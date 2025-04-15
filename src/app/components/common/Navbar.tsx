@@ -9,13 +9,13 @@ export default function Navbar() {
           <Link href="/" className="hover:text-gray-600">
             <li>Home</li>
           </Link>
-          <Link href="#" className="hover:text-gray-600">
+          <Link href="/aboutus/" className="hover:text-gray-600">
             <li>About Us</li>
           </Link>
-          <Link href="#" className="hover:text-gray-600">
+          <Link href="/trainings/" className="hover:text-gray-600">
             Trainings
           </Link>
-          <Link href="#" className="hover:text-gray-600">
+          <Link href="/contactus/" className="hover:text-gray-600">
             <li>Contact Us</li>
           </Link>
         </ul>
