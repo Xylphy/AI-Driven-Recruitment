@@ -87,6 +87,7 @@ export default function SignupPage() {
             >
               Mobile Number
             </label>
+          {/* asda */}
             <div className="flex">
               <select
                 id="countryCode"
@@ -105,6 +106,7 @@ export default function SignupPage() {
                 className="w-full mt-0 px-4 py-2 border border-gray-300 rounded-r-md focus:ring-blue-500 focus:border-blue-500"
                 required
               />
+              
             </div>
           </div>
           <div className="mb-4">
@@ -124,7 +126,7 @@ export default function SignupPage() {
                 id="street"
                 name="street"
                 className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                required
+            
               />
             </div>
             <div className="mt-4">
@@ -139,7 +141,7 @@ export default function SignupPage() {
                 id="zip"
                 name="zip"
                 className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                required
+               
               />
             </div>
             <div className="mt-4">
@@ -154,7 +156,7 @@ export default function SignupPage() {
                 id="city"
                 name="city"
                 className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                required
+               
               />
             </div>
             <div className="mt-4">
@@ -169,7 +171,7 @@ export default function SignupPage() {
                 id="state"
                 name="state"
                 className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                required
+               
               />
             </div>
             <div className="mt-4">
@@ -183,7 +185,7 @@ export default function SignupPage() {
                 id="country"
                 name="country"
                 className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                required
+                
               >
                 <option value="">Select a country</option>
                 <option value="US">United States</option>
@@ -211,7 +213,7 @@ export default function SignupPage() {
                 id="jobTitle"
                 name="jobTitle"
                 className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                required
+             
               />
             </div>
             <div className="mt-4">
@@ -227,7 +229,7 @@ export default function SignupPage() {
                 rows={4}
                 className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                 placeholder="List your skills separated by commas"
-                required
+              
               ></textarea>
             </div>
           </div>
