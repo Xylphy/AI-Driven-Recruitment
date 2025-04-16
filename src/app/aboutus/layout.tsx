@@ -12,10 +12,8 @@ export default function AuthLayout({
 }) {
   return (
     <>
-      <div className="flex min-h-screen items-center justify-center bg-gray-100">
-        <div className="w-full max-w-md p-6 bg-white rounded shadow-md">
-          {children}
-        </div>
+      <div className="w-full flex items-center justify-center">
+        <div className="p-6 bg-white rounded">{children}</div>
       </div>
     </>
   );
