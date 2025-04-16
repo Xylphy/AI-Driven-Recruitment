@@ -1,56 +1,61 @@
 import { login } from "@/app/lib/action";
 import { Button } from "@/app/components/common/Button";
+import Link from "next/link";
 
 export default function LoginPage() {
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded shadow-md">
-        <h2 className="text-2xl font-bold text-center text-gray-800">Login</h2>
-        <form action={login} className="space-y-4">
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Email
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              required
-              className="w-full px-3 py-2 mt-1 border rounded-md focus:outline-none focus:ring focus:ring-blue-300"
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Password
-            </label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              required
-              className="w-full px-3 py-2 mt-1 border rounded-md focus:outline-none focus:ring focus:ring-blue-300"
-            />
-          </div>
-          <Button
-            type="submit"
-            className="w-full py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700"
-          >
-            Login
-          </Button>
-        </form>
-        <p className="text-sm text-center text-gray-600">
-          Don't have an account?{" "}
-          <a href="/signup" className="text-blue-500 hover:underline">
-            Sign up
-          </a>
-        </p>
-      </div>
-    </div>
+    <>
+      <h1 className="text-4xl font-bold text-[#E30022] text-center mb-2 uppercase tracking-wide">
+        Welcome Back!
+      </h1>
+      <hr></hr>
+      <p className="text-center text-sm text-gray-700 mt-2 mb-6">
+        Log in to your Alliance Software Inc. Careers account
+      </p>
+      <form className="space-y-4">
+        <input
+          type="email"
+          placeholder="Email"
+          id="email"
+          className="w-full px-4 py-3 border border-red-500 rounded-md placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500"
+          required
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          id="password"
+          className="w-full px-4 py-3 border border-red-500 rounded-md placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500"
+          required
+        />
+        <Button
+          type="submit"
+          className="flex justify-center items-center w-full bg-red-600 text-white font-bold px-4 py-3 rounded-md border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-500 hover:border-red-500"
+        >
+          LOG IN
+        </Button>
+      </form>
+      <br></br>
+      <p className="text-sm text-center text-gray-600 mb-3">
+        Forgot your password?{" "}
+        <a href="/signup" className="text-red-600 hover:underline">
+          Click Here
+        </a>
+      </p>
+      <hr></hr>
+      <h1 className="text-4xl font-bold text-[#E30022] text-center mt-5 uppercase tracking-wide">
+        NEW TO ALLIANCE
+      </h1>
+      <p className="text-center text-sm text-gray-700 mt-2 mb-6">
+        <b>Start your journey with us!</b>
+        <br></br>Create an account to apply for roles, get job alerts, and take
+        the first step toward a rewarding career.
+      </p>
+      <Link
+        href="/signup/"
+        className="flex justify-center items-center w-full bg-red-600 text-white font-bold px-4 py-3 rounded-md border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-500 hover:border-red-500"
+      >
+        Get Started Here
+      </Link>
+    </>
   );
 }
