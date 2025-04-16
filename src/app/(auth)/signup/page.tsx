@@ -1,5 +1,5 @@
 import FileUpload from "@/app/components/common/FileUpload";
-import { signup } from "@/app/lib/action";
+import { signup } from "@/app/lib/actionServer";
 import {
   EducationalDetails,
   SocialLinks,
@@ -39,13 +39,13 @@ export default function SignupPage() {
             className="w-24 px-4 py-2 border border-gray-300 rounded-md focus:ring-red-600 "
           >
             <option value="">None</option>
-            <option value="mr">Mr.</option>
-            <option value="mrs">Mrs.</option>
-            <option value="ms">Ms.</option>
-            <option value="dr">Dr.</option>
-            <option value="jr">Jr.</option>
-            <option value="sr">Sr.</option>
-            <option value="sr">Engr.</option>
+            <option value="Mr.">Mr.</option>
+            <option value="Mrs.">Mrs.</option>
+            <option value="Ms.">Ms.</option>
+            <option value="Dr.">Dr.</option>
+            <option value="Jr.">Jr.</option>
+            <option value="Sr.">Sr.</option>
+            <option value="Engr.">Engr.</option>
           </select>
 
           <input

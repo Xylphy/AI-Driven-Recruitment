@@ -16,12 +16,6 @@ export default function Verification() {
         </p>
         <form className="space-y-4">
           <input
-            type="email"
-            placeholder="Email"
-            className="w-full px-4 py-3 border border-red-500 rounded-md placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500"
-            required
-          />
-          <input
             type="password"
             placeholder="New Password"
             className="w-full px-4 py-3 border border-red-500 rounded-md placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500"
