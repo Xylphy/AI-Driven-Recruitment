@@ -1,9 +1,9 @@
 "use server";
 
-import store from "../store/store";
-import { setSignupData } from "../store/registerReducer";
+import { isSignInWithEmailLink } from "firebase/auth";
 import { signupWithFirebase } from "./firebase/action";
-import { storeEmail } from "./actionClient";
+import { getTokenData } from "./mongodb/action";
+import { auth } from "./firebase/firebase";
 
 export async function login(formData: FormData) {
   const email = formData.get("email") as string;
@@ -13,42 +13,41 @@ export async function login(formData: FormData) {
 }
 
 export async function signup(formData: FormData) {
-  // store.dispatch(
-  //   setSignupData({
-  //     prefix: formData.get("prefix") as string,
-  //     firstName: formData.get("firstName") as string,
-  //     lastName: formData.get("lastName") as string,
-  //     email: formData.get("email") as string,
-  //     countryCode: formData.get("countryCode") as string,
-  //     mobileNumber: formData.get("mobileNumber") as string,
-  //     street: formData.get("street") as string,
-  //     zip: formData.get("zip") as string,
-  //     city: formData.get("city") as string,
-  //     state_: formData.get("state") as string,
-  //     country: formData.get("country") as string,
-  //     jobTitle: formData.get("jobTitle") as string,
-  //     skillSet: formData.get("skillSet") as string,
-  //     success: false,
-  //     error: null,
-  //   })
-  // );
-  store.dispatch(
-    setSignupData({
-      prefix: "Mr." as string,
-      firstName: "John" as string,
-      lastName: "Doe" as string,
-      countryCode: "+63" as string,
-      mobileNumber: "1234567890" as string,
-      street: "123 Main St" as string,
-      zip: "12345" as string,
-      city: "New York" as string,
-      state_: "NY" as string,
-      country: "USA" as string,
-      jobTitle: "Software Engineer" as string,
-      skillSet: "JavaScript, React" as string,
-      success: false,
-      error: null,
-    })
-  );
-  signupWithFirebase("jameskennethacabal@gmail.com");
+  signupWithFirebase({
+    prefix: formData.get("prefix") as string,
+    firstName: formData.get("firstName") as string,
+    lastName: formData.get("lastName") as string,
+    email: formData.get("email") as string,
+    countryCode: formData.get("countryCode") as string,
+    mobileNumber: formData.get("mobileNumber") as string,
+    street: formData.get("street") as string,
+    zip: formData.get("zip") as string,
+    city: formData.get("city") as string,
+    state_: formData.get("state") as string,
+    country: formData.get("country") as string,
+    jobTitle: formData.get("jobTitle") as string,
+    skillSet: formData.get("skillSet") as string,
+  });
 }
+
+// export async function verify(formData: FormData) {
+//   const token = formData.get("token") as string;
+//   const password = formData.get("password") as string;
+//   const confirmPassword = formData.get("confirmPassword") as string;
+
+//   if (password !== confirmPassword) {
+//     throw new Error("Passwords do not match. Please try again.");
+//   }
+
+//   const user = await getTokenData(token);
+
+//   if (!user?.email) {
+//     throw new Error("Invalid token or user data.");
+//   }
+
+//   if (isSignInWithEmailLink(auth, user.email)) {
+//     try{
+//       await signInWithEmailLink(auth, user.email, )
+//     }
+//   }
+// }

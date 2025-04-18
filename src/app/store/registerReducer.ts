@@ -5,6 +5,7 @@ const initialState: RegisterState = {
   prefix: "",
   firstName: "",
   lastName: "",
+  email: "",
   countryCode: "",
   mobileNumber: "",
   street: "",
@@ -14,8 +15,6 @@ const initialState: RegisterState = {
   country: "",
   jobTitle: "",
   skillSet: "",
-  success: false,
-  error: null,
 };
 
 const registerSlice = createSlice({

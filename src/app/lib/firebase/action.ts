@@ -1,40 +1,25 @@
-import { auth } from "./firebase";
 import { sendSignInLinkToEmail } from "firebase/auth";
-import { db } from "./firebase";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { db, auth } from "./firebase";
+import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
 import { redirect } from "next/navigation";
-import { storeEmail } from "../actionClient";
+import { RegisterState } from "@/app/types/types";
+import { insertTokenData } from "../mongodb/action";
 
-// export function useAuth() {
-//   const [loading, setLoading] = useState(true);
-//   const [user, setUser] = useState<User | null>(null);
-
-//   useEffect(() => {
-//     const unsubscribe = onAuthStateChanged(auth, (user) => {
-//       setUser(user);
-//       setLoading(false);
-//     });
-
-//     return () => unsubscribe();
-//   }, []);
-//   return { user, loading };
-// }
-
-export async function signupWithFirebase(email: string) {
+export async function signupWithFirebase(data: RegisterState) {
   try {
     const querySnapshot = await getDocs(
-      query(collection(db, "users"), where("email", "==", email))
+      query(collection(db, "users"), where("email", "==", data.email))
     );
 
     if (!querySnapshot.empty) {
       redirect("/login");
     }
 
-    await sendSignInLinkToEmail(auth, email, {
-      url: "http://localhost:3000/verification",
+    const response = await insertTokenData(data);
+    await sendSignInLinkToEmail(auth, data.email, {
+      url: `http://localhost:3000/verification/${response?.insertedId}`,
       handleCodeInApp: true,
     });
-    storeEmail(email);
   } catch (error) {
     console.error(error);
   }

@@ -2,7 +2,7 @@ export interface RegisterState {
   prefix: string;
   firstName: string;
   lastName: string;
-  email?: string;
+  email: string;
   countryCode: string;
   mobileNumber: string;
   street: string;
@@ -12,6 +12,4 @@ export interface RegisterState {
   country: string;
   jobTitle: string;
   skillSet: string;
-  success: boolean;
-  error: string | null;
 }
