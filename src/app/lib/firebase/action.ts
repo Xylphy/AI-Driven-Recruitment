@@ -3,8 +3,7 @@ import { sendSignInLinkToEmail } from "firebase/auth";
 import { db } from "./firebase";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { redirect } from "next/navigation";
-import { setEmailData } from "@/app/store/registerReducer";
-import store from "@/app/store/store";
+import { storeEmail } from "../actionClient";
 
 // export function useAuth() {
 //   const [loading, setLoading] = useState(true);
@@ -22,7 +21,6 @@ import store from "@/app/store/store";
 // }
 
 export async function signupWithFirebase(email: string) {
-  console.log(db);
   try {
     const querySnapshot = await getDocs(
       query(collection(db, "users"), where("email", "==", email))
@@ -36,7 +34,7 @@ export async function signupWithFirebase(email: string) {
       url: "http://localhost:3000/verification",
       handleCodeInApp: true,
     });
-
+    storeEmail(email);
   } catch (error) {
     console.error(error);
   }

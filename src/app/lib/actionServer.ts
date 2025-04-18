@@ -3,6 +3,7 @@
 import store from "../store/store";
 import { setSignupData } from "../store/registerReducer";
 import { signupWithFirebase } from "./firebase/action";
+import { storeEmail } from "./actionClient";
 
 export async function login(formData: FormData) {
   const email = formData.get("email") as string;
