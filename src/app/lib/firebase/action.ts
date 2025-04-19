@@ -16,6 +16,7 @@ export async function signupWithFirebase(data: RegisterState) {
     }
 
     const response = await insertTokenData(data);
+
     await sendSignInLinkToEmail(auth, data.email, {
       url: `http://localhost:3000/verification/${response?.insertedId}`,
       handleCodeInApp: true,

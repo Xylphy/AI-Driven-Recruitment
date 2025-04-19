@@ -1,9 +1,6 @@
 "use server";
 
-import { isSignInWithEmailLink } from "firebase/auth";
 import { signupWithFirebase } from "./firebase/action";
-import { getTokenData } from "./mongodb/action";
-import { auth } from "./firebase/firebase";
 
 export async function login(formData: FormData) {
   const email = formData.get("email") as string;

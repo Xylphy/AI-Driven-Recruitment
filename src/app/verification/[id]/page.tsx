@@ -1,8 +1,14 @@
 "use client";
 
+import {
+  createUserWithEmailAndPassword,
+  isSignInWithEmailLink,
+  signInWithEmailLink,
+} from "firebase/auth";
 import { Button } from "../../components/common/Button";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, use } from "react";
+import { auth } from "@/app/lib/firebase/firebase";
 
 export default function Verification({
   params,
@@ -11,23 +17,44 @@ export default function Verification({
 }) {
   const router = useRouter();
   const [csrfToken, setCsrfToken] = useState("");
+  const [email, setEmail] = useState("");
   const { id } = use(params);
 
   useEffect(() => {
-    fetch("/api/csrf")
-      .then((response) => {
-        if (response.ok) {
-          response.json().then((data) => {
-            setCsrfToken(data.csrfToken);
-          });
-        } else {
-          console.error("Failed to fetch CSRF token");
+    const fetchData = async () => {
+      try {
+        const csrfResponse = await fetch("/api/csrf");
+        if (!csrfResponse.ok) {
+          throw new Error("Failed to fetch CSRF token");
         }
-      })
-      .catch((error) => {
-        alert("Error fetching CSRF token:" + error);
-      });
-  }, []);
+        const csrfData = await csrfResponse.json();
+        setCsrfToken(csrfData.csrfToken);
+
+        const emailResponse = await fetch("/api/users/email", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": csrfData.csrfToken,
+          },
+          body: JSON.stringify({ id }),
+        });
+
+        if (!emailResponse.ok) {
+          router.push("/signup");
+        }
+        const emailData = await emailResponse.json();
+        setEmail(emailData);
+      } catch (error) {
+        if (error instanceof Error) {
+          alert("Error: " + error.message);
+        } else {
+          alert("An unknown error occurred");
+        }
+      }
+    };
+
+    fetchData();
+  }, [id]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -36,24 +63,41 @@ export default function Verification({
       password: formData.get("password"),
       confirmPassword: formData.get("confirmPassword"),
       token: id,
-      csrfToken: csrfToken,
     };
 
-    const getEmail = await fetch
+    if (!isSignInWithEmailLink(auth, window.location.href)) {
+      alert("Invalid link");
+      return;
+    }
 
-    const response = await fetch("/api/users", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
+    try {
+      await signInWithEmailLink(auth, email, window.location.href);
 
-    if (response.ok) {
-      alert("Password set successfully");
-      router.push("/");
-    } else {
-      alert("Error setting password");
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        data.password as string
+      );
+      console.log("userCredential", userCredential);
+
+      const response = await fetch("/api/users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken,
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (response.ok) {
+        alert("Password set successfully");
+        router.push("/");
+      } else {
+        alert("Error setting password");
+      }
+    } catch (error) {
+      console.error("Error signing in with email link:", error);
+      alert("Error signing in with email link");
     }
   };
 
