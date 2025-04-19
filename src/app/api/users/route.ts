@@ -52,6 +52,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    console.log(body);
+
     return NextResponse.json(
       { message: "Password set successfully" },
       { status: 200 }

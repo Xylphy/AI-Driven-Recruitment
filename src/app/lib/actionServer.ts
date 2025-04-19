@@ -29,25 +29,3 @@ export async function signup(formData: FormData) {
     skillSet: formData.get("skillSet") as string,
   });
 }
-
-// export async function verify(formData: FormData) {
-//   const token = formData.get("token") as string;
-//   const password = formData.get("password") as string;
-//   const confirmPassword = formData.get("confirmPassword") as string;
-
-//   if (password !== confirmPassword) {
-//     throw new Error("Passwords do not match. Please try again.");
-//   }
-
-//   const user = await getTokenData(token);
-
-//   if (!user?.email) {
-//     throw new Error("Invalid token or user data.");
-//   }
-
-//   if (isSignInWithEmailLink(auth, user.email)) {
-//     try{
-//       await signInWithEmailLink(auth, user.email, )
-//     }
-//   }
-// }

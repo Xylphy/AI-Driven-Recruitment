@@ -3,8 +3,8 @@ import { NextRequest } from "next/server";
 import { LRUCache } from "lru-cache";
 
 const rateLimitCache = new LRUCache<string, number[]>({
-  max: 10,
-  ttl: 60,
+  max: 1000,
+  ttl: 15 * 60 * 1000,
 });
 
 export function rateLimit(config: { max: number; windowMs: number }) {

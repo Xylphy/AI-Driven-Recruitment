@@ -1,12 +1,33 @@
 "use client";
 
 import { Button } from "../../components/common/Button";
-import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState, use } from "react";
 
-export default function Verification({ params }: { params: { id: string } }) {
+export default function Verification({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const router = useRouter();
   const [csrfToken, setCsrfToken] = useState("");
+  const { id } = use(params);
+
+  useEffect(() => {
+    fetch("/api/csrf")
+      .then((response) => {
+        if (response.ok) {
+          response.json().then((data) => {
+            setCsrfToken(data.csrfToken);
+          });
+        } else {
+          console.error("Failed to fetch CSRF token");
+        }
+      })
+      .catch((error) => {
+        alert("Error fetching CSRF token:" + error);
+      });
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -14,9 +35,11 @@ export default function Verification({ params }: { params: { id: string } }) {
     const data = {
       password: formData.get("password"),
       confirmPassword: formData.get("confirmPassword"),
-      token: params.id,
+      token: id,
       csrfToken: csrfToken,
     };
+
+    const getEmail = await fetch
 
     const response = await fetch("/api/users", {
       method: "POST",
@@ -34,22 +57,6 @@ export default function Verification({ params }: { params: { id: string } }) {
     }
   };
 
-  useEffect(() => {
-    fetch("/api/csrf-token")
-      .then((response) => {
-        if (response.ok) {
-          response.json().then((data) => {
-            setCsrfToken(data.csrfToken);
-          });
-        } else {
-          console.error("Failed to fetch CSRF token");
-        }
-      })
-      .catch((error) => {
-        alert("Error fetching CSRF token:" + error);
-      });
-  }, []);
-
   return (
     <div className="flex justify-center pt-43">
       <div className="w-full max-w-md px-6">
@@ -62,7 +69,7 @@ export default function Verification({ params }: { params: { id: string } }) {
           with us.
         </p>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <input type="hidden" name="token" value={params.id} />
+          <input type="hidden" name="token" value={id} />
           <input
             type="password"
             placeholder="New Password"

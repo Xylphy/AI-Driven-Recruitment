@@ -1,0 +1,46 @@
+import { getTokenData } from "@/app/lib/mongodb/action";
+import { NextRequest, NextResponse } from "next/server";
+import { rateLimit } from "@/app/lib/rate-limit";
+import { z } from "zod";
+
+const limiter = rateLimit({
+  max: 5,
+  windowMs: 15 * 60 * 1000,
+});
+
+const schema = z.object({
+  id: z.string().min(1, "ID is required"),
+  csrfToken: z.string().min(1, "CSRF token is required"),
+});
+
+// export async function GET(request: NextRequest) {
+//   const rateLimitResult = await limiter.check(request);
+//   if (!rateLimitResult.success) {
+//     return NextResponse.json(
+//       { error: "Too many requests, please try again later." },
+//       { status: 429 }
+//     );
+//   }
+
+//   const validationResult = schema.safeParse({ id, csrfToken: "" }); // Assuming csrfToken is passed elsewhere
+//   if (!validationResult.success) {
+//     return NextResponse.json(
+//       { error: validationResult.error.errors.map((e) => e.message).join(", ") },
+//       { status: 400 }
+//     );
+//   }
+
+//   try {
+//     const tokenData = await getTokenData(id);
+//     if (!tokenData) {
+//       return NextResponse.json({ error: "Token not found" }, { status: 404 });
+//     }
+
+//     return NextResponse.json(tokenData, { status: 200 });
+//   } catch (error) {
+//     return NextResponse.json(
+//       { error: "Internal server error" },
+//       { status: 500 }
+//     );
+//   }
+// }
