@@ -2,13 +2,6 @@
 
 import { signupWithFirebase } from "./firebase/action";
 
-export async function login(formData: FormData) {
-  const email = formData.get("email") as string;
-  const password = formData.get("password") as string;
-
-  // Authenticate with supabase here
-}
-
 export async function signup(formData: FormData) {
   signupWithFirebase({
     prefix: formData.get("prefix") as string,

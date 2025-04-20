@@ -1,8 +1,47 @@
-import { login } from "@/app/lib/actionServer";
+"use client";
+
 import { Button } from "@/app/components/common/Button";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "@/app/lib/firebase/firebase";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
+  const router = useRouter();
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+
+    let email = formData.get("email");
+    let password = formData.get("password");
+
+    if (!email) {
+      alert("Please enter a valid email address");
+      return;
+    }
+    email = email.toString().trim();
+
+    if (!password) {
+      alert("Please enter a valid password");
+      return;
+    }
+    password = password.toString().trim();
+
+    signInWithEmailAndPassword(auth, email, password)
+      .then((userCredential) => {
+        const user = userCredential.user;
+
+        if (user) {
+          alert("Login successful");
+          router.push("/home");
+        }
+      })
+      .catch((error) => {
+        alert(`Error: ${error.message}`);
+      });
+  };
+
   return (
     <>
       <h1 className="text-4xl font-bold text-[#E30022] text-center mb-2 uppercase tracking-wide">
@@ -12,11 +51,12 @@ export default function LoginPage() {
       <p className="text-center text-sm text-gray-700 mt-2 mb-6">
         Log in to your Alliance Software Inc. Careers account
       </p>
-      <form className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
         <input
           type="email"
           placeholder="Email"
           id="email"
+          name="email"
           className="w-full px-4 py-3 border border-red-500 rounded-md placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500"
           required
         />
@@ -24,6 +64,7 @@ export default function LoginPage() {
           type="password"
           placeholder="Password"
           id="password"
+          name="password"
           className="w-full px-4 py-3 border border-red-500 rounded-md placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500"
           required
         />

@@ -4,7 +4,7 @@ import {
   createUserWithEmailAndPassword,
   isSignInWithEmailLink,
 } from "firebase/auth";
-import { Button } from "../../components/common/Button";
+import { Button } from "../../../components/common/Button";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, use } from "react";
 import { auth } from "@/app/lib/firebase/firebase";
