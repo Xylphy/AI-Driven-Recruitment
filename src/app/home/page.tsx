@@ -1,4 +1,20 @@
+"use client";
+
+import { onAuthStateChanged } from "firebase/auth";
+import { useRouter } from "next/navigation";
+import { auth } from "../lib/firebase/firebase";
+
 export default function HomePage() {
+  const router = useRouter();
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      alert("User is logged in");
+    } else {
+      router.push("/");
+    }
+  });
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
       <h1 className="text-4xl font-bold text-gray-800">
