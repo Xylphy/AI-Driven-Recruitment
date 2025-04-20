@@ -30,7 +30,7 @@ export default function Navbar() {
               About Us
             </li>
           </Link>
-          <Link href="/trainings/">
+          <Link href="/hometrainings/">
             <li
               className="relative inline-block pb-1 
     after:content-[''] after:absolute after:bottom-0 after:left-1/2 

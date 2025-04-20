@@ -24,46 +24,29 @@ export function createClient(database: number) {
 
 export async function createClientServer(database: number) {
   const cookieStore = await cookies();
-  switch (database) {
-    case 1:
-      return createServerClient(database1.url, database1.key, {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-          setAll(cookiesToSet) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) =>
-                cookieStore.set(name, value, options)
-              );
-            } catch {
-              // The `setAll` method was called from a Server Component.
-              //
-              // This can be ignored if you have middleware refreshing
-              // user sessions.
-            }
-          },
-        },
-      });
-    case 2:
-      return createServerClient(database2.url, database2.key, {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-          setAll(cookiesToSet) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) =>
-                cookieStore.set(name, value, options)
-              );
-            } catch {
-              // The `setAll` method was called from a Server Component.
-              //
-              // This can be ignored if you have middleware refreshing
-              // user sessions.
-            }
-          },
-        },
-      });
-  }
+
+  const database_data = {
+    url: database === 1 ? database1.url : database2.url,
+    key: database === 1 ? database1.key : database2.key,
+  };
+  
+  return createServerClient(database_data.url, database_data.key, {
+    cookies: {
+      getAll() {
+        return cookieStore.getAll();
+      },
+      setAll(cookiesToSet) {
+        try {
+          cookiesToSet.forEach(({ name, value, options }) =>
+            cookieStore.set(name, value, options)
+          );
+        } catch {
+          // The `setAll` method was called from a Server Component.
+          //
+          // This can be ignored if you have middleware refreshing
+          // user sessions.
+        }
+      },
+    },
+  });
 }

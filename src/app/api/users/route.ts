@@ -2,6 +2,9 @@ import { rateLimit } from "@/app/lib/rate-limit";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { verifyCsrfToken } from "@/app/lib/csrf";
+import { createClientServer } from "@/app/lib/supabase/supabase";
+import mongoDb_client from "@/app/lib/mongodb/mongodb";
+import { ObjectId } from "mongodb";
 
 const formSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters long"),
@@ -9,7 +12,7 @@ const formSchema = z.object({
     .string()
     .min(8, "Password must be at least 8 characters long"),
   token: z.string().min(1, "Token is required"),
-  csrfToken: z.string().min(1, "CSRF token is required"),
+  uid: z.string().min(1, "User ID is required"),
 });
 
 const limiter = rateLimit({
@@ -28,6 +31,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+    const csrfToken = request.headers.get("X-CSRF-Token");
 
     const validatedData = formSchema.safeParse(body);
     if (!validatedData.success) {
@@ -37,7 +41,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const isValidCsrf = await verifyCsrfToken(validatedData.data.csrfToken);
+    if (!csrfToken) {
+      return NextResponse.json(
+        { error: "CSRF token is required" },
+        { status: 403 }
+      );
+    }
+
+    const isValidCsrf = await verifyCsrfToken(csrfToken);
     if (!isValidCsrf) {
       return NextResponse.json(
         { error: "Invalid CSRF token" },
@@ -52,7 +63,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(body);
+    const supabase = createClientServer(1);
+    await mongoDb_client.connect();
+
+    const data = await mongoDb_client
+      .db("ai-driven-recruitment")
+      .collection("verification_tokens")
+      .findOne({ _id: ObjectId.createFromHexString(body.token) });
+
+    if (!data) {
+      return NextResponse.json({ error: "Token not found" }, { status: 404 });
+    }
+
+    const { data: insertedData, error } = await (await supabase)
+      .from("users")
+      .insert({
+        firstName: data.firstName,
+        lastName: data.lastName,
+        phoneNumber: data.mobileNumber,
+        prefix: data.prefix,
+        firebase_uid: body.uid,
+      });
+
+    if (error) {
+      console.error("Error inserting user into Supabase:", error);
+    } else {
+      console.log("User inserted into Supabase:", insertedData);
+    }
 
     return NextResponse.json(
       { message: "Password set successfully" },
@@ -63,5 +100,7 @@ export async function POST(request: NextRequest) {
       { error: "An error occurred while processing your request" },
       { status: 500 }
     );
+  } finally {
+    await mongoDb_client.close();
   }
 }

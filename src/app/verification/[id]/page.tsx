@@ -3,7 +3,6 @@
 import {
   createUserWithEmailAndPassword,
   isSignInWithEmailLink,
-  signInWithEmailLink,
 } from "firebase/auth";
 import { Button } from "../../components/common/Button";
 import { useRouter } from "next/navigation";
@@ -59,6 +58,9 @@ export default function Verification({
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    const password = formData.get("password");
+    const confirmPassword = formData.get("confirmPassword");
+
     const data = {
       password: formData.get("password"),
       confirmPassword: formData.get("confirmPassword"),
@@ -71,14 +73,18 @@ export default function Verification({
     }
 
     try {
-      await signInWithEmailLink(auth, email, window.location.href);
+      if (password !== confirmPassword) {
+        alert("Passwords do not match");
+        return;
+      }
 
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
-        data.password as string
+        (data.password as string).trim()
       );
-      console.log("userCredential", userCredential);
+
+      const uid = userCredential.user.uid;
 
       const response = await fetch("/api/users", {
         method: "POST",
@@ -86,18 +92,17 @@ export default function Verification({
           "Content-Type": "application/json",
           "X-CSRF-Token": csrfToken,
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, uid }),
       });
 
       if (response.ok) {
         alert("Password set successfully");
-        router.push("/");
       } else {
         alert("Error setting password");
+        return;
       }
-    } catch (error) {
-      console.error("Error signing in with email link:", error);
-      alert("Error signing in with email link");
+    } catch (error: any) {
+      alert("Error signing in with email link:" + error);
     }
   };
 

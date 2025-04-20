@@ -1,6 +1,6 @@
 import { MongoClient, ServerApiVersion } from "mongodb";
 
-const client = new MongoClient(
+const mongoDb_client = new MongoClient(
   process.env.MONGODB_URI ||
     (() => {
       throw new Error("MONGODB_URI is not defined");
@@ -14,4 +14,4 @@ const client = new MongoClient(
   }
 );
 
-export default client;
+export default mongoDb_client;

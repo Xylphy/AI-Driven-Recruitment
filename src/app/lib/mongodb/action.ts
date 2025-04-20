@@ -1,5 +1,5 @@
 import { ObjectId } from "mongodb";
-import client from "./mongodb";
+import mongoDb_client from "./mongodb";
 
 export async function insertTokenData(data: {
   prefix: string;
@@ -17,32 +17,32 @@ export async function insertTokenData(data: {
   skillSet: string;
 }) {
   try {
-    await client.connect();
+    await mongoDb_client.connect();
 
     const user = {
       ...data,
       createdAt: new Date(),
     };
 
-    return await client
+    return await mongoDb_client
       .db("ai-driven-recruitment")
       .collection("verification_tokens")
       .insertOne(user);
   } catch (error) {
     console.error("Error inserting user data:", error);
   } finally {
-    await client.close();
+    await mongoDb_client.close();
   }
 }
 
 export async function getTokenData(id: string) {
   try {
-    await client.connect();
+    await mongoDb_client.connect();
 
     const query = { _id: new ObjectId(id) };
     const options = { projection: { _id: 0 } };
 
-    const result = await client
+    const result = await mongoDb_client
       .db("ai-driven-recruitment")
       .collection("verification_tokens")
       .findOne(query, options);
@@ -51,6 +51,6 @@ export async function getTokenData(id: string) {
   } catch (error) {
     console.error("Error retrieving token data:", error);
   } finally {
-    await client.close();
+    await mongoDb_client.close();
   }
 }
