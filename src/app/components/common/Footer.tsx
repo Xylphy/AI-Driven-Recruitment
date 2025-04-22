@@ -1,6 +1,8 @@
 import React from "react";
 import { FaFacebook, FaInstagram } from "react-icons/fa";
 import { MdEmail, MdPhone } from "react-icons/md";
+import Image from "next/image";
+import Link from "next/link";
 
 const Header: React.FC = () => {
   return (
@@ -8,7 +10,7 @@ const Header: React.FC = () => {
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center">
         <div className="flex flex-col md:flex-row items-center gap-6">
           <div className="flex items-center gap-2">
-            <img src="/logo-white.png" alt="Alliance Logo" className="w-50" />
+            <Image src="/logo.png" alt="Alliance Logo" width={50} height={50} />
           </div>
           <div className="text-sm space-y-1 mt-2 md:mt-0">
             <div className="flex items-center gap-2">
@@ -29,34 +31,34 @@ const Header: React.FC = () => {
         <nav className="mt-6 md:mt-0">
           <ul className="grid grid-cols-2 gap-2 text-sm font-400 text-left">
             <li>
-              <a href="/" className="mr-2 hover:underline">
+              <Link href="/" className="mr-2 hover:underline">
                 HOME
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="/aboutus/" className="hover:underline">
+              <Link href="/aboutus/" className="hover:underline">
                 ABOUT US
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="/news/" className="mr-4 hover:underline">
+              <Link href="/news/" className="mr-4 hover:underline">
                 NEWS AND EVENTS
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="/trainings/" className="hover:underline">
+              <Link href="/trainings/" className="hover:underline">
                 TRAININGS
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="/joblistings/" className="mr-2 hover:underline">
+              <Link href="/joblistings/" className="mr-2 hover:underline">
                 JOB LISTINGS
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="/privacypolicy/" className="hover:underline">
+              <Link href="/privacypolicy/" className="hover:underline">
                 PRIVACY POLICY
-              </a>
+              </Link>
             </li>
           </ul>
         </nav>

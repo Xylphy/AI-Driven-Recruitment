@@ -20,7 +20,7 @@ export default function AboutUs() {
       <section className="max-w-4xl mx-auto px-6 py-16">
         <p className="mb-6 text-lg leading-relaxed">
           <strong>Alliance</strong> is a people-first job platform connecting
-          talent with the right opportunities. We're passionate about removing
+          talent with the right opportunities. We&apos;re passionate about removing
           hiring friction and elevating careers with purpose.
         </p>
         <p className="mb-6 text-lg leading-relaxed">

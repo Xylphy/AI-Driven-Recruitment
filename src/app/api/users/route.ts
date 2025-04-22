@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
       { message: "Password set successfully" },
       { status: 200 }
     );
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "An error occurred while processing your request" },
       { status: 500 }

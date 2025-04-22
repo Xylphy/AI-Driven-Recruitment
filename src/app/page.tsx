@@ -11,8 +11,8 @@ export default function Home() {
           </h1>
           <p className="text-lg text-gray-700 mb-8">
             Explore thousands of job opportunities from top companies. Whether
-            you're starting out or looking for a career change, we've got you
-            covered.
+            you&#39;re starting out or looking for a career change, we&#39;ve
+            got you covered.
           </p>
           <Link
             href="/login"

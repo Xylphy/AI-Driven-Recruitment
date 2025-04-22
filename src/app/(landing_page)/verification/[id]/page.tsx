@@ -53,7 +53,7 @@ export default function Verification({
     };
 
     fetchData();
-  }, [id]);
+  }, [id, router]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -101,8 +101,12 @@ export default function Verification({
         alert("Error setting password");
         return;
       }
-    } catch (error: any) {
-      alert("Error signing in with email link:" + error);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        alert("Error signing in with email link: " + error.message);
+      } else {
+        alert("An unknown error occurred");
+      }
     }
   };
 

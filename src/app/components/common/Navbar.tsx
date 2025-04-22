@@ -1,11 +1,12 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Navbar() {
   return (
     <nav className="bg-white text-black shadow-md">
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
         <div className="text-lg font-bold">
-          <img src="logo.png" alt="Alliance Logo" width="130" />
+          <Image src="/logo.png" alt="Alliance Logo" width={130} height={50} />
         </div>
         <ul className="flex-1 flex justify-center space-x-6">
           <Link href="/">

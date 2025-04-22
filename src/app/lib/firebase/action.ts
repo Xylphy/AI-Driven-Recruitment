@@ -1,6 +1,6 @@
 import { sendSignInLinkToEmail } from "firebase/auth";
 import { db, auth } from "./firebase";
-import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
+import { collection, query, where, getDocs } from "firebase/firestore";
 import { redirect } from "next/navigation";
 import { RegisterState } from "@/app/types/types";
 import { insertTokenData } from "../mongodb/action";
