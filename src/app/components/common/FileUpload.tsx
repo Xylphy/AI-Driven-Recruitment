@@ -4,14 +4,39 @@ import { useState } from "react";
 
 export default function FileUpload() {
   const [fileName, setFileName] = useState("No file chosen");
+  const [isDragging, setIsDragging] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFileName = e.target.files?.[0]?.name || "No file chosen";
     setFileName(selectedFileName);
   };
 
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+
+    const droppedFileName = e.dataTransfer.files?.[0]?.name || "No file chosen";
+    setFileName(droppedFileName);
+  };
+
   return (
-    <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed border-gray-300 rounded-md">
+    <div
+      className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 ${
+        isDragging ? "border-blue-500" : "border-gray-300"
+      } border-dashed rounded-md`}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       <div className="space-y-1 text-center">
         <svg
           className="mx-auto h-12 w-12 text-gray-400"

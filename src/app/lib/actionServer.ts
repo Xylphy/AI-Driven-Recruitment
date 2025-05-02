@@ -3,6 +3,8 @@
 import { signupWithFirebase } from "./firebase/action";
 
 export async function signup(formData: FormData) {
+  console.log("File data", formData.get("resume"));
+
   signupWithFirebase({
     prefix: formData.get("prefix") as string,
     firstName: formData.get("firstName") as string,
