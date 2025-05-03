@@ -15,8 +15,8 @@ export default function Verification({
   params: Promise<{ id: string }>;
 }) {
   const router = useRouter();
-  const [csrfToken, setCsrfToken] = useState("");
-  const [email, setEmail] = useState("");
+  const [csrfToken, setCsrfToken] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
   const { id } = use(params);
 
   useEffect(() => {

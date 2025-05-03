@@ -2,9 +2,49 @@
 
 import { sendEmailVerification } from "./firebase/action";
 import { uploadFile } from "./cloudinary/cloudinary";
+import { verifyCsrfToken } from "./csrf";
 
 export async function signup(formData: FormData) {
+  const csrfToken = formData.get("csrfToken");
+
+  if (!csrfToken || !verifyCsrfToken(csrfToken as string)) {
+    return {
+      success: false,
+      message: "Invalid request, please try again.",
+    };
+  }
+
+  console.log(formData); // Debugging line
+
   try {
+    const file: File | null = formData.get("resume") as File;
+    let resume_id = undefined;
+
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        return {
+          success: false,
+          message: "File size exceeds the limit of 5MB.",
+        };
+      }
+
+      if (
+        ![
+          "application/pdf",
+          "application/msword",
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ].includes(file.type)
+      ) {
+        return {
+          success: false,
+          message:
+            "Invalid file type. Only PDF and Word documents are allowed.",
+        };
+      }
+
+      // resume_id = await uploadFile(file, "resumes");
+    }
+
     // sendEmailVerification({
     //   prefix: formData.get("prefix") as string,
     //   firstName: formData.get("firstName") as string,
@@ -19,8 +59,8 @@ export async function signup(formData: FormData) {
     //   country: formData.get("country") as string,
     //   jobTitle: formData.get("jobTitle") as string,
     //   skillSet: formData.get("skillSet") as string,
+    //   public_id: resume_id,
     // });
-    await uploadFile(formData.get("resume") as File, "resumes");
 
     return {
       success: true,

@@ -12,4 +12,10 @@ export interface RegisterState {
   country: string;
   jobTitle: string;
   skillSet: string;
+  public_id?: string;
+}
+
+export interface SocialLink {
+  id: number;
+  value: string;
 }

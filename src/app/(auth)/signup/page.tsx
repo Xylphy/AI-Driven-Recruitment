@@ -4,7 +4,8 @@ import FileUpload from "@/app/components/common/FileUpload";
 import { signup } from "@/app/lib/actionServer";
 import SocialLinks from "@/app/components/signup/SocialLinks";
 import EducationalDetails from "@/app/components/signup/EducationalDetails";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { SocialLink } from "@/app/types/types";
 
 export default function SignupPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -12,7 +13,29 @@ export default function SignupPage() {
     success?: boolean;
     message?: string;
   } | null>(null);
+
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [csrfToken, setCsrfToken] = useState<string>("");
+
+  const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
+
+  useEffect(() => {
+    fetch("/api/csrf")
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Failed to fetch CSRF token");
+        }
+        return res.json();
+      })
+      .then((data) => {
+        setCsrfToken(data.csrfToken);
+      })
+      .catch((error) => {
+        if (error instanceof Error) {
+          alert("Error: " + error.message);
+        }
+      });
+  }, []);
 
   const handleFileSelect = (file: File | null) => {
     setSelectedFile(file);
@@ -25,9 +48,13 @@ export default function SignupPage() {
 
     try {
       const formData = new FormData(form);
+
       if (selectedFile) {
         formData.set("resume", selectedFile);
       }
+
+      formData.set("csrfToken", csrfToken);
+
       const result = await signup(formData);
       setResponse(result);
 
@@ -283,24 +310,23 @@ export default function SignupPage() {
           <EducationalDetails />
         </div>
         <div className="mb-4">
-          <SocialLinks />
-        </div>
-        <div className="mb-4">
-          <div className="mt-4">
-            <label
-              htmlFor="resumeFile"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Upload Resume File
-            </label>
-            <input
-              type="file"
-              id="resumeFile"
-              name="resumeFile"
-              className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-              accept=".pdf,.doc,.docx"
-            />
-          </div>
+          <SocialLinks
+            update={(id: number, value: string) => {
+              setSocialLinks((prev) =>
+                prev.map((link) => (link.id === id ? { ...link, value } : link))
+              );
+            }}
+            delete={(id: number) => {
+              setSocialLinks((prev) => prev.filter((link) => link.id !== id));
+            }}
+            add={() => {
+              setSocialLinks((prev) => [
+                ...prev,
+                { id: socialLinks.length + 1, value: "" },
+              ]);
+            }}
+            getSocialLinks={() => socialLinks}
+          />
         </div>
         <button
           type="submit"

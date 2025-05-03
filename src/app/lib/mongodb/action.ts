@@ -1,21 +1,8 @@
 import { ObjectId } from "mongodb";
 import mongoDb_client from "./mongodb";
+import { RegisterState } from "@/app/types/types";
 
-export async function insertTokenData(data: {
-  prefix: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  countryCode: string;
-  mobileNumber: string;
-  street: string;
-  zip: string;
-  city: string;
-  state_: string;
-  country: string;
-  jobTitle: string;
-  skillSet: string;
-}) {
+export async function insertTokenData(data: RegisterState) {
   try {
     await mongoDb_client.connect();
 

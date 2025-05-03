@@ -3,7 +3,7 @@ import { generateCsrfToken } from "@/app/lib/csrf";
 import { rateLimit } from "@/app/lib/rate-limit";
 
 const limiter = rateLimit({
-  max: 5,
+  max: 10,
   windowMs: 15 * 60 * 1000,
 });
 

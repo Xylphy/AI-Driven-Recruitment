@@ -6,15 +6,15 @@ import { auth } from "../lib/firebase/firebase";
 import Image from "next/image";
 
 export default function HomePage() {
-  // const router = useRouter();
+  const router = useRouter();
 
-  // onAuthStateChanged(auth, (user) => {
-  //   if (user) {
-  //     alert("User is logged in");
-  //   } else {
-  //     router.push("/");
-  //   }
-  // });
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      alert("User is logged in");
+    } else {
+      router.push("/");
+    }
+  });
 
   return (
     <>
