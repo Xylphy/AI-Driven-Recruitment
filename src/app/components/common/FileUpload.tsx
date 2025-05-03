@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 
-export default function FileUpload() {
+export default function FileUpload({
+  onFileSelect,
+}: {
+  onFileSelect: (file: File | null) => void;
+}) {
   const [fileName, setFileName] = useState("No file chosen");
   const [isDragging, setIsDragging] = useState(false);
 
@@ -24,8 +28,9 @@ export default function FileUpload() {
     e.preventDefault();
     setIsDragging(false);
 
-    const droppedFileName = e.dataTransfer.files?.[0]?.name || "No file chosen";
-    setFileName(droppedFileName);
+    const file = e.dataTransfer.files?.[0] || null;
+    setFileName(file?.name || "No file chosen");
+    onFileSelect(file);
   };
 
   return (
