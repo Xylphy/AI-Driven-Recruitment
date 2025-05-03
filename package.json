@@ -9,15 +9,16 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@reduxjs/toolkit": "^2.6.1",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.4",
+    "cloudinary": "^2.6.0",
     "clsx": "^2.1.1",
     "csrf": "^3.1.0",
     "firebase": "^11.6.0",
     "lru-cache": "^11.1.0",
     "mongodb": "^6.15.0",
     "next": "15.2.4",
+    "next-cloudinary": "^6.16.0",
     "rate-limiter-flexible": "^7.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

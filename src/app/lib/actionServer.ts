@@ -1,6 +1,7 @@
 "use server";
 
 import { sendEmailVerification } from "./firebase/action";
+import { uploadFile } from "./cloudinary/cloudinary";
 
 export async function signup(formData: FormData) {
   try {
@@ -19,6 +20,7 @@ export async function signup(formData: FormData) {
     //   jobTitle: formData.get("jobTitle") as string,
     //   skillSet: formData.get("skillSet") as string,
     // });
+    await uploadFile(formData.get("resume") as File, "resumes");
 
     return {
       success: true,

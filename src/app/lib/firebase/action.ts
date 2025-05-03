@@ -1,7 +1,6 @@
 import { sendSignInLinkToEmail } from "firebase/auth";
 import { db, auth } from "./firebase";
 import { collection, query, where, getDocs } from "firebase/firestore";
-import { redirect } from "next/navigation";
 import { RegisterState } from "@/app/types/types";
 import { insertTokenData } from "../mongodb/action";
 
@@ -11,7 +10,7 @@ export async function sendEmailVerification(data: RegisterState) {
   );
 
   if (!querySnapshot.empty) {
-    redirect("/login");
+    throw new Error("Email already exists");
   }
 
   const response = await insertTokenData(data);

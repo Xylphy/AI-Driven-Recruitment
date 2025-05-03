@@ -3,8 +3,7 @@
 import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { auth } from "../lib/firebase/firebase";
-import Navbar from "../components/common/Navbar";
-import Footer from "../components/common/Footer";
+import Image from "next/image";
 
 export default function HomePage() {
   // const router = useRouter();
@@ -25,11 +24,10 @@ export default function HomePage() {
             <h1 className="text-2xl font-bold mb-6">My Profile</h1>
 
             <div className="flex flex-col md:flex-row gap-6">
-              {/* Left side - Profile picture and name */}
               <div className="md:w-1/3">
                 <div className="flex flex-col items-center">
                   <div className="w-40 h-40 bg-gray-300 rounded-full mb-4 overflow-hidden">
-                    <img
+                    <Image
                       src="/placeholder-avatar.png"
                       alt="Profile"
                       className="w-full h-full object-cover"
@@ -44,7 +42,6 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Right side - Applied jobs */}
               <div className="md:w-2/3">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-semibold">Applied Jobs</h2>
@@ -71,7 +68,7 @@ export default function HomePage() {
 
                 <div className="border border-gray-200 rounded-lg p-4 flex items-center">
                   <div className="h-16 w-16 bg-gray-200 rounded-md overflow-hidden mr-4">
-                    <img
+                    <Image
                       src="/company-logo-2.png"
                       alt="Company"
                       className="h-full w-full object-cover"
@@ -91,7 +88,7 @@ export default function HomePage() {
                 </div>
                 <div className="border border-gray-200 rounded-lg p-4 flex items-center">
                   <div className="h-16 w-16 bg-gray-200 rounded-md overflow-hidden mr-4">
-                    <img
+                    <Image
                       src="/company-logo-2.png"
                       alt="Company"
                       className="h-full w-full object-cover"
@@ -110,7 +107,7 @@ export default function HomePage() {
 
                 <div className="border border-gray-200 rounded-lg p-4 flex items-center">
                   <div className="h-16 w-16 bg-gray-200 rounded-md overflow-hidden mr-4">
-                    <img
+                    <Image
                       src="/company-logo-2.png"
                       alt="Company"
                       className="h-full w-full object-cover"
