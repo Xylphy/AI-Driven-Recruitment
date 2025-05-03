@@ -1,20 +1,6 @@
 "use client";
 
-import { useState } from "react";
-
-interface EducationalDetail {
-  id: number;
-  value: string;
-  institute?: string;
-  major?: string;
-  degree?: string;
-  duration?: string;
-  startMonth?: string;
-  startYear?: string;
-  endMonth?: string;
-  endYear?: string;
-  currentlyPursuing?: boolean;
-}
+import { EducationalDetail } from "@/app/types/types";
 
 const years = Array.from({ length: 56 }, (_, i) => 1980 + i);
 
@@ -33,61 +19,21 @@ const months = [
   "December",
 ];
 
-export default function EducationalDetails() {
-  const [educationalDetails, setEducationalDetails] = useState<
-    EducationalDetail[]
-  >([]);
-  const [inputBoxes, setInputBoxes] = useState<EducationalDetail[]>([]);
-
-  const handleAddInputBox = () => {
-    const newId = inputBoxes.length + 1;
-    setInputBoxes([
-      ...inputBoxes,
-      {
-        id: newId,
-        value: "",
-        institute: "",
-        major: "",
-        degree: "",
-        duration: "",
-        startMonth: "",
-        startYear: "",
-        endMonth: "",
-        endYear: "",
-        currentlyPursuing: false,
-      },
-    ]);
-  };
-
-  const handleInputChange = (
-    id: number,
-    key: string,
-    value: string | boolean
-  ) => {
-    setInputBoxes((prev) =>
-      prev.map((box) => (box.id === id ? { ...box, [key]: value } : box))
-    );
-  };
-
-  const handleAddDetail = (id: number) => {
-    const detail = inputBoxes.find((box) => box.id === id);
-    if (detail && detail.value.trim()) {
-      setEducationalDetails([
-        { id, value: detail.value },
-        ...educationalDetails,
-      ]);
-      setInputBoxes(inputBoxes.filter((box) => box.id !== id));
-    }
-  };
-
-  const handleClear = (id: number) => {
-    setInputBoxes((prev) => prev.filter((box) => box.id !== id));
-  };
-
+export default function EducationalDetails({
+  update,
+  delete: deleteEducationalDetail,
+  add,
+  getEducationalDetails,
+}: {
+  update: (id: number, key: string, value: string | boolean) => void;
+  delete: (id: number) => void;
+  add: () => void;
+  getEducationalDetails: EducationalDetail[];
+}) {
   return (
     <div className="p-4 bg-gray-100 rounded shadow-md">
       <h2 className="text-xl font-bold mb-4">Educational Details</h2>
-      {inputBoxes.map((box) => (
+      {getEducationalDetails.map((box) => (
         <div
           key={box.id}
           className="mb-6 p-4 border rounded-lg shadow-sm space-y-3"
@@ -95,25 +41,21 @@ export default function EducationalDetails() {
           <input
             type="text"
             value={box.institute}
-            onChange={(e) =>
-              handleInputChange(box.id, "institute", e.target.value)
-            }
+            onChange={(e) => update(box.id, "institute", e.target.value)}
             placeholder="Institute / School"
             className="border border-gray-300 rounded px-2 py-1 w-full"
           />
           <input
             type="text"
             value={box.major}
-            onChange={(e) => handleInputChange(box.id, "major", e.target.value)}
+            onChange={(e) => update(box.id, "major", e.target.value)}
             placeholder="Major / Department"
             className="border border-gray-300 rounded px-2 py-1 w-full"
           />
           <input
             type="text"
             value={box.degree}
-            onChange={(e) =>
-              handleInputChange(box.id, "degree", e.target.value)
-            }
+            onChange={(e) => update(box.id, "degree", e.target.value)}
             placeholder="Degree"
             className="border border-gray-300 rounded px-2 py-1 w-full"
           />
@@ -121,9 +63,7 @@ export default function EducationalDetails() {
           <div className="flex gap-2">
             <select
               value={box.startMonth}
-              onChange={(e) =>
-                handleInputChange(box.id, "startMonth", e.target.value)
-              }
+              onChange={(e) => update(box.id, "startMonth", e.target.value)}
               className="border border-gray-300 rounded px-2 py-1 w-full"
             >
               <option value="">Start Month</option>
@@ -136,9 +76,7 @@ export default function EducationalDetails() {
 
             <select
               value={box.startYear}
-              onChange={(e) =>
-                handleInputChange(box.id, "startYear", e.target.value)
-              }
+              onChange={(e) => update(box.id, "startYear", e.target.value)}
               className="border border-gray-300 rounded px-2 py-1 w-full"
             >
               <option value="">Start Year</option>
@@ -153,9 +91,7 @@ export default function EducationalDetails() {
             <div className="flex gap-2">
               <select
                 value={box.endMonth}
-                onChange={(e) =>
-                  handleInputChange(box.id, "endMonth", e.target.value)
-                }
+                onChange={(e) => update(box.id, "endMonth", e.target.value)}
                 className="border border-gray-300 rounded px-2 py-1 w-full"
               >
                 <option value="">End Month</option>
@@ -168,9 +104,7 @@ export default function EducationalDetails() {
 
               <select
                 value={box.endYear}
-                onChange={(e) =>
-                  handleInputChange(box.id, "endYear", e.target.value)
-                }
+                onChange={(e) => update(box.id, "endYear", e.target.value)}
                 className="border border-gray-300 rounded px-2 py-1 w-full"
               >
                 <option value="">End Year</option>
@@ -187,14 +121,14 @@ export default function EducationalDetails() {
               type="checkbox"
               checked={box.currentlyPursuing || false}
               onChange={(e) =>
-                handleInputChange(box.id, "currentlyPursuing", e.target.checked)
+                update(box.id, "currentlyPursuing", e.target.checked)
               }
             />
             <label className="text-sm">Currently pursuing</label>
           </div>
           <button
             type="button"
-            onClick={() => handleClear(box.id)}
+            onClick={() => deleteEducationalDetail(box.id)}
             className="text-red-600 text-sm underline"
           >
             Clear Educational Details
@@ -202,7 +136,7 @@ export default function EducationalDetails() {
         </div>
       ))}
       <p
-        onClick={handleAddInputBox}
+        onClick={add}
         className="text-green-500 cursor-pointer hover:underline mb-4"
       >
         Add Educational Detail

@@ -5,7 +5,7 @@ import { signup } from "@/app/lib/actionServer";
 import SocialLinks from "@/app/components/signup/SocialLinks";
 import EducationalDetails from "@/app/components/signup/EducationalDetails";
 import { useEffect, useState } from "react";
-import { SocialLink } from "@/app/types/types";
+import { SocialLink, EducationalDetail } from "@/app/types/types";
 
 export default function SignupPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -18,6 +18,9 @@ export default function SignupPage() {
   const [csrfToken, setCsrfToken] = useState<string>("");
 
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
+  const [educationalDetails, setEducationalDetails] = useState<
+    EducationalDetail[]
+  >([]);
 
   useEffect(() => {
     fetch("/api/csrf")
@@ -307,7 +310,39 @@ export default function SignupPage() {
           </div>
         </div>
         <div className="mb-4">
-          <EducationalDetails />
+          <EducationalDetails
+            add={() => {
+              setEducationalDetails([
+                ...educationalDetails,
+                {
+                  id: educationalDetails.length + 1,
+                  value: "",
+                  institute: "",
+                  major: "",
+                  degree: "",
+                  duration: "",
+                  startMonth: "",
+                  startYear: "",
+                  endMonth: "",
+                  endYear: "",
+                  currentlyPursuing: false,
+                },
+              ]);
+            }}
+            update={(id: number, key: string, value: string | boolean) => {
+              setEducationalDetails((prev) =>
+                prev.map((detail) =>
+                  detail.id === id ? { ...detail, [key]: value } : detail
+                )
+              );
+            }}
+            delete={(id: number) => {
+              setEducationalDetails((prev) =>
+                prev.filter((detail) => detail.id !== id)
+              );
+            }}
+            getEducationalDetails={educationalDetails}
+          />
         </div>
         <div className="mb-4">
           <SocialLinks
@@ -325,7 +360,7 @@ export default function SignupPage() {
                 { id: socialLinks.length + 1, value: "" },
               ]);
             }}
-            getSocialLinks={() => socialLinks}
+            getSocialLinks={socialLinks}
           />
         </div>
         <button

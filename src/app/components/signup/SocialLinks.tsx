@@ -11,12 +11,12 @@ export default function SocialLinks({
   update: (id: number, value: string) => void;
   delete: (id: number) => void;
   add: () => void;
-  getSocialLinks: () => SocialLink[];
+  getSocialLinks: SocialLink[];
 }) {
   return (
     <div className="p-4 bg-gray-100 rounded shadow-md">
       <h2 className="text-xl font-bold mb-4">Social Links</h2>
-      {getSocialLinks().map((link) => (
+      {getSocialLinks.map((link) => (
         <div key={link.id} className="mb-4 flex items-center gap-2">
           <input
             type="text"

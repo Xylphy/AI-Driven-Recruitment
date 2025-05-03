@@ -19,3 +19,17 @@ export interface SocialLink {
   id: number;
   value: string;
 }
+
+export interface EducationalDetail {
+  id: number;
+  value: string;
+  institute?: string;
+  major?: string;
+  degree?: string;
+  duration?: string;
+  startMonth?: string;
+  startYear?: string;
+  endMonth?: string;
+  endYear?: string;
+  currentlyPursuing?: boolean;
+}
