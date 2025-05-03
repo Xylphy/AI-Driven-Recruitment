@@ -52,6 +52,9 @@ export default function SignupPage() {
     try {
       const formData = new FormData(form);
 
+      formData.set("educationalDetails", JSON.stringify(educationalDetails));
+      formData.set("socialLinks", JSON.stringify(socialLinks));
+
       if (selectedFile) {
         formData.set("resume", selectedFile);
       }
