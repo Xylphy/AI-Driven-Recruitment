@@ -20,7 +20,6 @@ export async function uploadFile(file: File, folder: string) {
     )}`,
     uploadOptions
   );
-  console.log(result);
   return result.public_id;
 }
 

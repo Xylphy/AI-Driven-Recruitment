@@ -14,8 +14,6 @@ export async function signup(formData: FormData) {
     };
   }
 
-  console.log(formData); // Debugging line
-
   try {
     const file: File | null = formData.get("resume") as File;
     let resume_id = undefined;
@@ -33,6 +31,7 @@ export async function signup(formData: FormData) {
           "application/pdf",
           "application/msword",
           "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          "application/octet-stream",
         ].includes(file.type)
       ) {
         return {
@@ -42,25 +41,29 @@ export async function signup(formData: FormData) {
         };
       }
 
-      // resume_id = await uploadFile(file, "resumes");
+      resume_id = await uploadFile(file, "resumes");
     }
 
-    // sendEmailVerification({
-    //   prefix: formData.get("prefix") as string,
-    //   firstName: formData.get("firstName") as string,
-    //   lastName: formData.get("lastName") as string,
-    //   email: formData.get("email") as string,
-    //   countryCode: formData.get("countryCode") as string,
-    //   mobileNumber: formData.get("mobileNumber") as string,
-    //   street: formData.get("street") as string,
-    //   zip: formData.get("zip") as string,
-    //   city: formData.get("city") as string,
-    //   state_: formData.get("state") as string,
-    //   country: formData.get("country") as string,
-    //   jobTitle: formData.get("jobTitle") as string,
-    //   skillSet: formData.get("skillSet") as string,
-    //   public_id: resume_id,
-    // });
+    sendEmailVerification({
+      prefix: formData.get("prefix") as string,
+      firstName: formData.get("firstName") as string,
+      lastName: formData.get("lastName") as string,
+      email: formData.get("email") as string,
+      countryCode: formData.get("countryCode") as string,
+      mobileNumber: formData.get("mobileNumber") as string,
+      street: formData.get("street") as string,
+      zip: formData.get("zip") as string,
+      city: formData.get("city") as string,
+      state_: formData.get("state") as string,
+      country: formData.get("country") as string,
+      jobTitle: formData.get("jobTitle") as string,
+      skillSet: formData.get("skillSet") as string,
+      educationalDetails: JSON.parse(
+        formData.get("educationalDetails") as string
+      ),
+      socialLinks: JSON.parse(formData.get("socialLinks") as string),
+      public_id: resume_id,
+    });
 
     return {
       success: true,
@@ -70,7 +73,7 @@ export async function signup(formData: FormData) {
     return {
       success: false,
       message:
-        error instanceof Error ? error.message : "Failed to create account",
+        error instanceof Error ? error.message : `Failed to create account`,
     };
   }
 }

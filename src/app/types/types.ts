@@ -12,6 +12,8 @@ export interface RegisterState {
   country: string;
   jobTitle: string;
   skillSet: string;
+  educationalDetails: EducationalDetail[];
+  socialLinks: SocialLink[];
   public_id?: string;
 }
 
