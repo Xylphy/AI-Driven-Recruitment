@@ -13,17 +13,20 @@ import {
 } from "react-icons/md";
 import JobApplicationDetails from "@/app/components/profile/JobApplications";
 import Image from "next/image";
+import { useEffect } from "react";
 
 export default function HomePage() {
   const router = useRouter();
 
-  // onAuthStateChanged(auth, (user) => {
-  //   if (user) {
-  //     alert("User is logged in");
-  //   } else {
-  //     router.push("/");
-  //   }
-  // });
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        router.push("/login");
+      }
+    });
+    return () => unsubscribe();
+  }, [router]);
+
   const jobApplications = [
     {
       id: 1,

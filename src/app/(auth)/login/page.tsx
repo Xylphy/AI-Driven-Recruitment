@@ -5,9 +5,19 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/app/lib/firebase/firebase";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function LoginPage() {
   const router = useRouter();
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        router.push("/profile");
+      }
+    });
+    return () => unsubscribe();
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -34,7 +44,7 @@ export default function LoginPage() {
 
         if (user) {
           alert("Login successful");
-          router.push("/home");
+          router.push("/profile");
         }
       })
       .catch((error) => {
