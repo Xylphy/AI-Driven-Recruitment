@@ -35,3 +35,22 @@ export interface EducationalDetail {
   endYear?: string;
   currentlyPursuing?: boolean;
 }
+
+export interface JobApplicationDetail {
+  id: number;
+  title: string;
+  dateApplied: string;
+}
+
+export interface JobExperience {
+  id: number;
+  value: string;
+  title?: string;
+  company?: string;
+  summary?: string;
+  startMonth?: string;
+  startYear?: string;
+  endMonth?: string;
+  endYear?: string;
+  currentlyWorking?: boolean;
+}

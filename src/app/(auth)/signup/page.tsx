@@ -4,8 +4,13 @@ import FileUpload from "@/app/components/common/FileUpload";
 import { signup } from "@/app/lib/actionServer";
 import SocialLinks from "@/app/components/signup/SocialLinks";
 import EducationalDetails from "@/app/components/signup/EducationalDetails";
+import JobExperiences from "@/app/components/signup/JobExperience";
 import { useEffect, useState } from "react";
-import { SocialLink, EducationalDetail } from "@/app/types/types";
+import {
+  SocialLink,
+  EducationalDetail,
+  JobExperience,
+} from "@/app/types/types";
 
 export default function SignupPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -21,6 +26,7 @@ export default function SignupPage() {
   const [educationalDetails, setEducationalDetails] = useState<
     EducationalDetail[]
   >([]);
+  const [jobExperiences, setJobExperience] = useState<JobExperience>([]);
 
   useEffect(() => {
     fetch("/api/csrf")
@@ -345,6 +351,40 @@ export default function SignupPage() {
               );
             }}
             getEducationalDetails={educationalDetails}
+          />
+        </div>
+        <div className="mb-4">
+          <JobExperiences
+            add={() => {
+              setJobExperience([
+                ...jobExperience,
+                {
+                  id: jobExperience.length + 1,
+                  value: "",
+                  title: "",
+                  company: "",
+                  summary: "",
+                  startMonth: "",
+                  startYear: "",
+                  endMonth: "",
+                  endYear: "",
+                  currentlyWorking: false,
+                },
+              ]);
+            }}
+            update={(id: number, key: string, value: string | boolean) => {
+              setJobExperience((prev) =>
+                prev.map((detail) =>
+                  detail.id === id ? { ...detail, [key]: value } : detail
+                )
+              );
+            }}
+            delete={(id: number) => {
+              setEducationalDetails((prev) =>
+                prev.filter((detail) => detail.id !== id)
+              );
+            }}
+            getJobExperiences={jobExperience}
           />
         </div>
         <div className="mb-4">
