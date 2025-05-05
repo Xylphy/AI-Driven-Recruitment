@@ -41,8 +41,7 @@ export default function Verification({
         if (!emailResponse.ok) {
           router.push("/signup");
         }
-        const emailData = await emailResponse.json();
-        setEmail(emailData);
+        setEmail(await emailResponse.json());
       } catch (error) {
         if (error instanceof Error) {
           alert("Error: " + error.message);
@@ -84,15 +83,13 @@ export default function Verification({
         (data.password as string).trim()
       );
 
-      const uid = userCredential.user.uid;
-
       const response = await fetch("/api/users", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "X-CSRF-Token": csrfToken,
         },
-        body: JSON.stringify({ ...data, uid }),
+        body: JSON.stringify({ ...data, uid: userCredential.user.uid }),
       });
 
       if (response.ok) {

@@ -40,10 +40,7 @@ export default function LoginPage() {
 
     signInWithEmailAndPassword(auth, email, password)
       .then((userCredential) => {
-        const user = userCredential.user;
-
-        if (user) {
-          alert("Login successful");
+        if (userCredential.user) {
           router.push("/profile");
         }
       })

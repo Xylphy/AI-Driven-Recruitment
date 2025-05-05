@@ -1,3 +1,15 @@
+interface IdentifiableItem {
+  id: number;
+}
+
+interface DateRange {
+  startMonth: string;
+  startYear: string;
+  endMonth: string;
+  endYear: string;
+}
+
+// ----- Exported Types ----- //
 export interface RegisterState {
   prefix: string;
   firstName: string;
@@ -22,32 +34,22 @@ export interface SocialLink {
   value: string;
 }
 
-export interface EducationalDetail {
-  id: number;
-  institute: string;
-  major: string;
-  degree: string;
-  startMonth: string;
-  startYear: string;
-  endMonth: string;
-  endYear: string;
-  currentlyPursuing: boolean;
-}
-
 export interface JobApplicationDetail {
   id: number;
   title: string;
   dateApplied: string;
 }
 
-export interface JobExperience {
-  id: number;
+export interface EducationalDetail extends DateRange, IdentifiableItem {
+  institute: string;
+  major: string;
+  degree: string;
+  currentlyPursuing: boolean;
+}
+
+export interface JobExperience extends DateRange, IdentifiableItem {
   title: string;
   company: string;
   summary: string;
-  startMonth: string;
-  startYear: string;
-  endMonth: string;
-  endYear: string;
   currentlyWorking: boolean;
 }
