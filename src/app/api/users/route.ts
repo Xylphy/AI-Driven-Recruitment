@@ -132,19 +132,16 @@ export async function POST(request: NextRequest) {
         .slice(data.educationalDetails.length)
         .some((result) => result.error)
     ) {
-      console.error("Error inserting educational details or social links");
       return NextResponse.json(
         { error: "Failed to insert educational details or social links" },
         { status: 500 }
       );
     }
 
-    // if (insertedData) {
-    //   await mongoDb_client
-    //     .db("ai-driven-recruitment")
-    //     .collection("verification_tokens")
-    //     .deleteOne({ _id: ObjectId.createFromHexString(body.token) });
-    // }
+    await mongoDb_client
+      .db("ai-driven-recruitment")
+      .collection("verification_tokens")
+      .deleteOne({ _id: ObjectId.createFromHexString(body.token) });
 
     return NextResponse.json(
       { message: "Password set successfully" },

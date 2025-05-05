@@ -79,7 +79,6 @@ export default function HomePage() {
       <div className="container mx-auto px-4 h-full">
         <div className="bg-white rounded-lg max-w-6xl mx-auto h-full flex">
           <div className="w-full md:w-1/3 border-r border-gray-300 p-6 flex flex-col items-center bg-white">
-            {/* Profile upload */}
             <label
               htmlFor="profile-upload"
               className="relative inline-block w-40 h-40 rounded-full overflow-hidden cursor-pointer group"
@@ -117,7 +116,13 @@ export default function HomePage() {
             <div className="flex flex-col gap-4 my-6 mt-auto">
               <div className="flex gap-4 justify-center">
                 <MdSettings className="cursor-pointer hover:text-red-600" />
-                <MdLogout className="cursor-pointer hover:text-red-600" />
+                <MdLogout
+                  onClick={() => {
+                    auth.signOut();
+                    router.push("/login");
+                  }}
+                  className="cursor-pointer hover:text-red-600"
+                />
               </div>
 
               <button className="bg-[#E30022] text-white font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-500 hover:border-red-500">
