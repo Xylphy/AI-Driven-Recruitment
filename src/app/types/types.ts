@@ -4,9 +4,9 @@ interface IdentifiableItem {
 
 interface DateRange {
   startMonth: string;
-  startYear: string;
+  startYear: number;
   endMonth: string;
-  endYear: string;
+  endYear: number;
 }
 
 // ----- Exported Types ----- //
@@ -26,6 +26,7 @@ export interface RegisterState {
   skillSet: string;
   educationalDetails: EducationalDetail[];
   socialLinks: SocialLink[];
+  jobExperiences: JobExperience[];
   public_id?: string;
 }
 

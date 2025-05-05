@@ -3,10 +3,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { verifyCsrfToken } from "@/app/lib/csrf";
 import { createClientServer } from "@/app/lib/supabase/supabase";
-import mongoDb_client from "@/app/lib/mongodb/mongodb";
 import { ObjectId } from "mongodb";
 import { insertTable } from "@/app/lib/supabase/action";
-import { EducationalDetail, SocialLink } from "@/app/types/types";
+import {
+  EducationalDetail,
+  JobExperience,
+  SocialLink,
+} from "@/app/types/types";
+import { deleteOne, findOne } from "@/app/lib/mongodb/action";
+import { ErrorResponse } from "@/app/types/classes";
 
 const formSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters long"),
@@ -51,8 +56,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const isValidCsrf = await verifyCsrfToken(csrfToken);
-    if (!isValidCsrf) {
+    const isValid = verifyCsrfToken(csrfToken);
+    if (!isValid) {
       return NextResponse.json(
         { error: "Invalid CSRF token" },
         { status: 403 }
@@ -66,12 +71,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await mongoDb_client.connect();
-
-    const data = await mongoDb_client
-      .db("ai-driven-recruitment")
-      .collection("verification_tokens")
-      .findOne({ _id: ObjectId.createFromHexString(body.token) });
+    const data = await findOne("ai-driven-recruitment", "verification_tokens", {
+      _id: ObjectId.createFromHexString(body.token),
+    });
 
     if (!data) {
       return NextResponse.json({ error: "Token not found" }, { status: 404 });
@@ -109,9 +111,9 @@ export async function POST(request: NextRequest) {
           degree: detail.degree,
           institute: detail.institute,
           start_month: detail.startMonth,
-          start_year: parseInt(detail.startYear, 10),
+          start_year: detail.startYear,
           end_month: detail.endMonth,
-          end_year: detail.endYear ? parseInt(detail.endYear, 10) : null,
+          end_year: detail.endYear,
           currently_pursuing: detail.currentlyPursuing,
           major: detail.major,
         })
@@ -122,37 +124,52 @@ export async function POST(request: NextRequest) {
           link: link.value,
         })
       ),
+      ...data.jobExperiences.map((experience: Omit<JobExperience, "id">) =>
+        insertTable(supabase, "job_experiences", {
+          user_id: userId,
+          title: experience.title,
+          company: experience.company,
+          start_month: experience.startMonth,
+          start_year: experience.startYear,
+          end_month: experience.endMonth,
+          end_year: experience.endYear,
+          currently_working: experience.currentlyWorking,
+          summary: experience.summary,
+        })
+      ),
+      ...data.skillSet.split(",").map((skill: string) =>
+        insertTable(supabase, "skills", {
+          user_id: userId,
+          skill: skill.trim(),
+        })
+      ),
     ]);
 
-    if (
-      results
-        .slice(0, data.educationalDetails.length)
-        .some((result) => result.error) ||
-      results
-        .slice(data.educationalDetails.length)
-        .some((result) => result.error)
-    ) {
+    if (results.some((result) => result.error)) {
       return NextResponse.json(
-        { error: "Failed to insert educational details or social links" },
+        { error: "Something wrong saving data" },
         { status: 500 }
       );
     }
 
-    await mongoDb_client
-      .db("ai-driven-recruitment")
-      .collection("verification_tokens")
-      .deleteOne({ _id: ObjectId.createFromHexString(body.token) });
+    deleteOne("ai-driven-recruitment", "verification_tokens", {
+      _id: ObjectId.createFromHexString(body.token),
+    });
 
     return NextResponse.json(
       { message: "Password set successfully" },
       { status: 200 }
     );
-  } catch {
+  } catch (error) {
+    if (error instanceof ErrorResponse) {
+      return NextResponse.json(
+        { error: error.errorMessage },
+        { status: error.status }
+      );
+    }
     return NextResponse.json(
       { error: "An error occurred while processing your request" },
       { status: 500 }
     );
-  } finally {
-    await mongoDb_client.close();
   }
 }

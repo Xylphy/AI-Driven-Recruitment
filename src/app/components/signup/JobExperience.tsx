@@ -42,22 +42,23 @@ export default function JobExperiences({
             type="text"
             value={box.title}
             onChange={(e) => update(box.id, "title", e.target.value)}
-            placeholder="Institute / School"
+            placeholder="Title"
             className="border border-gray-300 rounded px-2 py-1 w-full"
+            maxLength={255}
           />
           <input
             type="text"
             value={box.company}
             onChange={(e) => update(box.id, "company", e.target.value)}
-            placeholder="Major / Department"
+            placeholder="Company"
             className="border border-gray-300 rounded px-2 py-1 w-full"
+            maxLength={255}
           />
-          <input
-            type="text"
+          <textarea
             value={box.summary}
-            onChange={(e) => update(box.id, "degree", e.target.value)}
-            placeholder="Degree"
-            className="border border-gray-300 rounded px-2 py-1 h-2 w-full"
+            onChange={(e) => update(box.id, "summary", e.target.value)}
+            placeholder="Summary"
+            className="border border-gray-300 rounded px-2 py-1 w-full h-24 resize-y"
           />
           <p>Duration</p>
           <div className="flex gap-2">
@@ -121,17 +122,17 @@ export default function JobExperiences({
               type="checkbox"
               checked={box.currentlyWorking || false}
               onChange={(e) =>
-                update(box.id, "currentlyPursuing", e.target.checked)
+                update(box.id, "currentlyWorking", e.target.checked)
               }
             />
-            <label className="text-sm">Currently pursuing</label>
+            <label className="text-sm">Currently working</label>
           </div>
           <button
             type="button"
             onClick={() => deleteEducationalDetail(box.id)}
             className="text-red-600 text-sm underline"
           >
-            Clear Educational Details
+            Clear Job Experience
           </button>
         </div>
       ))}

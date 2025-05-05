@@ -6,23 +6,20 @@ export class EducationalDetailClass implements EducationalDetail {
   major: string;
   degree: string;
   startMonth: string;
-  startYear: string;
+  startYear: number;
   endMonth: string;
-  endYear: string;
+  endYear: number;
   currentlyPursuing: boolean;
 
   constructor(id: number) {
     this.id = id;
-    this.endYear =
-      this.endMonth =
-      this.startYear =
-      this.startYear =
+    this.endMonth =
       this.startMonth =
       this.degree =
       this.major =
       this.institute =
         "";
-
+    this.startYear = this.endYear = 0;
     this.currentlyPursuing = false;
   }
 }
@@ -33,15 +30,20 @@ export class JobExperienceClass implements JobExperience {
   company: string;
   summary: string;
   startMonth: string;
-  startYear: string;
+  startYear: number;
   endMonth: string;
-  endYear: string;
+  endYear: number;
   currentlyWorking: boolean;
 
   constructor(id: number) {
     this.id = id;
-    this.title = this.company = this.summary = "";
-    this.startMonth = this.startYear = this.endMonth = this.endYear = "";
+    this.title =
+      this.company =
+      this.summary =
+      this.startMonth =
+      this.endMonth =
+        "";
+    this.startYear = this.endYear = 0;
     this.currentlyWorking = false;
   }
 }
@@ -53,5 +55,15 @@ export class SocialLinkClass implements SocialLink {
   constructor(id: number) {
     this.id = id;
     this.value = "";
+  }
+}
+
+export class ErrorResponse {
+  status: number;
+  errorMessage: string;
+
+  constructor(status: number, errorMessage: string) {
+    this.status = status;
+    this.errorMessage = errorMessage;
   }
 }

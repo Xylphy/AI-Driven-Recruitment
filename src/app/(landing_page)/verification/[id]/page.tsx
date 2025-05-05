@@ -95,8 +95,7 @@ export default function Verification({
       if (response.ok) {
         alert("Password set successfully");
       } else {
-        alert("Error setting password");
-        return;
+        response.json().then((errorData) => alert("Error: " + errorData.error));
       }
     } catch (error: unknown) {
       if (error instanceof Error) {

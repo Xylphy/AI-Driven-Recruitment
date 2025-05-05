@@ -65,6 +65,7 @@ export default function SignupPage() {
 
       formData.set("educationalDetails", JSON.stringify(educationalDetails));
       formData.set("socialLinks", JSON.stringify(socialLinks));
+      formData.set("jobExperiences", JSON.stringify(jobExperiences));
 
       if (selectedFile) {
         formData.set("resume", selectedFile);
@@ -77,6 +78,9 @@ export default function SignupPage() {
 
       if (result.success) {
         form.reset();
+        setSocialLinks([]);
+        setEducationalDetails([]);
+        setJobExperience([]);
         setSelectedFile(null);
       }
     } catch (error) {

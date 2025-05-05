@@ -63,6 +63,7 @@ export async function signup(formData: FormData) {
       ),
       socialLinks: JSON.parse(formData.get("socialLinks") as string),
       public_id: resume_id,
+      jobExperiences: JSON.parse(formData.get("jobExperiences") as string),
     });
 
     return {

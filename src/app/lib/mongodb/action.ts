@@ -41,3 +41,25 @@ export async function getTokenData(id: string) {
     await mongoDb_client.close();
   }
 }
+
+export async function findOne(db: string, collection: string, query: object) {
+  try {
+    await mongoDb_client.connect();
+    return await mongoDb_client.db(db).collection(collection).findOne(query);
+  } catch (error) {
+    console.error("Error retrieving data:", error);
+  } finally {
+    await mongoDb_client.close();
+  }
+}
+
+export async function deleteOne(db: string, collection: string, query: object) {
+  try {
+    await mongoDb_client.connect();
+    return await mongoDb_client.db(db).collection(collection).deleteOne(query);
+  } catch (error) {
+    console.error("Error deleting data:", error);
+  } finally {
+    await mongoDb_client.close();
+  }
+}
