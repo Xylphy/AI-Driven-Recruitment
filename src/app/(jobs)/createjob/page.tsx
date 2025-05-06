@@ -134,13 +134,15 @@ export default function JobListingPage() {
           </select>
         </div>
 
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="flex mb-5 justify-center items-center w-full bg-red-600 text-white font-bold px-4 py-3 rounded-md transition-all duration-300 hover:bg-transparent hover:text-red-600 hover:border hover:border-red-600"
-        >
-          {isSubmitting ? "Processing..." : "Submit Listing"}
-        </button>
+        <div className="flex justify-center">
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="bg-[#E30022] text-white font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-500 hover:border-red-500"
+          >
+            {isSubmitting ? "Processing..." : "Submit Listing"}
+          </button>
+        </div>
       </form>
     </div>
   );
