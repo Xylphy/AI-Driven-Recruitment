@@ -53,3 +53,15 @@ export interface JobExperience extends DateRange, IdentifiableItem {
   summary: string;
   currentlyWorking: boolean;
 }
+
+export type QualificationOrRequirement = {
+  id: number;
+  title: string;
+};
+
+export type JobListing = {
+  title: string;
+  qualifications: QualificationOrRequirement[];
+  requirements: QualificationOrRequirement[];
+  location: string;
+};
