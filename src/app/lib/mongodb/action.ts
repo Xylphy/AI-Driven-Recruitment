@@ -1,21 +1,8 @@
 import { ObjectId } from "mongodb";
 import mongoDb_client from "./mongodb";
+import { RegisterState } from "@/app/types/types";
 
-export async function insertTokenData(data: {
-  prefix: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  countryCode: string;
-  mobileNumber: string;
-  street: string;
-  zip: string;
-  city: string;
-  state_: string;
-  country: string;
-  jobTitle: string;
-  skillSet: string;
-}) {
+export async function insertTokenData(data: RegisterState) {
   try {
     await mongoDb_client.connect();
 
@@ -50,6 +37,28 @@ export async function getTokenData(id: string) {
     return result;
   } catch (error) {
     console.error("Error retrieving token data:", error);
+  } finally {
+    await mongoDb_client.close();
+  }
+}
+
+export async function findOne(db: string, collection: string, query: object) {
+  try {
+    await mongoDb_client.connect();
+    return await mongoDb_client.db(db).collection(collection).findOne(query);
+  } catch (error) {
+    console.error("Error retrieving data:", error);
+  } finally {
+    await mongoDb_client.close();
+  }
+}
+
+export async function deleteOne(db: string, collection: string, query: object) {
+  try {
+    await mongoDb_client.connect();
+    return await mongoDb_client.db(db).collection(collection).deleteOne(query);
+  } catch (error) {
+    console.error("Error deleting data:", error);
   } finally {
     await mongoDb_client.close();
   }

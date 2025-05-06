@@ -15,8 +15,8 @@ export default function Verification({
   params: Promise<{ id: string }>;
 }) {
   const router = useRouter();
-  const [csrfToken, setCsrfToken] = useState("");
-  const [email, setEmail] = useState("");
+  const [csrfToken, setCsrfToken] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
   const { id } = use(params);
 
   useEffect(() => {
@@ -41,8 +41,7 @@ export default function Verification({
         if (!emailResponse.ok) {
           router.push("/signup");
         }
-        const emailData = await emailResponse.json();
-        setEmail(emailData);
+        setEmail(await emailResponse.json());
       } catch (error) {
         if (error instanceof Error) {
           alert("Error: " + error.message);
@@ -84,22 +83,19 @@ export default function Verification({
         (data.password as string).trim()
       );
 
-      const uid = userCredential.user.uid;
-
       const response = await fetch("/api/users", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "X-CSRF-Token": csrfToken,
         },
-        body: JSON.stringify({ ...data, uid }),
+        body: JSON.stringify({ ...data, uid: userCredential.user.uid }),
       });
 
       if (response.ok) {
         alert("Password set successfully");
       } else {
-        alert("Error setting password");
-        return;
+        response.json().then((errorData) => alert("Error: " + errorData.error));
       }
     } catch (error: unknown) {
       if (error instanceof Error) {

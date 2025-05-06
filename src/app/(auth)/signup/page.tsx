@@ -1,13 +1,116 @@
+"use client";
+
 import FileUpload from "@/app/components/common/FileUpload";
 import { signup } from "@/app/lib/actionServer";
+import SocialLinks from "@/app/components/signup/SocialLinks";
+import EducationalDetails from "@/app/components/signup/EducationalDetails";
+import JobExperiences from "@/app/components/signup/JobExperience";
+import { useEffect, useState } from "react";
 import {
-  EducationalDetails,
-  SocialLinks,
-} from "@/app/components/signup/components";
+  SocialLink,
+  EducationalDetail,
+  JobExperience,
+} from "@/app/types/types";
+import {
+  EducationalDetailClass,
+  JobExperienceClass,
+  SocialLinkClass,
+} from "@/app/types/classes";
 
 export default function SignupPage() {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [response, setResponse] = useState<{
+    success?: boolean;
+    message?: string;
+  } | null>(null);
+
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [csrfToken, setCsrfToken] = useState<string>("");
+
+  const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
+  const [educationalDetails, setEducationalDetails] = useState<
+    EducationalDetail[]
+  >([]);
+  const [jobExperiences, setJobExperience] = useState<JobExperience[]>([]);
+
+  useEffect(() => {
+    fetch("/api/csrf")
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Failed to fetch CSRF token");
+        }
+        return res.json();
+      })
+      .then((data) => {
+        setCsrfToken(data.csrfToken);
+      })
+      .catch((error) => {
+        if (error instanceof Error) {
+          alert("Error: " + error.message);
+        }
+      });
+  }, []);
+
+  const handleFileSelect = (file: File | null) => {
+    setSelectedFile(file);
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    setIsSubmitting(true);
+
+    try {
+      const formData = new FormData(form);
+
+      formData.set("educationalDetails", JSON.stringify(educationalDetails));
+      formData.set("socialLinks", JSON.stringify(socialLinks));
+      formData.set("jobExperiences", JSON.stringify(jobExperiences));
+
+      if (selectedFile) {
+        formData.set("resume", selectedFile);
+      }
+
+      formData.set("csrfToken", csrfToken);
+
+      const result = await signup(formData);
+      setResponse(result);
+
+      if (result.success) {
+        form.reset();
+        setSocialLinks([]);
+        setEducationalDetails([]);
+        setJobExperience([]);
+        setSelectedFile(null);
+      }
+    } catch (error) {
+      setResponse({
+        success: false,
+        message: `An unexpected error occurred. ${
+          error instanceof Error ? error.message : ""
+        }`,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <>
+      <div className="flex justify-center items-center mt-10">
+        {response && (
+          <div
+            className={`${
+              response.success ? "bg-green-100" : "bg-red-100"
+            } border-l-4 border-${
+              response.success ? "green" : "red"
+            }-500 text-${response.success ? "green" : "red"}-700 p-4`}
+            role="alert"
+          >
+            <p>{response.message}</p>
+          </div>
+        )}
+      </div>
       <h1 className="text-4xl font-bold text-[#E30022] text-center mb-2 uppercase tracking-wide">
         REGISTRATION
       </h1>
@@ -15,7 +118,7 @@ export default function SignupPage() {
       <p className="text-center text-sm text-gray-700 mt-2 mb-6">
         Join a community of innovators, problem-solvers, and change-makers.
       </p>
-      <form action={signup} className="mt-6">
+      <form onSubmit={handleSubmit} className="mt-6">
         <div className="mb-4">
           <label
             htmlFor="resume"
@@ -23,7 +126,7 @@ export default function SignupPage() {
           >
             Upload Resume
           </label>
-          <FileUpload />
+          <FileUpload onFileSelect={handleFileSelect} />
         </div>
         <h3 className="mb-2 font-bold">Basic Information</h3>
         <div className="mb-4">
@@ -184,6 +287,7 @@ export default function SignupPage() {
               className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="">Select a country</option>
+              <option value="PH">Philippines</option>
               <option value="US">United States</option>
               <option value="CA">Canada</option>
               <option value="GB">United Kingdom</option>
@@ -225,33 +329,76 @@ export default function SignupPage() {
           </div>
         </div>
         <div className="mb-4">
-          <EducationalDetails />
+          <EducationalDetails
+            add={() => {
+              setEducationalDetails([
+                ...educationalDetails,
+                new EducationalDetailClass(educationalDetails.length + 1),
+              ]);
+            }}
+            update={(id: number, key: string, value: string | boolean) => {
+              setEducationalDetails((prev) =>
+                prev.map((detail) =>
+                  detail.id === id ? { ...detail, [key]: value } : detail
+                )
+              );
+            }}
+            delete={(id: number) => {
+              setEducationalDetails((prev) =>
+                prev.filter((detail) => detail.id !== id)
+              );
+            }}
+            getEducationalDetails={educationalDetails}
+          />
         </div>
         <div className="mb-4">
-          <SocialLinks />
+          <JobExperiences
+            add={() => {
+              setJobExperience([
+                ...jobExperiences,
+                new JobExperienceClass(jobExperiences.length + 1),
+              ]);
+            }}
+            update={(id: number, key: string, value: string | boolean) => {
+              setJobExperience((prev) =>
+                prev.map((detail) =>
+                  detail.id === id ? { ...detail, [key]: value } : detail
+                )
+              );
+            }}
+            delete={(id: number) => {
+              setEducationalDetails((prev) =>
+                prev.filter((detail) => detail.id !== id)
+              );
+            }}
+            getJobExperiences={jobExperiences}
+          />
         </div>
         <div className="mb-4">
-          <div className="mt-4">
-            <label
-              htmlFor="resumeFile"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Upload Resume File
-            </label>
-            <input
-              type="file"
-              id="resumeFile"
-              name="resumeFile"
-              className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-              accept=".pdf,.doc,.docx"
-            />
-          </div>
+          <SocialLinks
+            update={(id: number, value: string) => {
+              setSocialLinks((prev) =>
+                prev.map((link) => (link.id === id ? { ...link, value } : link))
+              );
+            }}
+            delete={(id: number) => {
+              setSocialLinks((prev) => prev.filter((link) => link.id !== id));
+            }}
+            add={() => {
+              setSocialLinks((links) => [
+                ...links,
+                new SocialLinkClass(links.length + 1),
+              ]);
+            }}
+            getSocialLinks={socialLinks}
+          />
         </div>
         <button
           type="submit"
+          disabled={isSubmitting}
           className="flex mb-5 justify-center items-center w-full bg-red-600 text-white font-bold px-4 py-3 rounded-md border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-500 hover:border-red-500"
         >
-          Register
+          {isSubmitting ? "Processing..." : "Submit"}
         </button>
       </form>
     </>

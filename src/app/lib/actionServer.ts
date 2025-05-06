@@ -1,21 +1,80 @@
 "use server";
 
-import { signupWithFirebase } from "./firebase/action";
+import { sendEmailVerification } from "./firebase/action";
+import { uploadFile } from "./cloudinary/cloudinary";
+import { verifyCsrfToken } from "./csrf";
 
 export async function signup(formData: FormData) {
-  signupWithFirebase({
-    prefix: formData.get("prefix") as string,
-    firstName: formData.get("firstName") as string,
-    lastName: formData.get("lastName") as string,
-    email: formData.get("email") as string,
-    countryCode: formData.get("countryCode") as string,
-    mobileNumber: formData.get("mobileNumber") as string,
-    street: formData.get("street") as string,
-    zip: formData.get("zip") as string,
-    city: formData.get("city") as string,
-    state_: formData.get("state") as string,
-    country: formData.get("country") as string,
-    jobTitle: formData.get("jobTitle") as string,
-    skillSet: formData.get("skillSet") as string,
-  });
+  const csrfToken = formData.get("csrfToken");
+
+  if (!csrfToken || !verifyCsrfToken(csrfToken as string)) {
+    return {
+      success: false,
+      message: "Invalid request, please try again.",
+    };
+  }
+
+  try {
+    const file: File | null = formData.get("resume") as File;
+    let resume_id = undefined;
+
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        return {
+          success: false,
+          message: "File size exceeds the limit of 5MB.",
+        };
+      }
+
+      if (
+        ![
+          "application/pdf",
+          "application/msword",
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          "application/octet-stream",
+        ].includes(file.type)
+      ) {
+        return {
+          success: false,
+          message:
+            "Invalid file type. Only PDF and Word documents are allowed.",
+        };
+      }
+
+      resume_id = await uploadFile(file, "resumes");
+    }
+
+    sendEmailVerification({
+      prefix: formData.get("prefix") as string,
+      firstName: formData.get("firstName") as string,
+      lastName: formData.get("lastName") as string,
+      email: formData.get("email") as string,
+      countryCode: formData.get("countryCode") as string,
+      mobileNumber: formData.get("mobileNumber") as string,
+      street: formData.get("street") as string,
+      zip: formData.get("zip") as string,
+      city: formData.get("city") as string,
+      state_: formData.get("state") as string,
+      country: formData.get("country") as string,
+      jobTitle: formData.get("jobTitle") as string,
+      skillSet: formData.get("skillSet") as string,
+      educationalDetails: JSON.parse(
+        formData.get("educationalDetails") as string
+      ),
+      socialLinks: JSON.parse(formData.get("socialLinks") as string),
+      public_id: resume_id,
+      jobExperiences: JSON.parse(formData.get("jobExperiences") as string),
+    });
+
+    return {
+      success: true,
+      message: "Email sent successfully",
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message:
+        error instanceof Error ? error.message : `Failed to create account`,
+    };
+  }
 }
