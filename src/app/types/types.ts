@@ -24,16 +24,14 @@ export interface SocialLink {
 
 export interface EducationalDetail {
   id: number;
-  value: string;
-  institute?: string;
-  major?: string;
-  degree?: string;
-  duration?: string;
-  startMonth?: string;
-  startYear?: string;
-  endMonth?: string;
-  endYear?: string;
-  currentlyPursuing?: boolean;
+  institute: string;
+  major: string;
+  degree: string;
+  startMonth: string;
+  startYear: string;
+  endMonth: string;
+  endYear: string;
+  currentlyPursuing: boolean;
 }
 
 export interface JobApplicationDetail {
@@ -44,13 +42,12 @@ export interface JobApplicationDetail {
 
 export interface JobExperience {
   id: number;
-  value: string;
-  title?: string;
-  company?: string;
-  summary?: string;
-  startMonth?: string;
-  startYear?: string;
-  endMonth?: string;
-  endYear?: string;
-  currentlyWorking?: boolean;
+  title: string;
+  company: string;
+  summary: string;
+  startMonth: string;
+  startYear: string;
+  endMonth: string;
+  endYear: string;
+  currentlyWorking: boolean;
 }

@@ -139,7 +139,7 @@ export default function JobExperiences({
         onClick={add}
         className="text-green-500 cursor-pointer hover:underline mb-4"
       >
-        Add Educational Detail
+        Add Job Experiences
       </p>
     </div>
   );

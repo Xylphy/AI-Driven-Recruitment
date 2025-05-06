@@ -4,11 +4,13 @@ import { cookies } from "next/headers";
 const database1 = {
   url: process.env.NEXT_PUBLIC_SUPABASE_URL!,
   key: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  serviceKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
 };
 
 const database2 = {
   url: process.env.SUPABASE2__NEXT_PUBLIC_SUPABASE_URL!,
   key: process.env.SUPABASE2__NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  serviceKey: process.env.SUPABASE2__SUPABASE_SERVICE_ROLE_KEY,
 };
 
 export function createClient(database: number) {
@@ -22,14 +24,27 @@ export function createClient(database: number) {
   }
 }
 
-export async function createClientServer(database: number) {
+export async function createClientServer(
+  database: number,
+  useServiceRole = false
+) {
   const cookieStore = await cookies();
 
   const database_data = {
     url: database === 1 ? database1.url : database2.url,
-    key: database === 1 ? database1.key : database2.key,
+    key: useServiceRole
+      ? database === 1
+        ? database1.serviceKey ?? database1.key
+        : database2.serviceKey ?? database2.key
+      : database === 1
+      ? database1.key
+      : database2.key,
   };
-  
+
+  if (!database_data.url || !database_data.key) {
+    throw new Error("Supabase URL or key is missing");
+  }
+
   return createServerClient(database_data.url, database_data.key, {
     cookies: {
       getAll() {
@@ -48,5 +63,12 @@ export async function createClientServer(database: number) {
         }
       },
     },
+    ...(useServiceRole && {
+      global: {
+        headers: {
+          "x-supabase-role": "service_role",
+        },
+      },
+    }),
   });
 }

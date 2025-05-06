@@ -5,6 +5,8 @@ import { verifyCsrfToken } from "@/app/lib/csrf";
 import { createClientServer } from "@/app/lib/supabase/supabase";
 import mongoDb_client from "@/app/lib/mongodb/mongodb";
 import { ObjectId } from "mongodb";
+import { insertTable } from "@/app/lib/supabase/action";
+import { EducationalDetail, SocialLink } from "@/app/types/types";
 
 const formSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters long"),
@@ -20,6 +22,7 @@ const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
 });
 
+// This function handles the POST request to set the password
 export async function POST(request: NextRequest) {
   try {
     const { success } = await limiter.check(request);
@@ -63,7 +66,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = createClientServer(1);
     await mongoDb_client.connect();
 
     const data = await mongoDb_client
@@ -75,21 +77,74 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Token not found" }, { status: 404 });
     }
 
-    const { data: insertedData, error } = await (await supabase)
-      .from("users")
-      .insert({
-        firstName: data.firstName,
-        lastName: data.lastName,
-        phoneNumber: data.mobileNumber,
-        prefix: data.prefix,
-        firebase_uid: body.uid,
-      });
+    const supabase = await createClientServer(1, true);
+
+    const { data: insertedData, error } = await insertTable(supabase, "users", {
+      firstName: data.firstName,
+      lastName: data.lastName,
+      phoneNumber: data.mobileNumber,
+      prefix: data.prefix,
+      firebase_uid: body.uid,
+      resume_id: data.public_id,
+    });
 
     if (error) {
       console.error("Error inserting user into Supabase:", error);
     } else {
       console.log("User inserted into Supabase:", insertedData);
     }
+
+    if (!insertedData || !insertedData[0] || !insertedData[0].id) {
+      return NextResponse.json(
+        { error: "Failed to insert user into Supabase" },
+        { status: 500 }
+      );
+    }
+    const userId = insertedData[0].id;
+
+    const results = await Promise.all([
+      ...data.educationalDetails.map((detail: Omit<EducationalDetail, "id">) =>
+        insertTable(supabase, "educational_details", {
+          user_id: userId,
+          degree: detail.degree,
+          institute: detail.institute,
+          start_month: detail.startMonth,
+          start_year: parseInt(detail.startYear, 10),
+          end_month: detail.endMonth,
+          end_year: detail.endYear ? parseInt(detail.endYear, 10) : null,
+          currently_pursuing: detail.currentlyPursuing,
+          major: detail.major,
+        })
+      ),
+      ...data.socialLinks.map((link: Omit<SocialLink, "id">) =>
+        insertTable(supabase, "social_links", {
+          user_id: userId,
+          link: link.value,
+        })
+      ),
+    ]);
+
+    if (
+      results
+        .slice(0, data.educationalDetails.length)
+        .some((result) => result.error) ||
+      results
+        .slice(data.educationalDetails.length)
+        .some((result) => result.error)
+    ) {
+      console.error("Error inserting educational details or social links");
+      return NextResponse.json(
+        { error: "Failed to insert educational details or social links" },
+        { status: 500 }
+      );
+    }
+
+    // if (insertedData) {
+    //   await mongoDb_client
+    //     .db("ai-driven-recruitment")
+    //     .collection("verification_tokens")
+    //     .deleteOne({ _id: ObjectId.createFromHexString(body.token) });
+    // }
 
     return NextResponse.json(
       { message: "Password set successfully" },

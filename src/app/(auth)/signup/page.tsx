@@ -11,6 +11,11 @@ import {
   EducationalDetail,
   JobExperience,
 } from "@/app/types/types";
+import {
+  EducationalDetailClass,
+  JobExperienceClass,
+  SocialLinkClass,
+} from "@/app/types/classes";
 
 export default function SignupPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -26,7 +31,7 @@ export default function SignupPage() {
   const [educationalDetails, setEducationalDetails] = useState<
     EducationalDetail[]
   >([]);
-  const [jobExperiences, setJobExperience] = useState<JobExperience>([]);
+  const [jobExperiences, setJobExperience] = useState<JobExperience[]>([]);
 
   useEffect(() => {
     fetch("/api/csrf")
@@ -278,6 +283,7 @@ export default function SignupPage() {
               className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="">Select a country</option>
+              <option value="PH">Philippines</option>
               <option value="US">United States</option>
               <option value="CA">Canada</option>
               <option value="GB">United Kingdom</option>
@@ -323,19 +329,7 @@ export default function SignupPage() {
             add={() => {
               setEducationalDetails([
                 ...educationalDetails,
-                {
-                  id: educationalDetails.length + 1,
-                  value: "",
-                  institute: "",
-                  major: "",
-                  degree: "",
-                  duration: "",
-                  startMonth: "",
-                  startYear: "",
-                  endMonth: "",
-                  endYear: "",
-                  currentlyPursuing: false,
-                },
+                new EducationalDetailClass(educationalDetails.length + 1),
               ]);
             }}
             update={(id: number, key: string, value: string | boolean) => {
@@ -357,19 +351,8 @@ export default function SignupPage() {
           <JobExperiences
             add={() => {
               setJobExperience([
-                ...jobExperience,
-                {
-                  id: jobExperience.length + 1,
-                  value: "",
-                  title: "",
-                  company: "",
-                  summary: "",
-                  startMonth: "",
-                  startYear: "",
-                  endMonth: "",
-                  endYear: "",
-                  currentlyWorking: false,
-                },
+                ...jobExperiences,
+                new JobExperienceClass(jobExperiences.length + 1),
               ]);
             }}
             update={(id: number, key: string, value: string | boolean) => {
@@ -384,7 +367,7 @@ export default function SignupPage() {
                 prev.filter((detail) => detail.id !== id)
               );
             }}
-            getJobExperiences={jobExperience}
+            getJobExperiences={jobExperiences}
           />
         </div>
         <div className="mb-4">
@@ -398,9 +381,9 @@ export default function SignupPage() {
               setSocialLinks((prev) => prev.filter((link) => link.id !== id));
             }}
             add={() => {
-              setSocialLinks((prev) => [
-                ...prev,
-                { id: socialLinks.length + 1, value: "" },
+              setSocialLinks((links) => [
+                ...links,
+                new SocialLinkClass(links.length + 1),
               ]);
             }}
             getSocialLinks={socialLinks}

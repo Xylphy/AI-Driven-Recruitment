@@ -31,6 +31,6 @@ export async function deleteFile(publicId: string) {
  * @deprecated
  */
 export async function getFileUrl(publicId: string) {
-  const result = await cloudinary.api.resource(publicId);
+  // const result = await cloudinary.api.resource(publicId);
   // Implement more here
 }
