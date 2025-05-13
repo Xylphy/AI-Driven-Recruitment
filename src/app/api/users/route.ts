@@ -23,7 +23,7 @@ const formSchema = z.object({
 });
 
 const limiter = rateLimit({
-  max: 10,
+  max: 20, // Limit each IP to 20 requests per windowMs
   windowMs: 15 * 60 * 1000,
 });
 
@@ -160,6 +160,31 @@ export async function POST(request: NextRequest) {
       { message: "Password set successfully" },
       { status: 200 }
     );
+  } catch (error) {
+    if (error instanceof ErrorResponse) {
+      return NextResponse.json(
+        { error: error.errorMessage },
+        { status: error.status }
+      );
+    }
+    return NextResponse.json(
+      { error: "An error occurred while processing your request" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const { success } = await limiter.check(request);
+    if (!success) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429 }
+      );
+    }
+
+
   } catch (error) {
     if (error instanceof ErrorResponse) {
       return NextResponse.json(

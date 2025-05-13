@@ -26,15 +26,10 @@ export async function getTokenData(id: string) {
   try {
     await mongoDb_client.connect();
 
-    const query = { _id: new ObjectId(id) };
-    const options = { projection: { _id: 0 } };
-
-    const result = await mongoDb_client
+    return await mongoDb_client
       .db("ai-driven-recruitment")
       .collection("verification_tokens")
-      .findOne(query, options);
-
-    return result;
+      .findOne({ _id: new ObjectId(id) }, { projection: { _id: 0 } });
   } catch (error) {
     console.error("Error retrieving token data:", error);
   } finally {

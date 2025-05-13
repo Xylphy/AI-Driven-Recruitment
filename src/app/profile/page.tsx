@@ -18,14 +18,14 @@ import { useEffect } from "react";
 export default function HomePage() {
   const router = useRouter();
 
-  // useEffect(() => {
-  //   const unsubscribe = onAuthStateChanged(auth, (user) => {
-  //     if (!user) {
-  //       router.push("/login");
-  //     }
-  //   });
-  //   return () => unsubscribe();
-  // }, [router]);
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        router.push("/login");
+      }
+    });
+    return () => unsubscribe();
+  }, [router]);
 
   const jobApplications = [
     {
