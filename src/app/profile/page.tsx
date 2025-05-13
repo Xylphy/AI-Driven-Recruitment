@@ -19,6 +19,17 @@ export default function HomePage() {
   const router = useRouter();
 
   useEffect(() => {
+    fetch("/api/csrf")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.error) {
+          alert("CSRF fetch failed: " + data.error);
+        } else {
+          // Handle the CSRF token if needed
+          console.log("CSRF token fetched successfully:", data.csrfToken);
+        }
+      })
+      .catch((err) => alert("CSRF fetch failed: " + err.message));
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user) {
         router.push("/login");

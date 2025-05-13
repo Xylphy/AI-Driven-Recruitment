@@ -1,18 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { JobListing, QualificationOrRequirement } from "@/app/types/types";
+import { useState } from "react";
+import { JobListing } from "@/app/types/types";
 import Qualifications from "@/app/components/joblisting/Qualifications";
 
 let idCounter = 1;
 
 export default function JobListingPage() {
-  const [csrfToken, setCsrfToken] = useState<string>("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [response, setResponse] = useState<{
-    success?: boolean;
-    message?: string;
-  } | null>(null);
+  // const [csrfToken, setCsrfToken] = useState<string>("");
+  const [isSubmitting] = useState(false);
+  // const [response, setResponse] = useState<{
+  //   success?: boolean;
+  //   message?: string;
+  // } | null>(null);
 
   const [jobListing, setJobListing] = useState<JobListing>({
     title: "",
@@ -21,12 +21,12 @@ export default function JobListingPage() {
     location: "",
   });
 
-  useEffect(() => {
-    fetch("/api/csrf")
-      .then((res) => res.json())
-      .then((data) => setCsrfToken(data.csrfToken))
-      .catch((err) => alert("CSRF fetch failed: " + err.message));
-  }, []);
+  // useEffect(() => {
+  //   fetch("/api/csrf")
+  //     .then((res) => res.json())
+  //     .then((data) => setCsrfToken(data.csrfToken))
+  //     .catch((err) => alert("CSRF fetch failed: " + err.message));
+  // }, []);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>

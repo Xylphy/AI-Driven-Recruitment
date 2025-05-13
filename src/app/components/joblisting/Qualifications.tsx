@@ -1,6 +1,5 @@
 "use client";
 
-import { JobListing, QualificationOrRequirement } from "@/app/types/types";
 export default function Qualifications({
   items,
   update,
