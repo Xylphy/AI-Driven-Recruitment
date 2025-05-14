@@ -191,6 +191,7 @@ export async function GET(request: NextRequest) {
             prefix: data.prefix,
             resumeId: data.resume_id,
             id: data.id,
+            type: "access",
           },
           process.env.JWT_SECRET as string,
           { expiresIn: "1h" }
@@ -201,6 +202,28 @@ export async function GET(request: NextRequest) {
           sameSite: "strict",
           maxAge: 60 * 60, // 1 hour
           path: "/",
+        }
+      )
+    );
+
+    response.headers.set(
+      "Set-Cookie",
+      serialize(
+        "refreshToken",
+        jwt.sign(
+          {
+            userId: data.id,
+            type: "refresh",
+          },
+          process.env.REFRESH_TOKEN_SECRET as string,
+          { expiresIn: "7d" }
+        ),
+        {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "strict",
+          maxAge: 60 * 60 * 24 * 7, // 7 days
+          path: "/api/auth/refresh",
         }
       )
     );
