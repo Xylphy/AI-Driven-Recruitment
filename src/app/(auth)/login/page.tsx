@@ -11,9 +11,40 @@ export default function LoginPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
-        router.push("/profile");
+        const response = await fetch("/api/csrf");
+        if (!response.ok) {
+          alert("Failed to fetch CSRF token");
+          return;
+        }
+
+        fetch("/api/users", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": (await response.json()).csrfToken,
+            Authorization: `Bearer ${user.uid}`,
+            credentials: "include",
+          },
+        })
+          .then((res) => {
+            if (!res.ok) {
+              alert("Failed to fetch user data");
+              auth.signOut();
+              return null;
+            }
+            return res.json();
+          })
+          .then((data) => {
+            if (data) {
+              router.push("/profile");
+            }
+          })
+          .catch((error) => {
+            auth.signOut();
+            return;
+          });
       }
     });
     return () => unsubscribe();

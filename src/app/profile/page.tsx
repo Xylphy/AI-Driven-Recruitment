@@ -15,7 +15,7 @@ import JobApplicationDetails from "@/app/components/profile/JobApplications";
 import Image from "next/image";
 import { useEffect } from "react";
 
-export default function HomePage() {
+export default function Profile() {
   const router = useRouter();
 
   useEffect(() => {
@@ -24,7 +24,6 @@ export default function HomePage() {
         router.push("/login");
       }
     });
-
 
     return () => unsubscribe();
   }, [router]);

@@ -10,7 +10,7 @@ const database1 = {
 const database2 = {
   url: process.env.SUPABASE2__NEXT_PUBLIC_SUPABASE_URL!,
   key: process.env.SUPABASE2__NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  serviceKey: process.env.SUPABASE2__SUPABASE_SERVICE_ROLE_KEY,
+  serviceKey: process.env.SUPABASE2__SUPABASE_SERVICE_ROLE_KEY, // used to bypass RLS (administrative tasks)
 };
 
 export function createClient(database: number) {
