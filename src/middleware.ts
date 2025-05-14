@@ -10,8 +10,7 @@ const limiter = rateLimit({
 
 export async function middleware(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith("/api")) {
-    const { success } = await limiter.check(request);
-    if (!success) {
+    if (!(await limiter.check(request))) {
       return NextResponse.json(
         { error: "Rate limit exceeded" },
         { status: 429 }
@@ -52,6 +51,10 @@ export async function middleware(request: NextRequest) {
       }
     }
 
+    if (!request.cookies.get("token")) {
+      return NextResponse.json({ error: "Token is required" }, { status: 403 });
+    }
+
     const response = NextResponse.next();
     if (origin && !isSameOrigin) {
       response.headers.set("Access-Control-Allow-Origin", origin);
@@ -78,7 +81,7 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  // return await updateSession(request); // if you want to use supabase session
+  // return await updateSession(request); // if you want to use supabase session but since we use firebase, we don't need this
   return NextResponse.next();
 }
 

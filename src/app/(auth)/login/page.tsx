@@ -6,6 +6,7 @@ import { auth } from "@/app/lib/firebase/firebase";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { getCsrfToken } from "@/app/lib/library";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -13,24 +14,35 @@ export default function LoginPage() {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
-        const response = await fetch("/api/csrf");
-        if (!response.ok) {
-          alert("Failed to fetch CSRF token");
+        const csrfTokenValue = await getCsrfToken();
+
+        if (!csrfTokenValue) {
+          alert("CSRF token is missing, cannot proceed.");
+          auth.signOut();
           return;
         }
 
-        fetch("/api/users", {
+        fetch("/api/auth/jwt", {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            "X-CSRF-Token": (await response.json()).csrfToken,
+            "X-CSRF-Token": csrfTokenValue,
             Authorization: `Bearer ${user.uid}`,
-            credentials: "include",
           },
+          credentials: "include",
         })
-          .then((res) => {
+          .then(async (res) => {
             if (!res.ok) {
-              alert("Failed to fetch user data");
+              let errorDetail = `Status: ${res.status}`;
+              try {
+                const errorData = await res.json();
+                errorDetail += `, Message: ${
+                  errorData.error || JSON.stringify(errorData)
+                }`;
+              } catch (e) {
+                errorDetail += `, Body: ${await res.text()}`;
+              }
+              alert(`Failed to fetch user data. ${errorDetail}`);
               auth.signOut();
               return null;
             }
@@ -42,8 +54,9 @@ export default function LoginPage() {
             }
           })
           .catch((error) => {
+            console.error("Error in JWT fetch chain:", error);
+            alert("An unexpected error occurred during authentication.");
             auth.signOut();
-            return;
           });
       }
     });

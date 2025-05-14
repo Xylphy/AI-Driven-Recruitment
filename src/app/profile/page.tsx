@@ -13,10 +13,16 @@ import {
 } from "react-icons/md";
 import JobApplicationDetails from "@/app/components/profile/JobApplications";
 import Image from "next/image";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { getCookie, clearCookies } from "@/app/lib/library";
 
 export default function Profile() {
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [information, setInformation] = useState({
+    firstName: "",
+    lastName: "",
+  });
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -24,6 +30,52 @@ export default function Profile() {
         router.push("/login");
       }
     });
+
+    setIsLoading(true);
+
+    const setInfo = async () => {
+      const csrfToken = getCookie("csrf_token");
+      let response;
+      if (!csrfToken) {
+        response = await fetch("/api/csrf");
+        if (!response.ok) {
+          alert("Failed to fetch CSRF token");
+          return;
+        }
+      }
+
+      fetch("/api/users/userDetails", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": (await response!.json()).csrfToken,
+          credentials: "include",
+        },
+      })
+        .then((res) => {
+          if (!res.ok) {
+            alert("Failed to fetch user data");
+            auth.signOut();
+            return null;
+          }
+          return res.json();
+        })
+        .then((body) => {
+          if (body) {
+            setInformation({
+              firstName: body.data.firstName,
+              lastName: body.data.lastName,
+            });
+            setIsLoading(false);
+          }
+        })
+        .catch(() => {
+          auth.signOut();
+          return;
+        });
+    };
+
+    setInfo();
 
     return () => unsubscribe();
   }, [router]);
@@ -103,8 +155,17 @@ export default function Profile() {
             </label>
 
             <h2 className="text-lg font-semibold mt-4 text-center">
-              <span className="text-red-600 font-bold">Last Name</span>, First
-              Name
+              {isLoading ? (
+                <div className="animate-pulse">
+                  <div className="w-24 h-4 bg-gray-300 rounded"></div>
+                  <div className="w-16 h-4 bg-gray-300 rounded mt-2"></div>
+                </div>
+              ) : (
+                <span>
+                  {information.firstName || "No"}{" "}
+                  {information.lastName || "Name"}
+                </span>
+              )}
             </h2>
 
             <div className="flex gap-3 my-4">
@@ -120,6 +181,7 @@ export default function Profile() {
                 <MdLogout
                   onClick={() => {
                     auth.signOut();
+                    clearCookies();
                     router.push("/login");
                   }}
                   className="cursor-pointer hover:text-red-600"
