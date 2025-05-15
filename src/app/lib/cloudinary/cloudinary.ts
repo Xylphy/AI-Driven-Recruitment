@@ -27,10 +27,10 @@ export async function deleteFile(publicId: string) {
   await cloudinary.uploader.destroy(publicId);
 }
 
-/**
- * @deprecated
- */
-export async function getFileUrl(publicId: string) {
-  // const result = await cloudinary.api.resource(publicId);
-  // Implement more here
-}
+// /**
+//  * @deprecated
+//  */
+// export async function getFileUrl(publicId: string) {
+//   // const result = await cloudinary.api.resource(publicId);
+//   // Implement more here
+// }

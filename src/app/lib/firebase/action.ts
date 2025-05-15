@@ -16,7 +16,11 @@ export async function sendEmailVerification(data: RegisterState) {
   const response = await insertTokenData(data);
 
   await sendSignInLinkToEmail(auth, data.email, {
-    url: `http://localhost:3000/verification/${response?.insertedId}`,
+    url: `${
+      process.env.NODE_ENV === "development"
+        ? "http://localhost:3000/"
+        : process.env.NEXT_PUBLIC_SITE_URL
+    }/verification/${response?.insertedId}`,
     handleCodeInApp: true,
   });
 }

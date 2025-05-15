@@ -1,0 +1,153 @@
+import { NextRequest, NextResponse } from "next/server";
+import jwt from "jsonwebtoken";
+import { serialize } from "cookie";
+import { createClientServer } from "@/app/lib/supabase/supabase";
+import { findOne as supabaseFindOne } from "@/app/lib/supabase/action";
+
+interface RefreshTokenPayload {
+  userId: string;
+  type?: string;
+  iat: number;
+  exp: number;
+}
+
+export async function POST(request: NextRequest) {
+  const refreshTokenCookie = request.cookies.get("refreshToken");
+
+  if (!refreshTokenCookie) {
+    return NextResponse.json(
+      { error: "Refresh token not found." },
+      { status: 401 }
+    );
+  }
+
+  const refreshToken = refreshTokenCookie.value;
+
+  try {
+    const decoded = jwt.verify(
+      refreshToken,
+      process.env.REFRESH_TOKEN_SECRET as string
+    ) as RefreshTokenPayload;
+
+    if (decoded.type !== "refresh") {
+      return NextResponse.json(
+        { error: "Invalid token type." },
+        { status: 401 }
+      );
+    }
+
+    const { data: user, error: userError } = await supabaseFindOne(
+      await createClientServer(1, true),
+      "users",
+      decoded.userId,
+      "id"
+    );
+
+    if (userError || !user) {
+      const response = NextResponse.json(
+        { error: "Invalid refresh token or user not found." },
+        { status: 401 }
+      );
+      response.headers.append(
+        "Set-Cookie",
+        serialize("token", "", {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "strict",
+          expires: new Date(0),
+          path: "/",
+        })
+      );
+      response.headers.append(
+        "Set-Cookie",
+        serialize("refreshToken", "", {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "strict",
+          expires: new Date(0),
+          path: "/api/auth/refresh",
+        })
+      );
+      return response;
+    }
+
+    const response = NextResponse.json({
+      message: "Token refreshed successfully",
+    });
+
+    response.headers.append(
+      "Set-Cookie",
+      serialize(
+        "token",
+        jwt.sign(
+          {
+            email: user.email,
+            phoneNumber: user.phoneNumber,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            prefix: user.prefix,
+            resumeId: user.resume_id,
+            id: user.id,
+            type: "access",
+          },
+          process.env.JWT_SECRET as string,
+          { expiresIn: "1h" }
+        ),
+        {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "strict",
+          maxAge: 60 * 60, // 1 hour
+          path: "/",
+        }
+      )
+    );
+
+    response.headers.append(
+      "Set-Cookie",
+      serialize(
+        "refreshToken",
+        jwt.sign(
+          { userId: user.id, type: "refresh" },
+          process.env.REFRESH_TOKEN_SECRET as string,
+          { expiresIn: "7d" }
+        ),
+        {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "strict",
+          maxAge: 60 * 60 * 24 * 7, // 7 days
+          path: "/api/auth/refresh",
+        }
+      )
+    );
+
+    return response;
+  } catch {
+    const response = NextResponse.json(
+      { error: "Invalid or expired refresh token." },
+      { status: 401 }
+    );
+    response.headers.append(
+      "Set-Cookie",
+      serialize("token", "", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        expires: new Date(0),
+        path: "/",
+      })
+    );
+    response.headers.append(
+      "Set-Cookie",
+      serialize("refreshToken", "", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        expires: new Date(0),
+        path: "/api/auth/refresh",
+      })
+    );
+    return response;
+  }
+}

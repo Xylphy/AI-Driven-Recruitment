@@ -1,8 +1,8 @@
 import React from "react";
 
 export const metadata = {
-  title: "Login",
-  description: "Login to your account",
+  title: "Signup",
+  description: "Create an account",
 };
 
 export default function AuthLayout({

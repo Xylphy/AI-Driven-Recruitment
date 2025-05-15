@@ -6,15 +6,13 @@ export async function insertTokenData(data: RegisterState) {
   try {
     await mongoDb_client.connect();
 
-    const user = {
-      ...data,
-      createdAt: new Date(),
-    };
-
     return await mongoDb_client
       .db("ai-driven-recruitment")
       .collection("verification_tokens")
-      .insertOne(user);
+      .insertOne({
+        ...data,
+        createdAt: new Date(),
+      });
   } catch (error) {
     console.error("Error inserting user data:", error);
   } finally {
@@ -26,15 +24,10 @@ export async function getTokenData(id: string) {
   try {
     await mongoDb_client.connect();
 
-    const query = { _id: new ObjectId(id) };
-    const options = { projection: { _id: 0 } };
-
-    const result = await mongoDb_client
+    return await mongoDb_client
       .db("ai-driven-recruitment")
       .collection("verification_tokens")
-      .findOne(query, options);
-
-    return result;
+      .findOne({ _id: new ObjectId(id) }, { projection: { _id: 0 } });
   } catch (error) {
     console.error("Error retrieving token data:", error);
   } finally {

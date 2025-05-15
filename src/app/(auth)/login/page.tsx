@@ -6,14 +6,58 @@ import { auth } from "@/app/lib/firebase/firebase";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { getCsrfToken } from "@/app/lib/library";
 
 export default function LoginPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
-        router.push("/profile");
+        const csrfTokenValue = await getCsrfToken();
+
+        if (!csrfTokenValue) {
+          alert("CSRF token is missing, cannot proceed.");
+          auth.signOut();
+          return;
+        }
+
+        fetch("/api/auth/jwt", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": csrfTokenValue,
+            Authorization: `Bearer ${user.uid}`,
+          },
+          credentials: "include",
+        })
+          .then(async (res) => {
+            if (!res.ok) {
+              let errorDetail = `Status: ${res.status}`;
+              try {
+                const errorData = await res.json();
+                errorDetail += `, Message: ${
+                  errorData.error || JSON.stringify(errorData)
+                }`;
+              } catch {
+                errorDetail += `, Body: ${await res.text()}`;
+              }
+              alert(`Failed to fetch user data. ${errorDetail}`);
+              auth.signOut();
+              return null;
+            }
+            return res.json();
+          })
+          .then((data) => {
+            if (data) {
+              router.push("/profile");
+            }
+          })
+          .catch((error) => {
+            console.error("Error in JWT fetch chain:", error);
+            alert("An unexpected error occurred during authentication.");
+            auth.signOut();
+          });
       }
     });
     return () => unsubscribe();
