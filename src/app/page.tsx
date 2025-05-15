@@ -1,65 +1,80 @@
-import React from "react";
-import { motion } from "framer-motion";
+"use client";
+import { motion, useAnimation, useInView } from "framer-motion";
+import { useEffect, useRef } from "react";
 import Link from "next/link";
+import AnimatedSection from "./components/common/AnimatedSection";
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.3, // delay between each child animation
+    },
+  },
+};
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0 },
+};
+
+const hoverGrow = {
+  hover: { scale: 1.05 },
+};
+
+const categories = [
+  { name: "IT & Software", img: "it-software.jpg" },
+  { name: "Marketing", img: "/marketing.jpg" },
+  { name: "Finance", img: "/finance.jpg" },
+  { name: "Healthcare", img: "/healthcare.jpg" },
+];
 
 export default function Home() {
-  const container = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.2,
-      },
-    },
-  };
-
-  const fadeUp = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 },
-  };
-
-  const hoverGrow = {
-    hover: { scale: 1.05, transition: { duration: 0.3 } },
-  };
-
   return (
     <>
-      <motion.section
-        className="py-20 px-6 text-center"
-        initial="hidden"
-        animate="visible"
-        variants={container}
-      >
-        <motion.div className="max-w-4xl mx-auto" variants={fadeUp}>
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Find Your Dream Job with{" "}
-            <span className="text-red-600">Alliance</span>
-          </h1>
-          <p className="text-lg text-gray-700 mb-8">
-            Explore thousands of job opportunities from top companies. Whether
-            you're starting out or looking for a career change, we've got you
-            covered.
-          </p>
-          <motion.div variants={fadeUp} whileHover={hoverGrow.hover}>
-            <Link
-              href="/login"
-              className="bg-[#E30022] inline-block text-white font-bold py-3 px-6 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-500 hover:border-red-500"
-            >
-              BROWSE JOBS
-            </Link>
-          </motion.div>
-        </motion.div>
-      </motion.section>
+      <AnimatedSection className="pt-20 px-6 bg-gradient-to-br from-white via-red-50 to-red-100 flex justify-center items-center">
+        <motion.div
+          className="max-w-6xl mx-auto grid md:grid-cols-2 gap-10 items-center"
+          variants={fadeUp}
+        >
+          <div className="text-left">
+            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+              Find Your Dream Job with{" "}
+              <span className="text-red-600">Alliance</span>
+            </h1>
+            <p className="text-lg text-gray-700 mb-8">
+              Explore thousands of job opportunities from top companies. Whether
+              you're starting out or looking for a career change, we've got you
+              covered.
+            </p>
+            <motion.div variants={fadeUp} whileHover={hoverGrow.hover}>
+              <Link
+                href="/login"
+                className="bg-[#E30022] inline-block text-white font-bold py-3 px-6 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-500 hover:border-red-500"
+              >
+                BROWSE JOBS
+              </Link>
+            </motion.div>
+          </div>
 
-      <motion.section
-        className="py-16 px-6 bg-[#E30022]"
-        initial="hidden"
-        animate="visible"
-        variants={container}
-      >
+          <div className="relative flex justify-center items-center w-full h-full">
+            <img
+              src="/professionals.png"
+              alt="Professional team"
+              className="w-full h-full object-cover max-w-md"
+            />
+          </div>
+        </motion.div>
+      </AnimatedSection>
+
+      <AnimatedSection className="relative py-16 px-6 bg-[url('/workspace.jpg')] bg-cover bg-center bg-no-repeat">
+        <div className="absolute inset-0 bg-black/40 z-0"></div>
         <motion.div
           className="max-w-6xl mx-auto grid md:grid-cols-3 gap-10 text-center"
-          variants={fadeUp}
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
         >
           {[
             {
@@ -77,7 +92,7 @@ export default function Home() {
           ].map((item, idx) => (
             <motion.div
               key={idx}
-              className="p-6 rounded-lg shadow-lg hover:shadow-2xl bg-white/10"
+              className="p-6 rounded-lg shadow-lg hover:shadow-2xl backdrop-blur-sm bg-white/20 border border-white/30"
               variants={fadeUp}
               whileHover={{ scale: 1.03 }}
             >
@@ -88,43 +103,36 @@ export default function Home() {
             </motion.div>
           ))}
         </motion.div>
-      </motion.section>
+      </AnimatedSection>
 
-      <motion.section
-        className="py-16 px-6 bg-gray-50"
-        initial="hidden"
-        animate="visible"
-        variants={container}
-      >
+      <AnimatedSection className="py-16 px-6 bg-gray-50">
         <motion.div className="max-w-6xl mx-auto text-center" variants={fadeUp}>
           <h2 className="text-3xl font-bold text-gray-800 mb-8">
             Popular Job Categories
           </h2>
           <div className="grid md:grid-cols-4 gap-6">
-            {["IT & Software", "Marketing", "Finance", "Healthcare"].map(
-              (category, i) => (
-                <motion.div
-                  key={i}
-                  className="bg-white p-6 rounded-lg shadow hover:shadow-lg"
-                  variants={fadeUp}
-                  whileHover={{ y: -5, transition: { duration: 0.3 } }}
-                >
-                  <h4 className="text-lg font-semibold text-gray-800">
-                    {category}
-                  </h4>
-                </motion.div>
-              )
-            )}
+            {categories.map((category, i) => (
+              <motion.div
+                key={i}
+                className="bg-red-600 p-6 rounded-lg shadow hover:shadow-lg flex flex-col items-center"
+                variants={fadeUp}
+                whileHover={{ y: -5, transition: { duration: 0.3 } }}
+              >
+                <img
+                  src={category.img}
+                  alt={category.name}
+                  className="w-20 h-20 object-cover rounded-full mb-4"
+                />
+                <h4 className="text-lg font-semibold text-white">
+                  {category.name}
+                </h4>
+              </motion.div>
+            ))}
           </div>
         </motion.div>
-      </motion.section>
+      </AnimatedSection>
 
-      <motion.section
-        className="py-20 text-center px-6"
-        initial="hidden"
-        animate="visible"
-        variants={container}
-      >
+      <AnimatedSection className="py-20 text-center px-6">
         <motion.h2
           className="text-3xl text-[#E30022] md:text-4xl font-bold mb-4"
           variants={fadeUp}
@@ -142,7 +150,7 @@ export default function Home() {
             APPLY NOW
           </Link>
         </motion.div>
-      </motion.section>
+      </AnimatedSection>
     </>
   );
 }
