@@ -51,7 +51,13 @@ export async function middleware(request: NextRequest) {
       }
     }
 
-    if (!request.cookies.get("token")) {
+    const pathname = request.nextUrl.pathname;
+    const publicPaths = ["/api/csrf", "/api/users/email", "/api/users"];
+
+    if (
+      !request.cookies.get("token") &&
+      !publicPaths.some((path) => pathname.startsWith(path))
+    ) {
       return NextResponse.json({ error: "Token is required" }, { status: 403 });
     }
 

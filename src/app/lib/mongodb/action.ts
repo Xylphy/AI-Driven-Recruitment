@@ -6,15 +6,13 @@ export async function insertTokenData(data: RegisterState) {
   try {
     await mongoDb_client.connect();
 
-    const user = {
-      ...data,
-      createdAt: new Date(),
-    };
-
     return await mongoDb_client
       .db("ai-driven-recruitment")
       .collection("verification_tokens")
-      .insertOne(user);
+      .insertOne({
+        ...data,
+        createdAt: new Date(),
+      });
   } catch (error) {
     console.error("Error inserting user data:", error);
   } finally {

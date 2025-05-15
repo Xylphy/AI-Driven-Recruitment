@@ -7,6 +7,5 @@ export const poppins = Poppins({
   display: "swap",
   style: ["normal", "italic"],
   fallback: ["sans-serif"],
-  preload: true,
   adjustFontFallback: true,
 });

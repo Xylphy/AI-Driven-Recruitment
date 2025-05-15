@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
     );
 
     return response;
-  } catch (error) {
+  } catch {
     const response = NextResponse.json(
       { error: "Invalid or expired refresh token." },
       { status: 401 }

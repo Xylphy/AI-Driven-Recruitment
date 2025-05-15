@@ -39,7 +39,7 @@ export default function LoginPage() {
                 errorDetail += `, Message: ${
                   errorData.error || JSON.stringify(errorData)
                 }`;
-              } catch (e) {
+              } catch {
                 errorDetail += `, Body: ${await res.text()}`;
               }
               alert(`Failed to fetch user data. ${errorDetail}`);

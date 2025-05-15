@@ -2,6 +2,7 @@
 
 import {
   createUserWithEmailAndPassword,
+  deleteUser,
   isSignInWithEmailLink,
 } from "firebase/auth";
 import { Button } from "../../../components/common/Button";
@@ -17,6 +18,7 @@ export default function Verification({
   const router = useRouter();
   const [csrfToken, setCsrfToken] = useState<string>("");
   const [email, setEmail] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const { id } = use(params);
 
   useEffect(() => {
@@ -77,6 +79,7 @@ export default function Verification({
         return;
       }
 
+      setIsLoading(true);
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
@@ -95,14 +98,17 @@ export default function Verification({
       if (response.ok) {
         alert("Password set successfully");
       } else {
+        await deleteUser(userCredential.user);
         response.json().then((errorData) => alert("Error: " + errorData.error));
       }
+      setIsLoading(false);
     } catch (error: unknown) {
       if (error instanceof Error) {
         alert("Error signing in with email link: " + error.message);
       } else {
         alert("An unknown error occurred");
       }
+      setIsLoading(false);
     }
   };
 
@@ -124,6 +130,7 @@ export default function Verification({
             placeholder="New Password"
             name="password"
             className="w-full px-4 py-3 border border-red-500 rounded-md placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500"
+            minLength={8}
             required
           />
           <input
@@ -131,14 +138,45 @@ export default function Verification({
             placeholder="Confirm Password"
             name="confirmPassword"
             className="w-full px-4 py-3 border border-red-500 rounded-md placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500"
+            minLength={8}
             required
           />
-          <Button
-            type="submit"
-            className="flex justify-center items-center w-full bg-red-600 text-white font-bold px-4 py-3 rounded-md border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-500 hover:border-red-500"
-          >
-            SET PASSWORD
-          </Button>
+          {email && !isLoading ? (
+            <Button
+              type="submit"
+              className="flex justify-center items-center w-full bg-red-600 text-white font-bold px-4 py-3 rounded-md border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-500 hover:border-red-500"
+            >
+              SET PASSWORD
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              disabled
+              className="flex justify-center items-center w-full bg-gray-400 text-white font-bold px-4 py-3 rounded-md border border-transparent"
+            >
+              <svg
+                className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              LOADING...
+            </Button>
+          )}
         </form>
       </div>
     </div>

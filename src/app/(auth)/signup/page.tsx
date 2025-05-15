@@ -16,6 +16,7 @@ import {
   JobExperienceClass,
   SocialLinkClass,
 } from "@/app/types/classes";
+import { getCookie } from "@/app/lib/library";
 
 export default function SignupPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -34,10 +35,18 @@ export default function SignupPage() {
   const [jobExperiences, setJobExperience] = useState<JobExperience[]>([]);
 
   useEffect(() => {
+    const csrfToken = getCookie("csrf_token");
+
+    if (csrfToken) {
+      setCsrfToken(csrfToken);
+      return;
+    }
+
     fetch("/api/csrf")
       .then((res) => {
         if (!res.ok) {
-          throw new Error("Failed to fetch CSRF token");
+          alert("Failed to fetch CSRF token");
+          return;
         }
         return res.json();
       })
@@ -45,9 +54,7 @@ export default function SignupPage() {
         setCsrfToken(data.csrfToken);
       })
       .catch((error) => {
-        if (error instanceof Error) {
-          alert("Error: " + error.message);
-        }
+        console.error("Error fetching CSRF token:", error);
       });
   }, []);
 

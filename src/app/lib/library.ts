@@ -41,7 +41,7 @@ export async function getCsrfToken(): Promise<string | null> {
       }
       const csrfData = await csrfResponse.json();
       csrfTokenValue = csrfData.csrfToken;
-    } catch (error) {}
+    } catch {}
   }
   return csrfTokenValue;
 }
