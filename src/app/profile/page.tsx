@@ -14,7 +14,8 @@ import {
 import JobApplicationDetails from "@/app/components/profile/JobApplications";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { checkAuthStatus, getCsrfToken } from "@/app/lib/library";
+import useCsrfToken from "../hooks/useCsrfToken";
+import { checkAuthStatus } from "../lib/library";
 
 export default function Profile() {
   const router = useRouter();
@@ -24,6 +25,7 @@ export default function Profile() {
     lastName: "",
     isAdmin: false,
   });
+  const { csrfToken, isLoading: isCsrfLoading } = useCsrfToken();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -34,24 +36,23 @@ export default function Profile() {
 
     setIsLoading(true);
     const setInfo = async () => {
-      const token = await getCsrfToken();
-      if (!token) {
-        throw new Error("Failed to fetch CSRF token");
+      if (isCsrfLoading) {
+        return;
       }
 
-      await checkAuthStatus(token);
+      await checkAuthStatus(csrfToken);
 
       fetch("/api/users/userDetails", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "X-CSRF-Token": token,
+          "X-CSRF-Token": csrfToken,
         },
         credentials: "include",
       })
         .then((res) => {
           if (!res.ok) {
-            alert("Failed to fetch user data");
+            alert("Failed to fetch user data, user details");
             auth.signOut();
             return null;
           }
@@ -77,7 +78,7 @@ export default function Profile() {
     setInfo();
 
     return () => unsubscribe();
-  }, [router]);
+  }, [router, csrfToken]);
 
   const jobApplications = [
     {

@@ -5,16 +5,18 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/app/lib/firebase/firebase";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import useCsrfToken from "@/app/hooks/useCsrfToken";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { csrfToken, isLoading: isCsrfLoading } = useCsrfToken();
+  const { csrfToken } = useCsrfToken();
+  const [isAuthLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
-      if (user) {
+      if (user && !isAuthLoading) {
+        setIsLoading(false);
         router.push("/profile");
       }
     });
@@ -40,61 +42,45 @@ export default function LoginPage() {
     }
     password = password.toString().trim();
 
-    const user = await signInWithEmailAndPassword(auth, email, password)
-      .then((userCredential) => {
-        if (userCredential.user) {
-          return userCredential.user;
-        }
-      })
-      .catch((error) => {
-        alert(`Error: ${error.message}`);
-        return null;
+    try {
+      setIsLoading(true);
+
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      if (!userCredential.user) return;
+
+      const response = await fetch("/api/auth/jwt", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken,
+          Authorization: `Bearer ${userCredential.user.uid}`,
+        },
+        credentials: "include",
       });
 
-    if (!user) {
-      return;
-    }
-
-    if (!isCsrfLoading) {
-      alert("CSRF token is not available. Please try again.");
-      return;
-    }
-
-    fetch("/api/auth/jwt", {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": csrfToken,
-        Authorization: `Bearer ${user.uid}`,
-      },
-      credentials: "include",
-    })
-      .then(async (res) => {
-        if (!res.ok) {
-          let errorDetail = `Status: ${res.status}`;
-          try {
-            const errorData = await res.json();
-            errorDetail += `, Message: ${
-              errorData.error || JSON.stringify(errorData)
-            }`;
-          } catch {
-            errorDetail += `, Body: ${await res.text()}`;
-          }
-          // alert(`Failed to fetch user data. ${errorDetail}`);
-          auth.signOut();
-          return null;
-        }
-        return res.json();
-      })
-      .then((data) => {
-        if (data) {
-          router.push("/profile");
-        }
-      })
-      .catch(() => {
-        alert("An unexpected error occurred during authentication.");
+      if (!response.ok) {
         auth.signOut();
-      });
+        alert("Authentication failed");
+        return;
+      }
+
+      const data = await response.json();
+      if (data) {
+        router.push("/profile");
+      }
+    } catch (error) {
+      alert(
+        "Authentication failed: " +
+          (error instanceof Error ? error.message : "Unknown error")
+      );
+      auth.signOut();
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
