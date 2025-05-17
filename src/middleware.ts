@@ -4,7 +4,7 @@ import { rateLimit } from "./app/lib/rate-limit";
 import { verifyCsrfToken } from "@/app/lib/csrf";
 
 const limiter = rateLimit({
-  max: 20,
+  max: 50,
   windowMs: 15 * 60 * 1000,
 });
 
@@ -52,7 +52,7 @@ export async function middleware(request: NextRequest) {
     }
 
     const pathname = request.nextUrl.pathname;
-    const publicPaths = ["/api/csrf", "/api/users/email", "/api/users"];
+    const publicPaths = ["/api/csrf", "/api/users/email", "/api/users", "/api/auth/jwt"];
 
     if (
       !request.cookies.get("token") &&

@@ -14,7 +14,7 @@ import {
 import JobApplicationDetails from "@/app/components/profile/JobApplications";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { getCookie, clearCookies } from "@/app/lib/library";
+import { checkAuthStatus, getCsrfToken } from "@/app/lib/library";
 
 export default function Profile() {
   const router = useRouter();
@@ -22,6 +22,7 @@ export default function Profile() {
   const [information, setInformation] = useState({
     firstName: "",
     lastName: "",
+    isAdmin: false,
   });
 
   useEffect(() => {
@@ -32,25 +33,21 @@ export default function Profile() {
     });
 
     setIsLoading(true);
-
     const setInfo = async () => {
-      const csrfToken = getCookie("csrf_token");
-      let response;
-      if (!csrfToken) {
-        response = await fetch("/api/csrf");
-        if (!response.ok) {
-          alert("Failed to fetch CSRF token");
-          return;
-        }
+      const token = await getCsrfToken();
+      if (!token) {
+        throw new Error("Failed to fetch CSRF token");
       }
+
+      await checkAuthStatus(token);
 
       fetch("/api/users/userDetails", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "X-CSRF-Token": (await response!.json()).csrfToken,
-          credentials: "include",
+          "X-CSRF-Token": token,
         },
+        credentials: "include",
       })
         .then((res) => {
           if (!res.ok) {
@@ -65,12 +62,14 @@ export default function Profile() {
             setInformation({
               firstName: body.data.firstName,
               lastName: body.data.lastName,
+              isAdmin: body.data.isAdmin,
             });
             setIsLoading(false);
           }
         })
         .catch(() => {
           auth.signOut();
+          router.push("/login");
           return;
         });
     };
@@ -174,6 +173,26 @@ export default function Profile() {
               <FaInstagram className="text-red-600" />
               <MdPhone className="text-red-600" />
             </div>
+            {information.isAdmin && (
+              <button
+                onClick={() => router.push("/createjob")}
+                className="mt-4 bg-blue-600 text-white font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-blue-600 hover:border-blue-600 flex items-center justify-center gap-2"
+              >
+                <span>Add Job Listing</span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </button>
+            )}
 
             <div className="flex flex-col gap-4 my-6 mt-auto">
               <div className="flex gap-4 justify-center">
@@ -181,7 +200,6 @@ export default function Profile() {
                 <MdLogout
                   onClick={() => {
                     auth.signOut();
-                    clearCookies();
                     router.push("/login");
                   }}
                   className="cursor-pointer hover:text-red-600"
@@ -204,7 +222,6 @@ export default function Profile() {
                 <div className="absolute top-0 left-3 w-3 h-3 bg-red-600 rounded-full z-10" />
               </div>
             </div>
-
             <div className="space-y-5 pb-9 overflow-y-auto h-full">
               <JobApplicationDetails jobApplications={jobApplications} />
             </div>

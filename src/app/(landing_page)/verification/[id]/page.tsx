@@ -9,6 +9,7 @@ import { Button } from "../../../components/common/Button";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, use } from "react";
 import { auth } from "@/app/lib/firebase/firebase";
+import { getCsrfToken } from "@/app/lib/library";
 
 export default function Verification({
   params,
@@ -22,20 +23,23 @@ export default function Verification({
   const { id } = use(params);
 
   useEffect(() => {
+    getCsrfToken().then((token) => {
+      if (!token) {
+        router.push("/signup");
+      } else {
+        setCsrfToken(token);
+      }
+    });
+  }, [router]);
+
+  useEffect(() => {
     const fetchData = async () => {
       try {
-        const csrfResponse = await fetch("/api/csrf");
-        if (!csrfResponse.ok) {
-          throw new Error("Failed to fetch CSRF token");
-        }
-        const csrfData = await csrfResponse.json();
-        setCsrfToken(csrfData.csrfToken);
-
         const emailResponse = await fetch("/api/users/email", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "X-CSRF-Token": csrfData.csrfToken,
+            "X-CSRF-Token": csrfToken,
           },
           body: JSON.stringify({ id }),
         });
@@ -54,7 +58,7 @@ export default function Verification({
     };
 
     fetchData();
-  }, [id, router]);
+  }, [id, router, csrfToken]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -79,6 +83,12 @@ export default function Verification({
         return;
       }
 
+      if (!email) {
+        alert("Email not found");
+        router.push("/signup");
+        return;
+      }
+
       setIsLoading(true);
       const userCredential = await createUserWithEmailAndPassword(
         auth,
@@ -97,6 +107,7 @@ export default function Verification({
 
       if (response.ok) {
         alert("Password set successfully");
+        router.push("/login");
       } else {
         await deleteUser(userCredential.user);
         response.json().then((errorData) => alert("Error: " + errorData.error));

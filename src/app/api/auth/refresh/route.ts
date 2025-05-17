@@ -11,7 +11,7 @@ interface RefreshTokenPayload {
   exp: number;
 }
 
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest) {
   const refreshTokenCookie = request.cookies.get("refreshToken");
 
   if (!refreshTokenCookie) {
@@ -21,11 +21,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const refreshToken = refreshTokenCookie.value;
-
   try {
     const decoded = jwt.verify(
-      refreshToken,
+      refreshTokenCookie.value,
       process.env.REFRESH_TOKEN_SECRET as string
     ) as RefreshTokenPayload;
 
@@ -35,12 +33,20 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
+    const supabase = await createClientServer(1, true);
 
     const { data: user, error: userError } = await supabaseFindOne(
-      await createClientServer(1, true),
+      supabase,
       "users",
       decoded.userId,
       "id"
+    );
+
+    const { data: adminData, error: _ } = await supabaseFindOne(
+      supabase,
+      "admins",
+      decoded.userId,
+      "user_id"
     );
 
     if (userError || !user) {
@@ -88,6 +94,7 @@ export async function POST(request: NextRequest) {
             prefix: user.prefix,
             resumeId: user.resume_id,
             id: user.id,
+            isAdmin: adminData ? true : false,
             type: "access",
           },
           process.env.JWT_SECRET as string,

@@ -30,18 +30,64 @@ export async function getCsrfToken(): Promise<string | null> {
     // This code is running on the server, so we can't access document.cookie
     return null;
   }
-  let csrfTokenValue = getCookie("csrf_token");
-  let csrfResponse;
 
-  if (!csrfTokenValue) {
-    try {
-      csrfResponse = await fetch("/api/csrf");
-      if (!csrfResponse.ok) {
-        throw new Error("CSRF token fetch failed");
-      }
-      const csrfData = await csrfResponse.json();
-      csrfTokenValue = csrfData.csrfToken;
-    } catch {}
+  try {
+    let csrfResponse = await fetch("/api/csrf");
+
+    if (!csrfResponse.ok) {
+      throw new Error("CSRF token fetch failed");
+    }
+
+    const csrfData = await csrfResponse.json();
+    return csrfData.csrfToken;
+  } catch {
+    alert("Failed to fetch CSRF token");
+    return null;
   }
-  return csrfTokenValue;
+}
+
+export async function checkAuthStatus(csrfToken: string): Promise<boolean> {
+  if (typeof document === "undefined") {
+    // This code is running on the server, so we can't access document.cookie
+    return false;
+  }
+
+  try {
+    const response = await fetch("/api/auth/status", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": csrfToken,
+      },
+      credentials: "include",
+    });
+
+    if (response.ok) {
+      return true;
+    }
+
+    return await refreshToken();
+  } catch (error) {
+    return false;
+  }
+}
+
+export async function refreshToken(): Promise<boolean> {
+  if (typeof document === "undefined") {
+    // This code is running on the server, so we can't access document.cookie
+    return false;
+  }
+  return await fetch("/api/auth/refresh", {
+    method: "GET",
+    credentials: "include",
+  })
+    .then((res) => {
+      if (!res.ok) {
+        throw new Error("Token refresh failed");
+      }
+      return true;
+    })
+    .catch(() => {
+      return false;
+    });
 }

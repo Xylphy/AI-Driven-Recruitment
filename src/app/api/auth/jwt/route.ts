@@ -8,15 +8,15 @@ import jwt from "jsonwebtoken";
 export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get("Authorization");
-    console.log("Authorization Header:", authHeader);
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return NextResponse.json(
         { error: "Authorization header is missing or invalid" },
         { status: 401 }
       );
     }
+    const supabase = await createClientServer(1, true);
     const { data, error } = await findOne(
-      await createClientServer(1, true),
+      supabase,
       "users",
       authHeader.split(" ")[1],
       "firebase_uid"
@@ -31,6 +31,13 @@ export async function GET(request: NextRequest) {
     if (!data) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
+
+    const { data: adminData, error: _ } = await findOne(
+      supabase,
+      "admins",
+      data.id,
+      "user_id"
+    );
 
     const response = NextResponse.json({
       message: "Success",
@@ -50,6 +57,7 @@ export async function GET(request: NextRequest) {
             prefix: data.prefix,
             resumeId: data.resume_id,
             id: data.id,
+            isAdmin: adminData ? true : false,
             type: "access",
           },
           process.env.JWT_SECRET as string,
