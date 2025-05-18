@@ -25,22 +25,31 @@ export default function Profile() {
     lastName: "",
     isAdmin: false,
   });
-  const { csrfToken, isLoading: isCsrfLoading } = useCsrfToken();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { csrfToken } = useCsrfToken();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user) {
+        setIsAuthenticated(false);
         router.push("/login");
+      } else {
+        setIsAuthenticated(true);
       }
     });
 
     setIsLoading(true);
+
     const setInfo = async () => {
-      if (isCsrfLoading) {
+      if (!csrfToken || !isAuthenticated) {
         return;
       }
 
-      await checkAuthStatus(csrfToken);
+      if (!(await checkAuthStatus(csrfToken))) {
+        auth.signOut();
+        router.push("/login");
+        return;
+      }
 
       fetch("/api/users/userDetails", {
         method: "GET",
@@ -78,7 +87,7 @@ export default function Profile() {
     setInfo();
 
     return () => unsubscribe();
-  }, [router, csrfToken]);
+  }, [router, csrfToken, isAuthenticated]);
 
   const jobApplications = [
     {

@@ -1,3 +1,4 @@
+// --------------- Common Types --------------- //
 interface IdentifiableItem {
   id: number;
 }
@@ -9,7 +10,11 @@ interface DateRange {
   endYear: number;
 }
 
-// ----- Exported Types ----- //
+interface Title {
+  title: string;
+}
+
+// --------------- Exported Types --------------- //
 export interface RegisterState {
   prefix: string;
   firstName: string;
@@ -30,14 +35,11 @@ export interface RegisterState {
   public_id?: string;
 }
 
-export interface SocialLink {
-  id: number;
+export interface SocialLink extends IdentifiableItem {
   value: string;
 }
 
-export interface JobApplicationDetail {
-  id: number;
-  title: string;
+export interface JobApplicationDetail extends IdentifiableItem, Title {
   dateApplied: string;
 }
 
@@ -48,21 +50,16 @@ export interface EducationalDetail extends DateRange, IdentifiableItem {
   currentlyPursuing: boolean;
 }
 
-export interface JobExperience extends DateRange, IdentifiableItem {
-  title: string;
+export interface JobExperience extends DateRange, IdentifiableItem, Title {
   company: string;
   summary: string;
   currentlyWorking: boolean;
 }
 
-export type QualificationOrRequirement = {
-  id: number;
-  title: string;
-};
+export interface IdentifiableTitle extends IdentifiableItem, Title {}
 
-export type JobListing = {
-  title: string;
-  qualifications: QualificationOrRequirement[];
-  requirements: QualificationOrRequirement[];
+export interface JobListing extends Title {
+  qualifications: IdentifiableTitle[];
+  requirements: IdentifiableTitle[];
   location: string;
-};
+}

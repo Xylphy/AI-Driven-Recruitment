@@ -11,17 +11,17 @@ import useCsrfToken from "@/app/hooks/useCsrfToken";
 export default function LoginPage() {
   const router = useRouter();
   const { csrfToken } = useCsrfToken();
-  const [isAuthLoading, setIsLoading] = useState(true);
+  const [isAuthLoading, setIsAuthLoading] = useState(false);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user && !isAuthLoading) {
-        setIsLoading(false);
+        setIsAuthLoading(false);
         router.push("/profile");
       }
     });
     return () => unsubscribe();
-  }, [router]);
+  }, [router, isAuthLoading]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -43,7 +43,7 @@ export default function LoginPage() {
     password = password.toString().trim();
 
     try {
-      setIsLoading(true);
+      setIsAuthLoading(true);
 
       const userCredential = await signInWithEmailAndPassword(
         auth,
@@ -56,7 +56,7 @@ export default function LoginPage() {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "X-CSRF-Token": csrfToken,
+          "X-CSRF-Token": csrfToken!,
           Authorization: `Bearer ${userCredential.user.uid}`,
         },
         credentials: "include",
@@ -79,7 +79,7 @@ export default function LoginPage() {
       );
       auth.signOut();
     } finally {
-      setIsLoading(false);
+      setIsAuthLoading(false);
     }
   };
 
@@ -109,12 +109,22 @@ export default function LoginPage() {
           className="w-full px-4 py-3 border border-red-500 rounded-md placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500"
           required
         />
-        <Button
-          type="submit"
-          className="flex justify-center items-center w-full bg-red-600 text-white font-bold px-4 py-3 rounded-md border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-500 hover:border-red-500"
-        >
-          LOG IN
-        </Button>
+        {isAuthLoading ? (
+          <Button
+            type="submit"
+            className="flex justify-center items-center w-full bg-red-600 text-white font-bold px-4 py-3 rounded-md border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-500 hover:border-red-500"
+            disabled
+          >
+            LOGGING IN...
+          </Button>
+        ) : (
+          <Button
+            type="submit"
+            className="flex justify-center items-center w-full bg-red-600 text-white font-bold px-4 py-3 rounded-md border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-500 hover:border-red-500"
+          >
+            LOG IN
+          </Button>
+        )}
       </form>
       <br></br>
       <p className="text-sm text-center text-gray-600 mb-3">

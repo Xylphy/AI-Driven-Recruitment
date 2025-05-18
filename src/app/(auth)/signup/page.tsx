@@ -16,7 +16,7 @@ import {
   JobExperienceClass,
   SocialLinkClass,
 } from "@/app/types/classes";
-import { getCsrfToken } from "@/app/lib/library";
+import useCsrfToken from "@/app/hooks/useCsrfToken";
 
 export default function SignupPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -26,23 +26,13 @@ export default function SignupPage() {
   } | null>(null);
 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [csrfToken, setCsrfToken] = useState<string>("");
+  const { csrfToken } = useCsrfToken();
 
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
   const [educationalDetails, setEducationalDetails] = useState<
     EducationalDetail[]
   >([]);
   const [jobExperiences, setJobExperience] = useState<JobExperience[]>([]);
-
-  useEffect(() => {
-    getCsrfToken().then((token) => {
-      if (token) {
-        setCsrfToken(token);
-      } else {
-        alert("Failed to fetch CSRF token");
-      }
-    });
-  }, []);
 
   const handleFileSelect = (file: File | null) => {
     setSelectedFile(file);
@@ -51,6 +41,15 @@ export default function SignupPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
+
+    if (csrfToken === null) {
+      setResponse({
+        success: false,
+        message: "CSRF token is missing. Please try again.",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {

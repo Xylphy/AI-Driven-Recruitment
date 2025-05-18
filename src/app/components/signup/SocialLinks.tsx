@@ -24,6 +24,7 @@ export default function SocialLinks({
             onChange={(e) => update(link.id, e.target.value)}
             placeholder="Enter social link"
             className="border border-gray-300 rounded px-2 py-1 w-full"
+            required
           />
           <button
             onClick={() => deleteLink(link.id)}

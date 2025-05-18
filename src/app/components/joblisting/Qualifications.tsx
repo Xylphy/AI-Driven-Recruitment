@@ -26,6 +26,7 @@ export default function Qualifications({
             onChange={(e) => update(item.id, e.target.value)}
             placeholder={`Enter ${title.toLowerCase()}`}
             className="w-full px-3 py-2 border border-gray-300 rounded"
+            required
           />
           <button
             type="button"

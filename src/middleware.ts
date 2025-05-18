@@ -52,7 +52,13 @@ export async function middleware(request: NextRequest) {
     }
 
     const pathname = request.nextUrl.pathname;
-    const publicPaths = ["/api/csrf", "/api/users/email", "/api/users", "/api/auth/jwt"];
+    const publicPaths = [
+      "/api/csrf",
+      "/api/users/email",
+      "/api/users",
+      "/api/auth/jwt",
+      "/api/auth/status",
+    ];
 
     if (
       !request.cookies.get("token") &&
