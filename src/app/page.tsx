@@ -1,96 +1,215 @@
+"use client";
+import { motion, useAnimation, useInView } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import AnimatedSection from "./components/common/AnimatedSection";
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.3, // delay between each child animation
+    },
+  },
+};
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0 },
+};
+
+const hoverGrow = {
+  hover: { scale: 1.05 },
+};
+
+const categories = [
+  { name: "IT & Software", img: "it-software.jpg" },
+  { name: "Marketing", img: "/marketing.jpg" },
+  { name: "Finance", img: "/finance.jpg" },
+  { name: "Healthcare", img: "/healthcare.jpg" },
+];
 
 export default function Home() {
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate loading of resources
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2000); // Adjust this time as needed
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-white">
+        <div className="text-center">
+          <motion.div
+            className="w-16 h-16 mb-8 border-4 border-[#E30022] border-t-transparent rounded-full"
+            animate={{
+              rotate: 360,
+            }}
+            transition={{
+              duration: 1,
+              repeat: Infinity,
+              ease: "linear",
+            }}
+          />
+          <motion.h2
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+            className="text-2xl font-bold text-gray-800"
+          >
+            Loading
+            <motion.span
+              animate={{
+                opacity: [0, 1, 0],
+              }}
+              transition={{
+                duration: 1.5,
+                repeat: Infinity,
+                repeatType: "loop",
+              }}
+            >
+              ...
+            </motion.span>
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+            className="text-gray-600 mt-2"
+          >
+            Preparing your experience
+          </motion.p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
-      <section className="py-20 px-6 text-center">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Find Your Dream Job with{" "}
-            <span className="text-red-600">Alliance</span>
-          </h1>
-          <p className="text-lg text-gray-700 mb-8">
-            Explore thousands of job opportunities from top companies. Whether
-            you&#39;re starting out or looking for a career change, we&#39;ve
-            got you covered.
-          </p>
-          <Link
-            href="/login"
-            className="bg-[#E30022] inline-block text-white font-bold py-3 px-6 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-500 hover:border-red-500"
-          >
-            BROWSE JOBS
-          </Link>
-        </div>
-      </section>
+      <AnimatedSection className="pt-20 px-6 bg-gradient-to-br from-white via-red-50 to-red-100 flex justify-center items-center">
+        <motion.div
+          className="max-w-6xl mx-auto grid md:grid-cols-2 gap-10 items-center"
+          variants={fadeUp}
+        >
+          <div className="text-left">
+            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+              Find Your Dream Job with{" "}
+              <span className="text-red-600">Alliance</span>
+            </h1>
+            <p className="text-lg text-gray-700 mb-8">
+              Explore thousands of job opportunities from top companies. Whether
+              you're starting out or looking for a career change, we've got you
+              covered.
+            </p>
+            <motion.div variants={fadeUp} whileHover={hoverGrow.hover}>
+              <Link
+                href="/login"
+                className="bg-[#E30022] inline-block text-white font-bold py-3 px-6 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-500 hover:border-red-500"
+              >
+                BROWSE JOBS
+              </Link>
+            </motion.div>
+          </div>
 
-      <section className="py-16 px-6 bg-[#E30022]">
-        <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-10 text-center">
-          <div>
-            <h3 className="text-xl font-semibold text-white mb-2">
-              Curated Listings
-            </h3>
-            <p className="text-white">
-              We hand-pick jobs from reputable companies to ensure quality and
-              relevance.
-            </p>
+          <div className="relative flex justify-center items-center w-full h-full">
+            <img
+              src="/professionals.png"
+              alt="Professional team"
+              className="w-full h-full object-cover max-w-md"
+            />
           </div>
-          <div>
-            <h3 className="text-xl font-semibold text-white mb-2">
-              Smart Search
-            </h3>
-            <p className="text-white">
-              Filter by location, salary, and role type to quickly find what
-              fits you best.
-            </p>
-          </div>
-          <div>
-            <h3 className="text-xl font-semibold text-white mb-2">
-              Career Resources
-            </h3>
-            <p className="text-white">
-              Get tips on resumes, interviews, and more to stay ahead of the
-              competition.
-            </p>
-          </div>
-        </div>
-      </section>
+        </motion.div>
+      </AnimatedSection>
 
-      <section className="py-16 px-6 bg-gray-50">
-        <div className="max-w-6xl mx-auto text-center">
+      <AnimatedSection className="relative py-16 px-6 bg-[url('/workspace.jpg')] bg-cover bg-center bg-no-repeat">
+        <div className="absolute inset-0 bg-black/40 z-0"></div>
+        <motion.div
+          className="max-w-6xl mx-auto grid md:grid-cols-3 gap-10 text-center"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          {[
+            {
+              title: "Curated Listings",
+              desc: "We hand-pick jobs from reputable companies to ensure quality and relevance.",
+            },
+            {
+              title: "Smart Search",
+              desc: "Filter by location, salary, and role type to quickly find what fits you best.",
+            },
+            {
+              title: "Career Resources",
+              desc: "Get tips on resumes, interviews, and more to stay ahead of the competition.",
+            },
+          ].map((item, idx) => (
+            <motion.div
+              key={idx}
+              className="p-6 rounded-lg shadow-lg hover:shadow-2xl backdrop-blur-sm bg-white/20 border border-white/30"
+              variants={fadeUp}
+              whileHover={{ scale: 1.03 }}
+            >
+              <h3 className="text-xl font-semibold text-white mb-2">
+                {item.title}
+              </h3>
+              <p className="text-white">{item.desc}</p>
+            </motion.div>
+          ))}
+        </motion.div>
+      </AnimatedSection>
+
+      <AnimatedSection className="py-16 px-6 bg-gray-50">
+        <motion.div className="max-w-6xl mx-auto text-center" variants={fadeUp}>
           <h2 className="text-3xl font-bold text-gray-800 mb-8">
             Popular Job Categories
           </h2>
           <div className="grid md:grid-cols-4 gap-6">
-            {["IT & Software", "Marketing", "Finance", "Healthcare"].map(
-              (category, i) => (
-                <div
-                  key={i}
-                  className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition"
-                >
-                  <h4 className="text-lg font-semibold text-gray-800">
-                    {category}
-                  </h4>
-                </div>
-              )
-            )}
+            {categories.map((category, i) => (
+              <motion.div
+                key={i}
+                className="bg-red-600 p-6 rounded-lg shadow hover:shadow-lg flex flex-col items-center"
+                variants={fadeUp}
+                whileHover={{ y: -5, transition: { duration: 0.3 } }}
+              >
+                <img
+                  src={category.img}
+                  alt={category.name}
+                  className="w-20 h-20 object-cover rounded-full mb-4"
+                />
+                <h4 className="text-lg font-semibold text-white">
+                  {category.name}
+                </h4>
+              </motion.div>
+            ))}
           </div>
-        </div>
-      </section>
+        </motion.div>
+      </AnimatedSection>
 
-      <section className="py-20 text-center px-6">
-        <h2 className="text-3xl text-[#E30022] md:text-4xl font-bold mb-4">
-          Ready to take the next step?
-        </h2>
-        <p className="text-lg mb-8">
-          Sign up and get matched with the best opportunities.
-        </p>
-        <Link
-          href="/signup"
-          className="bg-[#E30022] inline-block text-white font-bold py-3 px-6 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-500 hover:border-red-500"
+      <AnimatedSection className="py-20 text-center px-6">
+        <motion.h2
+          className="text-3xl text-[#E30022] md:text-4xl font-bold mb-4"
+          variants={fadeUp}
         >
-          APPLY NOW
-        </Link>
-      </section>
+          Ready to take the next step?
+        </motion.h2>
+        <motion.p className="text-lg mb-8" variants={fadeUp}>
+          Sign up and get matched with the best opportunities.
+        </motion.p>
+        <motion.div variants={fadeUp} whileHover={hoverGrow.hover}>
+          <Link
+            href="/signup"
+            className="bg-[#E30022] inline-block text-white font-bold py-3 px-6 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-500 hover:border-red-500"
+          >
+            APPLY NOW
+          </Link>
+        </motion.div>
+      </AnimatedSection>
     </>
   );
 }
