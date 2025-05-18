@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createClientServer } from "@/app/lib/supabase/supabase";
 import { ObjectId } from "mongodb";
-import { insertTable } from "@/app/lib/supabase/action";
+import {
+  insertTable,
+  deleteOne as supabaseDeleteOne,
+} from "@/app/lib/supabase/action";
 import {
   EducationalDetail,
   JobExperience,
@@ -114,6 +117,7 @@ export async function POST(request: NextRequest) {
     ]);
 
     if (results.some((result) => result.error)) {
+      supabaseDeleteOne(supabase, "users", "id", userId.toString());
       return NextResponse.json(
         { error: "Something wrong saving data" },
         { status: 500 }
@@ -141,4 +145,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

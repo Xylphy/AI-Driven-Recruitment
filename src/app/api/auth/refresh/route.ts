@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
       "id"
     );
 
-    const { data: adminData, error: _ } = await supabaseFindOne(
+    const { data: adminData  } = await supabaseFindOne(
       supabase,
       "admins",
       decoded.userId,

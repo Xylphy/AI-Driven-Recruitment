@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const { data: adminData, error: _ } = await findOne(
+    const { data: adminData } = await findOne(
       supabase,
       "admins",
       data.id,

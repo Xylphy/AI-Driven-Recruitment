@@ -1,3 +1,4 @@
+// Note: Cannot be used for getting HTTP-only cookies
 export function getCookie(name: string): string | null {
   if (typeof document === "undefined") {
     // This code is running on the server, so we can't access document.cookie
@@ -13,6 +14,7 @@ export function getCookie(name: string): string | null {
   return null;
 }
 
+// Note: Can't be used for clearing HTTP-only cookies
 export function clearCookies() {
   if (typeof document === "undefined") {
     // This code is running on the server, so we can't access document.cookie
@@ -32,7 +34,7 @@ export async function getCsrfToken(): Promise<string | null> {
   }
 
   try {
-    let csrfResponse = await fetch("/api/csrf");
+    const csrfResponse = await fetch("/api/csrf");
 
     if (!csrfResponse.ok) {
       throw new Error("CSRF token fetch failed");
@@ -66,19 +68,23 @@ export async function checkAuthStatus(csrfToken: string): Promise<boolean> {
       return true;
     }
 
-    return await refreshToken();
-  } catch (error) {
+    return await refreshToken(csrfToken);
+  } catch {
     return false;
   }
 }
 
-export async function refreshToken(): Promise<boolean> {
+export async function refreshToken(csrfToken: string): Promise<boolean> {
   if (typeof document === "undefined") {
     // This code is running on the server, so we can't access document.cookie
     return false;
   }
   return await fetch("/api/auth/refresh", {
     method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRF-Token": csrfToken,
+    },
     credentials: "include",
   })
     .then((res) => {

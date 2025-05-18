@@ -1,19 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { JobListing } from "@/app/types/types";
 import Qualifications from "@/app/components/joblisting/Qualifications";
-
-let idCounter = 1;
+import useCsrfToken from "@/app/hooks/useCsrfToken";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "@/app/lib/firebase/firebase";
+import { checkAuthStatus } from "@/app/lib/library";
+import { useRouter } from "next/navigation";
 
 export default function JobListingPage() {
-  // const [csrfToken, setCsrfToken] = useState<string>("");
+  const router = useRouter();
+  const { csrfToken } = useCsrfToken();
   const [isSubmitting] = useState(false);
-  // const [response, setResponse] = useState<{
-  //   success?: boolean;
-  //   message?: string;
-  // } | null>(null);
-
   const [jobListing, setJobListing] = useState<JobListing>({
     title: "",
     qualifications: [],
@@ -21,12 +20,14 @@ export default function JobListingPage() {
     location: "",
   });
 
-  // useEffect(() => {
-  //   fetch("/api/csrf")
-  //     .then((res) => res.json())
-  //     .then((data) => setCsrfToken(data.csrfToken))
-  //     .catch((err) => alert("CSRF fetch failed: " + err.message));
-  // }, []);
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        router.push("/login");
+      }
+    });
+    return () => unsubscribe();
+  }, [router]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -38,7 +39,7 @@ export default function JobListingPage() {
   const handleAdd = (field: "qualifications" | "requirements") => {
     setJobListing((prev) => ({
       ...prev,
-      [field]: [...prev[field], { id: idCounter++, title: "" }],
+      [field]: [...prev[field], { id: prev[field].length + 1, title: "" }],
     }));
   };
 
@@ -65,6 +66,44 @@ export default function JobListingPage() {
     }));
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!csrfToken) {
+      alert("CSRF token is missing, please try again later");
+      return;
+    }
+
+    if (!(await checkAuthStatus(csrfToken!))) {
+      alert("You are not authenticated");
+      auth.signOut();
+      router.push("/login");
+    }
+
+    const response = await fetch("/api/joblisting", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": csrfToken,
+      },
+      body: JSON.stringify(jobListing),
+    });
+
+    if (!response.ok) {
+      alert("Failed to create job listing");
+      return;
+    } else {
+      alert("Job listing created successfully");
+    }
+
+    setJobListing({
+      title: "",
+      qualifications: [],
+      requirements: [],
+      location: "",
+    });
+  };
+
   return (
     <div className="flex flex-col justify-center items-center mt-10">
       <h1 className="text-4xl font-bold text-[#E30022] text-center mb-2 uppercase tracking-wide">
@@ -75,7 +114,7 @@ export default function JobListingPage() {
         Post your job listing and find the best talent.
       </p>
 
-      <form className="w-full max-w-2xl mt-6 space-y-4">
+      <form onSubmit={handleSubmit} className="w-full max-w-2xl mt-6 space-y-4">
         <div className="mb-4">
           <label
             htmlFor="title"
@@ -91,6 +130,7 @@ export default function JobListingPage() {
             onChange={handleInputChange}
             className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md"
             required
+            maxLength={255}
           />
         </div>
 

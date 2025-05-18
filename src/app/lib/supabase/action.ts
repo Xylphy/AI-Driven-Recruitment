@@ -24,3 +24,12 @@ export function findOne(
 ) {
   return supabase.from(table).select("*").eq(column, value).single();
 }
+
+export function deleteOne(
+  supabase: SupabaseClient,
+  table: string,
+  column: string,
+  value: string
+) {
+  return supabase.from(table).delete().eq(column, value);
+}
