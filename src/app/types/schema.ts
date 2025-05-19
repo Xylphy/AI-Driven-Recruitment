@@ -1,9 +1,71 @@
-import { string, z } from "zod";
+import { IdentifiableItem, DateRange, Title } from "./types";
 
-export const userSupabaseSchema = z.object({
-  firstname: z.string().min(1, "First name is required"),
-  lastname: z.string().min(1, "Last name is required"),
-  phoneNumber: z.string().min(1, "Phone number is required"),
-  prefix: z.string().min(1, "Prefix is required"),
-  firebase_uid: string().optional(),
-});
+// -------------------------------- Database Schema -------------------------------- //
+
+export interface Admin extends IdentifiableItem {
+  user_id: number;
+}
+
+export interface User extends IdentifiableItem {
+  first_name: string;
+  last_name: string;
+  phone_number: string | null;
+  prefix: string;
+  firebase_uid: string;
+  resume_id: string | null;
+}
+
+export interface EducationalDetails
+  extends IdentifiableItem,
+    DateRange,
+    Pick<Admin, "user_id"> {
+  degree: string | null;
+  institute: string | null;
+  currently_pursuing: boolean;
+  major: string | null;
+}
+
+export interface SocialLinks extends IdentifiableItem, Pick<Admin, "user_id"> {
+  link: string | null;
+}
+
+export interface Skills extends IdentifiableItem, Pick<Admin, "user_id"> {
+  skill: string | null;
+}
+
+export interface JobExperiences
+  extends IdentifiableItem,
+    Pick<Admin, "user_id">,
+    DateRange {
+  title: string | null;
+  company: string | null;
+  summary: string | null;
+  currently_working: boolean;
+}
+
+export interface JobApplicants
+  extends IdentifiableItem,
+    Pick<Admin, "user_id"> {
+  created_at: string;
+  joblisting_id: number;
+}
+
+export interface JobListing
+  extends IdentifiableItem,
+    Pick<JobApplicants, "created_at">,
+    Title {
+  location: string;
+  created_by: number;
+}
+
+export interface JobListingQualifications
+  extends IdentifiableItem,
+    Pick<JobApplicants, "joblisting_id"> {
+  qualification: string;
+}
+
+export interface JobListingRequirements
+  extends IdentifiableItem,
+    Pick<JobApplicants, "joblisting_id"> {
+  requirement: string;
+}
