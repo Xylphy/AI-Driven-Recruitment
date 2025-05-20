@@ -184,6 +184,13 @@ export default function JobListingPage() {
           </button>
         </div>
       </form>
+
+      <button
+        onClick={() => router.back()}
+        className="mt-4 bg-gray-300 text-gray-800 font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-gray-500 hover:border-gray-500"
+      >
+        Back
+      </button>
     </div>
   );
 }

@@ -1,16 +1,16 @@
-// --------------- Common Types --------------- //
-interface IdentifiableItem {
+// --------------- Types for common attributes | meant for extends --------------- //
+export interface IdentifiableItem {
   id: number;
 }
 
-interface DateRange {
+export interface DateRange {
   startMonth: string;
   startYear: number;
   endMonth: string;
   endYear: number;
 }
 
-interface Title {
+export interface Title {
   title: string;
 }
 
@@ -40,7 +40,7 @@ export interface SocialLink extends IdentifiableItem {
 }
 
 export interface JobApplicationDetail extends IdentifiableItem, Title {
-  dateApplied: string;
+  date: string;
 }
 
 export interface EducationalDetail extends DateRange, IdentifiableItem {
@@ -62,4 +62,5 @@ export interface JobListing extends Title {
   qualifications: IdentifiableTitle[];
   requirements: IdentifiableTitle[];
   location: string;
+  created_at: string;
 }

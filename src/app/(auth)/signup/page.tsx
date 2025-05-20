@@ -5,7 +5,7 @@ import { signup } from "@/app/lib/actionServer";
 import SocialLinks from "@/app/components/signup/SocialLinks";
 import EducationalDetails from "@/app/components/signup/EducationalDetails";
 import JobExperiences from "@/app/components/signup/JobExperience";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   SocialLink,
   EducationalDetail,
