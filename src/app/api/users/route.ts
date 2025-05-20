@@ -53,9 +53,9 @@ export async function POST(request: NextRequest) {
     const supabase = await createClientServer(1, true);
 
     const { data: insertedData, error } = await insertTable(supabase, "users", {
-      firstName: data.firstName,
-      lastName: data.lastName,
-      phoneNumber: data.mobileNumber,
+      first_name: data.firstName,
+      last_name: data.lastName,
+      phone_number: data.mobileNumber,
       prefix: data.prefix,
       firebase_uid: body.uid,
       resume_id: data.public_id,

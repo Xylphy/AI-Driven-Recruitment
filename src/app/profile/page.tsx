@@ -17,10 +17,11 @@ import { useEffect, useState } from "react";
 import useCsrfToken from "../hooks/useCsrfToken";
 import { checkAuthStatus } from "../lib/library";
 import { motion } from "framer-motion";
+import { JobApplicationDetail, JobListing } from "../types/types";
 
 export default function Profile() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean[]>([true, true]);
   const [information, setInformation] = useState({
     firstName: "",
     lastName: "",
@@ -28,6 +29,68 @@ export default function Profile() {
   });
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const { csrfToken } = useCsrfToken();
+
+  const [jobListed, setJobListed] = useState<{
+    createdByThem: JobApplicationDetail[];
+    createdByOthers: JobApplicationDetail[];
+  }>({
+    createdByThem: [],
+    createdByOthers: [],
+  });
+
+  useEffect(() => {
+    if (!csrfToken || !isAuthenticated) {
+      return;
+    }
+
+    const fetchContent = async () => {
+      if (!(await checkAuthStatus(csrfToken))) {
+        auth.signOut();
+        router.push("/login");
+        return;
+      }
+      fetch("/api/joblisting", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken,
+        },
+      })
+        .then((res) => {
+          if (!res.ok) {
+            alert("Failed to fetch job listings");
+            return null;
+          }
+          return res.json();
+        })
+        .then((body) => {
+          if (!body) {
+            return;
+          }
+          if (information.isAdmin) {
+            setJobListed({
+              createdByThem: body.data.createdByThem.map((job: JobListing) => {
+                return {
+                  ...job,
+                  date: new Date(job.created_at).toLocaleDateString(),
+                };
+              }),
+              createdByOthers: body.data.createdByAll.map((job: JobListing) => {
+                return {
+                  ...job,
+                  date: new Date(job.created_at).toLocaleDateString(),
+                };
+              }),
+            });
+          }
+        })
+        .finally(() => {
+          setIsLoading((prevState) => [prevState[0], false]);
+        });
+    };
+
+    fetchContent();
+  }, [router, information.isAdmin]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -39,11 +102,11 @@ export default function Profile() {
       }
     });
 
-    const setInfo = async () => {
-      if (!csrfToken || !isAuthenticated) {
-        return;
-      }
+    if (!csrfToken || !isAuthenticated) {
+      return;
+    }
 
+    const setInfo = async () => {
       if (!(await checkAuthStatus(csrfToken))) {
         auth.signOut();
         router.push("/login");
@@ -73,13 +136,15 @@ export default function Profile() {
               lastName: body.data.lastName,
               isAdmin: body.data.isAdmin,
             });
-            setIsLoading(false);
           }
         })
         .catch(() => {
           auth.signOut();
           router.push("/login");
           return;
+        })
+        .finally(() => {
+          setIsLoading((prevState) => [false, prevState[1]]);
         });
     };
 
@@ -88,55 +153,7 @@ export default function Profile() {
     return () => unsubscribe();
   }, [router, csrfToken, isAuthenticated]);
 
-  const jobApplications = [
-    {
-      id: 1,
-      title: "Systems Administrator",
-      dateApplied: "March 10, 2025",
-    },
-    {
-      id: 2,
-      title: "Technical Support Staff",
-      dateApplied: "April 2, 2025",
-    },
-    {
-      id: 3,
-      title: "Software Developer",
-      dateApplied: "May 1, 2025",
-    },
-    {
-      id: 4,
-      title: "Systems Administrator",
-      dateApplied: "March 10, 2025",
-    },
-    {
-      id: 5,
-      title: "Technical Support Staff",
-      dateApplied: "April 2, 2025",
-    },
-    {
-      id: 6,
-      title: "Software Developer",
-      dateApplied: "May 1, 2025",
-    },
-    {
-      id: 7,
-      title: "Systems Administrator",
-      dateApplied: "March 10, 2025",
-    },
-    {
-      id: 8,
-      title: "Technical Support Staff",
-      dateApplied: "April 2, 2025",
-    },
-    {
-      id: 9,
-      title: "Software Developer",
-      dateApplied: "May 1, 2025",
-    },
-  ];
-
-  if (isLoading) {
+  if (isLoading.some((loading) => loading)) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-white">
         <div className="text-center">
@@ -212,7 +229,7 @@ export default function Profile() {
             </label>
 
             <h2 className="text-lg font-semibold mt-4 text-center">
-              {isLoading ? (
+              {isLoading.some((loading) => loading) ? (
                 <div className="animate-pulse">
                   <div className="w-24 h-4 bg-gray-300 rounded"></div>
                   <div className="w-16 h-4 bg-gray-300 rounded mt-2"></div>
@@ -273,7 +290,15 @@ export default function Profile() {
           <div className="w-full md:w-2/3 p-6  ">
             <div className="flex justify-between items-start mb-6">
               <h2 className="text-2xl font-bold">
-                <span className="text-red-600">Applied</span> Jobs
+                {information.isAdmin ? (
+                  <>
+                    <span className="text-red-600">Job</span> Listed{" "}
+                  </>
+                ) : (
+                  <>
+                    <span className="text-red-600">Applied</span> Jobs
+                  </>
+                )}
               </h2>
               <div className="relative w-5 h-5">
                 <MdNotifications className="w-6 h-6" />
@@ -281,7 +306,14 @@ export default function Profile() {
               </div>
             </div>
             <div className="space-y-5 pb-9 overflow-y-auto h-full">
-              <JobApplicationDetails jobApplications={jobApplications} />
+              <JobApplicationDetails
+                jobApplications={
+                  information.isAdmin
+                    ? jobListed.createdByThem
+                    : jobListed.createdByOthers
+                }
+                isAdmin={information.isAdmin}
+              />
             </div>
           </div>
         </div>

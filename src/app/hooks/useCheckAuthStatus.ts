@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { checkAuthStatus, getCsrfToken } from "@/app/lib/library";
+import { checkAuthStatus } from "@/app/lib/library";
 
 export function useCheckAuthStatus(csrfToken: string) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -10,12 +10,7 @@ export function useCheckAuthStatus(csrfToken: string) {
     const checkStatus = async () => {
       setIsLoading(true);
       try {
-        const token = await getCsrfToken();
-        if (!token) {
-          throw new Error("Failed to fetch CSRF token");
-        }
-
-        const status = await checkAuthStatus(token);
+        const status = await checkAuthStatus(csrfToken);
         if (status) {
           setIsAuthenticated(true);
         } else {
@@ -29,7 +24,7 @@ export function useCheckAuthStatus(csrfToken: string) {
     };
 
     checkStatus();
-  }, []);
+  }, [csrfToken]);
 
   return { isAuthenticated, isLoading, error };
 }

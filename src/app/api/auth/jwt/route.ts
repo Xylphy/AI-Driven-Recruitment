@@ -2,8 +2,9 @@ import { createClientServer } from "@/app/lib/supabase/supabase";
 import { ErrorResponse } from "@/app/types/classes";
 import { NextRequest, NextResponse } from "next/server";
 import { serialize } from "cookie";
-import { findOne } from "@/app/lib/supabase/action";
+import { findMany } from "@/app/lib/supabase/action";
 import jwt from "jsonwebtoken";
+import { User, Admin } from "@/app/types/schema";
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,12 +16,15 @@ export async function GET(request: NextRequest) {
       );
     }
     const supabase = await createClientServer(1, true);
-    const { data, error } = await findOne(
+    const { data, error } = await findMany<User>(
       supabase,
       "users",
-      authHeader.split(" ")[1],
-      "firebase_uid"
-    );
+      "firebase_uid",
+      authHeader.split(" ")[1]
+    ).single();
+
+    console.log("Error:", error);
+
     if (error) {
       return NextResponse.json(
         { error: "Failed to fetch user from the database" },
@@ -32,12 +36,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const { data: adminData } = await findOne(
+    const { data: adminData } = await findMany<Admin>(
       supabase,
       "admins",
-      data.id,
-      "user_id"
-    );
+      "user_id",
+      data.id.toString()
+    ).single();
 
     const response = NextResponse.json({
       message: "Success",
@@ -50,10 +54,9 @@ export async function GET(request: NextRequest) {
         "token",
         jwt.sign(
           {
-            email: data.email,
-            phoneNumber: data.phoneNumber,
-            firstName: data.firstName,
-            lastName: data.lastName,
+            phoneNumber: data.phone_number,
+            firstName: data.first_name,
+            lastName: data.last_name,
             prefix: data.prefix,
             resumeId: data.resume_id,
             id: data.id,

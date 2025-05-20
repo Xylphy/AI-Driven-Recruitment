@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import z from "zod";
 import { createClientServer } from "@/app/lib/supabase/supabase";
-import { deleteOne, insertTable } from "@/app/lib/supabase/action";
+import { deleteOne, findMany, insertTable } from "@/app/lib/supabase/action";
+import { JobListing } from "@/app/types/schema";
 
 const identifiableTitleSchema = z.object({
   id: z.string().or(z.number()),
@@ -88,4 +89,66 @@ export async function POST(request: NextRequest) {
     message: "Success",
     status: 401,
   });
+}
+
+// Admin: Get all their created joblistings or created by others
+// User: Get all applied joblistings
+// Usage: GET /api/joblisting?page=1&limit=10
+export async function GET(request: NextRequest) {
+  const token = request.cookies.get("token")!;
+  const page = parseInt(request.nextUrl.searchParams.get("page") || "1", 10);
+  const limit = parseInt(
+    request.nextUrl.searchParams.get("limit") || "100",
+    10
+  );
+
+  const offset = (page - 1) * limit;
+
+  const { isAdmin, id: userId } = jwt.verify(
+    token.value,
+    process.env.JWT_SECRET!
+  ) as {
+    isAdmin: boolean;
+    id: string;
+  };
+
+  const supabase = await createClientServer(1, true);
+
+  if (isAdmin) {
+    const [themResults, allResults] = await Promise.all([
+      findMany<JobListing>(supabase, "job_listings", "created_by", userId)
+        .many()
+        .range(offset, offset + limit - 1)
+        .order("created_at", { ascending: false })
+        .execute(),
+      findMany<JobListing>(supabase, "job_listings")
+        .many()
+        .range(offset, offset + limit - 1)
+        .order("created_at", { ascending: false })
+        .execute(),
+    ]);
+
+    if (themResults.error || allResults.error) {
+      return NextResponse.json(
+        { error: "Failed to fetch job listings" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      message: "Success",
+      status: 200,
+      data: {
+        createdByThem: themResults.data?.map((item) => ({
+          title: item.title,
+          created_at: item.created_at,
+        })),
+        createdByAll: allResults.data?.map((item) => ({
+          title: item.title,
+          created_at: item.created_at,
+        })),
+      },
+    });
+  } else {
+  }
 }

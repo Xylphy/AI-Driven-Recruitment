@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import { serialize } from "cookie";
 import { createClientServer } from "@/app/lib/supabase/supabase";
-import { findOne as supabaseFindOne } from "@/app/lib/supabase/action";
+import { findMany } from "@/app/lib/supabase/action";
+import { Admin, User } from "@/app/types/schema";
 
 interface RefreshTokenPayload {
   userId: string;
@@ -35,19 +36,19 @@ export async function GET(request: NextRequest) {
     }
     const supabase = await createClientServer(1, true);
 
-    const { data: user, error: userError } = await supabaseFindOne(
+    const { data: user, error: userError } = await findMany<User>(
       supabase,
       "users",
-      decoded.userId,
-      "id"
-    );
+      "id",
+      decoded.userId
+    ).single();
 
-    const { data: adminData  } = await supabaseFindOne(
+    const { data: adminData } = await findMany<Admin>(
       supabase,
       "admins",
-      decoded.userId,
-      "user_id"
-    );
+      "user_id",
+      decoded.userId
+    ).single();
 
     if (userError || !user) {
       const response = NextResponse.json(
@@ -87,10 +88,9 @@ export async function GET(request: NextRequest) {
         "token",
         jwt.sign(
           {
-            email: user.email,
-            phoneNumber: user.phoneNumber,
-            firstName: user.firstName,
-            lastName: user.lastName,
+            phoneNumber: user.phone_number,
+            firstName: user.first_name,
+            lastName: user.last_name,
             prefix: user.prefix,
             resumeId: user.resume_id,
             id: user.id,

@@ -58,6 +58,7 @@ export async function middleware(request: NextRequest) {
       "/api/users",
       "/api/auth/jwt",
       "/api/auth/status",
+      "/api/auth/refresh",
     ];
 
     if (

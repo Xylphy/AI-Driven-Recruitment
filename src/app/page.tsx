@@ -1,8 +1,9 @@
 "use client";
-import { motion, useAnimation, useInView } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import AnimatedSection from "./components/common/AnimatedSection";
+import Image from "next/image";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -24,7 +25,7 @@ const hoverGrow = {
 };
 
 const categories = [
-  { name: "IT & Software", img: "it-software.jpg" },
+  { name: "IT & Software", img: "/it-software.jpg" },
   { name: "Marketing", img: "/marketing.jpg" },
   { name: "Finance", img: "/finance.jpg" },
   { name: "Healthcare", img: "/healthcare.jpg" },
@@ -111,8 +112,8 @@ export default function Home() {
             </h1>
             <p className="text-lg text-gray-700 mb-8">
               Explore thousands of job opportunities from top companies. Whether
-              you're starting out or looking for a career change, we've got you
-              covered.
+              you&apos;re starting out or looking for a career change,
+              we&apos;ve got you covered.
             </p>
             <motion.div variants={fadeUp} whileHover={hoverGrow.hover}>
               <Link
@@ -125,9 +126,11 @@ export default function Home() {
           </div>
 
           <div className="relative flex justify-center items-center w-full h-full">
-            <img
+            <Image
               src="/professionals.png"
               alt="Professional team"
+              width={500}
+              height={500}
               className="w-full h-full object-cover max-w-md"
             />
           </div>
@@ -192,9 +195,11 @@ export default function Home() {
                 variants={fadeUp}
                 whileHover={{ y: -5, transition: { duration: 0.3 } }}
               >
-                <img
+                <Image
                   src={category.img}
                   alt={category.name}
+                  width={80}
+                  height={80}
                   className="w-20 h-20 object-cover rounded-full mb-4"
                 />
                 <h4 className="text-lg font-semibold text-white">
