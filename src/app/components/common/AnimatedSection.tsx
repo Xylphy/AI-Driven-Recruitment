@@ -5,6 +5,8 @@ import { motion, useInView, useAnimation } from "framer-motion";
 type Props = {
   children: React.ReactNode;
   className?: string;
+  start?: boolean;
+  onComplete?: () => void;
 };
 
 const container = {
@@ -19,16 +21,23 @@ const container = {
   },
 };
 
-export default function AnimatedSection({ children, className }: Props) {
+export default function AnimatedSection({
+  children,
+  className,
+  start = false,
+  onComplete,
+}: Props) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, amount: 0.3 });
   const controls = useAnimation();
 
   useEffect(() => {
-    if (inView) {
-      controls.start("visible");
+    if (inView && start) {
+      controls.start("visible").then(() => {
+        if (onComplete) onComplete(); // callback to parent
+      });
     }
-  }, [inView, controls]);
+  }, [inView, start, controls, onComplete]);
 
   return (
     <motion.section
@@ -36,7 +45,7 @@ export default function AnimatedSection({ children, className }: Props) {
       className={className}
       initial="hidden"
       animate={controls}
-      variants={container} // <-- Applies stagger to children
+      variants={container}
     >
       {children}
     </motion.section>
