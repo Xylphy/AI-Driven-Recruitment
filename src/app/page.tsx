@@ -32,12 +32,15 @@ const categories = [
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
+  const [section1Done, setSection1Done] = useState(false);
+  const [section2Done, setSection2Done] = useState(false);
+  const [section3Done, setSection3Done] = useState(false);
+  const [section4Done, setSection4Done] = useState(false);
 
   useEffect(() => {
-    // Simulate loading of resources
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 2000); // Adjust this time as needed
+    }, 2000);
 
     return () => clearTimeout(timer);
   }, []);
@@ -92,7 +95,11 @@ export default function Home() {
 
   return (
     <>
-      <AnimatedSection className="pt-20 px-6 bg-gradient-to-br from-white via-red-50 to-red-100 flex justify-center items-center">
+      <AnimatedSection
+        className="pt-20 px-6 bg-gradient-to-br from-white via-red-50 to-red-100 flex justify-center items-center"
+        start={true}
+        onComplete={() => setSection1Done(true)}
+      >
         <motion.div
           className="max-w-6xl mx-auto grid md:grid-cols-2 gap-10 items-center"
           variants={fadeUp}
@@ -127,7 +134,11 @@ export default function Home() {
         </motion.div>
       </AnimatedSection>
 
-      <AnimatedSection className="relative py-16 px-6 bg-[url('/workspace.jpg')] bg-cover bg-center bg-no-repeat">
+      <AnimatedSection
+        className="relative py-16 px-6 bg-[url('/workspace.jpg')] bg-cover bg-center bg-no-repeat"
+        start={section1Done}
+        onComplete={() => setSection2Done(true)}
+      >
         <div className="absolute inset-0 bg-black/40 z-0"></div>
         <motion.div
           className="max-w-6xl mx-auto grid md:grid-cols-3 gap-10 text-center"
@@ -164,7 +175,11 @@ export default function Home() {
         </motion.div>
       </AnimatedSection>
 
-      <AnimatedSection className="py-16 px-6 bg-gray-50">
+      <AnimatedSection
+        className="py-16 px-6 bg-gray-50"
+        start={true}
+        onComplete={() => setSection3Done(true)}
+      >
         <motion.div className="max-w-6xl mx-auto text-center" variants={fadeUp}>
           <h2 className="text-3xl font-bold text-gray-800 mb-8">
             Popular Job Categories
@@ -191,7 +206,11 @@ export default function Home() {
         </motion.div>
       </AnimatedSection>
 
-      <AnimatedSection className="py-20 text-center px-6">
+      <AnimatedSection
+        className="py-20 text-center px-6"
+        start={true}
+        onComplete={() => setSection4Done(true)}
+      >
         <motion.h2
           className="text-3xl text-[#E30022] md:text-4xl font-bold mb-4"
           variants={fadeUp}
