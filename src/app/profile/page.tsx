@@ -16,10 +16,11 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import useCsrfToken from "../hooks/useCsrfToken";
 import { checkAuthStatus } from "../lib/library";
+import { motion } from "framer-motion";
 
 export default function Profile() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [information, setInformation] = useState({
     firstName: "",
     lastName: "",
@@ -37,8 +38,6 @@ export default function Profile() {
         setIsAuthenticated(true);
       }
     });
-
-    setIsLoading(true);
 
     const setInfo = async () => {
       if (!csrfToken || !isAuthenticated) {
@@ -136,6 +135,55 @@ export default function Profile() {
       dateApplied: "May 1, 2025",
     },
   ];
+
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-white">
+        <div className="text-center">
+          <motion.div
+            className="w-16 h-16 mb-8 border-4 border-[#E30022] border-t-transparent rounded-full"
+            animate={{
+              rotate: 360,
+            }}
+            transition={{
+              duration: 1,
+              repeat: Infinity,
+              ease: "linear",
+            }}
+          />
+          <motion.h2
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+            className="text-2xl font-bold text-gray-800"
+          >
+            Loading
+            <motion.span
+              animate={{
+                opacity: [0, 1, 0],
+              }}
+              transition={{
+                duration: 1.5,
+                repeat: Infinity,
+                repeatType: "loop",
+              }}
+            >
+              ...
+            </motion.span>
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+            className="text-gray-600 mt-2"
+          >
+            Preparing your experience
+          </motion.p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <main className="bg-white h-[75vh] overflow-hidden">
       <div className="container mx-auto px-4 h-full">
@@ -186,7 +234,7 @@ export default function Profile() {
             {information.isAdmin && (
               <button
                 onClick={() => router.push("/createjob")}
-                className="mt-4 bg-blue-600 text-white font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-blue-600 hover:border-blue-600 flex items-center justify-center gap-2"
+                className="mt-4 bg-red-600 text-white font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-600 hover:border-red-600 flex items-center justify-center gap-2"
               >
                 <span>Add Job Listing</span>
                 <svg
