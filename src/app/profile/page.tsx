@@ -39,21 +39,43 @@ export default function Profile() {
   });
 
   useEffect(() => {
-    if (!csrfToken || !isAuthenticated) {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        router.push("/login");
+      }
+    });
+    return () => unsubscribe();
+  }, [router]);
+
+  useEffect(() => {
+    if (!csrfToken) {
       return;
     }
 
-    const fetchContent = async () => {
+    const checkAuth = async () => {
       if (!(await checkAuthStatus(csrfToken))) {
         auth.signOut();
         router.push("/login");
         return;
+      } else {
+        setIsAuthenticated(true);
       }
+    };
+
+    checkAuth();
+  }, [csrfToken, router]);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      return;
+    }
+
+    const fetchContent = async () => {
       fetch("/api/joblisting", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "X-CSRF-Token": csrfToken,
+          "X-CSRF-Token": csrfToken!,
         },
       })
         .then((res) => {
@@ -68,19 +90,16 @@ export default function Profile() {
             return;
           }
           if (information.isAdmin) {
+            const formatJobDate = (
+              job: Pick<JobListing, "title" | "created_at">
+            ) => ({
+              ...job,
+              date: new Date(job.created_at).toLocaleDateString(),
+            });
+
             setJobListed({
-              createdByThem: body.data.createdByThem.map((job: JobListing) => {
-                return {
-                  ...job,
-                  date: new Date(job.created_at).toLocaleDateString(),
-                };
-              }),
-              createdByOthers: body.data.createdByAll.map((job: JobListing) => {
-                return {
-                  ...job,
-                  date: new Date(job.created_at).toLocaleDateString(),
-                };
-              }),
+              createdByThem: body.data.createdByThem.map(formatJobDate),
+              createdByOthers: body.data.createdByAll.map(formatJobDate),
             });
           }
         })
@@ -90,34 +109,19 @@ export default function Profile() {
     };
 
     fetchContent();
-  }, [router, information.isAdmin]);
+  }, [information]);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        setIsAuthenticated(false);
-        router.push("/login");
-      } else {
-        setIsAuthenticated(true);
-      }
-    });
-
-    if (!csrfToken || !isAuthenticated) {
+    if (!isAuthenticated) {
       return;
     }
 
     const setInfo = async () => {
-      if (!(await checkAuthStatus(csrfToken))) {
-        auth.signOut();
-        router.push("/login");
-        return;
-      }
-
       fetch("/api/users/userDetails", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "X-CSRF-Token": csrfToken,
+          "X-CSRF-Token": csrfToken!,
         },
         credentials: "include",
       })
@@ -149,9 +153,7 @@ export default function Profile() {
     };
 
     setInfo();
-
-    return () => unsubscribe();
-  }, [router, csrfToken, isAuthenticated]);
+  }, [router, isAuthenticated]);
 
   if (isLoading.some((loading) => loading)) {
     return (

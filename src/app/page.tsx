@@ -38,7 +38,11 @@ export default function Home() {
   const [section3Done, setSection3Done] = useState(false);
   const [section4Done, setSection4Done] = useState(false);
 
+  if (section2Done || section3Done || section4Done) {
+  }
+
   useEffect(() => {
+    // As of now we don't have any thing to load so maybe this is not needed(?)
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 2000);

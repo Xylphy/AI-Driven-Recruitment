@@ -5,12 +5,12 @@ import { verifyCsrfToken } from "@/app/lib/csrf";
 
 const limiter = rateLimit({
   max: 50,
-  windowMs: 15 * 60 * 1000,
+  windowMs: 10 * 60 * 1000,
 });
 
 export async function middleware(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith("/api")) {
-    if (!(await limiter.check(request))) {
+    if (!(await limiter.check(request)).success) {
       return NextResponse.json(
         { error: "Rate limit exceeded" },
         { status: 429 }

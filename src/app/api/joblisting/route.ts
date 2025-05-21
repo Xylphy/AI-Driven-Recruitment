@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import z from "zod";
 import { createClientServer } from "@/app/lib/supabase/supabase";
 import { deleteOne, findMany, insertTable } from "@/app/lib/supabase/action";
-import { JobListing } from "@/app/types/schema";
+import { JobApplicants, JobListing, User } from "@/app/types/schema";
 
 const identifiableTitleSchema = z.object({
   id: z.string().or(z.number()),
@@ -140,15 +140,55 @@ export async function GET(request: NextRequest) {
       status: 200,
       data: {
         createdByThem: themResults.data?.map((item) => ({
+          id: item.id,
           title: item.title,
           created_at: item.created_at,
         })),
         createdByAll: allResults.data?.map((item) => ({
+          id: item.id,
           title: item.title,
           created_at: item.created_at,
         })),
       },
     });
   } else {
+    const { data: jobApplied, error: jobAppliedError } = await findMany<
+      JobApplicants & {
+        job_listings: JobListing & {
+          created_by: User;
+        };
+      }
+    >(
+      supabase,
+      "job_applicants",
+      "user_id",
+      userId,
+      "job_listings:joblisting_id(*, created_by:created_by(first_name, last_name))"
+    )
+      .many()
+      .range(offset, offset + limit - 1)
+      .order("created_at", {
+        ascending: false,
+      })
+      .execute();
+
+    if (jobAppliedError) {
+      return NextResponse.json(
+        { error: "Failed to fetch job listings" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      message: "Success",
+      status: 200,
+      data: {
+        jobApplied: jobApplied?.map((item) => ({
+          id: item.job_listings.id,
+          title: item.job_listings.title,
+          created_at: item.job_listings.created_at,
+        })),
+      },
+    });
   }
 }
