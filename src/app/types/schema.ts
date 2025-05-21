@@ -1,9 +1,13 @@
-import { IdentifiableItem, DateRange, Title } from "./types";
+import { DateRange, Title } from "./types";
 
 // -------------------------------- Database Schema -------------------------------- //
 
+interface IdentifiableItem {
+  id: string;
+}
+
 export interface Admin extends IdentifiableItem {
-  user_id: number;
+  user_id: string;
 }
 
 export interface User extends IdentifiableItem {
@@ -47,7 +51,7 @@ export interface JobApplicants
   extends IdentifiableItem,
     Pick<Admin, "user_id"> {
   created_at: string;
-  joblisting_id: number;
+  joblisting_id: string;
 }
 
 export interface JobListing
@@ -55,7 +59,7 @@ export interface JobListing
     Pick<JobApplicants, "created_at">,
     Title {
   location: string;
-  created_by: number;
+  created_by: string;
 }
 
 export interface JobListingQualifications

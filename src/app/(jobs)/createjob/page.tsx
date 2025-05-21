@@ -13,7 +13,7 @@ export default function JobListingPage() {
   const router = useRouter();
   const { csrfToken } = useCsrfToken();
   const [isSubmitting] = useState(false);
-  const [jobListing, setJobListing] = useState<JobListing>({
+  const [jobListing, setJobListing] = useState<Omit<JobListing, "created_at">>({
     title: "",
     qualifications: [],
     requirements: [],

@@ -23,8 +23,6 @@ export async function GET(request: NextRequest) {
       authHeader.split(" ")[1]
     ).single();
 
-    console.log("Error:", error);
-
     if (error) {
       return NextResponse.json(
         { error: "Failed to fetch user from the database" },
@@ -60,7 +58,7 @@ export async function GET(request: NextRequest) {
             prefix: data.prefix,
             resumeId: data.resume_id,
             id: data.id,
-            isAdmin: adminData ? true : false,
+            isAdmin: !!adminData,
             type: "access",
           },
           process.env.JWT_SECRET as string,

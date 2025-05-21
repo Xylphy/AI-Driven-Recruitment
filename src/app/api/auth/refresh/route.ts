@@ -36,21 +36,11 @@ export async function GET(request: NextRequest) {
     }
     const supabase = await createClientServer(1, true);
 
-    const { data: user, error: userError } = await findMany<User>(
-      supabase,
-      "users",
-      "id",
-      decoded.userId
-    ).single();
+    const { data: userData, error: userError } = await findMany<
+      User & { admins: Admin[] }
+    >(supabase, "users", "id", decoded.userId, "*, admins").single();
 
-    const { data: adminData } = await findMany<Admin>(
-      supabase,
-      "admins",
-      "user_id",
-      decoded.userId
-    ).single();
-
-    if (userError || !user) {
+    if (userError || !userData) {
       const response = NextResponse.json(
         { error: "Invalid refresh token or user not found." },
         { status: 401 }
@@ -88,13 +78,13 @@ export async function GET(request: NextRequest) {
         "token",
         jwt.sign(
           {
-            phoneNumber: user.phone_number,
-            firstName: user.first_name,
-            lastName: user.last_name,
-            prefix: user.prefix,
-            resumeId: user.resume_id,
-            id: user.id,
-            isAdmin: adminData ? true : false,
+            phoneNumber: userData.phone_number,
+            firstName: userData.first_name,
+            lastName: userData.last_name,
+            prefix: userData.prefix,
+            resumeId: userData.resume_id,
+            id: userData.id,
+            isAdmin: userData.admins.length > 0,
             type: "access",
           },
           process.env.JWT_SECRET as string,
@@ -115,7 +105,7 @@ export async function GET(request: NextRequest) {
       serialize(
         "refreshToken",
         jwt.sign(
-          { userId: user.id, type: "refresh" },
+          { userId: userData.id, type: "refresh" },
           process.env.REFRESH_TOKEN_SECRET as string,
           { expiresIn: "7d" }
         ),

@@ -9,7 +9,7 @@ import { Button } from "../../../components/common/Button";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, use } from "react";
 import { auth } from "@/app/lib/firebase/firebase";
-import { getCsrfToken } from "@/app/lib/library";
+import useCsrfToken from "@/app/hooks/useCsrfToken";
 
 export default function Verification({
   params,
@@ -17,22 +17,16 @@ export default function Verification({
   params: Promise<{ id: string }>;
 }) {
   const router = useRouter();
-  const [csrfToken, setCsrfToken] = useState<string>("");
+  const { csrfToken } = useCsrfToken();
   const [email, setEmail] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const { id } = use(params);
 
   useEffect(() => {
-    getCsrfToken().then((token) => {
-      if (!token) {
-        router.push("/signup");
-      } else {
-        setCsrfToken(token);
-      }
-    });
-  }, [router]);
+    if (!csrfToken) {
+      return;
+    }
 
-  useEffect(() => {
     const fetchData = async () => {
       try {
         const emailResponse = await fetch("/api/users/email", {
@@ -62,6 +56,12 @@ export default function Verification({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    if (!csrfToken) {
+      alert("CSRF token not found");
+      return;
+    }
+
     const formData = new FormData(e.currentTarget);
     const password = formData.get("password");
     const confirmPassword = formData.get("confirmPassword");

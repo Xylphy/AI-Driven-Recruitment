@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    deleteOne("ai-driven-recruitment", "verification_tokens", {
+    await deleteOne("ai-driven-recruitment", "verification_tokens", {
       _id: ObjectId.createFromHexString(body.token),
     });
 
