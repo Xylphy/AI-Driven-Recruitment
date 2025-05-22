@@ -2,7 +2,7 @@ import { createClientServer } from "@/app/lib/supabase/supabase";
 import { ErrorResponse } from "@/app/types/classes";
 import { NextRequest, NextResponse } from "next/server";
 import { serialize } from "cookie";
-import { findMany } from "@/app/lib/supabase/action";
+import { find } from "@/app/lib/supabase/action";
 import jwt from "jsonwebtoken";
 import { User, Admin } from "@/app/types/schema";
 
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
       );
     }
     const supabase = await createClientServer(1, true);
-    const { data, error } = await findMany<User>(
+    const { data, error } = await find<User>(
       supabase,
       "users",
       "firebase_uid",
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const { data: adminData } = await findMany<Admin>(
+    const { data: adminData } = await find<Admin>(
       supabase,
       "admins",
       "user_id",

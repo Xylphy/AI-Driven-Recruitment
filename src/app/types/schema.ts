@@ -60,6 +60,7 @@ export interface JobListing
     Title {
   location: string;
   created_by: string;
+  is_fulltime: boolean;
 }
 
 export interface JobListingQualifications

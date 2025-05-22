@@ -1,8 +1,5 @@
 "use client";
 
-import { onAuthStateChanged } from "firebase/auth";
-import { useRouter } from "next/navigation";
-import { auth } from "../lib/firebase/firebase";
 import { FaFacebook, FaInstagram } from "react-icons/fa";
 import {
   MdEmail,
@@ -14,56 +11,25 @@ import {
 import JobApplicationDetails from "@/app/components/profile/JobApplications";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import useCsrfToken from "../hooks/useCsrfToken";
-import { checkAuthStatus } from "../lib/library";
 import { motion } from "framer-motion";
-import { JobApplicationDetail, JobListing } from "../types/types";
+import { JobListing } from "../types/schema";
+import useAuth from "../hooks/useAuth";
+import { useRouter } from "next/navigation";
+import { auth } from "@/app/lib/firebase/firebase";
 
 export default function Profile() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState<boolean[]>([true, true]);
-  const [information, setInformation] = useState({
-    firstName: "",
-    lastName: "",
-    isAdmin: false,
-  });
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const { csrfToken } = useCsrfToken();
 
   const [jobListed, setJobListed] = useState<{
-    createdByThem: JobApplicationDetail[];
-    createdByOthers: JobApplicationDetail[];
+    createdByThem: JobListing[];
+    createdByOthers: JobListing[];
   }>({
     createdByThem: [],
     createdByOthers: [],
   });
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        router.push("/login");
-      }
-    });
-    return () => unsubscribe();
-  }, [router]);
-
-  useEffect(() => {
-    if (!csrfToken) {
-      return;
-    }
-
-    const checkAuth = async () => {
-      if (!(await checkAuthStatus(csrfToken))) {
-        auth.signOut();
-        router.push("/login");
-        return;
-      } else {
-        setIsAuthenticated(true);
-      }
-    };
-
-    checkAuth();
-  }, [csrfToken, router]);
+  const { information, isAuthLoading, isAuthenticated, csrfToken } = useAuth();
+  const [isJobLoading, setIsJobLoading] = useState(true);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -94,7 +60,7 @@ export default function Profile() {
               job: Pick<JobListing, "title" | "created_at">
             ) => ({
               ...job,
-              date: new Date(job.created_at).toLocaleDateString(),
+              created_at: new Date(job.created_at).toLocaleDateString(),
             });
 
             setJobListed({
@@ -104,58 +70,14 @@ export default function Profile() {
           }
         })
         .finally(() => {
-          setIsLoading((prevState) => [prevState[0], false]);
+          setIsJobLoading(false);
         });
     };
 
     fetchContent();
   }, [information]);
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      return;
-    }
-
-    const setInfo = async () => {
-      fetch("/api/users/userDetails", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": csrfToken!,
-        },
-        credentials: "include",
-      })
-        .then((res) => {
-          if (!res.ok) {
-            alert("Failed to fetch user data, user details");
-            auth.signOut();
-            return null;
-          }
-          return res.json();
-        })
-        .then((body) => {
-          if (body) {
-            setInformation({
-              firstName: body.data.firstName,
-              lastName: body.data.lastName,
-              isAdmin: body.data.isAdmin,
-            });
-          }
-        })
-        .catch(() => {
-          auth.signOut();
-          router.push("/login");
-          return;
-        })
-        .finally(() => {
-          setIsLoading((prevState) => [false, prevState[1]]);
-        });
-    };
-
-    setInfo();
-  }, [router, isAuthenticated]);
-
-  if (isLoading.some((loading) => loading)) {
+  if (isAuthLoading || isJobLoading) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-white">
         <div className="text-center">
@@ -231,7 +153,7 @@ export default function Profile() {
             </label>
 
             <h2 className="text-lg font-semibold mt-4 text-center">
-              {isLoading.some((loading) => loading) ? (
+              {isAuthLoading || isJobLoading ? (
                 <div className="animate-pulse">
                   <div className="w-24 h-4 bg-gray-300 rounded"></div>
                   <div className="w-16 h-4 bg-gray-300 rounded mt-2"></div>

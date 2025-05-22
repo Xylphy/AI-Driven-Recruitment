@@ -22,7 +22,7 @@ export function deleteOne(
   return supabase.from(table).delete().eq(column, value);
 }
 
-export function findMany<T>(
+export function find<T>(
   supabase: SupabaseClient,
   table: string,
   column?: string,

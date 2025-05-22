@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import { serialize } from "cookie";
 import { createClientServer } from "@/app/lib/supabase/supabase";
-import { findMany } from "@/app/lib/supabase/action";
+import { find } from "@/app/lib/supabase/action";
 import { Admin, User } from "@/app/types/schema";
 
 interface RefreshTokenPayload {
@@ -36,11 +36,12 @@ export async function GET(request: NextRequest) {
     }
     const supabase = await createClientServer(1, true);
 
-    const { data: userData, error: userError } = await findMany<
-      User & { admins: Admin[] }
-    >(supabase, "users", "id", decoded.userId, "*, admins").single();
+    const [userData, adminData] = await Promise.all([
+      find<User>(supabase, "users", "id", decoded.userId).single(),
+      find<Admin>(supabase, "admins", "user_id", decoded.userId).single(),
+    ]);
 
-    if (userError || !userData) {
+    if (userData.error || !userData.data) {
       const response = NextResponse.json(
         { error: "Invalid refresh token or user not found." },
         { status: 401 }
@@ -78,13 +79,13 @@ export async function GET(request: NextRequest) {
         "token",
         jwt.sign(
           {
-            phoneNumber: userData.phone_number,
-            firstName: userData.first_name,
-            lastName: userData.last_name,
-            prefix: userData.prefix,
-            resumeId: userData.resume_id,
-            id: userData.id,
-            isAdmin: userData.admins.length > 0,
+            phoneNumber: userData.data.phone_number,
+            firstName: userData.data.first_name,
+            lastName: userData.data.last_name,
+            prefix: userData.data.prefix,
+            resumeId: userData.data.resume_id,
+            id: userData.data.id,
+            isAdmin: !!adminData.data,
             type: "access",
           },
           process.env.JWT_SECRET as string,
@@ -105,7 +106,7 @@ export async function GET(request: NextRequest) {
       serialize(
         "refreshToken",
         jwt.sign(
-          { userId: userData.id, type: "refresh" },
+          { userId: userData.data.id, type: "refresh" },
           process.env.REFRESH_TOKEN_SECRET as string,
           { expiresIn: "7d" }
         ),
