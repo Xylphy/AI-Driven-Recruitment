@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import z from "zod";
 import { createClientServer } from "@/app/lib/supabase/supabase";
-import { deleteOne, findMany, insertTable } from "@/app/lib/supabase/action";
+import { deleteOne, find, insertTable } from "@/app/lib/supabase/action";
 import { JobApplicants, JobListing, User } from "@/app/types/schema";
 
 const identifiableTitleSchema = z.object({
@@ -18,6 +18,7 @@ const jobListingSchema = z.object({
   qualifications: z.array(identifiableTitleSchema).optional(),
   requirements: z.array(identifiableTitleSchema).optional(),
   location: z.enum(["Cebu City", "Manila", "Tokyo"]),
+  isFullTime: z.boolean(),
 });
 
 export async function POST(request: NextRequest) {
@@ -52,6 +53,7 @@ export async function POST(request: NextRequest) {
       title: parsedData.data.title,
       location: parsedData.data.location,
       created_by: userId,
+      is_fulltime: parsedData.data.isFullTime,
     }
   );
 
@@ -116,12 +118,12 @@ export async function GET(request: NextRequest) {
 
   if (isAdmin) {
     const [themResults, allResults] = await Promise.all([
-      findMany<JobListing>(supabase, "job_listings", "created_by", userId)
+      find<JobListing>(supabase, "job_listings", "created_by", userId)
         .many()
         .range(offset, offset + limit - 1)
         .order("created_at", { ascending: false })
         .execute(),
-      findMany<JobListing>(supabase, "job_listings")
+      find<JobListing>(supabase, "job_listings")
         .many()
         .range(offset, offset + limit - 1)
         .order("created_at", { ascending: false })
@@ -139,20 +141,22 @@ export async function GET(request: NextRequest) {
       message: "Success",
       status: 200,
       data: {
-        createdByThem: themResults.data?.map((item) => ({
-          id: item.id,
-          title: item.title,
-          created_at: item.created_at,
-        })),
-        createdByAll: allResults.data?.map((item) => ({
-          id: item.id,
-          title: item.title,
-          created_at: item.created_at,
-        })),
+        createdByThem:
+          themResults.data?.map((item) => ({
+            id: item.id,
+            title: item.title,
+            created_at: item.created_at,
+          })) || [],
+        createdByAll:
+          allResults.data?.map((item) => ({
+            id: item.id,
+            title: item.title,
+            created_at: item.created_at,
+          })) || [],
       },
     });
   } else {
-    const { data: jobApplied, error: jobAppliedError } = await findMany<
+    const { data: jobApplied, error: jobAppliedError } = await find<
       JobApplicants & {
         job_listings: JobListing & {
           created_by: User;
@@ -183,11 +187,12 @@ export async function GET(request: NextRequest) {
       message: "Success",
       status: 200,
       data: {
-        jobApplied: jobApplied?.map((item) => ({
-          id: item.job_listings.id,
-          title: item.job_listings.title,
-          created_at: item.job_listings.created_at,
-        })),
+        jobApplied:
+          jobApplied?.map((item) => ({
+            id: item.job_listings.id,
+            title: item.job_listings.title,
+            created_at: item.job_listings.created_at,
+          })) || [],
       },
     });
   }

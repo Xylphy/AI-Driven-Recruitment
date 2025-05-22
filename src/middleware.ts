@@ -4,7 +4,7 @@ import { rateLimit } from "./app/lib/rate-limit";
 import { verifyCsrfToken } from "@/app/lib/csrf";
 
 const limiter = rateLimit({
-  max: 50,
+  max: 75,
   windowMs: 10 * 60 * 1000,
 });
 

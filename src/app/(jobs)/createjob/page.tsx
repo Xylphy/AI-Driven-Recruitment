@@ -1,33 +1,26 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { JobListing } from "@/app/types/types";
 import Qualifications from "@/app/components/joblisting/Qualifications";
-import useCsrfToken from "@/app/hooks/useCsrfToken";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "@/app/lib/firebase/firebase";
-import { checkAuthStatus } from "@/app/lib/library";
+import useAuth from "@/app/hooks/useAuth";
 import { useRouter } from "next/navigation";
 
 export default function JobListingPage() {
   const router = useRouter();
-  const { csrfToken } = useCsrfToken();
   const [isSubmitting] = useState(false);
-  const [jobListing, setJobListing] = useState<Omit<JobListing, "created_at">>({
+  const [jobListing, setJobListing] = useState<
+    Omit<JobListing, "created_at"> & {
+      isFullTime: boolean;
+    }
+  >({
     title: "",
     qualifications: [],
     requirements: [],
     location: "",
+    isFullTime: true,
   });
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        router.push("/login");
-      }
-    });
-    return () => unsubscribe();
-  }, [router]);
+  const { information, csrfToken } = useAuth();
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -74,10 +67,9 @@ export default function JobListingPage() {
       return;
     }
 
-    if (!(await checkAuthStatus(csrfToken!))) {
-      alert("You are not authenticated");
-      auth.signOut();
-      router.push("/login");
+    if (!information.isAdmin) {
+      alert("You are not authorized to create a job listing");
+      router.push("/profile");
     }
 
     const response = await fetch("/api/joblisting", {
@@ -101,6 +93,7 @@ export default function JobListingPage() {
       qualifications: [],
       requirements: [],
       location: "",
+      isFullTime: true,
     });
   };
 
@@ -172,6 +165,30 @@ export default function JobListingPage() {
             <option value="Manila">Manila</option>
             <option value="Tokyo">Tokyo</option>
           </select>
+
+          <div className="mt-4">
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="isFullTime"
+                name="isFullTime"
+                checked={jobListing.isFullTime}
+                onChange={(e) =>
+                  setJobListing((prev) => ({
+                    ...prev,
+                    isFullTime: e.target.checked,
+                  }))
+                }
+                className="h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
+              />
+              <label
+                htmlFor="isFullTime"
+                className="ml-2 block text-sm font-medium text-gray-700"
+              >
+                Full Time Position
+              </label>
+            </div>
+          </div>
         </div>
 
         <div className="flex justify-center">

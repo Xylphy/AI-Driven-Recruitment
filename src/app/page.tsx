@@ -39,6 +39,8 @@ export default function Home() {
   const [section4Done, setSection4Done] = useState(false);
 
   if (section2Done || section3Done || section4Done) {
+    // Prevent linting errors when building Next.js
+    // Recommended to remove this in production
   }
 
   useEffect(() => {
