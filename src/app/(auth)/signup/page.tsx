@@ -1,22 +1,22 @@
 "use client";
 
-import FileUpload from "@/app/components/common/FileUpload";
-import { signup } from "@/app/lib/actionServer";
-import SocialLinks from "@/app/components/signup/SocialLinks";
-import EducationalDetails from "@/app/components/signup/EducationalDetails";
-import JobExperiences from "@/app/components/signup/JobExperience";
+import FileUpload from "@/components/common/FileUpload";
+import { signup } from "@/lib/actionServer";
+import SocialLinks from "@/components/signup/SocialLinks";
+import EducationalDetails from "@/components/signup/EducationalDetails";
+import JobExperiences from "@/components/signup/JobExperience";
 import { useState } from "react";
 import {
   SocialLink,
   EducationalDetail,
   JobExperience,
-} from "@/app/types/types";
+} from "@/types/types";
 import {
   EducationalDetailClass,
   JobExperienceClass,
   SocialLinkClass,
-} from "@/app/types/classes";
-import useCsrfToken from "@/app/hooks/useCsrfToken";
+} from "@/types/classes";
+import useCsrfToken from "@/hooks/useCsrfToken";
 
 export default function SignupPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);

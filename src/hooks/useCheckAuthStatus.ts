@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { checkAuthStatus } from "@/app/lib/library";
+import { checkAuthStatus } from "@/lib/library";
 
 export function useCheckAuthStatus(csrfToken: string) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);

@@ -8,14 +8,14 @@ import {
   MdSettings,
   MdLogout,
 } from "react-icons/md";
-import JobApplicationDetails from "@/app/components/profile/JobApplications";
+import JobApplicationDetails from "@/components/profile/JobApplications";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { JobListing } from "../types/schema";
-import useAuth from "../hooks/useAuth";
+import { JobListing } from "@/types/schema";
+import useAuth from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
-import { auth } from "@/app/lib/firebase/firebase";
+import { auth } from "@/lib/firebase/firebase";
 
 export default function Profile() {
   const router = useRouter();

@@ -5,11 +5,11 @@ import {
   deleteUser,
   isSignInWithEmailLink,
 } from "firebase/auth";
-import { Button } from "../../../components/common/Button";
+import { Button } from "@/components/common/Button";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, use } from "react";
-import { auth } from "@/app/lib/firebase/firebase";
-import useCsrfToken from "@/app/hooks/useCsrfToken";
+import { auth } from "@/lib/firebase/firebase";
+import useCsrfToken from "@/hooks/useCsrfToken";
 
 export default function Verification({
   params,

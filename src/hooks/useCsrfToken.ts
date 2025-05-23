@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getCsrfToken } from "../lib/library";
+import { getCsrfToken } from "@/lib/library";
 
 export default function useCsrfToken() {
   const [csrfToken, setCsrfToken] = useState<string | null>(null);

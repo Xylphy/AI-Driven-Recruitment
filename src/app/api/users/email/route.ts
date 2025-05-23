@@ -1,4 +1,4 @@
-import { getTokenData } from "@/app/lib/mongodb/action";
+import { getTokenData } from "@/lib/mongodb/action";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 

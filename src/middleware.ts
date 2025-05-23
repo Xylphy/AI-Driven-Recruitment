@@ -1,7 +1,7 @@
 import { type NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { rateLimit } from "./app/lib/rate-limit";
-import { verifyCsrfToken } from "@/app/lib/csrf";
+import { rateLimit } from "./lib/rate-limit";
+import { verifyCsrfToken } from "@/lib/csrf";
 
 const limiter = rateLimit({
   max: 75,

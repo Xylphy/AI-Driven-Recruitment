@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import { serialize } from "cookie";
-import { createClientServer } from "@/app/lib/supabase/supabase";
-import { find } from "@/app/lib/supabase/action";
-import { Admin, User } from "@/app/types/schema";
+import { createClientServer } from "@/lib/supabase/supabase";
+import { find } from "@/lib/supabase/action";
+import { Admin, User } from "@/types/schema";
 
 interface RefreshTokenPayload {
   userId: string;

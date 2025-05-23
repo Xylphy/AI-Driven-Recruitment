@@ -1,6 +1,6 @@
 import { ObjectId } from "mongodb";
 import mongoDb_client from "./mongodb";
-import { RegisterState } from "@/app/types/types";
+import { RegisterState } from "@/types/types";
 
 export async function insertTokenData(data: RegisterState) {
   try {
