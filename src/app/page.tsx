@@ -2,7 +2,7 @@
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import AnimatedSection from "./components/common/AnimatedSection";
+import AnimatedSection from "@/components/common/AnimatedSection";
 import Image from "next/image";
 
 const containerVariants = {

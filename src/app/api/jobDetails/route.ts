@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClientServer } from "@/app/lib/supabase/supabase";
-import { find } from "@/app/lib/supabase/action";
+import { createClientServer } from "@/lib/supabase/supabase";
+import { find } from "@/lib/supabase/action";
 import {
   JobListing,
   JobListingQualifications,
   JobListingRequirements,
-} from "@/app/types/schema";
+} from "@/types/schema";
 
 export async function GET(request: NextRequest) {
   const jobId = request.nextUrl.searchParams.get("job");

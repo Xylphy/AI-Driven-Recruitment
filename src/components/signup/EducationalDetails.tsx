@@ -1,6 +1,6 @@
 "use client";
 
-import { JobExperience } from "@/app/types/types";
+import { EducationalDetail } from "@/types/types";
 
 const years = Array.from({ length: 56 }, (_, i) => 1980 + i);
 
@@ -19,46 +19,45 @@ const months = [
   "December",
 ];
 
-export default function JobExperiences({
+export default function EducationalDetails({
   update,
   delete: deleteEducationalDetail,
   add,
-  getJobExperiences,
+  getEducationalDetails,
 }: {
   update: (id: number, key: string, value: string | boolean) => void;
   delete: (id: number) => void;
   add: () => void;
-  getJobExperiences: JobExperience[];
+  getEducationalDetails: EducationalDetail[];
 }) {
   return (
     <div className="p-4 bg-gray-100 rounded shadow-md">
-      <h2 className="text-xl font-bold mb-4">Job Experiences</h2>
-      {getJobExperiences.map((box) => (
+      <h2 className="text-xl font-bold mb-4">Educational Details</h2>
+      {getEducationalDetails.map((box) => (
         <div
           key={box.id}
           className="mb-6 p-4 border rounded-lg shadow-sm space-y-3"
         >
           <input
             type="text"
-            value={box.title}
-            onChange={(e) => update(box.id, "title", e.target.value)}
-            placeholder="Title"
+            value={box.institute}
+            onChange={(e) => update(box.id, "institute", e.target.value)}
+            placeholder="Institute / School"
             className="border border-gray-300 rounded px-2 py-1 w-full"
-            maxLength={255}
           />
           <input
             type="text"
-            value={box.company}
-            onChange={(e) => update(box.id, "company", e.target.value)}
-            placeholder="Company"
+            value={box.major}
+            onChange={(e) => update(box.id, "major", e.target.value)}
+            placeholder="Major / Department"
             className="border border-gray-300 rounded px-2 py-1 w-full"
-            maxLength={255}
           />
-          <textarea
-            value={box.summary}
-            onChange={(e) => update(box.id, "summary", e.target.value)}
-            placeholder="Summary"
-            className="border border-gray-300 rounded px-2 py-1 w-full h-24 resize-y"
+          <input
+            type="text"
+            value={box.degree}
+            onChange={(e) => update(box.id, "degree", e.target.value)}
+            placeholder="Degree"
+            className="border border-gray-300 rounded px-2 py-1 w-full"
           />
           <p>Duration</p>
           <div className="flex gap-2">
@@ -88,7 +87,7 @@ export default function JobExperiences({
               ))}
             </select>
           </div>
-          {!box.currentlyWorking && (
+          {!box.currentlyPursuing && (
             <div className="flex gap-2">
               <select
                 value={box.endMonth}
@@ -120,19 +119,19 @@ export default function JobExperiences({
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
-              checked={box.currentlyWorking || false}
+              checked={box.currentlyPursuing || false}
               onChange={(e) =>
-                update(box.id, "currentlyWorking", e.target.checked)
+                update(box.id, "currentlyPursuing", e.target.checked)
               }
             />
-            <label className="text-sm">Currently working</label>
+            <label className="text-sm">Currently pursuing</label>
           </div>
           <button
             type="button"
             onClick={() => deleteEducationalDetail(box.id)}
             className="text-red-600 text-sm underline"
           >
-            Clear Job Experience
+            Clear Educational Details
           </button>
         </div>
       ))}
@@ -140,7 +139,7 @@ export default function JobExperiences({
         onClick={add}
         className="text-green-500 cursor-pointer hover:underline mb-4"
       >
-        Add Job Experiences
+        Add Educational Detail
       </p>
     </div>
   );

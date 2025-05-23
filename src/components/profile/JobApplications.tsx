@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { JobListing } from "@/app/types/schema";
+import { JobListing } from "@/types/schema";
 
 export default function JobApplicationDetails({
   jobApplications,

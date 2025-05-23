@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import z from "zod";
-import { createClientServer } from "@/app/lib/supabase/supabase";
-import { deleteOne, find, insertTable } from "@/app/lib/supabase/action";
-import { JobApplicants, JobListing, User } from "@/app/types/schema";
+import { createClientServer } from "@/lib/supabase/supabase";
+import { deleteOne, find, insertTable } from "@/lib/supabase/action";
+import { JobApplicants, JobListing, User } from "@/types/schema";
 
 const identifiableTitleSchema = z.object({
   id: z.string().or(z.number()),
@@ -167,7 +167,7 @@ export async function GET(request: NextRequest) {
       "job_applicants",
       "user_id",
       userId,
-      "job_listings:joblisting_id(*, created_by:created_by(first_name, last_name))"
+      "job_listings:joblisting_id(*, created_by:created_by(*, users!admins_user_id_fkey(*)))"
     )
       .many()
       .range(offset, offset + limit - 1)
@@ -177,6 +177,7 @@ export async function GET(request: NextRequest) {
       .execute();
 
     if (jobAppliedError) {
+      console.log(jobAppliedError);
       return NextResponse.json(
         { error: "Failed to fetch job listings" },
         { status: 500 }

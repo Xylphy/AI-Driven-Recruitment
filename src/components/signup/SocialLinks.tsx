@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { SocialLink } from "@/app/types/types";
+import { SocialLink } from "@/types/types";
 
 export default function SocialLinks({
   update,

@@ -1,12 +1,12 @@
 "use client";
 
-import { Button } from "@/app/components/common/Button";
+import { Button } from "@/components/common/Button";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/app/lib/firebase/firebase";
+import { auth } from "@/lib/firebase/firebase";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import useCsrfToken from "@/app/hooks/useCsrfToken";
+import useCsrfToken from "@/hooks/useCsrfToken";
 
 export default function LoginPage() {
   const router = useRouter();

@@ -1,18 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { createClientServer } from "@/app/lib/supabase/supabase";
+import { createClientServer } from "@/lib/supabase/supabase";
 import { ObjectId } from "mongodb";
 import {
   insertTable,
   deleteOne as supabaseDeleteOne,
-} from "@/app/lib/supabase/action";
+} from "@/lib/supabase/action";
 import {
   EducationalDetail,
   JobExperience,
   SocialLink,
-} from "@/app/types/types";
-import { deleteOne, findOne } from "@/app/lib/mongodb/action";
-import { ErrorResponse } from "@/app/types/classes";
+} from "@/types/types";
+import { deleteOne, findOne } from "@/lib/mongodb/action";
+import { ErrorResponse } from "@/types/classes";
 
 const formSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters long"),

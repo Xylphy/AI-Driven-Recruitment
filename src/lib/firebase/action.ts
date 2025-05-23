@@ -1,7 +1,7 @@
 import { sendSignInLinkToEmail } from "firebase/auth";
 import { db, auth } from "./firebase";
 import { collection, query, where, getDocs } from "firebase/firestore";
-import { RegisterState } from "@/app/types/types";
+import { RegisterState } from "@/types/types";
 import { insertTokenData } from "../mongodb/action";
 
 export async function sendEmailVerification(data: RegisterState) {

@@ -1,10 +1,10 @@
-import { createClientServer } from "@/app/lib/supabase/supabase";
-import { ErrorResponse } from "@/app/types/classes";
+import { createClientServer } from "@/lib/supabase/supabase";
+import { ErrorResponse } from "@/types/classes";
 import { NextRequest, NextResponse } from "next/server";
 import { serialize } from "cookie";
-import { find } from "@/app/lib/supabase/action";
+import { find } from "@/lib/supabase/action";
 import jwt from "jsonwebtoken";
-import { User, Admin } from "@/app/types/schema";
+import { User, Admin } from "@/types/schema";
 
 export async function GET(request: NextRequest) {
   try {

@@ -2,10 +2,10 @@
 
 import { MdLocationOn, MdAccessTime, MdChevronRight } from "react-icons/md";
 import Image from "next/image";
-import useAuth from "@/app/hooks/useAuth";
+import useAuth from "@/hooks/useAuth";
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { JobListing } from "@/app/types/schema";
+import { JobListing } from "@/types/schema";
 
 export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
@@ -14,9 +14,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const [jobLoading, isJobLoading] = useState(true);
 
   const [jobDetails, setJobDetails] = useState<
-    Omit<JobListing, "created_by"> & {
-      requirements: string[];
-    } & {
+    Omit<JobListing, "created_by"> & { requirements: string[] } & {
       qualifications: string[];
     }
   >({

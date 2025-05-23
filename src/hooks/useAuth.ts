@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "@/app/lib/firebase/firebase";
+import { auth } from "@/lib/firebase/firebase";
 import useCsrfToken from "./useCsrfToken";
 import { useEffect } from "react";
-import { checkAuthStatus } from "@/app/lib/library";
+import { checkAuthStatus } from "@/lib/library";
 
 export default function useAuth() {
   const router = useRouter();

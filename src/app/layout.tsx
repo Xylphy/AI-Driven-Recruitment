@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { poppins } from "./styles/fonts";
 import "./globals.css";
-import Navbar from "./components/common/Navbar";
-import Footer from "./components/common/Footer";
+import Navbar from "@/components/common/Navbar";
+import Footer from "@/components/common/Footer";
 
 export const metadata: Metadata = {
   title: "AI-Driven Recruitment",

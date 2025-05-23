@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { JobListing } from "@/app/types/types";
-import Qualifications from "@/app/components/joblisting/Qualifications";
-import useAuth from "@/app/hooks/useAuth";
+import { JobListing } from "@/types/types";
+import Qualifications from "@/components/joblisting/Qualifications";
+import useAuth from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 
 export default function JobListingPage() {
