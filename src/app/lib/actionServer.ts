@@ -44,7 +44,7 @@ export async function signup(formData: FormData) {
       resume_id = await uploadFile(file, "resumes");
     }
 
-    sendEmailVerification({
+    await sendEmailVerification({
       prefix: formData.get("prefix") as string,
       firstName: formData.get("firstName") as string,
       lastName: formData.get("lastName") as string,
