@@ -31,7 +31,7 @@ export default function Navbar() {
               About Us
             </li>
           </Link>
-          <Link href="/hometrainings/">
+          <Link href="/jobs/">
             <li
               className="relative inline-block pb-1 
     after:content-[''] after:absolute after:bottom-0 after:left-1/2 
@@ -39,7 +39,7 @@ export default function Navbar() {
     after:transition-all after:duration-300 
     hover:after:w-full hover:after:left-0 transform after:-translate-x-1/2 hover:after:translate-x-0"
             >
-              Trainings
+              Jobs
             </li>
           </Link>
           <Link href="/contactus/">
