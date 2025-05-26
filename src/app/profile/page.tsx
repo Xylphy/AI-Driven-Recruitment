@@ -205,7 +205,10 @@ export default function Profile() {
                 />
               </div>
 
-              <button className="bg-[#E30022] text-white font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-500 hover:border-red-500">
+              <button
+                onClick={() => router.push("/profile/edit")}
+                className="bg-[#E30022] text-white font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-500 hover:border-red-500"
+              >
                 EDIT PROFILE
               </button>
             </div>
