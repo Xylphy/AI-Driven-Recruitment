@@ -14,8 +14,8 @@ export async function GET(request: NextRequest) {
     process.env.JWT_SECRET as string
   ) as jwt.JwtPayload;
 
-  // Check if token is about to expire in 15 seconds
-  if (decoded.exp && decoded.exp - Math.floor(Date.now() / 1000) < 15) {
+  // Check if token is about to expire in 15 minutes
+  if (decoded.exp && decoded.exp - Math.floor(Date.now() / 1000) < 15 * 60) {
     return new Response(JSON.stringify({ error: "Token is about to expire" }), {
       status: 401,
     });
