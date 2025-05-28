@@ -2,6 +2,7 @@ import { type NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { rateLimit } from "./lib/rate-limit";
 import { verifyCsrfToken } from "@/lib/csrf";
+import { acceleratedValues } from "framer-motion";
 
 const limiter = rateLimit({
   max: 75,
@@ -53,17 +54,39 @@ export async function middleware(request: NextRequest) {
 
     const pathname = request.nextUrl.pathname;
     const publicPaths = [
-      "/api/csrf",
-      "/api/users/email",
-      "/api/users",
-      "/api/auth/jwt",
-      "/api/auth/status",
-      "/api/auth/refresh",
+      {
+        path: "/api/csrf",
+        acceptedMethods: ["GET"],
+      },
+      {
+        path: "/api/users/email",
+        acceptedMethods: ["POST"],
+      },
+      {
+        path: "/api/users",
+        acceptedMethods: ["POST"],
+      },
+      {
+        path: "/api/auth/jwt",
+        acceptedMethods: ["GET"],
+      },
+      {
+        path: "/api/auth/status",
+        acceptedMethods: ["GET"],
+      },
+      {
+        path: "/api/auth/refresh",
+        acceptedMethods: ["GET"],
+      },
     ];
 
     if (
       !request.cookies.get("token") &&
-      !publicPaths.some((path) => pathname.startsWith(path))
+      !publicPaths.some(
+        (publicPath) =>
+          pathname.startsWith(publicPath.path) &&
+          publicPath.acceptedMethods.includes(request.method)
+      )
     ) {
       return NextResponse.json({ error: "Token is required" }, { status: 403 });
     }
