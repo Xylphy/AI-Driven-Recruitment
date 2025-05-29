@@ -15,7 +15,7 @@ export interface Title {
 }
 
 // --------------- Exported Types --------------- //
-export interface RegisterState {
+export interface User {
   prefix: string;
   firstName: string;
   lastName: string;
@@ -29,10 +29,13 @@ export interface RegisterState {
   country: string;
   jobTitle: string;
   skillSet: string;
+  public_id?: string; // Resume ID
+}
+
+export interface RegisterState extends User {
   educationalDetails: EducationalDetail[];
   socialLinks: SocialLink[];
   jobExperiences: JobExperience[];
-  public_id?: string;
 }
 
 export interface SocialLink extends IdentifiableItem {
@@ -63,4 +66,8 @@ export interface JobListing extends Title {
   requirements: IdentifiableTitle[];
   location: string;
   created_at: string;
+}
+
+export interface DbIdentification {
+  db_id: string;
 }

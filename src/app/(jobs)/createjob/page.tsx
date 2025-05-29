@@ -20,7 +20,7 @@ export default function JobListingPage() {
     location: "",
     isFullTime: true,
   });
-  const { information, csrfToken } = useAuth();
+  const { information, csrfToken } = useAuth(undefined, true);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -67,7 +67,7 @@ export default function JobListingPage() {
       return;
     }
 
-    if (!information.isAdmin) {
+    if (!information.admin) {
       alert("You are not authorized to create a job listing");
       router.push("/profile");
     }

@@ -15,7 +15,7 @@ export async function signup(formData: FormData) {
   }
 
   try {
-    const file: File | null = formData.get("resume") as File;
+    const file = formData.get("resume") as File;
     let resume_id = undefined;
 
     if (file) {

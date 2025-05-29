@@ -2,7 +2,6 @@ import { type NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { rateLimit } from "./lib/rate-limit";
 import { verifyCsrfToken } from "@/lib/csrf";
-import { acceleratedValues } from "framer-motion";
 
 const limiter = rateLimit({
   max: 75,

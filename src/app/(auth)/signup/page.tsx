@@ -4,7 +4,11 @@ import { signup } from "@/lib/actionServer";
 import { useState } from "react";
 import useCsrfToken from "@/hooks/useCsrfToken";
 import { UserForm } from "@/components/common/UserForm";
-import { EducationalDetail, JobExperience, SocialLink } from "@/types/types";
+import {
+  EducationalDetail,
+  JobExperience,
+  SocialLink,
+} from "@/types/types";
 
 export default function SignupPage() {
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
@@ -82,6 +86,9 @@ export default function SignupPage() {
       isSubmitting={isSubmitting}
       handleFileSelect={handleFileSelect}
       response={response}
+      description="Join a community of innovators, problem-solvers, and change-makers."
+      title="REGISTRATION"
+      
     />
   );
 }

@@ -1,6 +1,13 @@
-import { DateRange, Title } from "./types";
+import { Title } from "./types";
 
 // -------------------------------- Database Schema -------------------------------- //
+
+interface DateRange {
+  start_month: string;
+  start_year: number;
+  end_month: string | null;
+  end_year: number | null;
+}
 
 interface IdentifiableItem {
   id: string;
@@ -16,7 +23,14 @@ export interface User extends IdentifiableItem {
   phone_number: string | null;
   prefix: string;
   firebase_uid: string;
+  country_code: string;
   resume_id: string | null;
+  street: string | null;
+  zip: string | null;
+  city: string | null;
+  state: string | null;
+  country: string | null;
+  job_title: string | null;
 }
 
 export interface EducationalDetails

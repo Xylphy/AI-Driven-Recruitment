@@ -39,7 +39,9 @@ export default function Verification({
         });
 
         if (!emailResponse.ok) {
+          alert("Verification expired");
           router.push("/signup");
+          return;
         }
         setEmail(await emailResponse.json());
       } catch (error) {

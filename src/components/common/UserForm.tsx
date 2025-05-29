@@ -7,16 +7,26 @@ import {
   SocialLinkClass,
 } from "@/types/classes";
 import FileUpload from "@/components/common/FileUpload";
-import { SocialLink, EducationalDetail, JobExperience } from "@/types/types";
+import {
+  SocialLink,
+  EducationalDetail,
+  JobExperience,
+  User,
+} from "@/types/types";
+import React from "react";
 
 export function UserForm({
   socialLinksInfo,
   educationalDetailsInfo,
   jobExperiencesInfo,
+  userInfo,
   isSubmitting,
   handleSubmit,
-  response,
   handleFileSelect,
+  response,
+  description,
+  title,
+  fileName,
 }: {
   socialLinksInfo: {
     socialLinks: SocialLink[];
@@ -32,6 +42,7 @@ export function UserForm({
     jobExperiences: JobExperience[];
     setJobExperience: React.Dispatch<React.SetStateAction<JobExperience[]>>;
   };
+  userInfo?: User;
   isSubmitting: boolean;
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => Promise<void>;
   response: {
@@ -39,6 +50,9 @@ export function UserForm({
     message?: string;
   } | null;
   handleFileSelect: (file: File | null) => void;
+  title: string;
+  description: string;
+  fileName?: string;
 }) {
   return (
     <>
@@ -57,11 +71,11 @@ export function UserForm({
         )}
       </div>
       <h1 className="text-4xl font-bold text-[#E30022] text-center mb-2 uppercase tracking-wide">
-        REGISTRATION
+        {title}
       </h1>
       <hr></hr>
       <p className="text-center text-sm text-gray-700 mt-2 mb-6">
-        Join a community of innovators, problem-solvers, and change-makers.
+        {description}
       </p>
       <form onSubmit={handleSubmit} className="mt-6">
         <div className="mb-4">
@@ -71,7 +85,8 @@ export function UserForm({
           >
             Upload Resume
           </label>
-          <FileUpload onFileSelect={handleFileSelect} />
+          {/* Handle file select */}
+          <FileUpload onFileSelect={handleFileSelect} defaultFileName={fileName} />
         </div>
         <h3 className="mb-2 font-bold">Basic Information</h3>
         <div className="mb-4">
@@ -85,6 +100,7 @@ export function UserForm({
             id="prefix"
             name="prefix"
             className="w-24 px-4 py-2 border border-gray-300 rounded-md focus:ring-red-600 "
+            defaultValue={userInfo?.prefix}
           >
             <option value="">None</option>
             <option value="Mr.">Mr.</option>
@@ -102,6 +118,7 @@ export function UserForm({
             name="firstName"
             className="flex-1 ml-2 w-130 px-4 py-2 border border-gray-300 rounded-md focus:ring-red-600 focus:border-red-600"
             required
+            defaultValue={userInfo?.firstName}
           />
         </div>
         <div className="mb-4">
@@ -117,6 +134,7 @@ export function UserForm({
             name="lastName"
             className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
             required
+            defaultValue={userInfo?.lastName}
           />
         </div>
         <div className="mb-4">
@@ -132,6 +150,7 @@ export function UserForm({
             name="email"
             className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
             required
+            defaultValue={userInfo?.email}
           />
         </div>
         <div className="mb-4">
@@ -146,6 +165,7 @@ export function UserForm({
               id="countryCode"
               name="countryCode"
               className="w-35 px-4 py-2 border border-gray-300 rounded-md focus:ring-red-600"
+              defaultValue={userInfo?.mobileNumber}
             >
               <option value="+63">+63 (PH)</option>
               <option value="+1">+1 (US)</option>
@@ -158,6 +178,7 @@ export function UserForm({
               name="mobileNumber"
               className="w-full mt-0 px-4 py-2 border border-gray-300 rounded-r-md focus:ring-blue-500 focus:border-blue-500"
               required
+              defaultValue={userInfo?.mobileNumber}
             />
           </div>
         </div>
@@ -175,6 +196,7 @@ export function UserForm({
               id="street"
               name="street"
               className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              defaultValue={userInfo?.street}
             />
           </div>
           <div className="mt-4">
@@ -189,6 +211,7 @@ export function UserForm({
               id="zip"
               name="zip"
               className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              defaultValue={userInfo?.zip}
             />
           </div>
           <div className="mt-4">
@@ -203,6 +226,7 @@ export function UserForm({
               id="city"
               name="city"
               className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              defaultValue={userInfo?.city}
             />
           </div>
           <div className="mt-4">
@@ -217,6 +241,7 @@ export function UserForm({
               id="state"
               name="state"
               className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              defaultValue={userInfo?.state_}
             />
           </div>
           <div className="mt-4">
@@ -230,6 +255,7 @@ export function UserForm({
               id="country"
               name="country"
               className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              defaultValue={userInfo?.country}
             >
               <option value="">Select a country</option>
               <option value="PH">Philippines</option>
@@ -255,6 +281,7 @@ export function UserForm({
               id="jobTitle"
               name="jobTitle"
               className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              defaultValue={userInfo?.jobTitle}
             />
           </div>
           <div className="mt-4">
@@ -270,6 +297,7 @@ export function UserForm({
               rows={4}
               className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
               placeholder="List your skills separated by commas"
+              defaultValue={userInfo?.skillSet}
             ></textarea>
           </div>
         </div>
@@ -295,7 +323,9 @@ export function UserForm({
                 prev.filter((detail) => detail.id !== id)
               );
             }}
-            getEducationalDetails={educationalDetailsInfo.educationalDetails}
+            getEducationalDetails={
+              educationalDetailsInfo.educationalDetails || []
+            }
           />
         </div>
         <div className="mb-4">
@@ -320,13 +350,13 @@ export function UserForm({
                 prev.filter((detail) => detail.id !== id)
               );
             }}
-            getJobExperiences={jobExperiencesInfo.jobExperiences}
+            getJobExperiences={jobExperiencesInfo.jobExperiences || []}
           />
         </div>
         <div className="mb-4">
           <SocialLinks
             update={(id: number, value: string) => {
-              socialLinksInfo.setSocialLinks((prev) =>
+              socialLinksInfo?.setSocialLinks((prev) =>
                 prev.map((link) => (link.id === id ? { ...link, value } : link))
               );
             }}
@@ -341,7 +371,7 @@ export function UserForm({
                 new SocialLinkClass(links.length + 1),
               ]);
             }}
-            getSocialLinks={socialLinksInfo.socialLinks}
+            getSocialLinks={socialLinksInfo.socialLinks || []}
           />
         </div>
         <button

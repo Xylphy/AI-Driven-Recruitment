@@ -40,21 +40,21 @@ export default function EducationalDetails({
         >
           <input
             type="text"
-            value={box.institute}
+            defaultValue={box.institute}
             onChange={(e) => update(box.id, "institute", e.target.value)}
             placeholder="Institute / School"
             className="border border-gray-300 rounded px-2 py-1 w-full"
           />
           <input
             type="text"
-            value={box.major}
+            defaultValue={box.major}
             onChange={(e) => update(box.id, "major", e.target.value)}
             placeholder="Major / Department"
             className="border border-gray-300 rounded px-2 py-1 w-full"
           />
           <input
             type="text"
-            value={box.degree}
+            defaultValue={box.degree}
             onChange={(e) => update(box.id, "degree", e.target.value)}
             placeholder="Degree"
             className="border border-gray-300 rounded px-2 py-1 w-full"
@@ -62,7 +62,7 @@ export default function EducationalDetails({
           <p>Duration</p>
           <div className="flex gap-2">
             <select
-              value={box.startMonth}
+              defaultValue={box.startMonth}
               onChange={(e) => update(box.id, "startMonth", e.target.value)}
               className="border border-gray-300 rounded px-2 py-1 w-full"
             >
@@ -75,7 +75,7 @@ export default function EducationalDetails({
             </select>
 
             <select
-              value={box.startYear}
+              defaultValue={box.startYear}
               onChange={(e) => update(box.id, "startYear", e.target.value)}
               className="border border-gray-300 rounded px-2 py-1 w-full"
             >
@@ -90,7 +90,7 @@ export default function EducationalDetails({
           {!box.currentlyPursuing && (
             <div className="flex gap-2">
               <select
-                value={box.endMonth}
+                defaultValue={box.endMonth}
                 onChange={(e) => update(box.id, "endMonth", e.target.value)}
                 className="border border-gray-300 rounded px-2 py-1 w-full"
               >
@@ -103,7 +103,7 @@ export default function EducationalDetails({
               </select>
 
               <select
-                value={box.endYear}
+                defaultValue={box.endYear.toString()}
                 onChange={(e) => update(box.id, "endYear", e.target.value)}
                 className="border border-gray-300 rounded px-2 py-1 w-full"
               >
@@ -119,7 +119,7 @@ export default function EducationalDetails({
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
-              checked={box.currentlyPursuing || false}
+              checked={box.currentlyPursuing}
               onChange={(e) =>
                 update(box.id, "currentlyPursuing", e.target.checked)
               }

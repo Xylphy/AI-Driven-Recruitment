@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import z from "zod";
 import { createClientServer } from "@/lib/supabase/supabase";
 import { deleteOne, find, insertTable } from "@/lib/supabase/action";
-import { JobApplicants, JobListing, User } from "@/types/schema";
+import { JobApplicants, JobListing, User, Admin } from "@/types/schema";
 
 const identifiableTitleSchema = z.object({
   id: z.string().or(z.number()),
@@ -24,12 +24,12 @@ const jobListingSchema = z.object({
 export async function POST(request: NextRequest) {
   const token = request.cookies.get("token")!;
 
-  const { isAdmin, id: userId } = jwt.verify(
+  const { id: userId, isAdmin } = jwt.verify(
     token.value,
     process.env.JWT_SECRET!
   ) as {
-    isAdmin: boolean;
     id: string;
+    isAdmin: boolean;
   };
 
   if (!isAdmin) {
@@ -106,17 +106,20 @@ export async function GET(request: NextRequest) {
 
   const offset = (page - 1) * limit;
 
-  const { isAdmin, id: userId } = jwt.verify(
-    token.value,
-    process.env.JWT_SECRET!
-  ) as {
-    isAdmin: boolean;
+  const { id: userId } = jwt.verify(token.value, process.env.JWT_SECRET!) as {
     id: string;
   };
 
   const supabase = await createClientServer(1, true);
 
-  if (isAdmin) {
+  const { data: adminData } = await find<Admin>(
+    supabase,
+    "admins",
+    "user_id",
+    userId
+  ).single();
+
+  if (adminData) {
     const [themResults, allResults] = await Promise.all([
       find<JobListing>(supabase, "job_listings", "created_by", userId)
         .many()

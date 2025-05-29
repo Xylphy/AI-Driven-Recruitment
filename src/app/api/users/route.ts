@@ -6,28 +6,36 @@ import {
   insertTable,
   deleteOne as supabaseDeleteOne,
 } from "@/lib/supabase/action";
-import {
-  EducationalDetail,
-  JobExperience,
-  SocialLink,
-} from "@/types/types";
+import { EducationalDetail, JobExperience, SocialLink } from "@/types/types";
 import { deleteOne, findOne } from "@/lib/mongodb/action";
 import { ErrorResponse } from "@/types/classes";
-
-const formSchema = z.object({
-  password: z.string().min(8, "Password must be at least 8 characters long"),
-  confirmPassword: z
-    .string()
-    .min(8, "Password must be at least 8 characters long"),
-  token: z.string().min(1, "Token is required"),
-  uid: z.string().min(1, "User ID is required"),
-});
+import jwt from "jsonwebtoken";
+import { find } from "@/lib/supabase/action";
+import {
+  EducationalDetails,
+  JobExperiences,
+  Skills,
+  SocialLinks,
+  User,
+} from "@/types/schema";
+import { getFileInfo } from "@/lib/cloudinary/cloudinary";
 
 // This function handles the POST request to set the password
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const validatedData = formSchema.safeParse(body);
+    const validatedData = z
+      .object({
+        password: z
+          .string()
+          .min(8, "Password must be at least 8 characters long"),
+        confirmPassword: z
+          .string()
+          .min(8, "Password must be at least 8 characters long"),
+        token: z.string().min(1, "Token is required"),
+        uid: z.string().min(1, "User ID is required"),
+      })
+      .safeParse(body);
     if (!validatedData.success) {
       return NextResponse.json(
         { error: validatedData.error.format() },
@@ -59,7 +67,14 @@ export async function POST(request: NextRequest) {
       prefix: data.prefix,
       firebase_uid: body.uid,
       resume_id: data.public_id,
-    });
+      country_code: data.countryCode,
+      street: data.street,
+      zip: data.zip,
+      city: data.city,
+      state: data.state_,
+      country: data.country,
+      job_title: data.jobTitle,
+    } as User);
 
     if (error) {
       console.error("Error inserting user into Supabase:", error);
@@ -74,6 +89,7 @@ export async function POST(request: NextRequest) {
       );
     }
     const userId = insertedData[0].id;
+    const skills = data.skillSet ? data.skillSet.split(",") : []; // Split skills by comma
 
     const results = await Promise.all([
       ...data.educationalDetails.map((detail: Omit<EducationalDetail, "id">) =>
@@ -108,7 +124,7 @@ export async function POST(request: NextRequest) {
           summary: experience.summary,
         })
       ),
-      ...data.skillSet.split(",").map((skill: string) =>
+      ...skills.map((skill: string) =>
         insertTable(supabase, "skills", {
           user_id: userId,
           skill: skill.trim(),
@@ -145,3 +161,104 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export async function GET(request: NextRequest) {
+  const tokenCookie = request.cookies.get("token");
+  const doUser = request.nextUrl.searchParams.get("user") === "true";
+  const doSkills = request.nextUrl.searchParams.get("skills") === "true";
+  const doSocialLinks =
+    request.nextUrl.searchParams.get("socialLinks") === "true";
+  const doEducation = request.nextUrl.searchParams.get("education") === "true";
+  const doExperience =
+    request.nextUrl.searchParams.get("experience") === "true";
+
+  if (!tokenCookie || !tokenCookie.value) {
+    return NextResponse.json({
+      message: "Token not found",
+      status: 401,
+    });
+  }
+
+  const decoded = jwt.verify(
+    tokenCookie.value,
+    process.env.JWT_SECRET as string
+  ) as jwt.JwtPayload;
+  const supabase = await createClientServer(1, true);
+
+  const [userData, skillsData, socialLinksData, educationData, experienceData] =
+    await Promise.all([
+      doUser && find<User>(supabase, "users", "id", decoded.id).single(),
+      doSkills &&
+        find<Skills>(supabase, "skills", "user_id", decoded.id)
+          .many()
+          .execute(),
+      doSocialLinks &&
+        find<SocialLinks>(supabase, "social_links", "user_id", decoded.id)
+          .many()
+          .execute(),
+      doEducation &&
+        find<EducationalDetails>(
+          supabase,
+          "educational_details",
+          "user_id",
+          decoded.id
+        )
+          .many()
+          .execute(),
+      doExperience &&
+        find<JobExperiences>(supabase, "job_experiences", "user_id", decoded.id)
+          .many()
+          .execute(),
+    ]);
+
+  if (
+    [userData, skillsData, socialLinksData, educationData, experienceData].some(
+      (data) =>
+        data && typeof data === "object" && "error" in data && data.error
+    )
+  ) {
+    return NextResponse.json({
+      message: "Data retrieval error",
+      status: 404,
+    });
+  }
+
+  return NextResponse.json({
+    message: "Success",
+    status: 200,
+    data: {
+      user: userData
+        ? {
+            ...userData.data,
+            id: undefined,
+            resume_id:
+              userData.data?.resume_id &&
+              (await getFileInfo(userData.data.resume_id)).url.split(
+                "resumes/"
+              )[1],
+          }
+        : null,
+      admin: decoded.isAdmin,
+      skills: skillsData ? skillsData.data?.map((skill) => skill.skill) : [],
+      socialLinks: socialLinksData
+        ? socialLinksData.data?.map((link) => link.link)
+        : [],
+      education: educationData
+        ? educationData.data?.map((education) => ({
+            ...education,
+            id: undefined,
+            user_id: undefined,
+          }))
+        : [],
+      experience: experienceData
+        ? experienceData.data?.map((experience) => ({
+            ...experience,
+            id: undefined,
+            user_id: undefined,
+          }))
+        : [],
+    },
+  });
+}
+
+export async function PUT(request: NextRequest) {}
