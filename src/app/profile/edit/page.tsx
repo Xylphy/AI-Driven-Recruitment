@@ -9,11 +9,12 @@ import {
   User,
 } from "@/types/types";
 import { auth } from "@/lib/firebase/firebase";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import { checkAuthStatus } from "@/lib/library";
 
 export default function EditProfilePage() {
-  const { information, isAuthLoading, isAuthenticated, csrfToken } = useAuth(
+  const router = useRouter();
+  const { information, isAuthLoading, csrfToken } = useAuth(
     true,
     false,
     true,
@@ -116,12 +117,7 @@ export default function EditProfilePage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!isAuthenticated) {
-      alert("You must be logged in to update your profile.");
-      auth.signOut();
-      useRouter().push("/login");
-      return;
-    }
+
     if (!csrfToken) {
       alert("CSRF token is missing. Please refresh the page.");
       return;
@@ -130,7 +126,7 @@ export default function EditProfilePage() {
     if (!(await checkAuthStatus(csrfToken))) {
       alert("Authentication failed. Please log in again.");
       auth.signOut();
-      useRouter().push("/login");
+      router.push("/login");
       return;
     }
 
@@ -150,7 +146,9 @@ export default function EditProfilePage() {
     setIsSubmitting(true);
 
     try {
-    } catch (error) {
+      setResponse(null);
+    } catch {
+
     } finally {
       setIsSubmitting(false);
     }
