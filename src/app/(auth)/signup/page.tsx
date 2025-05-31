@@ -4,11 +4,7 @@ import { signup } from "@/lib/actionServer";
 import { useState } from "react";
 import useCsrfToken from "@/hooks/useCsrfToken";
 import { UserForm } from "@/components/common/UserForm";
-import {
-  EducationalDetail,
-  JobExperience,
-  SocialLink,
-} from "@/types/types";
+import { EducationalDetail, JobExperience, SocialLink } from "@/types/types";
 
 export default function SignupPage() {
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
@@ -31,7 +27,7 @@ export default function SignupPage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const form = e.currentTarget;
+    const form = e.currentTarget; // To prevent getting affected by React's synthetic event system
 
     if (csrfToken === null) {
       setResponse({
@@ -88,7 +84,6 @@ export default function SignupPage() {
       response={response}
       description="Join a community of innovators, problem-solvers, and change-makers."
       title="REGISTRATION"
-      
     />
   );
 }

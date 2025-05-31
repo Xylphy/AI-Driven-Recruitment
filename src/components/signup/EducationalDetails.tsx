@@ -1,23 +1,9 @@
 "use client";
 
 import { EducationalDetail } from "@/types/types";
+import { MONTHS } from "@/lib/constants";
 
 const years = Array.from({ length: 56 }, (_, i) => 1980 + i);
-
-const months = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
 
 export default function EducationalDetails({
   update,
@@ -67,7 +53,7 @@ export default function EducationalDetails({
               className="border border-gray-300 rounded px-2 py-1 w-full"
             >
               <option value="">Start Month</option>
-              {months.map((month) => (
+              {MONTHS.map((month) => (
                 <option key={month} value={month}>
                   {month}
                 </option>
@@ -95,7 +81,7 @@ export default function EducationalDetails({
                 className="border border-gray-300 rounded px-2 py-1 w-full"
               >
                 <option value="">End Month</option>
-                {months.map((month) => (
+                {MONTHS.map((month) => (
                   <option key={month} value={month}>
                     {month}
                   </option>

@@ -14,6 +14,7 @@ import {
   User,
 } from "@/types/types";
 import React from "react";
+import { COUNTRY, COUNTRY_CODES, PREFIXES } from "@/lib/constants";
 
 export function UserForm({
   socialLinksInfo,
@@ -85,8 +86,10 @@ export function UserForm({
           >
             Upload Resume
           </label>
-          {/* Handle file select */}
-          <FileUpload onFileSelect={handleFileSelect} defaultFileName={fileName} />
+          <FileUpload
+            onFileSelect={handleFileSelect}
+            defaultFileName={fileName}
+          />
         </div>
         <h3 className="mb-2 font-bold">Basic Information</h3>
         <div className="mb-4">
@@ -103,13 +106,11 @@ export function UserForm({
             defaultValue={userInfo?.prefix}
           >
             <option value="">None</option>
-            <option value="Mr.">Mr.</option>
-            <option value="Mrs.">Mrs.</option>
-            <option value="Ms.">Ms.</option>
-            <option value="Dr.">Dr.</option>
-            <option value="Jr.">Jr.</option>
-            <option value="Sr.">Sr.</option>
-            <option value="Engr.">Engr.</option>
+            {PREFIXES.map((prefix) => (
+              <option key={prefix} value={prefix}>
+                {prefix}
+              </option>
+            ))}
           </select>
 
           <input
@@ -167,10 +168,11 @@ export function UserForm({
               className="w-35 px-4 py-2 border border-gray-300 rounded-md focus:ring-red-600"
               defaultValue={userInfo?.mobileNumber}
             >
-              <option value="+63">+63 (PH)</option>
-              <option value="+1">+1 (US)</option>
-              <option value="+44">+44 (UK)</option>
-              <option value="+91">+91 (IN)</option>
+              {Object.entries(COUNTRY_CODES).map(([country, code]) => (
+                <option key={country} value={code}>
+                  {code} ({country})
+                </option>
+              ))}
             </select>
             <input
               type="tel"
@@ -258,12 +260,11 @@ export function UserForm({
               defaultValue={userInfo?.country}
             >
               <option value="">Select a country</option>
-              <option value="PH">Philippines</option>
-              <option value="US">United States</option>
-              <option value="CA">Canada</option>
-              <option value="GB">United Kingdom</option>
-              <option value="AU">Australia</option>
-              <option value="IN">India</option>
+              {Object.entries(COUNTRY).map(([code, name]) => (
+                <option key={code} value={code}>
+                  {name}
+                </option>
+              ))}
             </select>
           </div>
         </div>

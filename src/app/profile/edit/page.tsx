@@ -117,6 +117,7 @@ export default function EditProfilePage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const formElement = e.currentTarget; // To prevent getting affected by React's synthetic event system
 
     if (!csrfToken) {
       alert("CSRF token is missing. Please refresh the page.");
@@ -132,7 +133,7 @@ export default function EditProfilePage() {
 
     setIsSubmitting(true);
 
-    const formData = new FormData(e.currentTarget);
+    const formData = new FormData(formElement);
     formData.set("educationalDetails", JSON.stringify(educationalDetails));
     formData.set("socialLinks", JSON.stringify(socialLinks));
     formData.set("jobExperiences", JSON.stringify(jobExperiences));
@@ -143,12 +144,9 @@ export default function EditProfilePage() {
 
     console.log("Form Data:", formData);
 
-    setIsSubmitting(true);
-
     try {
       setResponse(null);
     } catch {
-
     } finally {
       setIsSubmitting(false);
     }
