@@ -1,25 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
-import z from "zod";
 import { createClientServer } from "@/lib/supabase/supabase";
 import { deleteOne, find, insertTable } from "@/lib/supabase/action";
 import { JobApplicants, JobListing, User, Admin } from "@/types/schema";
-
-const identifiableTitleSchema = z.object({
-  id: z.string().or(z.number()),
-  title: z.string(),
-});
-
-const jobListingSchema = z.object({
-  title: z
-    .string()
-    .min(1, "Title is required")
-    .max(255, "Title must be less than 255 characters"),
-  qualifications: z.array(identifiableTitleSchema).optional(),
-  requirements: z.array(identifiableTitleSchema).optional(),
-  location: z.enum(["Cebu City", "Manila", "Tokyo"]),
-  isFullTime: z.boolean(),
-});
+import { jobListingSchema } from "@/lib/schemas/";
 
 export async function POST(request: NextRequest) {
   const token = request.cookies.get("token")!;

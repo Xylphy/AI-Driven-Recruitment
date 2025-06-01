@@ -7,3 +7,8 @@ export const dateRangeSchema = z.object({
   endMonth: z.enum(MONTHS).optional(),
   endYear: z.number().optional(),
 });
+
+export const identifiableTitleSchema = z.object({
+  id: z.string().or(z.number()),
+  title: z.string(),
+});

@@ -39,3 +39,5 @@ export const COUNTRY = {
   CA: "Canada",
   AU: "Australia",
 } as const;
+
+export const JOB_LOCATIONS = ["Cebu City", "Manila", "Tokyo"] as const;

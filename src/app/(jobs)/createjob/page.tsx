@@ -5,6 +5,7 @@ import { JobListing } from "@/types/types";
 import Qualifications from "@/components/joblisting/Qualifications";
 import useAuth from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
+import { JOB_LOCATIONS } from "@/lib/constants";
 
 export default function JobListingPage() {
   const router = useRouter();
@@ -161,9 +162,11 @@ export default function JobListingPage() {
             <option value="" disabled>
               Select a location
             </option>
-            <option value="Cebu City">Cebu City</option>
-            <option value="Manila">Manila</option>
-            <option value="Tokyo">Tokyo</option>
+            {JOB_LOCATIONS.map((location) => (
+              <option key={location} value={location}>
+                {location}
+              </option>
+            ))}
           </select>
 
           <div className="mt-4">

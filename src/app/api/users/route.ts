@@ -19,7 +19,6 @@ import {
   User,
 } from "@/types/schema";
 import { getFileInfo } from "@/lib/cloudinary/cloudinary";
-import { userSchema } from "@/lib/schemas";
 
 // This function handles the POST request to set the password
 export async function POST(request: NextRequest) {
