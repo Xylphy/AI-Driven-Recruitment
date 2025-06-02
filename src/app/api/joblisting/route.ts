@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import { createClientServer } from "@/lib/supabase/supabase";
-import { deleteOne, find, insertTable } from "@/lib/supabase/action";
+import { deleteTable, find, insertTable } from "@/lib/supabase/action";
 import { JobApplicants, JobListing, User, Admin } from "@/types/schema";
 import { jobListingSchema } from "@/lib/schemas/";
 
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
   ]);
 
   if (results.some((result) => result.error)) {
-    await deleteOne(supabase, "job_listings", "id", insertedData[0].id);
+    await deleteTable(supabase, "job_listings", "id", insertedData[0].id);
     return NextResponse.json(
       { error: "Failed to create job listings" },
       { status: 500 }

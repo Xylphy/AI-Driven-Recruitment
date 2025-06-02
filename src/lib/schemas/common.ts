@@ -3,9 +3,9 @@ import { MONTHS } from "../constants";
 
 export const dateRangeSchema = z.object({
   startMonth: z.enum(MONTHS),
-  startYear: z.number(),
+  startYear: z.coerce.number(),
   endMonth: z.enum(MONTHS).optional(),
-  endYear: z.number().optional(),
+  endYear: z.coerce.number().optional(),
 });
 
 export const identifiableTitleSchema = z.object({

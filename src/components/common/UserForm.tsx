@@ -43,7 +43,10 @@ export function UserForm({
     jobExperiences: JobExperience[];
     setJobExperience: React.Dispatch<React.SetStateAction<JobExperience[]>>;
   };
-  userInfo?: User;
+  userInfo?: {
+    user: User;
+    setUserInfo: React.Dispatch<React.SetStateAction<User>>;
+  };
   isSubmitting: boolean;
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => Promise<void>;
   response: {
@@ -103,7 +106,13 @@ export function UserForm({
             id="prefix"
             name="prefix"
             className="w-24 px-4 py-2 border border-gray-300 rounded-md focus:ring-red-600 "
-            defaultValue={userInfo?.prefix}
+            value={userInfo?.user.prefix}
+            onChange={(e) => {
+              userInfo?.setUserInfo((prev) => ({
+                ...prev,
+                prefix: e.target.value,
+              }));
+            }}
           >
             <option value="">None</option>
             {PREFIXES.map((prefix) => (
@@ -119,7 +128,7 @@ export function UserForm({
             name="firstName"
             className="flex-1 ml-2 w-130 px-4 py-2 border border-gray-300 rounded-md focus:ring-red-600 focus:border-red-600"
             required
-            defaultValue={userInfo?.firstName}
+            defaultValue={userInfo?.user.firstName}
           />
         </div>
         <div className="mb-4">
@@ -135,7 +144,7 @@ export function UserForm({
             name="lastName"
             className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
             required
-            defaultValue={userInfo?.lastName}
+            defaultValue={userInfo?.user.lastName}
           />
         </div>
         <div className="mb-4">
@@ -151,7 +160,7 @@ export function UserForm({
             name="email"
             className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
             required
-            defaultValue={userInfo?.email}
+            defaultValue={userInfo?.user.email}
           />
         </div>
         <div className="mb-4">
@@ -166,7 +175,13 @@ export function UserForm({
               id="countryCode"
               name="countryCode"
               className="w-35 px-4 py-2 border border-gray-300 rounded-md focus:ring-red-600"
-              defaultValue={userInfo?.mobileNumber}
+              value={userInfo?.user.countryCode}
+              onChange={(e) => {
+                userInfo?.setUserInfo((prev) => ({
+                  ...prev,
+                  countryCode: e.target.value,
+                }));
+              }}
             >
               {Object.entries(COUNTRY_CODES).map(([country, code]) => (
                 <option key={country} value={code}>
@@ -180,7 +195,7 @@ export function UserForm({
               name="mobileNumber"
               className="w-full mt-0 px-4 py-2 border border-gray-300 rounded-r-md focus:ring-blue-500 focus:border-blue-500"
               required
-              defaultValue={userInfo?.mobileNumber}
+              defaultValue={userInfo?.user.mobileNumber}
             />
           </div>
         </div>
@@ -198,7 +213,7 @@ export function UserForm({
               id="street"
               name="street"
               className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-              defaultValue={userInfo?.street}
+              defaultValue={userInfo?.user.street}
             />
           </div>
           <div className="mt-4">
@@ -213,7 +228,7 @@ export function UserForm({
               id="zip"
               name="zip"
               className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-              defaultValue={userInfo?.zip}
+              defaultValue={userInfo?.user.zip}
             />
           </div>
           <div className="mt-4">
@@ -228,7 +243,7 @@ export function UserForm({
               id="city"
               name="city"
               className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-              defaultValue={userInfo?.city}
+              defaultValue={userInfo?.user.city}
             />
           </div>
           <div className="mt-4">
@@ -243,7 +258,7 @@ export function UserForm({
               id="state"
               name="state"
               className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-              defaultValue={userInfo?.state_}
+              defaultValue={userInfo?.user.state_}
             />
           </div>
           <div className="mt-4">
@@ -257,7 +272,13 @@ export function UserForm({
               id="country"
               name="country"
               className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-              defaultValue={userInfo?.country}
+              value={userInfo?.user.country}
+              onChange={(e) => {
+                userInfo?.setUserInfo((prev) => ({
+                  ...prev,
+                  country: e.target.value,
+                }));
+              }}
             >
               <option value="">Select a country</option>
               {Object.entries(COUNTRY).map(([code, name]) => (
@@ -282,7 +303,7 @@ export function UserForm({
               id="jobTitle"
               name="jobTitle"
               className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-              defaultValue={userInfo?.jobTitle}
+              defaultValue={userInfo?.user.jobTitle}
             />
           </div>
           <div className="mt-4">
@@ -298,7 +319,7 @@ export function UserForm({
               rows={4}
               className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
               placeholder="List your skills separated by commas"
-              defaultValue={userInfo?.skillSet}
+              defaultValue={userInfo?.user?.skillSet}
             ></textarea>
           </div>
         </div>

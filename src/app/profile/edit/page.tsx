@@ -10,7 +10,7 @@ import {
 } from "@/types/types";
 import { auth } from "@/lib/firebase/firebase";
 import { useRouter } from "next/navigation";
-import { checkAuthStatus } from "@/lib/library";
+import { checkAuthStatus, cleanArrayData } from "@/lib/library";
 
 export default function EditProfilePage() {
   const router = useRouter();
@@ -29,6 +29,7 @@ export default function EditProfilePage() {
   const [jobExperiences, setJobExperience] = useState<JobExperience[]>([]);
 
   const [userInfo, setUserInfo] = useState<User>({
+    // Initialize with default values
     prefix: "",
     firstName: "",
     lastName: "",
@@ -134,17 +135,79 @@ export default function EditProfilePage() {
     setIsSubmitting(true);
 
     const formData = new FormData(formElement);
-    formData.set("educationalDetails", JSON.stringify(educationalDetails));
-    formData.set("socialLinks", JSON.stringify(socialLinks));
-    formData.set("jobExperiences", JSON.stringify(jobExperiences));
+
+    const keysToDelete = [];
+
+    for (const [key, value] of formData.entries()) {
+      if (typeof value === "string" && value.trim() === "")
+        keysToDelete.push(key);
+    }
+
+    keysToDelete.forEach((key) => {
+      formData.delete(key);
+    });
+
+    formData.set(
+      "educationalDetails",
+      JSON.stringify(
+        cleanArrayData(educationalDetails, ["institute", "major", "endMonth"])
+      )
+    );
+
+    formData.set(
+      "socialLinks",
+      JSON.stringify(cleanArrayData(socialLinks, ["value"]))
+    );
+
+    formData.set(
+      "jobExperiences",
+      JSON.stringify(
+        cleanArrayData(jobExperiences, [
+          "title",
+          "company",
+          "summary",
+          "endMonth",
+        ])
+      )
+    );
 
     if (selectedFile) {
       formData.set("resume", selectedFile);
     }
 
-    console.log("Form Data:", formData);
-
     try {
+      fetch("/api/users", {
+        method: "PUT",
+        headers: {
+          "X-CSRF-Token": csrfToken,
+        },
+        body: formData,
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Network response was not ok");
+          }
+          return response.json();
+        })
+        .then((data) => {
+          if (data.error) {
+            setResponse({ success: false, message: data.error });
+          } else {
+            router.refresh();
+            setResponse({
+              success: true,
+              message: "Profile updated successfully!",
+            });
+          }
+        })
+        .catch((error) => {
+          console.error("Error updating profile:", error);
+          setResponse({
+            success: false,
+            message: "Failed to update profile.",
+          });
+        });
+
       setResponse(null);
     } catch {
     } finally {
@@ -158,7 +221,7 @@ export default function EditProfilePage() {
 
   return (
     <UserForm
-      userInfo={userInfo}
+      userInfo={{ user: userInfo, setUserInfo }}
       socialLinksInfo={{ socialLinks, setSocialLinks }}
       educationalDetailsInfo={{
         educationalDetails,

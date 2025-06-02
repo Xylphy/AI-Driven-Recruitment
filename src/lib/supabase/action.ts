@@ -13,7 +13,7 @@ export function insertTable(
   return supabase.from(table).insert(data).select("id");
 }
 
-export function deleteOne(
+export function deleteTable(
   supabase: SupabaseClient,
   table: string,
   column: string,
@@ -67,4 +67,14 @@ export function find<T>(
       };
     },
   };
+}
+
+export function updateTable(
+  supabase: SupabaseClient,
+  table: string,
+  matchColumn: string,
+  matchValue: string,
+  data: object
+) {
+  return supabase.from(table).update(data).eq(matchColumn, matchValue);
 }

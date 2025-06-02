@@ -21,7 +21,7 @@ export interface User extends IdentifiableItem {
   first_name: string;
   last_name: string;
   phone_number: string | null;
-  prefix: string;
+  prefix: string | null;
   firebase_uid: string;
   country_code: string;
   resume_id: string | null;

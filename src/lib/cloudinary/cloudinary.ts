@@ -8,9 +8,13 @@ cloudinary.config({
 
 export async function uploadFile(file: File, folder: string) {
   const uploadOptions = {
-    unique_filename: false,
+    unique_filename: true,
     overwrite: true,
     folder: folder,
+    public_id: file.name
+      .replace(/\.[^/.]+$/, "")
+      .replace(/[^a-zA-Z0-9-_]/g, "_")
+      .toLowerCase(),
   };
 
   const result = await cloudinary.uploader.upload(
