@@ -150,19 +150,26 @@ export default function EditProfilePage() {
     formData.set(
       "educationalDetails",
       JSON.stringify(
-        cleanArrayData(educationalDetails, ["institute", "major", "endMonth"])
+        cleanArrayData(
+          educationalDetails as unknown as Record<string, unknown>[],
+          ["institute", "major", "endMonth"]
+        )
       )
     );
 
     formData.set(
       "socialLinks",
-      JSON.stringify(cleanArrayData(socialLinks, ["value"]))
+      JSON.stringify(
+        cleanArrayData(socialLinks as unknown as Record<string, unknown>[], [
+          "value",
+        ])
+      )
     );
 
     formData.set(
       "jobExperiences",
       JSON.stringify(
-        cleanArrayData(jobExperiences, [
+        cleanArrayData(jobExperiences as unknown as Record<string, unknown>[], [
           "title",
           "company",
           "summary",

@@ -100,7 +100,7 @@ export async function refreshToken(csrfToken: string): Promise<boolean> {
 
 // Parses FormData and converts specified fields to JSON
 export function parseFormData(formData: FormData, jsonFields: string[] = []) {
-  const data: Record<string, any> = {};
+  const data: Record<string, unknown> = {};
 
   for (const [key, value] of formData.entries()) {
     if (jsonFields.includes(key)) {
@@ -109,7 +109,11 @@ export function parseFormData(formData: FormData, jsonFields: string[] = []) {
       } catch {
         data[key] = value; // Fallback to string if parsing fails
       }
+    } else if (value instanceof File) {
+      data[key] = value.size > 0 ? value : undefined;
     } else if (typeof value === "string") {
+      data[key] = value === "" ? undefined : value;
+    } else {
       data[key] = value;
     }
   }
@@ -138,7 +142,7 @@ export function isValidFile(file: File | null): boolean {
  * @param stringFields Fields that should be trimmed and empty strings converted to undefined
  * @param filterEmptyObjects If true, objects with all empty string fields will be removed
  */
-export function cleanArrayData<T extends Record<string, any>>(
+export function cleanArrayData<T extends Record<string, unknown>>(
   items: T[],
   stringFields: (keyof T)[],
   filterEmptyObjects: boolean = false
@@ -146,13 +150,9 @@ export function cleanArrayData<T extends Record<string, any>>(
   return items
     .map((item) => {
       const cleanedItem = { ...item };
-
-      // Clean string fields
       for (const field of stringFields) {
-        if (cleanedItem[field]) {
-          cleanedItem[field] = cleanedItem[field].trim() || undefined;
-        } else {
-          cleanedItem.delete(field);
+        if (!cleanedItem[field]) {
+          delete cleanedItem[field]; // Remove the field if it is falsy
         }
       }
 
