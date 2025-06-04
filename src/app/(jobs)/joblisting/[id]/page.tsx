@@ -10,7 +10,10 @@ import { JobListing } from "@/types/schema";
 export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const { id: jobId } = use(params);
-  const { information, isAuthLoading, isAuthenticated, csrfToken } = useAuth();
+  const { information, isAuthLoading, isAuthenticated, csrfToken } = useAuth(
+    undefined,
+    true
+  );
   const [jobLoading, isJobLoading] = useState(true);
 
   const [jobDetails, setJobDetails] = useState<
@@ -154,7 +157,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
             </section>
 
             <button className="mt-6 w-full bg-red-600 text-white font-bold py-2 rounded hover:bg-red-700 transition">
-              {information.isAdmin ? "See Applicants" : "Apply Now"}
+              {information.admin ? "See Applicants" : "Apply Now"}
             </button>
           </div>
         </div>

@@ -2,9 +2,9 @@ import { createClientServer } from "@/lib/supabase/supabase";
 import { ErrorResponse } from "@/types/classes";
 import { NextRequest, NextResponse } from "next/server";
 import { serialize } from "cookie";
-import { find } from "@/lib/supabase/action";
 import jwt from "jsonwebtoken";
-import { User, Admin } from "@/types/schema";
+import { find } from "@/lib/supabase/action";
+import { IdentifiableItem } from "@/types/types";
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,30 +16,25 @@ export async function GET(request: NextRequest) {
       );
     }
     const supabase = await createClientServer(1, true);
-    const { data, error } = await find<User>(
+
+    const { data, error } = await find<
+      IdentifiableItem & {
+        admins: IdentifiableItem | null;
+      }
+    >(
       supabase,
       "users",
       "firebase_uid",
-      authHeader.split(" ")[1]
+      authHeader.split(" ")[1],
+      "id, admins!left(id)"
     ).single();
 
-    if (error) {
+    if (error || !data) {
       return NextResponse.json(
-        { error: "Failed to fetch user from the database" },
-        { status: 500 }
+        { error: "Invalid token or user not found" },
+        { status: 401 }
       );
     }
-
-    if (!data) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    const { data: adminData } = await find<Admin>(
-      supabase,
-      "admins",
-      "user_id",
-      data.id.toString()
-    ).single();
 
     const response = NextResponse.json({
       message: "Success",
@@ -52,13 +47,8 @@ export async function GET(request: NextRequest) {
         "token",
         jwt.sign(
           {
-            phoneNumber: data.phone_number,
-            firstName: data.first_name,
-            lastName: data.last_name,
-            prefix: data.prefix,
-            resumeId: data.resume_id,
             id: data.id,
-            isAdmin: !!adminData,
+            isAdmin: !!data.admins,
             type: "access",
           },
           process.env.JWT_SECRET as string,

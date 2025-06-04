@@ -28,7 +28,10 @@ export default function Profile() {
     createdByOthers: [],
   });
 
-  const { information, isAuthLoading, isAuthenticated, csrfToken } = useAuth();
+  const { information, isAuthLoading, isAuthenticated, csrfToken } = useAuth(
+    true,
+    true
+  );
   const [isJobLoading, setIsJobLoading] = useState(true);
 
   useEffect(() => {
@@ -55,7 +58,7 @@ export default function Profile() {
           if (!body) {
             return;
           }
-          if (information.isAdmin) {
+          if (information) {
             const formatJobDate = (
               job: Pick<JobListing, "title" | "created_at">
             ) => ({
@@ -160,8 +163,8 @@ export default function Profile() {
                 </div>
               ) : (
                 <span>
-                  {information.firstName || "No"}{" "}
-                  {information.lastName || "Name"}
+                  {information.user?.first_name || "No"}{" "}
+                  {information.user?.last_name || "Name"}
                 </span>
               )}
             </h2>
@@ -172,7 +175,7 @@ export default function Profile() {
               <FaInstagram className="text-red-600" />
               <MdPhone className="text-red-600" />
             </div>
-            {information.isAdmin && (
+            {information.admin && (
               <button
                 onClick={() => router.push("/createjob")}
                 className="mt-4 bg-red-600 text-white font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-600 hover:border-red-600 flex items-center justify-center gap-2"
@@ -205,7 +208,10 @@ export default function Profile() {
                 />
               </div>
 
-              <button className="bg-[#E30022] text-white font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-500 hover:border-red-500">
+              <button
+                onClick={() => router.push("/profile/edit")}
+                className="bg-[#E30022] text-white font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-500 hover:border-red-500"
+              >
                 EDIT PROFILE
               </button>
             </div>
@@ -214,7 +220,7 @@ export default function Profile() {
           <div className="w-full md:w-2/3 p-6  ">
             <div className="flex justify-between items-start mb-6">
               <h2 className="text-2xl font-bold">
-                {information.isAdmin ? (
+                {information.admin ? (
                   <>
                     <span className="text-red-600">Job</span> Listed{" "}
                   </>
@@ -232,11 +238,11 @@ export default function Profile() {
             <div className="space-y-5 pb-9 overflow-y-auto h-full">
               <JobApplicationDetails
                 jobApplications={
-                  information.isAdmin
+                  information.admin
                     ? jobListed.createdByThem
                     : jobListed.createdByOthers
                 }
-                isAdmin={information.isAdmin}
+                isAdmin={information.admin!}
               />
             </div>
           </div>

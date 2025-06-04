@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import { serialize } from "cookie";
 import { createClientServer } from "@/lib/supabase/supabase";
 import { find } from "@/lib/supabase/action";
-import { Admin, User } from "@/types/schema";
+import { IdentifiableItem } from "@/types/types";
 
 interface RefreshTokenPayload {
   userId: string;
@@ -36,12 +36,13 @@ export async function GET(request: NextRequest) {
     }
     const supabase = await createClientServer(1, true);
 
-    const [userData, adminData] = await Promise.all([
-      find<User>(supabase, "users", "id", decoded.userId).single(),
-      find<Admin>(supabase, "admins", "user_id", decoded.userId).single(),
-    ]);
+    const { data, error } = await find<
+      IdentifiableItem & {
+        admins: IdentifiableItem | null;
+      }
+    >(supabase, "users", "id", decoded.userId, "id, admins!left(id)").single();
 
-    if (userData.error || !userData.data) {
+    if (!data || error) {
       const response = NextResponse.json(
         { error: "Invalid refresh token or user not found." },
         { status: 401 }
@@ -79,13 +80,8 @@ export async function GET(request: NextRequest) {
         "token",
         jwt.sign(
           {
-            phoneNumber: userData.data.phone_number,
-            firstName: userData.data.first_name,
-            lastName: userData.data.last_name,
-            prefix: userData.data.prefix,
-            resumeId: userData.data.resume_id,
-            id: userData.data.id,
-            isAdmin: !!adminData.data,
+            id: data.id,
+            isAdmin: !!data.admins,
             type: "access",
           },
           process.env.JWT_SECRET as string,
@@ -106,7 +102,7 @@ export async function GET(request: NextRequest) {
       serialize(
         "refreshToken",
         jwt.sign(
-          { userId: userData.data.id, type: "refresh" },
+          { userId: data.id, type: "refresh" },
           process.env.REFRESH_TOKEN_SECRET as string,
           { expiresIn: "7d" }
         ),

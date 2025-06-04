@@ -1,35 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
-import z from "zod";
 import { createClientServer } from "@/lib/supabase/supabase";
-import { deleteOne, find, insertTable } from "@/lib/supabase/action";
-import { JobApplicants, JobListing, User } from "@/types/schema";
-
-const identifiableTitleSchema = z.object({
-  id: z.string().or(z.number()),
-  title: z.string(),
-});
-
-const jobListingSchema = z.object({
-  title: z
-    .string()
-    .min(1, "Title is required")
-    .max(255, "Title must be less than 255 characters"),
-  qualifications: z.array(identifiableTitleSchema).optional(),
-  requirements: z.array(identifiableTitleSchema).optional(),
-  location: z.enum(["Cebu City", "Manila", "Tokyo"]),
-  isFullTime: z.boolean(),
-});
+import { deleteTable, find, insertTable } from "@/lib/supabase/action";
+import { JobApplicants, JobListing, User, Admin } from "@/types/schema";
+import { jobListingSchema } from "@/lib/schemas/";
 
 export async function POST(request: NextRequest) {
   const token = request.cookies.get("token")!;
 
-  const { isAdmin, id: userId } = jwt.verify(
+  const { id: userId, isAdmin } = jwt.verify(
     token.value,
     process.env.JWT_SECRET!
   ) as {
-    isAdmin: boolean;
     id: string;
+    isAdmin: boolean;
   };
 
   if (!isAdmin) {
@@ -80,7 +64,7 @@ export async function POST(request: NextRequest) {
   ]);
 
   if (results.some((result) => result.error)) {
-    await deleteOne(supabase, "job_listings", "id", insertedData[0].id);
+    await deleteTable(supabase, "job_listings", "id", insertedData[0].id);
     return NextResponse.json(
       { error: "Failed to create job listings" },
       { status: 500 }
@@ -106,17 +90,20 @@ export async function GET(request: NextRequest) {
 
   const offset = (page - 1) * limit;
 
-  const { isAdmin, id: userId } = jwt.verify(
-    token.value,
-    process.env.JWT_SECRET!
-  ) as {
-    isAdmin: boolean;
+  const { id: userId } = jwt.verify(token.value, process.env.JWT_SECRET!) as {
     id: string;
   };
 
   const supabase = await createClientServer(1, true);
 
-  if (isAdmin) {
+  const { data: adminData } = await find<Admin>(
+    supabase,
+    "admins",
+    "user_id",
+    userId
+  ).single();
+
+  if (adminData) {
     const [themResults, allResults] = await Promise.all([
       find<JobListing>(supabase, "job_listings", "created_by", userId)
         .many()

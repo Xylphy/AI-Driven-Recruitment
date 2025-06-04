@@ -5,14 +5,37 @@ import { auth } from "@/lib/firebase/firebase";
 import useCsrfToken from "./useCsrfToken";
 import { useEffect } from "react";
 import { checkAuthStatus } from "@/lib/library";
+import {
+  Skills,
+  User,
+  EducationalDetails,
+  JobExperiences,
+} from "@/types/schema";
 
-export default function useAuth() {
+export default function useAuth(
+  fetchUser = false,
+  fetchAdmin = false,
+  fetchSkills = false,
+  fetchSocialLinks = false,
+  fetchEducation = false,
+  fetchExperience = false,
+) {
   const router = useRouter();
   const [isAuthLoading, setIsAuthLoading] = useState<boolean>(true);
-  const [information, setInformation] = useState({
-    firstName: "",
-    lastName: "",
-    isAdmin: false,
+  const [information, setInformation] = useState<{
+    user: Omit<User, "id"> | null;
+    admin: boolean | null;
+    skills: Pick<Skills, "skill">[];
+    socialLinks: string[];
+    education: Omit<EducationalDetails, "user_id" | "id">[];
+    experience: Omit<JobExperiences, "user_id" | "id">[];
+  }>({
+    user: null,
+    admin: null,
+    skills: [],
+    socialLinks: [],
+    education: [],
+    experience: [],
   });
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const { csrfToken } = useCsrfToken();
@@ -49,8 +72,21 @@ export default function useAuth() {
       return;
     }
 
+    const params = new URLSearchParams();
+
+    Object.entries({
+      admin: fetchAdmin,
+      user: fetchUser,
+      skills: fetchSkills,
+      socialLinks: fetchSocialLinks,
+      education: fetchEducation,
+      experience: fetchExperience,
+    }).forEach(([key, value]) => {
+      if (value) params.append(key, "true");
+    });
+
     const setInfo = async () => {
-      fetch("/api/users/userDetails", {
+      fetch(`/api/users?${params.toString()}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -69,10 +105,14 @@ export default function useAuth() {
         })
         .then((body) => {
           if (body) {
+            const data = body.data;
             setInformation({
-              firstName: body.data.firstName,
-              lastName: body.data.lastName,
-              isAdmin: body.data.isAdmin,
+              user: data.user,
+              admin: data.admin,
+              skills: data.skills,
+              socialLinks: data.socialLinks,
+              education: data.education,
+              experience: data.experience,
             });
           }
         })

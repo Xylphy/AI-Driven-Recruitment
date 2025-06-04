@@ -1,33 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 import { createClientServer } from "@/lib/supabase/supabase";
 import { ObjectId } from "mongodb";
-import {
-  insertTable,
-  deleteOne as supabaseDeleteOne,
-} from "@/lib/supabase/action";
-import {
-  EducationalDetail,
-  JobExperience,
-  SocialLink,
-} from "@/types/types";
+import { deleteTable, insertTable, updateTable } from "@/lib/supabase/action";
+import { EducationalDetail, JobExperience, SocialLink } from "@/types/types";
 import { deleteOne, findOne } from "@/lib/mongodb/action";
 import { ErrorResponse } from "@/types/classes";
-
-const formSchema = z.object({
-  password: z.string().min(8, "Password must be at least 8 characters long"),
-  confirmPassword: z
-    .string()
-    .min(8, "Password must be at least 8 characters long"),
-  token: z.string().min(1, "Token is required"),
-  uid: z.string().min(1, "User ID is required"),
-});
+import jwt from "jsonwebtoken";
+import { find } from "@/lib/supabase/action";
+import {
+  EducationalDetails,
+  JobExperiences,
+  Skills,
+  SocialLinks,
+  User,
+} from "@/types/schema";
+import {
+  deleteFile,
+  getFileInfo,
+  uploadFile,
+} from "@/lib/cloudinary/cloudinary";
+import { userSchema, verificationSchema } from "@/lib/schemas";
+import { isValidFile, parseFormData } from "@/lib/library";
 
 // This function handles the POST request to set the password
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const validatedData = formSchema.safeParse(body);
+    const validatedData = verificationSchema.safeParse(body);
     if (!validatedData.success) {
       return NextResponse.json(
         { error: validatedData.error.format() },
@@ -59,7 +58,14 @@ export async function POST(request: NextRequest) {
       prefix: data.prefix,
       firebase_uid: body.uid,
       resume_id: data.public_id,
-    });
+      country_code: data.countryCode,
+      street: data.street,
+      zip: data.zip,
+      city: data.city,
+      state: data.state_,
+      country: data.country,
+      job_title: data.jobTitle,
+    } as User);
 
     if (error) {
       console.error("Error inserting user into Supabase:", error);
@@ -74,6 +80,7 @@ export async function POST(request: NextRequest) {
       );
     }
     const userId = insertedData[0].id;
+    const skills = data.skillSet ? data.skillSet.split(",") : []; // Split skills by comma
 
     const results = await Promise.all([
       ...data.educationalDetails.map((detail: Omit<EducationalDetail, "id">) =>
@@ -108,7 +115,7 @@ export async function POST(request: NextRequest) {
           summary: experience.summary,
         })
       ),
-      ...data.skillSet.split(",").map((skill: string) =>
+      ...skills.map((skill: string) =>
         insertTable(supabase, "skills", {
           user_id: userId,
           skill: skill.trim(),
@@ -117,7 +124,7 @@ export async function POST(request: NextRequest) {
     ]);
 
     if (results.some((result) => result.error)) {
-      supabaseDeleteOne(supabase, "users", "id", userId.toString());
+      deleteTable(supabase, "users", "id", userId.toString());
       return NextResponse.json(
         { error: "Something wrong saving data" },
         { status: 500 }
@@ -144,4 +151,248 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+export async function GET(request: NextRequest) {
+  const tokenCookie = request.cookies.get("token");
+  const doUser = request.nextUrl.searchParams.get("user") === "true";
+  const doSkills = request.nextUrl.searchParams.get("skills") === "true";
+  const doSocialLinks =
+    request.nextUrl.searchParams.get("socialLinks") === "true";
+  const doEducation = request.nextUrl.searchParams.get("education") === "true";
+  const doExperience =
+    request.nextUrl.searchParams.get("experience") === "true";
+
+  if (!tokenCookie || !tokenCookie.value) {
+    return NextResponse.json({
+      message: "Token not found",
+      status: 401,
+    });
+  }
+
+  const decoded = jwt.verify(
+    tokenCookie.value,
+    process.env.JWT_SECRET as string
+  ) as jwt.JwtPayload;
+  const supabase = await createClientServer(1, true);
+
+  const [userData, skillsData, socialLinksData, educationData, experienceData] =
+    await Promise.all([
+      doUser && find<User>(supabase, "users", "id", decoded.id).single(),
+      doSkills &&
+        find<Skills>(supabase, "skills", "user_id", decoded.id)
+          .many()
+          .execute(),
+      doSocialLinks &&
+        find<SocialLinks>(supabase, "social_links", "user_id", decoded.id)
+          .many()
+          .execute(),
+      doEducation &&
+        find<EducationalDetails>(
+          supabase,
+          "educational_details",
+          "user_id",
+          decoded.id
+        )
+          .many()
+          .execute(),
+      doExperience &&
+        find<JobExperiences>(supabase, "job_experiences", "user_id", decoded.id)
+          .many()
+          .execute(),
+    ]);
+
+  if (
+    [userData, skillsData, socialLinksData, educationData, experienceData].some(
+      (data) =>
+        data && typeof data === "object" && "error" in data && data.error
+    )
+  ) {
+    return NextResponse.json({
+      message: "Data retrieval error",
+      status: 404,
+    });
+  }
+
+  return NextResponse.json({
+    message: "Success",
+    status: 200,
+    data: {
+      user: userData
+        ? {
+            ...userData.data,
+            id: undefined,
+            resume_id:
+              userData.data?.resume_id &&
+              (await getFileInfo(userData.data.resume_id)).url.split(
+                "resumes/"
+              )[1],
+          }
+        : null,
+      admin: decoded.isAdmin,
+      skills: skillsData ? skillsData.data?.map((skill) => skill.skill) : [],
+      socialLinks: socialLinksData
+        ? socialLinksData.data?.map((link) => link.link)
+        : [],
+      education: educationData
+        ? educationData.data?.map((education) => ({
+            ...education,
+            id: undefined,
+            user_id: undefined,
+          }))
+        : [],
+      experience: experienceData
+        ? experienceData.data?.map((experience) => ({
+            ...experience,
+            id: undefined,
+            user_id: undefined,
+          }))
+        : [],
+    },
+  });
+}
+
+export async function PUT(request: NextRequest) {
+  const formData = await request.formData();
+
+  const tokenCookie = request.cookies.get("token");
+  if (!tokenCookie) {
+    return NextResponse.json(
+      { error: "Unauthorized request" },
+      { status: 401 }
+    );
+  }
+
+  const { id: userId } = jwt.verify(
+    tokenCookie.value,
+    process.env.JWT_SECRET as string
+  ) as jwt.JwtPayload & { id: string };
+
+  const validatedData = userSchema.safeParse({
+    ...parseFormData(formData, [
+      "educationalDetails",
+      "jobExperiences",
+      "socialLinks",
+    ]),
+    resume: formData.get("resume") as File | null,
+  });
+
+  if (!validatedData.success) {
+    return NextResponse.json(
+      { error: validatedData.error.format() },
+      { status: 400 }
+    );
+  }
+
+  const supabase = await createClientServer(1, true);
+  const { data: userData, error: userError } = await find<User>(
+    supabase,
+    "users",
+    "id",
+    userId
+  ).single();
+
+  if (userError || !userData) {
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+
+  const promises = [];
+
+  if (isValidFile(validatedData.data.resume || null)) {
+    if (userData.resume_id !== null) {
+      promises.push(
+        getFileInfo(userData.resume_id).then((resume) =>
+          deleteFile(resume.publicId)
+        )
+      );
+    }
+
+    promises.push(
+      uploadFile(validatedData.data.resume!, "resumes").then((resumeId) =>
+        updateTable(supabase, "users", "id", userId, {
+          resume_id: resumeId,
+        })
+      )
+    );
+  }
+
+  await Promise.all([
+    deleteTable(supabase, "educational_details", "user_id", userId),
+    deleteTable(supabase, "social_links", "user_id", userId),
+    deleteTable(supabase, "job_experiences", "user_id", userId),
+    deleteTable(supabase, "skills", "user_id", userId),
+  ]);
+
+  const validatedUserData = validatedData.data;
+
+  // Warning: do not use ...jobExperience (includes all data) since supabase doesn't insert if column doesn't exist
+  promises.push(
+    updateTable(supabase, "users", "id", userId, {
+      first_name: validatedUserData.firstName,
+      last_name: validatedUserData.lastName,
+      phone_number: validatedUserData.mobileNumber,
+      country_code: validatedUserData.countryCode,
+      job_title: validatedUserData.jobTitle,
+      prefix: validatedUserData.prefix,
+      street: validatedUserData.street,
+      zip: validatedUserData.zip,
+      city: validatedUserData.city,
+      state: validatedUserData.state,
+      country: validatedUserData.country,
+    }),
+    ...(validatedUserData.educationalDetails?.map((educationalDetails) =>
+      insertTable(supabase, "educational_details", {
+        user_id: userId,
+        currently_pursuing: educationalDetails.currentlyPursuing,
+        start_month: educationalDetails.startMonth,
+        start_year: educationalDetails.startYear,
+        end_month: educationalDetails.endMonth,
+        end_year: educationalDetails.endYear,
+        degree: educationalDetails.degree,
+        institute: educationalDetails.institute,
+        major: educationalDetails.major,
+      })
+    ) || []),
+    ...(validatedUserData.socialLinks?.map((socialLink) =>
+      insertTable(supabase, "social_links", {
+        user_id: userId,
+        link: socialLink.value,
+      })
+    ) || []),
+    ...(validatedUserData.jobExperiences?.map((jobExperience) =>
+      insertTable(supabase, "job_experiences", {
+        user_id: userId,
+        currently_working: jobExperience.currentlyWorking,
+        start_month: jobExperience.startMonth,
+        start_year: jobExperience.startYear,
+        end_month: jobExperience.endMonth,
+        end_year: jobExperience.endYear,
+        title: jobExperience.title,
+        company: jobExperience.company,
+        summary: jobExperience.summary,
+      })
+    ) || []),
+    ...(validatedData.data.skillSet
+      ? validatedData.data.skillSet.split(",").map((skill) =>
+          insertTable(supabase, "skills", {
+            user_id: userId,
+            skill: skill.trim(),
+          })
+        )
+      : [])
+  );
+
+  await Promise.all(promises);
+
+  if (promises.some((p) => p instanceof Error)) {
+    return NextResponse.json(
+      { error: "Error updating user data" },
+      { status: 500 }
+    );
+  }
+
+  return NextResponse.json(
+    { message: "User data updated successfully" },
+    { status: 200 }
+  );
 }

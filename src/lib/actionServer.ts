@@ -3,6 +3,7 @@
 import { sendEmailVerification } from "./firebase/action";
 import { uploadFile } from "./cloudinary/cloudinary";
 import { verifyCsrfToken } from "./csrf";
+import { isValidFile } from "./library";
 
 export async function signup(formData: FormData) {
   const csrfToken = formData.get("csrfToken");
@@ -15,29 +16,14 @@ export async function signup(formData: FormData) {
   }
 
   try {
-    const file: File | null = formData.get("resume") as File;
+    const file = formData.get("resume") as File;
     let resume_id = undefined;
 
     if (file) {
-      if (file.size > 10 * 1024 * 1024) {
+      if (!isValidFile(file)) {
         return {
           success: false,
-          message: "File size exceeds the limit of 5MB.",
-        };
-      }
-
-      if (
-        ![
-          "application/pdf",
-          "application/msword",
-          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-          "application/octet-stream",
-        ].includes(file.type)
-      ) {
-        return {
-          success: false,
-          message:
-            "Invalid file type. Only PDF and Word documents are allowed.",
+          message: "Not a valid file type or size exceeds the limit of 10MB.",
         };
       }
 

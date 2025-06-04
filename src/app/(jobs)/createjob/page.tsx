@@ -5,6 +5,7 @@ import { JobListing } from "@/types/types";
 import Qualifications from "@/components/joblisting/Qualifications";
 import useAuth from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
+import { JOB_LOCATIONS } from "@/lib/constants";
 
 export default function JobListingPage() {
   const router = useRouter();
@@ -20,7 +21,7 @@ export default function JobListingPage() {
     location: "",
     isFullTime: true,
   });
-  const { information, csrfToken } = useAuth();
+  const { information, csrfToken } = useAuth(undefined, true);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -67,7 +68,7 @@ export default function JobListingPage() {
       return;
     }
 
-    if (!information.isAdmin) {
+    if (!information.admin) {
       alert("You are not authorized to create a job listing");
       router.push("/profile");
     }
@@ -161,9 +162,11 @@ export default function JobListingPage() {
             <option value="" disabled>
               Select a location
             </option>
-            <option value="Cebu City">Cebu City</option>
-            <option value="Manila">Manila</option>
-            <option value="Tokyo">Tokyo</option>
+            {JOB_LOCATIONS.map((location) => (
+              <option key={location} value={location}>
+                {location}
+              </option>
+            ))}
           </select>
 
           <div className="mt-4">

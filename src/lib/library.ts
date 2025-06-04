@@ -97,3 +97,73 @@ export async function refreshToken(csrfToken: string): Promise<boolean> {
       return false;
     });
 }
+
+// Parses FormData and converts specified fields to JSON
+export function parseFormData(formData: FormData, jsonFields: string[] = []) {
+  const data: Record<string, any> = {};
+
+  for (const [key, value] of formData.entries()) {
+    if (jsonFields.includes(key)) {
+      try {
+        data[key] = JSON.parse(value as string);
+      } catch {
+        data[key] = value; // Fallback to string if parsing fails
+      }
+    } else if (typeof value === "string") {
+      data[key] = value;
+    }
+  }
+
+  return data;
+}
+
+// Supported file types across the application
+export function isValidFile(file: File | null): boolean {
+  return (
+    !!file &&
+    [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/octet-stream",
+    ].includes(file.type) &&
+    file.size <= 10 * 1024 * 1024 &&
+    file.size > 0
+  );
+}
+
+/**
+ * Cleans string fields in an array of objects
+ * @param items Array of objects to clean
+ * @param stringFields Fields that should be trimmed and empty strings converted to undefined
+ * @param filterEmptyObjects If true, objects with all empty string fields will be removed
+ */
+export function cleanArrayData<T extends Record<string, any>>(
+  items: T[],
+  stringFields: (keyof T)[],
+  filterEmptyObjects: boolean = false
+): T[] {
+  return items
+    .map((item) => {
+      const cleanedItem = { ...item };
+
+      // Clean string fields
+      for (const field of stringFields) {
+        if (cleanedItem[field]) {
+          cleanedItem[field] = cleanedItem[field].trim() || undefined;
+        } else {
+          cleanedItem.delete(field);
+        }
+      }
+
+      return cleanedItem;
+    })
+    .filter((item) => {
+      if (!filterEmptyObjects) return true;
+
+      // Keep items that have at least one non-empty string field
+      return stringFields.some(
+        (field) => item[field] && item[field] !== undefined
+      );
+    });
+}

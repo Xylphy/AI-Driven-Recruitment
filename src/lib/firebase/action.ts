@@ -15,6 +15,10 @@ export async function sendEmailVerification(data: RegisterState) {
 
   const response = await insertTokenData(data);
 
+  if (response === null) {
+    throw new Error("Failed to insert token data");
+  }
+
   await sendSignInLinkToEmail(auth, data.email, {
     url: `${
       process.env.NODE_ENV === "development"

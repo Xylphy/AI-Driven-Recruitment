@@ -20,7 +20,7 @@ export default function SocialLinks({
         <div key={link.id} className="mb-4 flex items-center gap-2">
           <input
             type="text"
-            value={link.value}
+            defaultValue={link.value}
             onChange={(e) => update(link.id, e.target.value)}
             placeholder="Enter social link"
             className="border border-gray-300 rounded px-2 py-1 w-full"
