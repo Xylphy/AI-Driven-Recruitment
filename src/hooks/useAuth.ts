@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase/firebase";
-import useCsrfToken from "./useCsrfToken";
 import { useEffect } from "react";
 import { checkAuthStatus } from "@/lib/library";
 import {
@@ -18,10 +17,9 @@ export default function useAuth(
   fetchSkills = false,
   fetchSocialLinks = false,
   fetchEducation = false,
-  fetchExperience = false,
+  fetchExperience = false
 ) {
   const router = useRouter();
-  const [isAuthLoading, setIsAuthLoading] = useState<boolean>(true);
   const [information, setInformation] = useState<{
     user: Omit<User, "id"> | null;
     admin: boolean | null;
@@ -38,7 +36,7 @@ export default function useAuth(
     experience: [],
   });
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const { csrfToken } = useCsrfToken();
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -46,16 +44,9 @@ export default function useAuth(
         router.push("/login");
       }
     });
-    return () => unsubscribe();
-  }, [router]);
-
-  useEffect(() => {
-    if (!csrfToken) {
-      return;
-    }
 
     const checkAuth = async () => {
-      if (!(await checkAuthStatus(csrfToken))) {
+      if (!(await checkAuthStatus())) {
         auth.signOut();
         router.push("/login");
         return;
@@ -65,7 +56,8 @@ export default function useAuth(
     };
 
     checkAuth();
-  }, [csrfToken, router]);
+    return () => unsubscribe();
+  }, [router]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -90,7 +82,6 @@ export default function useAuth(
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "X-CSRF-Token": csrfToken!,
         },
         credentials: "include",
       })
@@ -118,7 +109,6 @@ export default function useAuth(
         })
         .catch(() => {
           auth.signOut();
-          router.push("/login");
           return;
         })
         .finally(() => {
@@ -127,12 +117,11 @@ export default function useAuth(
     };
 
     setInfo();
-  }, [router, isAuthenticated]);
+  }, [isAuthenticated]);
 
   return {
     information,
-    isAuthLoading,
     isAuthenticated,
-    csrfToken,
+    isAuthLoading,
   };
 }

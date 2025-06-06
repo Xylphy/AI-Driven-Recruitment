@@ -11,7 +11,7 @@ export async function generateCsrfToken(): Promise<string> {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
-    maxAge: 60 * 60,
+    maxAge: 60 * 60, // 1 hour
   });
   return csrfToken;
 }

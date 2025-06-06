@@ -4,6 +4,7 @@ import { serialize } from "cookie";
 import { createClientServer } from "@/lib/supabase/supabase";
 import { find } from "@/lib/supabase/action";
 import { IdentifiableItem } from "@/types/types";
+import { generateCsrfToken } from "@/lib/csrf";
 
 interface RefreshTokenPayload {
   userId: string;
@@ -72,6 +73,7 @@ export async function GET(request: NextRequest) {
 
     const response = NextResponse.json({
       message: "Token refreshed successfully",
+      csrfToken: await generateCsrfToken(),
     });
 
     response.headers.append(

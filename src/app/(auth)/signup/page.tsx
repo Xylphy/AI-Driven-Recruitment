@@ -1,10 +1,10 @@
 "use client";
 
 import { signup } from "@/lib/actionServer";
-import { useState } from "react";
-import useCsrfToken from "@/hooks/useCsrfToken";
+import { useState, use } from "react";
 import { UserForm } from "@/components/common/UserForm";
 import { EducationalDetail, JobExperience, SocialLink } from "@/types/types";
+import { getCsrfToken } from "@/lib/library";
 
 export default function SignupPage() {
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
@@ -19,7 +19,7 @@ export default function SignupPage() {
   } | null>(null);
 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const { csrfToken } = useCsrfToken();
+  const csrfToken = use(getCsrfToken());
 
   const handleFileSelect = (file: File | null) => {
     setSelectedFile(file);
@@ -27,6 +27,14 @@ export default function SignupPage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!csrfToken) {
+      setResponse({
+        success: false,
+        message: "CSRF token is missing. Please try again.",
+      });
+      return;
+    }
+
     const form = e.currentTarget; // To prevent getting affected by React's synthetic event system
 
     if (csrfToken === null) {

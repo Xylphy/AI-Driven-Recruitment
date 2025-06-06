@@ -9,7 +9,7 @@ import { Button } from "@/components/common/Button";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, use } from "react";
 import { auth } from "@/lib/firebase/firebase";
-import useCsrfToken from "@/hooks/useCsrfToken";
+import { getCsrfToken } from "@/lib/library";
 
 export default function Verification({
   params,
@@ -17,7 +17,7 @@ export default function Verification({
   params: Promise<{ id: string }>;
 }) {
   const router = useRouter();
-  const { csrfToken } = useCsrfToken();
+  const csrfToken = use(getCsrfToken());
   const [email, setEmail] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const { id } = use(params);

@@ -6,6 +6,7 @@ import Qualifications from "@/components/joblisting/Qualifications";
 import useAuth from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { JOB_LOCATIONS } from "@/lib/constants";
+import { useCsrfStore } from "@/lib/store";
 
 export default function JobListingPage() {
   const router = useRouter();
@@ -21,7 +22,7 @@ export default function JobListingPage() {
     location: "",
     isFullTime: true,
   });
-  const { information, csrfToken } = useAuth(undefined, true);
+  const { information } = useAuth(undefined, true);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -63,11 +64,6 @@ export default function JobListingPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!csrfToken) {
-      alert("CSRF token is missing, please try again later");
-      return;
-    }
-
     if (!information.admin) {
       alert("You are not authorized to create a job listing");
       router.push("/profile");
@@ -77,7 +73,7 @@ export default function JobListingPage() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-CSRF-Token": csrfToken,
+        "X-CSRF-Token": useCsrfStore.getState().csrfToken!,
       },
       body: JSON.stringify(jobListing),
     });

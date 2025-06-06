@@ -33,7 +33,17 @@ export async function middleware(request: NextRequest) {
       );
     }
 
-    if (!request.nextUrl.pathname.startsWith("/api/csrf")) {
+    const pathname = request.nextUrl.pathname;
+
+    // Paths that do not require CSRF token
+    const publicPathCsrf = [
+      "/api/auth/status",
+      "/api/auth/refresh",
+      "/api/auth/jwt",
+      "/api/joblisting",
+    ];
+
+    if (!publicPathCsrf.includes(pathname) && request.method !== "GET") {
       const csrfToken = request.headers.get("X-CSRF-Token");
 
       if (!csrfToken) {
@@ -51,12 +61,8 @@ export async function middleware(request: NextRequest) {
       }
     }
 
-    const pathname = request.nextUrl.pathname;
-    const publicPaths = [
-      {
-        path: "/api/csrf",
-        acceptedMethods: ["GET"],
-      },
+    // Paths that do not require an access token
+    const publicPathToken = [
       {
         path: "/api/users/email",
         acceptedMethods: ["POST"],
@@ -81,7 +87,7 @@ export async function middleware(request: NextRequest) {
 
     if (
       !request.cookies.get("token") &&
-      !publicPaths.some(
+      !publicPathToken.some(
         (publicPath) =>
           pathname.startsWith(publicPath.path) &&
           publicPath.acceptedMethods.includes(request.method)

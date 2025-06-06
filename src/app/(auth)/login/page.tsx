@@ -6,11 +6,10 @@ import { auth } from "@/lib/firebase/firebase";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import useCsrfToken from "@/hooks/useCsrfToken";
+import { useCsrfStore } from "@/lib/store";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { csrfToken } = useCsrfToken();
   const [isAuthLoading, setIsAuthLoading] = useState(false);
 
   useEffect(() => {
@@ -56,7 +55,6 @@ export default function LoginPage() {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "X-CSRF-Token": csrfToken!,
           Authorization: `Bearer ${userCredential.user.uid}`,
         },
         credentials: "include",
@@ -70,6 +68,7 @@ export default function LoginPage() {
 
       const data = await response.json();
       if (data) {
+        useCsrfStore.getState().setCsrfToken(data.csrfToken);
         router.push("/profile");
       }
     } catch (error) {

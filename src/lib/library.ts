@@ -1,3 +1,5 @@
+import { useCsrfStore } from "./store";
+
 // Note: Cannot be used for getting HTTP-only cookies
 export function getCookie(name: string): string | null {
   if (typeof document === "undefined") {
@@ -22,8 +24,9 @@ export function clearCookies() {
   }
   document.cookie.split(";").forEach((cookie) => {
     const eqPos = cookie.indexOf("=");
-    const name = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim();
-    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+    document.cookie = `${
+      eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim()
+    }=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
   });
 }
 
@@ -48,7 +51,7 @@ export async function getCsrfToken(): Promise<string | null> {
   }
 }
 
-export async function checkAuthStatus(csrfToken: string): Promise<boolean> {
+export async function checkAuthStatus(): Promise<boolean> {
   if (typeof document === "undefined") {
     // This code is running on the server, so we can't access document.cookie
     return false;
@@ -59,7 +62,6 @@ export async function checkAuthStatus(csrfToken: string): Promise<boolean> {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        "X-CSRF-Token": csrfToken,
       },
       credentials: "include",
     });
@@ -68,22 +70,23 @@ export async function checkAuthStatus(csrfToken: string): Promise<boolean> {
       return true;
     }
 
-    return await refreshToken(csrfToken);
+    return await refreshToken();
   } catch {
     return false;
   }
 }
 
-export async function refreshToken(csrfToken: string): Promise<boolean> {
+// Refreshes access and csrf token
+export async function refreshToken(): Promise<boolean> {
   if (typeof document === "undefined") {
     // This code is running on the server, so we can't access document.cookie
     return false;
   }
+
   return await fetch("/api/auth/refresh", {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
-      "X-CSRF-Token": csrfToken,
     },
     credentials: "include",
   })
@@ -91,6 +94,10 @@ export async function refreshToken(csrfToken: string): Promise<boolean> {
       if (!res.ok) {
         throw new Error("Token refresh failed");
       }
+      return res.json();
+    })
+    .then((data) => {
+      useCsrfStore.getState().setCsrfToken(data.csrfToken);
       return true;
     })
     .catch(() => {

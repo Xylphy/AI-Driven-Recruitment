@@ -11,10 +11,11 @@ import {
 import { auth } from "@/lib/firebase/firebase";
 import { useRouter } from "next/navigation";
 import { checkAuthStatus, cleanArrayData } from "@/lib/library";
+import { useCsrfStore } from "@/lib/store";
 
 export default function EditProfilePage() {
   const router = useRouter();
-  const { information, isAuthLoading, csrfToken } = useAuth(
+  const { information, isAuthLoading } = useAuth(
     true,
     false,
     true,
@@ -120,12 +121,7 @@ export default function EditProfilePage() {
     e.preventDefault();
     const formElement = e.currentTarget; // To prevent getting affected by React's synthetic event system
 
-    if (!csrfToken) {
-      alert("CSRF token is missing. Please refresh the page.");
-      return;
-    }
-
-    if (!(await checkAuthStatus(csrfToken))) {
+    if (!(await checkAuthStatus())) {
       alert("Authentication failed. Please log in again.");
       auth.signOut();
       router.push("/login");
@@ -186,7 +182,7 @@ export default function EditProfilePage() {
       fetch("/api/users", {
         method: "PUT",
         headers: {
-          "X-CSRF-Token": csrfToken,
+          "X-CSRF-Token": useCsrfStore.getState().csrfToken || "",
         },
         body: formData,
       })

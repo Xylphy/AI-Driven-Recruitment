@@ -6,14 +6,12 @@ import useAuth from "@/hooks/useAuth";
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { JobListing } from "@/types/schema";
+import Loading from "@/app/loading";
 
 export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const { id: jobId } = use(params);
-  const { information, isAuthLoading, isAuthenticated, csrfToken } = useAuth(
-    undefined,
-    true
-  );
+  const { information, isAuthenticated } = useAuth(undefined, true);
   const [jobLoading, isJobLoading] = useState(true);
 
   const [jobDetails, setJobDetails] = useState<
@@ -39,7 +37,6 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        "X-CSRF-Token": csrfToken!,
       },
     })
       .then((res) => {
@@ -62,8 +59,8 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
       });
   }, [isAuthenticated]);
 
-  if (isAuthLoading || jobLoading) {
-    return <div>Loading...</div>;
+  if (jobLoading) {
+    return <Loading />;
   }
 
   return (
