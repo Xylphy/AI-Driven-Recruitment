@@ -1,7 +1,7 @@
 "use client";
 
 import { signup } from "@/lib/actionServer";
-import { useState, use } from "react";
+import { useState, use, useEffect } from "react";
 import { UserForm } from "@/components/common/UserForm";
 import { EducationalDetail, JobExperience, SocialLink } from "@/types/types";
 import { getCsrfToken } from "@/lib/library";
@@ -19,7 +19,15 @@ export default function SignupPage() {
   } | null>(null);
 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const csrfToken = use(getCsrfToken());
+  const [csrfToken, setCsrfToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchCsrfToken = async () => {
+      setCsrfToken(await getCsrfToken());
+    };
+
+    fetchCsrfToken();
+  }, []);
 
   const handleFileSelect = (file: File | null) => {
     setSelectedFile(file);

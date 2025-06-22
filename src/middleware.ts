@@ -41,6 +41,7 @@ export async function middleware(request: NextRequest) {
       "/api/auth/refresh",
       "/api/auth/jwt",
       "/api/joblisting",
+      "/api/csrf",
     ];
 
     if (!publicPathCsrf.includes(pathname) && request.method !== "GET") {
