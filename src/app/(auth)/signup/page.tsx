@@ -1,7 +1,7 @@
 "use client";
 
 import { signup } from "@/lib/actionServer";
-import { useState, use, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { UserForm } from "@/components/common/UserForm";
 import { EducationalDetail, JobExperience, SocialLink } from "@/types/types";
 import { getCsrfToken } from "@/lib/library";

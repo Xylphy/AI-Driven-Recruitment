@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase/firebase";
 import { useEffect } from "react";
@@ -10,6 +9,7 @@ import {
   EducationalDetails,
   JobExperiences,
 } from "@/types/schema";
+import { useRouter } from "next/navigation";
 
 export default function useAuth(
   fetchUser = false,
