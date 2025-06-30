@@ -35,6 +35,8 @@ export default function SignupPage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const form = e.currentTarget; // To prevent getting affected by React's synthetic event system
+
     if (!csrfToken) {
       setResponse({
         success: false,
@@ -42,8 +44,6 @@ export default function SignupPage() {
       });
       return;
     }
-
-    const form = e.currentTarget; // To prevent getting affected by React's synthetic event system
 
     if (csrfToken === null) {
       setResponse({

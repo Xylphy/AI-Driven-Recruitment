@@ -14,7 +14,7 @@ import { useEffect, useState } from "react";
 import { JobListing } from "@/types/schema";
 import useAuth from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
-import { auth } from "@/lib/firebase/firebase";
+import { auth } from "@/lib/firebase/client";
 
 export default function Profile() {
   const router = useRouter();

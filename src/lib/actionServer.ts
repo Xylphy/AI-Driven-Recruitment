@@ -1,6 +1,6 @@
 "use server";
 
-import { sendEmailVerification } from "./firebase/action";
+import { isEmailRegistered, sendEmailVerification } from "./firebase/action";
 import { uploadFile } from "./cloudinary/cloudinary";
 import { verifyCsrfToken } from "./csrf";
 import { isValidFile } from "./library";

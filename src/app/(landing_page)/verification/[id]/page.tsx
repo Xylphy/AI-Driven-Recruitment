@@ -8,7 +8,7 @@ import {
 import { Button } from "@/components/common/Button";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, use } from "react";
-import { auth } from "@/lib/firebase/firebase";
+import { auth } from "@/lib/firebase/client";
 import { getCsrfToken } from "@/lib/library";
 
 export default function Verification({

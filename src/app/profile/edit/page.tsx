@@ -8,7 +8,7 @@ import {
   JobExperience,
   User,
 } from "@/types/types";
-import { auth } from "@/lib/firebase/firebase";
+import { auth } from "@/lib/firebase/client";
 import { useRouter } from "next/navigation";
 import { checkAuthStatus, cleanArrayData } from "@/lib/library";
 import { useCsrfStore } from "@/lib/store";

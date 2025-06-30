@@ -24,6 +24,7 @@
     "eslint": "^9.30.1",
     "eslint-config-next": "^15.3.4",
     "firebase": "^11.10.0",
+    "firebase-admin": "^13.4.0",
     "framer-motion": "^12.22.0",
     "jsonwebtoken": "^9.0.2",
     "lru-cache": "^11.1.0",

@@ -84,6 +84,10 @@ export async function middleware(request: NextRequest) {
         path: "/api/auth/refresh",
         acceptedMethods: ["GET"],
       },
+      {
+        path: "/api/csrf",
+        acceptedMethods: ["GET"],
+      },
     ];
 
     if (
