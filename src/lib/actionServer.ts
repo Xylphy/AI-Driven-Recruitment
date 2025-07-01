@@ -15,6 +15,13 @@ export async function signup(formData: FormData) {
     };
   }
 
+  if (await isEmailRegistered(formData.get("email") as string)) {
+    return {
+      success: false,
+      message: "Email is already registered. Please use a different email.",
+    };
+  }
+
   try {
     const file = formData.get("resume") as File;
     let resume_id = undefined;
