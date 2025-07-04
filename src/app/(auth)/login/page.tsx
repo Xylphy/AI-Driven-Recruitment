@@ -39,6 +39,7 @@ export default function LoginPage() {
       alert("Please enter a valid password");
       return;
     }
+
     password = password.toString().trim();
 
     try {
@@ -49,7 +50,6 @@ export default function LoginPage() {
         email,
         password
       );
-      if (!userCredential.user) return;
 
       const response = await fetch("/api/auth/jwt", {
         method: "GET",
