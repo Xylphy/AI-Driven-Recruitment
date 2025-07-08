@@ -1,4 +1,31 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { checkAuthStatus } from "@/lib/library";
+import { JobListing } from "@/types/schema";
+
 export default function Careers() {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [jobs, setJobs] = useState<JobListing[]>();
+
+  useEffect(() => {
+    checkAuthStatus().then(setIsAuthenticated);
+
+    fetch("/api/jobs", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setJobs(data.data || []);
+      })
+      .catch((error) => {
+        console.error("Error fetching jobs:", error);
+      });
+  }, []);
+
   return (
     <div className="text-gray-800">
       <section
@@ -33,26 +60,26 @@ export default function Careers() {
         </div>
 
         <div className="md:col-span-2 space-y-4 overflow-y-auto max-h-[500px] pr-2">
-          {Array(6)
-            .fill(0)
-            .map((_, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between p-4 border border-gray-200 rounded-md hover:shadow"
-              >
-                <div>
-                  <h3 className="text-lg font-bold">Systems Administrators</h3>
-                  <div className="text-sm text-gray-600 flex items-center space-x-2">
-                    <span>📍 Cebu Office</span>
-                    <span>•</span>
-                    <span>Full - Time</span>
-                  </div>
+          {jobs?.map((job, index) => (
+            <div
+              key={index}
+              className="flex items-center justify-between p-4 border border-gray-200 rounded-md hover:shadow"
+            >
+              <div>
+                <h3 className="text-lg font-bold">{job.title}</h3>
+                <div className="text-sm text-gray-600 flex items-center space-x-2">
+                  <span>📍 {job.location}</span>
+                  <span>•</span>
+                  <span>{job.is_fulltime ? "Full-time" : "Part-time"}</span>
                 </div>
+              </div>
+              {isAuthenticated && (
                 <button className="bg-[#E30022] text-white font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-500 hover:border-red-500">
                   Apply Now
                 </button>
-              </div>
-            ))}
+              )}
+            </div>
+          ))}
         </div>
       </section>
 

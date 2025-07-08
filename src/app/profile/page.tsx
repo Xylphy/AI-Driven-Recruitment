@@ -66,7 +66,7 @@ export default function Profile() {
     }
 
     const fetchContent = async () => {
-      fetch("/api/joblisting", {
+      fetch("/api/joblistings", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -83,26 +83,32 @@ export default function Profile() {
           if (!body) {
             return;
           }
-          if (information) {
-            const formatJobDate = (
-              job: Pick<JobListing, "title" | "created_at">
-            ) => ({
-              ...job,
-              created_at: new Date(job.created_at).toLocaleDateString(),
-            });
 
+          const formatJobDate = (
+            job: Pick<JobListing, "title" | "created_at">
+          ) => ({
+            ...job,
+            created_at: new Date(job.created_at).toLocaleDateString(),
+          });
+
+          if (information.admin) {
             setJobListed({
               createdByThem: body.data.createdByThem.map(formatJobDate),
               createdByOthers: body.data.createdByAll.map(formatJobDate),
             });
+          } else {
+            setJobListed({
+              createdByThem: body.data.jobApplied.map(formatJobDate),
+              createdByOthers: [],
+            });
           }
-        })
-        .finally(() => {
-          setIsJobLoading(false);
         });
     };
 
-    fetchContent();
+    fetchContent().finally(() => {
+      setIsJobLoading(false);
+    });
+
   }, [isAuthLoading]);
 
   const handleNotificationClick = () => {

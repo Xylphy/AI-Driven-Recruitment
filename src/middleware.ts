@@ -40,8 +40,9 @@ export async function middleware(request: NextRequest) {
       "/api/auth/status",
       "/api/auth/refresh",
       "/api/auth/jwt",
-      "/api/joblisting",
+      "/api/joblistings",
       "/api/csrf",
+      "/api/jobs",
     ];
 
     if (!publicPathCsrf.includes(pathname) && request.method !== "GET") {
@@ -86,6 +87,10 @@ export async function middleware(request: NextRequest) {
       },
       {
         path: "/api/csrf",
+        acceptedMethods: ["GET"],
+      },
+      {
+        path: "/api/jobs",
         acceptedMethods: ["GET"],
       },
     ];

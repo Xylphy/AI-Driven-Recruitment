@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
 
 // Admin: Get all their created joblistings or created by others
 // User: Get all applied joblistings
-// Usage: GET /api/joblisting?page=1&limit=10
+// Usage: GET /api/joblistings?page=1&limit=10
 export async function GET(request: NextRequest) {
   const token = request.cookies.get("token")!;
   const page = parseInt(request.nextUrl.searchParams.get("page") || "1", 10);
@@ -164,7 +164,6 @@ export async function GET(request: NextRequest) {
       .execute();
 
     if (jobAppliedError) {
-      console.log(jobAppliedError);
       return NextResponse.json(
         { error: "Failed to fetch job listings" },
         { status: 500 }

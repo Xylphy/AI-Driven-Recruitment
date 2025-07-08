@@ -10,6 +10,7 @@ import {
   JobExperiences,
 } from "@/types/schema";
 import { useRouter } from "next/navigation";
+import { useCsrfStore } from "@/lib/store";
 
 export default function useAuth(
   fetchUser = false,
@@ -42,6 +43,7 @@ export default function useAuth(
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user) {
         router.push("/login");
+        useCsrfStore.getState().deleteCsrfToken();
       }
     });
 
