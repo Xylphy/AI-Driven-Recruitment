@@ -38,12 +38,13 @@ export default function useAuth(
   });
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const csrfStore = useCsrfStore();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user) {
         router.push("/login");
-        useCsrfStore.getState().deleteCsrfToken();
+        csrfStore.deleteCsrfToken();
       }
     });
 
@@ -89,10 +90,7 @@ export default function useAuth(
       })
         .then((res) => {
           if (!res.ok) {
-            alert("Failed to fetch user data");
-            auth.signOut();
-            router.push("/login");
-            return;
+            throw new Error("Failed to fetch user information");
           }
           return res.json();
         })
@@ -110,6 +108,8 @@ export default function useAuth(
           }
         })
         .catch(() => {
+          console.error("Failed to fetch user information");
+          csrfStore.deleteCsrfToken();
           auth.signOut();
           return;
         })
@@ -125,5 +125,6 @@ export default function useAuth(
     information,
     isAuthenticated,
     isAuthLoading,
+    csrfStore,
   };
 }

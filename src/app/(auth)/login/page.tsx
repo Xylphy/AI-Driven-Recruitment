@@ -68,6 +68,7 @@ export default function LoginPage() {
 
       const data = await response.json();
       if (data) {
+        console.log(data.csrfToken);
         useCsrfStore.getState().setCsrfToken(data.csrfToken);
         router.push("/profile");
       }

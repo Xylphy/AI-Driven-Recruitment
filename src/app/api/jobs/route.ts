@@ -1,7 +1,9 @@
 import { createClientServer } from "@/lib/supabase/supabase";
 import { NextRequest, NextResponse } from "next/server";
-import { JobListing } from "@/types/schema";
+import { JobApplicants, JobListing } from "@/types/schema";
 import { find } from "@/lib/supabase/action";
+import jwt from "jsonwebtoken";
+import { JWT } from "@/types/types";
 
 // Usage: GET /api/jobs?page=1&limit=10
 export async function GET(request: NextRequest) {
@@ -12,14 +14,38 @@ export async function GET(request: NextRequest) {
   );
   const offset = (page - 1) * limit;
 
-  const { data, error } = await find<JobListing>(
-    await createClientServer(1, true),
-    "job_listings"
-  )
+  const token = request.cookies.get("token")?.value;
+  const supabaseClient = await createClientServer(1, true);
+
+  const { data, error } = await find<JobListing>(supabaseClient, "job_listings")
     .many()
     .range(offset, offset + limit - 1)
     .order("created_at", { ascending: false })
     .execute();
+
+  let appliedJobs: JobApplicants[] = [];
+
+  if (token) {
+    const { id: userId } = jwt.verify(token, process.env.JWT_SECRET!) as JWT;
+    const { data: appliedData, error: appliedError } =
+      await find<JobApplicants>(
+        supabaseClient,
+        "job_applicants",
+        "user_id",
+        userId
+      )
+        .many()
+        .execute();
+
+    if (appliedError) {
+      return NextResponse.json(
+        { error: "Failed to fetch applied jobs" },
+        { status: 500 }
+      );
+    } else {
+      appliedJobs = appliedData || [];
+    }
+  }
 
   if (error) {
     return NextResponse.json(
@@ -38,6 +64,9 @@ export async function GET(request: NextRequest) {
         created_at: item.created_at,
         is_fulltime: item.is_fulltime,
         location: item.location,
+        applied: appliedJobs.some(
+          (applied) => applied.joblisting_id === item.id
+        ),
       })) || [],
   });
 }

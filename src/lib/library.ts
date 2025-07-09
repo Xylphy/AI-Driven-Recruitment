@@ -97,7 +97,7 @@ export async function refreshToken(): Promise<boolean> {
       return res.json();
     })
     .then((data) => {
-      useCsrfStore.getState().setCsrfToken(data.csrfToken);
+      useCsrfStore().setCsrfToken(data.csrfToken);
       return true;
     })
     .catch(() => {

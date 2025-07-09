@@ -3,13 +3,18 @@
 import { useEffect, useState } from "react";
 import { checkAuthStatus } from "@/lib/library";
 import { JobListing } from "@/types/schema";
+import useAuth from "@/hooks/useAuth";
 
 export default function Careers() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [jobs, setJobs] = useState<JobListing[]>();
+  const [jobs, setJobs] = useState<(JobListing & { applied: boolean })[]>();
+
+  const { csrfStore } = useAuth(isAuthenticated);
 
   useEffect(() => {
-    checkAuthStatus().then(setIsAuthenticated);
+    checkAuthStatus().then((status) => {
+      setIsAuthenticated(status);
+    });
 
     fetch("/api/jobs", {
       method: "GET",
@@ -25,6 +30,31 @@ export default function Careers() {
         console.error("Error fetching jobs:", error);
       });
   }, []);
+
+  const handleApply = async (jobId: string) => {
+    await checkAuthStatus();
+
+    fetch("/api/jobs/apply", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": csrfStore.csrfToken || "",
+      },
+      body: JSON.stringify({ jobId }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        alert(data.error || data.message);
+        setJobs((prevJobs) =>
+          prevJobs?.map((job) =>
+            job.id === jobId ? { ...job, applied: true } : job
+          )
+        );
+      })
+      .catch(() => {
+        alert("Failed to apply for the job. Please try again later.");
+      });
+  };
 
   return (
     <div className="text-gray-800">
@@ -74,8 +104,16 @@ export default function Careers() {
                 </div>
               </div>
               {isAuthenticated && (
-                <button className="bg-[#E30022] text-white font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-500 hover:border-red-500">
-                  Apply Now
+                <button
+                  className={`font-bold px-4 py-2 rounded border transition-all duration-300 ease-in-out ${
+                    job.applied
+                      ? "bg-gray-400 text-gray-600 border-gray-400 cursor-not-allowed"
+                      : "bg-[#E30022] text-white border-transparent hover:bg-transparent hover:text-red-500 hover:border-red-500"
+                  }`}
+                  onClick={() => !job.applied && handleApply(job.id)}
+                  disabled={job.applied}
+                >
+                  {job.applied ? "Applied" : "Apply Now"}
                 </button>
               )}
             </div>

@@ -4,6 +4,7 @@ import { createClientServer } from "@/lib/supabase/supabase";
 import { deleteTable, find, insertTable } from "@/lib/supabase/action";
 import { JobApplicants, JobListing, User, Admin } from "@/types/schema";
 import { jobListingSchema } from "@/lib/schemas/";
+import { JWT } from "@/types/types";
 
 export async function POST(request: NextRequest) {
   const token = request.cookies.get("token")!;
@@ -11,10 +12,7 @@ export async function POST(request: NextRequest) {
   const { id: userId, isAdmin } = jwt.verify(
     token.value,
     process.env.JWT_SECRET!
-  ) as {
-    id: string;
-    isAdmin: boolean;
-  };
+  ) as JWT;
 
   if (!isAdmin) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
