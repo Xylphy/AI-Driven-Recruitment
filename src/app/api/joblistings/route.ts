@@ -141,44 +141,51 @@ export async function GET(request: NextRequest) {
       },
     });
   } else {
-    const { data: jobApplied, error: jobAppliedError } = await find<
-      JobApplicants & {
-        job_listings: JobListing & {
-          created_by: User;
-        };
-      }
-    >(
-      supabase,
-      "job_applicants",
-      "user_id",
-      userId,
-      "job_listings:joblisting_id(*, created_by:created_by(*, users!admins_user_id_fkey(*)))"
-    )
-      .many()
-      .range(offset, offset + limit - 1)
-      .order("created_at", {
-        ascending: false,
-      })
-      .execute();
+    const { data: appliedData, error: appliedError } =
+      await find<JobApplicants>(supabase, "job_applicants", "user_id", userId)
+        .many()
+        .execute();
 
-    if (jobAppliedError) {
+    if (appliedError) {
       return NextResponse.json(
-        { error: "Failed to fetch job listings" },
+        { error: "Failed to fetch applied jobs" },
         { status: 500 }
       );
     }
 
+    console.log("appliedData", appliedData);
+
     return NextResponse.json({
       message: "Success",
       status: 200,
-      data: {
-        jobApplied:
-          jobApplied?.map((item) => ({
-            id: item.job_listings.id,
-            title: item.job_listings.title,
-            created_at: item.job_listings.created_at,
-          })) || [],
-      },
+      data: appliedData,
     });
   }
+}
+
+export async function DELETE(request: NextRequest) {
+  const token = request.cookies.get("token")!;
+  const jobId = request.nextUrl.searchParams.get("jobId");
+
+  if (!jobId) {
+    return NextResponse.json({ error: "Job ID is required" }, { status: 400 });
+  }
+
+  const { isAdmin } = jwt.verify(token.value, process.env.JWT_SECRET!) as JWT;
+
+  if (!isAdmin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+
+  const supabase = await createClientServer(1, true);
+  const { error } = await deleteTable(supabase, "job_listings", "id", jobId);
+
+  if (error) {
+    return NextResponse.json(
+      { error: "Failed to delete job listing" },
+      { status: 500 }
+    );
+  }
+
+  return NextResponse.json({ message: "Job listing deleted successfully" });
 }

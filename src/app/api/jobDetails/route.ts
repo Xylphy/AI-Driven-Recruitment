@@ -18,6 +18,7 @@ export async function GET(request: NextRequest) {
   >(supabase, "job_listings", "id", jobId).single();
 
   if (errorJobListing || !jobListing) {
+    console.log("Error fetching job listing:", errorJobListing);
     return NextResponse.json(
       { error: "Failed to fetch job listing" },
       { status: 500 }
@@ -44,6 +45,11 @@ export async function GET(request: NextRequest) {
   ]);
 
   if (requirements.error || qualifications.error) {
+    console.log("Error fetching qualifications or requirements:", {
+      requirementsError: requirements.error,
+      qualificationsError: qualifications.error,
+    });
+
     return NextResponse.json(
       { error: "Failed to fetch job listing details" },
       { status: 500 }

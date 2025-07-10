@@ -74,6 +74,7 @@ export interface JobListing
   extends IdentifiableItem,
     Pick<JobApplicants, "created_at">,
     Title {
+  joblisting_id: any;
   location: string;
   created_by: string;
   is_fulltime: boolean;
