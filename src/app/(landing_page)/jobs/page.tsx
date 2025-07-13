@@ -22,12 +22,12 @@ export default function Careers() {
     })
       .then((res) => res.json())
       .then((data) => setJobs(data.data || []))
-      .catch((error) => console.error("Error fetching jobs:", error));
+      .catch(() =>
+        alert("Failed to fetch job listings. Please try again later.")
+      );
   }, []);
 
   const handleApply = async (jobId: string) => {
-    await checkAuthStatus();
-
     fetch("/api/jobs/applicants", {
       method: "POST",
       headers: {

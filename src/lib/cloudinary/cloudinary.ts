@@ -33,11 +33,10 @@ export async function uploadFile(file: File, folder: string) {
     {
       unique_filename: true,
       folder: folder,
-      public_id:
-        `${Date.now()}_${file.name
-          .replace(/\.[^/.]+$/, "")
-          .replace(/[^a-zA-Z0-9_-]/g, "_")
-          .toLowerCase()}` || `file_${Date.now()}`,
+      public_id: `${Date.now()}_${file.name
+        .replace(/\.[^/.]+$/, "")
+        .replace(/[^a-zA-Z0-9_-]/g, "_")
+        .toLowerCase()}`,
       resource_type: resourceType,
       ...specificOptions,
     }

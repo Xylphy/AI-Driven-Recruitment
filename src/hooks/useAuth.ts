@@ -113,7 +113,20 @@ export default function useAuth(
         });
     };
 
+    const checkAuthInterval = setInterval(() => {
+      checkAuthStatus().then((status) => {
+        if (!status) {
+          auth.signOut();
+          clearInterval(checkAuthInterval);
+          return;
+        }
+        setIsAuthenticated(true);
+      });
+    }, 60000 * 50); // Check every 50 minutes since the expiry of the session is 60 minutes
+
     setInfo();
+
+    return () => clearInterval(checkAuthInterval);
   }, [isAuthenticated]);
 
   return {

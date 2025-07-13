@@ -10,7 +10,7 @@ import {
 } from "@/types/types";
 import { auth } from "@/lib/firebase/client";
 import { useRouter } from "next/navigation";
-import { checkAuthStatus, cleanArrayData, getCsrfToken } from "@/lib/library";
+import { cleanArrayData, getCsrfToken } from "@/lib/library";
 
 export default function EditProfilePage() {
   const router = useRouter();
@@ -117,12 +117,6 @@ export default function EditProfilePage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formElement = e.currentTarget; // To prevent getting affected by React's synthetic event system
-
-    if (!(await checkAuthStatus())) {
-      alert("Authentication failed. Please log in again.");
-      auth.signOut();
-      return;
-    }
 
     setIsSubmitting(true);
 
@@ -239,7 +233,9 @@ export default function EditProfilePage() {
           description="Update your resume and personal information"
           fileName={information.user?.resume_id || "No file selected"}
           handleTranscriptSelect={handleTranscriptSelect}
-          transcriptFileName={information.user?.transcript_id || "No file selected"}
+          transcriptFileName={
+            information.user?.transcript_id || "No file selected"
+          }
         />
       </div>
     </div>
