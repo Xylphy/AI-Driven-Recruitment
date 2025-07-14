@@ -16,10 +16,14 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     true
   );
   const [candidatesLoading, isCandidatesLoading] = useState(true);
-
-  const [jobDetails /* , setJobDetails */] = useState<
-    Omit<JobListing, "created_by">
-  >({
+  const [candidates, setCandidates] = useState<
+    {
+      id: string;
+      name: string;
+      email?: string;
+    }[]
+  >();
+  const [jobDetails, setJobDetails] = useState<Omit<JobListing, "created_by">>({
     id: "",
     title: "",
     location: "",
@@ -43,37 +47,6 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
       }
     }
   }, [isAuthLoading, router]);
-
-  // const candidates = [
-  //   {
-  //     id: "c1",
-  //     name: "Jane Doe",
-  //     email: "jane.doe@example.com",
-  //     score: "100",
-  //     resumeLink: "#",
-  //   },
-  //   {
-  //     id: "c2",
-  //     name: "John Smith",
-  //     email: "john.smith@example.com",
-  //     score: "99",
-  //     resumeLink: "#",
-  //   },
-  //   {
-  //     id: "c3",
-  //     name: "Maria Garcia",
-  //     email: "maria.garcia@example.com",
-  //     score: "98",
-  //     resumeLink: "#",
-  //   },
-  // ];
-  const [candidates, setCandidates] = useState<
-    {
-      id: string;
-      name: string;
-      email?: string;
-    }[]
-  >();
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -100,6 +73,28 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
       })
       .finally(() => {
         isCandidatesLoading(false);
+      });
+
+    fetch(`/api/jobDetails?job=${jobId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Failed to fetch job details");
+        }
+        return res.json();
+      })
+      .then((data) => {
+        setJobDetails({
+          ...data,
+          created_at: new Date(data.created_at).toLocaleDateString(),
+        });
+      })
+      .catch((error) => {
+        alert("Error fetching job details: " + error.message);
       });
   }, [isAuthenticated]);
 
@@ -175,7 +170,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
           </div>
 
           <div className="w-full lg:w-1/3 bg-gray-50 border-l p-6">
-            {/* <section className="mb-8">
+            <section className="mb-8">
               <h3 className="text-xl font-bold text-gray-800 mb-2">
                 Job Summary
               </h3>
@@ -191,7 +186,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                   <strong>Location:</strong> {jobDetails.location}
                 </li>
               </ul>
-            </section> */}
+            </section>
 
             <section>
               <h3 className="text-xl font-bold text-gray-800 mb-2">
