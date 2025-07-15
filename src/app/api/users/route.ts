@@ -30,6 +30,7 @@ import {
 } from "@/lib/cloudinary/cloudinary";
 import { userSchema, verificationSchema } from "@/lib/schemas";
 import { parseFormData } from "@/lib/library";
+import mongoDb_client from "@/lib/mongodb/mongodb";
 
 // This function handles the POST request to set the password
 export async function POST(request: NextRequest) {
@@ -49,6 +50,8 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    await mongoDb_client.connect();
 
     const data = await findOne("ai-driven-recruitment", "verification_tokens", {
       _id: ObjectId.createFromHexString(body.token),
@@ -152,6 +155,8 @@ export async function POST(request: NextRequest) {
     await deleteOne("ai-driven-recruitment", "verification_tokens", {
       _id: ObjectId.createFromHexString(body.token),
     });
+
+    await mongoDb_client.close();
 
     return NextResponse.json(
       { message: "Password set successfully" },

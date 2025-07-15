@@ -3,25 +3,30 @@
 import { FaFacebook, FaInstagram } from "react-icons/fa";
 import { MdEmail, MdPhone } from "react-icons/md";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import useAuth from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
+import { use } from "react";
 
-// export default function Page({ params }: { params: Promise<{ id: string }> }) {
-export default function Page() {
+export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
-
-  // const [jobListed, setJobListed] = useState<{
-  //   createdByThem: JobListing[];
-  //   createdByOthers: JobListing[];
-  // }>({
-  //   createdByThem: [],
-  //   createdByOthers: [],
-  // });
-
+  const { id: candidateId } = use(params);
   const [selectedStatus, setSelectedStatus] = useState("");
-
   const { information, isAuthLoading } = useAuth(true, true);
+
+  useEffect(() => {
+    if (isAuthLoading) {
+      return;
+    }
+
+    fetch("/api/users/candidateProfile?userId=" + candidateId, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }).then();
+
+  }, [candidateId, isAuthLoading]);
 
   return (
     <main className="bg-white h-[75vh] overflow-hidden">
@@ -171,7 +176,7 @@ export default function Page() {
                     Sentiment Analysis
                   </h3>
                   <p>
-                    The overall sentiment expressed in Zing and Glue`&apos`s
+                    The overall sentiment expressed in Zing and Glue's
                     introduction is highly positive...
                   </p>
                 </div>

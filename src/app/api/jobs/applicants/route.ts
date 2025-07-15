@@ -5,6 +5,8 @@ import jwt from "jsonwebtoken";
 import { insertTable, findWithJoin, find } from "@/lib/supabase/action";
 import auth from "@/lib/firebase/admin";
 import { JobApplicants, User } from "@/types/schema";
+import { findOne } from "@/lib/mongodb/action";
+import mongoDb_client from "@/lib/mongodb/mongodb";
 
 // API for applying for a job
 export async function POST(request: NextRequest) {
@@ -121,6 +123,19 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  async function getCandidateMatch(userId: string) {
+    const candidateMatch = await findOne(
+      "ai-driven-recruitment",
+      "scored_candidates",
+      {
+        user_id: userId,
+      }
+    );
+    return candidateMatch?.score_data?.predictive_success || 0;
+  }
+
+  await mongoDb_client.connect();
+
   const applicantWithEmail = await Promise.all(
     (
       (applicantsWithUsers || []) as Array<
@@ -133,8 +148,11 @@ export async function GET(request: NextRequest) {
       ...applicant.users,
       email: (await auth.getUser(applicant.users.firebase_uid)).email,
       users: undefined,
+      candidateMatch: await getCandidateMatch(applicant.users.id),
     }))
   );
+
+  await mongoDb_client.close();
 
   return NextResponse.json({
     message: "Success",
@@ -142,6 +160,7 @@ export async function GET(request: NextRequest) {
       id: applicant.id,
       name: applicant.first_name + " " + applicant.last_name,
       email: applicant.email,
+      predictiveSuccess: applicant.candidateMatch,
     })),
   });
 }

@@ -8,6 +8,13 @@ import { useRouter } from "next/navigation";
 import Loading from "@/app/loading";
 import { JobListing } from "@/types/schema";
 
+interface Candidate {
+  id: string;
+  name: string;
+  email?: string;
+  predictiveSuccess?: number;
+}
+
 export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const { id: jobId } = use(params);
@@ -16,13 +23,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     true
   );
   const [candidatesLoading, isCandidatesLoading] = useState(true);
-  const [candidates, setCandidates] = useState<
-    {
-      id: string;
-      name: string;
-      email?: string;
-    }[]
-  >();
+  const [candidates, setCandidates] = useState<Candidate[]>();
   const [jobDetails, setJobDetails] = useState<Omit<JobListing, "created_by">>({
     id: "",
     title: "",
@@ -151,7 +152,8 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                           {candidate.email || "No email"}
                         </p>
                         <p className="text-xs text-green-600 font-semibold mt-1">
-                          98 % Job Candidate Match
+                          {candidate.predictiveSuccess || 0} % Job Candidate
+                          Match
                         </p>
                       </div>
                       <button
@@ -201,29 +203,27 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
             </section>
 
             {information.admin && (
-              <button
-                onClick={() => router.push(`/joblisting/${jobId}`)}
-                className="mt-6 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600"
-              >
-                See Job Details
-              </button>
+              <>
+                <button
+                  onClick={() => router.push(`/joblisting/${jobId}`)}
+                  className="mt-6 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600"
+                >
+                  See Job Details
+                </button>
+                <button className="mt-2 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600">
+                  Delete Job
+                </button>
+                <button className="mt-2 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600">
+                  Edit Job
+                </button>
+                <button
+                  onClick={() => router.back()}
+                  className="mt-2 w-full bg-gray-300 text-gray-800 font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-gray-500 hover:border-gray-500"
+                >
+                  Back
+                </button>
+              </>
             )}
-            {information.admin && (
-              <button className="mt-2 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600">
-                Delete Job
-              </button>
-            )}
-            {information.admin && (
-              <button className="mt-2 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600">
-                Edit Job
-              </button>
-            )}
-            <button
-              onClick={() => router.back()}
-              className="mt-2 w-full bg-gray-300 text-gray-800 font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-gray-500 hover:border-gray-500"
-            >
-              Back
-            </button>
           </div>
         </div>
       </div>

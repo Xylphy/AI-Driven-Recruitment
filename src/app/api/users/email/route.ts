@@ -1,6 +1,7 @@
 import { getTokenData } from "@/lib/mongodb/action";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import mongoDb_client from "@/lib/mongodb/mongodb";
 
 const schema = z.object({
   id: z.string().min(1, "ID is required"),
@@ -18,6 +19,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    await mongoDb_client.connect();
     const tokenData = await getTokenData(body.id);
     if (!tokenData) {
       return NextResponse.json({ error: "Token not found" }, { status: 404 });
@@ -29,5 +31,7 @@ export async function POST(request: NextRequest) {
       { error: "Internal server error" },
       { status: 500 }
     );
+  } finally {
+    await mongoDb_client.close();
   }
 }
