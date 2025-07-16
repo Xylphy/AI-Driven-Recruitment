@@ -1,6 +1,6 @@
 "use client";
 
-import { MdLocationOn, MdAccessTime, MdChevronRight } from "react-icons/md";
+import { MdLocationOn, MdAccessTime } from "react-icons/md";
 import Image from "next/image";
 import useAuth from "@/hooks/useAuth";
 import { use, useEffect, useState } from "react";
