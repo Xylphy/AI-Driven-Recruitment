@@ -14,6 +14,27 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const { information, isAuthenticated } = useAuth(undefined, true);
   const [jobLoading, isJobLoading] = useState(true);
 
+  const candidates = [
+    {
+      id: "c1",
+      name: "Jane Doe",
+      email: "jane.doe@example.com",
+      resumeLink: "#",
+    },
+    {
+      id: "c2",
+      name: "John Smith",
+      email: "john.smith@example.com",
+      resumeLink: "#",
+    },
+    {
+      id: "c3",
+      name: "Maria Garcia",
+      email: "maria.garcia@example.com",
+      resumeLink: "#",
+    },
+  ];
+
   const [jobDetails, setJobDetails] = useState<
     Omit<JobListing, "created_by"> & { requirements: string[] } & {
       qualifications: string[];
@@ -94,31 +115,38 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
         <div className="flex flex-col lg:flex-row py-5">
           <div className="w-full lg:w-2/3 p-8">
             <section className="mb-8">
-              <h2 className="text-2xl font-bold text-red-600 mb-4">
-                Qualifications
-              </h2>
-              <ul className="space-y-2 text-gray-700 text-sm">
-                {jobDetails.qualifications.map((item, index) => (
-                  <li key={index} className="flex items-start gap-2">
-                    <MdChevronRight className="text-red-600 mt-1" />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-bold text-red-600 mb-4">
-                Requirements
-              </h2>
-              <ul className="space-y-2 text-gray-700 text-sm">
-                {jobDetails.requirements.map((item, index) => (
-                  <li key={index} className="flex items-start gap-2">
-                    <MdChevronRight className="text-red-600 mt-1" />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
+              <section>
+                <h2 className="text-2xl font-bold text-red-600 mb-4">
+                  Applicants for this job
+                </h2>
+                <ul className="space-y-4 text-gray-700 text-sm">
+                  {candidates.length === 0 ? (
+                    <p>No candidates yet.</p>
+                  ) : (
+                    candidates.map((candidate) => (
+                      <li
+                        key={candidate.id}
+                        className="flex items-center justify-between border p-4 rounded shadow-sm"
+                      >
+                        <div>
+                          <p className="font-semibold">{candidate.name}</p>
+                          <p className="text-xs text-gray-500">
+                            {candidate.email || "No email"}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() =>
+                            router.push(`/candidate/${candidate.id}`)
+                          }
+                          className="bg-red-600 text-white px-3 py-1 rounded text-sm font-bold hover:bg-transparent hover:text-red-600 hover:border hover:border-red-600 transition-all"
+                        >
+                          See Candidate Profile
+                        </button>
+                      </li>
+                    ))
+                  )}
+                </ul>
+              </section>
             </section>
           </div>
 
@@ -155,10 +183,10 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
 
             {information.admin && (
               <button
-                onClick={() => router.push(`/candidates/${jobId}`)}
+                onClick={() => router.push(`/joblisting/${jobId}`)}
                 className="mt-6 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600"
               >
-                See Applicants
+                See Job Details
               </button>
             )}
             {information.admin && (
