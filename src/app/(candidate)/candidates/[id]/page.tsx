@@ -19,18 +19,21 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
       id: "c1",
       name: "Jane Doe",
       email: "jane.doe@example.com",
+      score: "100",
       resumeLink: "#",
     },
     {
       id: "c2",
       name: "John Smith",
       email: "john.smith@example.com",
+      score: "99",
       resumeLink: "#",
     },
     {
       id: "c3",
       name: "Maria Garcia",
       email: "maria.garcia@example.com",
+      score: "98",
       resumeLink: "#",
     },
   ];
@@ -115,38 +118,39 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
         <div className="flex flex-col lg:flex-row py-5">
           <div className="w-full lg:w-2/3 p-8">
             <section className="mb-8">
-              <section>
-                <h2 className="text-2xl font-bold text-red-600 mb-4">
-                  Applicants for this job
-                </h2>
-                <ul className="space-y-4 text-gray-700 text-sm">
-                  {candidates.length === 0 ? (
-                    <p>No candidates yet.</p>
-                  ) : (
-                    candidates.map((candidate) => (
-                      <li
-                        key={candidate.id}
-                        className="flex items-center justify-between border p-4 rounded shadow-sm"
+              <h2 className="text-2xl font-bold text-red-600 mb-4">
+                Applicants for this job
+              </h2>
+              <ul className="space-y-4 text-gray-700 text-sm">
+                {candidates.length === 0 ? (
+                  <p>No candidates yet.</p>
+                ) : (
+                  candidates.map((candidate) => (
+                    <li
+                      key={candidate.id}
+                      className="flex items-center justify-between border p-4 rounded shadow-sm"
+                    >
+                      <div>
+                        <p className="font-semibold">{candidate.name}</p>
+                        <p className="text-xs text-gray-500">
+                          {candidate.email || "No email"}
+                        </p>
+                        <p className="text-xs text-green-600 font-semibold mt-1">
+                          {candidate.score ?? 98}% Job Candidate Match
+                        </p>
+                      </div>
+                      <button
+                        onClick={() =>
+                          router.push(`/candidate/${candidate.id}`)
+                        }
+                        className="bg-red-600 text-white px-3 py-1 rounded text-sm font-bold hover:bg-transparent hover:text-red-600 hover:border hover:border-red-600 transition-all"
                       >
-                        <div>
-                          <p className="font-semibold">{candidate.name}</p>
-                          <p className="text-xs text-gray-500">
-                            {candidate.email || "No email"}
-                          </p>
-                        </div>
-                        <button
-                          onClick={() =>
-                            router.push(`/candidate/${candidate.id}`)
-                          }
-                          className="bg-red-600 text-white px-3 py-1 rounded text-sm font-bold hover:bg-transparent hover:text-red-600 hover:border hover:border-red-600 transition-all"
-                        >
-                          See Candidate Profile
-                        </button>
-                      </li>
-                    ))
-                  )}
-                </ul>
-              </section>
+                        See Candidate Profile
+                      </button>
+                    </li>
+                  ))
+                )}
+              </ul>
             </section>
           </div>
 
