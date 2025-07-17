@@ -189,3 +189,50 @@ export async function DELETE(request: NextRequest) {
 
   return NextResponse.json({ message: "Job listing deleted successfully" });
 }
+
+export async function PUT(request: NextRequest) {
+  const token = request.cookies.get("token")!;
+  const { isAdmin } = jwt.verify(token.value, process.env.JWT_SECRET!) as JWT;
+
+  if (!isAdmin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+
+  const jobId = request.nextUrl.searchParams.get("jobId");
+
+  if (!jobId) {
+    return NextResponse.json({ error: "Job ID is required" }, { status: 400 });
+  }
+
+  const parsedData = jobListingSchema.safeParse(await request.json());
+  if (!parsedData.success) {
+    return NextResponse.json(
+      { error: parsedData.error.format() },
+      { status: 422 }
+    );
+  }
+
+  const supabase = await createClientServer(1, true);
+  const { error: updateError } = await supabase
+    .from("job_listings")
+    .update({
+      title: parsedData.data.title,
+      location: parsedData.data.location,
+      is_fulltime: parsedData.data.isFullTime,
+    })
+    .eq("id", jobId)
+    .select()
+    .single();
+
+  if (updateError) {
+    return NextResponse.json(
+      { error: "Failed to update job listing" },
+      { status: 500 }
+    );
+  }
+
+  return NextResponse.json(
+    { message: "Job listing updated successfully" },
+    { status: 200 }
+  );
+}

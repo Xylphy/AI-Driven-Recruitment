@@ -5,7 +5,6 @@ import Image from "next/image";
 import useAuth from "@/hooks/useAuth";
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { JobListing } from "@/types/schema";
 import Loading from "@/app/loading";
 
 export default function Page({ params }: { params: Promise<{ id: string }> }) {
@@ -55,17 +54,13 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   //     resumeLink: "#",
   //   },
   // ];
-  // const [candidates, setCandidates] = useState<
-  //   { id: string; name: string; email: string | null; score?: number }[]
-
-  const [jobDetails, setJobDetails] = useState<
-    Omit<JobListing, "created_by" | "created_at">
-  >({
-    id: "",
-    title: "",
-    location: "",
-    is_fulltime: true,
-  });
+  const [candidates, setCandidates] = useState<
+    {
+      id: string;
+      name: string;
+      email?: string;
+    }[]
+  >();
 
   useEffect(() => {
     if (!isAuthenticated) {

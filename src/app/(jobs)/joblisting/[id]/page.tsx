@@ -92,7 +92,6 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
 
   return (
     <main className="bg-white min-h-screen py-5 px-4 md:px-20">
-      {/* Delete Confirmation Modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
@@ -225,7 +224,10 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                 >
                   Delete Job
                 </button>
-                <button className="mt-2 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600">
+                <button
+                  className="mt-2 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600"
+                  onClick={() => router.push(`/joblisting/${jobId}/edit`)}
+                >
                   Edit Job
                 </button>
               </>
