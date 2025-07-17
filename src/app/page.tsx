@@ -156,7 +156,9 @@ export default function Home() {
                 key={i}
                 className="bg-red-600 p-6 rounded-lg shadow hover:shadow-lg flex flex-col items-center"
                 variants={fadeUp}
-                whileHover={{ y: -5, transition: { duration: 0.3 } }}
+                initial={{ y: 0 }}
+                whileHover={{ y: -5 }}
+                transition={{ duration: 0.3 }}
               >
                 <Image
                   src={category.img}

@@ -4,10 +4,10 @@ import Link from "next/link";
 import Image from "next/image";
 import useAuth from "@/hooks/useAuth";
 
+const profileImageUrl = "/default-avatar.png";
+
 export default function Navbar() {
   const { information } = useAuth(undefined, true);
-
-  const profileImageUrl = "/default-avatar.png";
 
   return (
     <nav className="bg-white text-black shadow-md">
