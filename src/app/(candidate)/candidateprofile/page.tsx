@@ -18,7 +18,7 @@ import { auth } from "@/lib/firebase/client";
 
 export default function Profile() {
   const router = useRouter();
-
+  const hasTranscript = false;
   const [jobListed, setJobListed] = useState<{
     createdByThem: JobListing[];
     createdByOthers: JobListing[];
@@ -262,18 +262,32 @@ export default function Profile() {
                   <h3 className="font-semibold text-gray-700">
                     Interview Insights
                   </h3>
-                  <p>The intro highlights a proven track record...</p>
-                </div>
 
-                <details className="bg-white border rounded p-3">
-                  <summary className="cursor-pointer font-medium text-red-600">
-                    View Full Transcription
-                  </summary>
-                  <p className="mt-2 text-gray-700">
-                    "Hi everyone, my name is Zing and Glue and I'm a 26-year-old
-                    American..."
-                  </p>
-                </details>
+                  {hasTranscript ? (
+                    <div>
+                      <p>The intro highlights a proven track record...</p>
+                      <details className="bg-white border rounded p-3 mt-3">
+                        <summary className="cursor-pointer font-medium text-red-600">
+                          View Full Transcription
+                        </summary>
+                        <p className="mt-2 text-gray-700">
+                          "Hi everyone, my name is Zing and Glue and I'm a
+                          26-year-old American..."
+                        </p>
+                      </details>
+                    </div>
+                  ) : (
+                    <div className="mt-4 border border-dashed border-gray-300 p-4 text-center rounded">
+                      <p className="text-gray-500">No transcript uploaded.</p>
+                      <button
+                        className="bg-[#E30022] text-white font-bold mt-2 px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-500 hover:border-red-500"
+                        onClick={() => {}}
+                      >
+                        Upload Transcript
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
