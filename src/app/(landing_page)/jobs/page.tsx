@@ -9,7 +9,7 @@ export default function Careers() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [jobs, setJobs] = useState<(JobListing & { applied: boolean })[]>();
 
-  const { csrfStore } = useAuth(isAuthenticated);
+  const { information, csrfStore } = useAuth(undefined, isAuthenticated);
 
   useEffect(() => {
     checkAuthStatus().then((status) => {
@@ -34,7 +34,7 @@ export default function Careers() {
   const handleApply = async (jobId: string) => {
     await checkAuthStatus();
 
-    fetch("/api/jobs/apply", {
+    fetch("/api/jobs/applicants", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -103,7 +103,7 @@ export default function Careers() {
                   <span>{job.is_fulltime ? "Full-time" : "Part-time"}</span>
                 </div>
               </div>
-              {isAuthenticated && (
+              {isAuthenticated && !information.admin && (
                 <button
                   className={`font-bold px-4 py-2 rounded border transition-all duration-300 ease-in-out ${
                     job.applied

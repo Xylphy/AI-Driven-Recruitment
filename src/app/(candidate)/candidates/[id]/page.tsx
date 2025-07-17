@@ -11,32 +11,52 @@ import Loading from "@/app/loading";
 export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const { id: jobId } = use(params);
-  const { information, isAuthenticated } = useAuth(undefined, true);
+  const { information, isAuthenticated, isAuthLoading } = useAuth(
+    undefined,
+    true
+  );
   const [jobLoading, isJobLoading] = useState(true);
 
-  const candidates = [
-    {
-      id: "c1",
-      name: "Jane Doe",
-      email: "jane.doe@example.com",
-      score: "100",
-      resumeLink: "#",
-    },
-    {
-      id: "c2",
-      name: "John Smith",
-      email: "john.smith@example.com",
-      score: "99",
-      resumeLink: "#",
-    },
-    {
-      id: "c3",
-      name: "Maria Garcia",
-      email: "maria.garcia@example.com",
-      score: "98",
-      resumeLink: "#",
-    },
-  ];
+  // Admin only
+  useEffect(() => {
+    if (isAuthLoading) {
+      return;
+    }
+
+    if (!information.admin) {
+      if (window.history.length > 1) {
+        router.back();
+      } else {
+        router.push("/profile");
+      }
+    }
+  }, [isAuthLoading]);
+
+  // const candidates = [
+  //   {
+  //     id: "c1",
+  //     name: "Jane Doe",
+  //     email: "jane.doe@example.com",
+  //     score: "100",
+  //     resumeLink: "#",
+  //   },
+  //   {
+  //     id: "c2",
+  //     name: "John Smith",
+  //     email: "john.smith@example.com",
+  //     score: "99",
+  //     resumeLink: "#",
+  //   },
+  //   {
+  //     id: "c3",
+  //     name: "Maria Garcia",
+  //     email: "maria.garcia@example.com",
+  //     score: "98",
+  //     resumeLink: "#",
+  //   },
+  // ];
+  // const [candidates, setCandidates] = useState<
+  //   { id: string; name: string; email: string | null; score?: number }[]
 
   const [jobDetails, setJobDetails] = useState<
     Omit<JobListing, "created_by"> & {
@@ -58,7 +78,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
       return;
     }
 
-    fetch(`/api/jobDetails?job=${jobId}`, {
+    fetch(`/api/jobs/applicants?jobId=${jobId}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -70,17 +90,9 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
         }
         return res.json();
       })
-      .then((data) => {
-        setJobDetails({
-          ...data,
-          created_at: new Date(data.created_at).toLocaleDateString(),
-        });
-      })
+      .then((data) => {})
       .catch((error) => {
-        alert(error.message);
-      })
-      .finally(() => {
-        isJobLoading(false);
+        console.error("Error fetching job details:", error);
       });
   }, [isAuthenticated]);
 

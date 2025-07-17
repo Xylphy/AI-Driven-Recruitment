@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-interface CsrfStore {
+export interface CsrfStore {
   csrfToken: string | null;
   setCsrfToken: (token: string | null) => void;
   deleteCsrfToken: () => void;

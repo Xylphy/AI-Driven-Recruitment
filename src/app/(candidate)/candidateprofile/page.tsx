@@ -1,20 +1,12 @@
 "use client";
 
 import { FaFacebook, FaInstagram } from "react-icons/fa";
-import {
-  MdEmail,
-  MdPhone,
-  MdNotifications,
-  MdSettings,
-  MdLogout,
-} from "react-icons/md";
-import JobApplicationDetails from "@/components/profile/JobApplications";
+import { MdEmail, MdPhone } from "react-icons/md";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { JobListing } from "@/types/schema";
 import useAuth from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
-import { auth } from "@/lib/firebase/client";
 
 export default function Profile() {
   const router = useRouter();
