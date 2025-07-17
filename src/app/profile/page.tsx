@@ -7,6 +7,7 @@ import {
   MdNotifications,
   MdSettings,
   MdLogout,
+  MdClose,
 } from "react-icons/md";
 import JobApplicationDetails from "@/components/profile/JobApplications";
 import Image from "next/image";
@@ -16,15 +17,44 @@ import useAuth from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase/client";
 
+interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  timestamp: string;
+  read: boolean;
+}
+
 export default function Profile() {
   const router = useRouter();
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([
+    {
+      id: "1",
+      title: "New Application",
+      message: "John Doe applied for Software Engineer position",
+      timestamp: "2 hours ago",
+      read: false,
+    },
+    {
+      id: "2",
+      title: "Interview Scheduled",
+      message: "Interview scheduled for Frontend Developer position",
+      timestamp: "1 day ago",
+      read: false,
+    },
+    {
+      id: "3",
+      title: "Application Status Update",
+      message: "Your application for UX Designer has been reviewed",
+      timestamp: "3 days ago",
+      read: true,
+    },
+  ]);
 
-  const [jobListed, setJobListed] = useState<{
-    createdByThem: JobListing[];
-    createdByOthers: JobListing[];
-  }>({
-    createdByThem: [],
-    createdByOthers: [],
+  const [jobListed, setJobListed] = useState({
+    createdByThem: [] as JobListing[],
+    createdByOthers: [] as JobListing[],
   });
 
   const { information, isAuthLoading } = useAuth(true, true);
@@ -36,7 +66,7 @@ export default function Profile() {
     }
 
     const fetchContent = async () => {
-      fetch("/api/joblisting", {
+      fetch("/api/joblistings", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -53,27 +83,45 @@ export default function Profile() {
           if (!body) {
             return;
           }
-          if (information) {
-            const formatJobDate = (
-              job: Pick<JobListing, "title" | "created_at">
-            ) => ({
-              ...job,
-              created_at: new Date(job.created_at).toLocaleDateString(),
-            });
 
+          const formatJobDate = (
+            job: Pick<JobListing, "title" | "created_at">
+          ) => ({
+            ...job,
+            created_at: new Date(job.created_at).toLocaleDateString(),
+          });
+
+          if (information.admin) {
             setJobListed({
               createdByThem: body.data.createdByThem.map(formatJobDate),
               createdByOthers: body.data.createdByAll.map(formatJobDate),
             });
+          } else {
+            setJobListed({
+              createdByThem: body.data.jobApplied.map(formatJobDate),
+              createdByOthers: [],
+            });
           }
-        })
-        .finally(() => {
-          setIsJobLoading(false);
         });
     };
 
-    fetchContent();
+    fetchContent().finally(() => {
+      setIsJobLoading(false);
+    });
+
   }, [isAuthLoading]);
+
+  const handleNotificationClick = () => {
+    setShowNotifications(true);
+  };
+
+  const markAsRead = (id: string) => {
+    setNotifications((prev) =>
+      prev.map((notif) => (notif.id === id ? { ...notif, read: true } : notif))
+    );
+  };
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
     <main className="bg-white h-[75vh] overflow-hidden">
@@ -149,7 +197,6 @@ export default function Profile() {
                 <MdLogout
                   onClick={() => {
                     auth.signOut();
-                    router.push("/login");
                   }}
                   className="cursor-pointer hover:text-red-600"
                 />
@@ -178,8 +225,19 @@ export default function Profile() {
                 )}
               </h2>
               <div className="relative w-5 h-5">
-                <MdNotifications className="w-6 h-6" />
-                <div className="absolute top-0 left-3 w-3 h-3 bg-red-600 rounded-full z-10" />
+                <button
+                  onClick={handleNotificationClick}
+                  className="relative p-2 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <MdNotifications className="w-6 h-6" />
+                  {unreadCount > 0 && (
+                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-600 rounded-full flex items-center justify-center">
+                      <span className="text-white text-xs font-bold">
+                        {unreadCount}
+                      </span>
+                    </div>
+                  )}
+                </button>
               </div>
             </div>
             <div className="space-y-5 pb-9 overflow-y-auto h-full">
@@ -202,6 +260,71 @@ export default function Profile() {
             </div>
           </div>
         </div>
+        {showNotifications && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg w-full max-w-md mx-4 max-h-96 flex flex-col">
+              <div className="flex justify-between items-center p-4 border-b">
+                <h3 className="text-lg font-semibold">Notifications</h3>
+                <button
+                  onClick={() => setShowNotifications(false)}
+                  className="p-1 hover:bg-gray-100 rounded"
+                >
+                  <MdClose className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto">
+                {notifications.length === 0 ? (
+                  <div className="p-4 text-center text-gray-500">
+                    No notifications
+                  </div>
+                ) : (
+                  <div className="divide-y">
+                    {notifications.map((notification) => (
+                      <div
+                        key={notification.id}
+                        className={`p-4 hover:bg-gray-50 cursor-pointer ${
+                          !notification.read ? "bg-blue-50" : ""
+                        }`}
+                        onClick={() => markAsRead(notification.id)}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <h4 className="font-medium text-sm">
+                              {notification.title}
+                            </h4>
+                            <p className="text-gray-600 text-xs mt-1">
+                              {notification.message}
+                            </p>
+                            <span className="text-gray-400 text-xs">
+                              {notification.timestamp}
+                            </span>
+                          </div>
+                          {!notification.read && (
+                            <div className="w-2 h-2 bg-blue-500 rounded-full ml-2 mt-1"></div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="p-4 border-t">
+                <button
+                  onClick={() => {
+                    setNotifications((prev) =>
+                      prev.map((notif) => ({ ...notif, read: true }))
+                    );
+                  }}
+                  className="w-full text-red-600 hover:text-red-700 text-sm font-medium"
+                >
+                  Mark all as read
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </main>
   );

@@ -71,3 +71,8 @@ export interface JobListing extends Title {
 export interface DbIdentification {
   db_id: string;
 }
+
+export interface JWT {
+  id: string;
+  isAdmin: boolean;
+}

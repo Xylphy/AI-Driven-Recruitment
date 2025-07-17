@@ -39,7 +39,8 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   ];
 
   const [jobDetails, setJobDetails] = useState<
-    Omit<JobListing, "created_by"> & { requirements: string[] } & {
+    Omit<JobListing, "created_by"> & {
+      requirements: string[];
       qualifications: string[];
     }
   >({

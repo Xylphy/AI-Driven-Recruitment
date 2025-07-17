@@ -4,6 +4,7 @@ import { createClientServer } from "@/lib/supabase/supabase";
 import { deleteTable, find, insertTable } from "@/lib/supabase/action";
 import { JobApplicants, JobListing, User, Admin } from "@/types/schema";
 import { jobListingSchema } from "@/lib/schemas/";
+import { JWT } from "@/types/types";
 
 export async function POST(request: NextRequest) {
   const token = request.cookies.get("token")!;
@@ -11,10 +12,7 @@ export async function POST(request: NextRequest) {
   const { id: userId, isAdmin } = jwt.verify(
     token.value,
     process.env.JWT_SECRET!
-  ) as {
-    id: string;
-    isAdmin: boolean;
-  };
+  ) as JWT;
 
   if (!isAdmin) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
@@ -79,7 +77,7 @@ export async function POST(request: NextRequest) {
 
 // Admin: Get all their created joblistings or created by others
 // User: Get all applied joblistings
-// Usage: GET /api/joblisting?page=1&limit=10
+// Usage: GET /api/joblistings?page=1&limit=10
 export async function GET(request: NextRequest) {
   const token = request.cookies.get("token")!;
   const page = parseInt(request.nextUrl.searchParams.get("page") || "1", 10);
@@ -164,7 +162,6 @@ export async function GET(request: NextRequest) {
       .execute();
 
     if (jobAppliedError) {
-      console.log(jobAppliedError);
       return NextResponse.json(
         { error: "Failed to fetch job listings" },
         { status: 500 }

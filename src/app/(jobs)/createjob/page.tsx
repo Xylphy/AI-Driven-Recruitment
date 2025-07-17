@@ -69,7 +69,7 @@ export default function JobListingPage() {
       router.push("/profile");
     }
 
-    const response = await fetch("/api/joblisting", {
+    const response = await fetch("/api/joblistings", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
