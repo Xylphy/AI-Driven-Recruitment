@@ -10,7 +10,7 @@ import {
 } from "@/types/types";
 import { auth } from "@/lib/firebase/client";
 import { useRouter } from "next/navigation";
-import { checkAuthStatus, cleanArrayData } from "@/lib/library";
+import { checkAuthStatus, cleanArrayData, getCsrfToken } from "@/lib/library";
 import { useCsrfStore } from "@/lib/store";
 
 export default function EditProfilePage() {
@@ -182,7 +182,7 @@ export default function EditProfilePage() {
       fetch("/api/users", {
         method: "PUT",
         headers: {
-          "X-CSRF-Token": useCsrfStore.getState().csrfToken || "",
+          "X-CSRF-Token": (await getCsrfToken()) || "",
         },
         body: formData,
       })

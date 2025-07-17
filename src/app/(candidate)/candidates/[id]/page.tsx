@@ -15,7 +15,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     undefined,
     true
   );
-  const [jobLoading, isJobLoading] = useState(true);
+  const [candidatesLoading, isCandidatesLoading] = useState(true);
 
   // Admin only
   useEffect(() => {
@@ -59,18 +59,12 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   //   { id: string; name: string; email: string | null; score?: number }[]
 
   const [jobDetails, setJobDetails] = useState<
-    Omit<JobListing, "created_by"> & {
-      requirements: string[];
-      qualifications: string[];
-    }
+    Omit<JobListing, "created_by" | "created_at">
   >({
     id: "",
     title: "",
     location: "",
     is_fulltime: true,
-    created_at: "",
-    requirements: [],
-    qualifications: [],
   });
 
   useEffect(() => {
@@ -93,10 +87,13 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
       .then((data) => {})
       .catch((error) => {
         console.error("Error fetching job details:", error);
+      })
+      .finally(() => {
+        isCandidatesLoading(false);
       });
   }, [isAuthenticated]);
 
-  if (jobLoading) {
+  if (candidatesLoading) {
     return <Loading />;
   }
 
@@ -135,7 +132,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                 Applicants for this job
               </h2>
               <ul className="space-y-4 text-gray-700 text-sm">
-                {candidates.length === 0 ? (
+                {/* {candidates.length === 0 ? (
                   <p>No candidates yet.</p>
                 ) : (
                   candidates.map((candidate) => (
@@ -162,13 +159,13 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                       </button>
                     </li>
                   ))
-                )}
+                )} */}
               </ul>
             </section>
           </div>
 
           <div className="w-full lg:w-1/3 bg-gray-50 border-l p-6">
-            <section className="mb-8">
+            {/* <section className="mb-8">
               <h3 className="text-xl font-bold text-gray-800 mb-2">
                 Job Summary
               </h3>
@@ -184,7 +181,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                   <strong>Location:</strong> {jobDetails.location}
                 </li>
               </ul>
-            </section>
+            </section> */}
 
             <section>
               <h3 className="text-xl font-bold text-gray-800 mb-2">

@@ -15,10 +15,10 @@ export async function uploadFile(file: File, folder: string) {
       .replace(/\.[^/.]+$/, "")
       .replace(/[^a-zA-Z0-9-_]/g, "_")
       .toLowerCase(),
+    resource_type: "auto" as const,
   };
 
   const result = await cloudinary.uploader.upload(
-    // URI
     `data:${file.type};base64,${Buffer.from(await file.arrayBuffer()).toString(
       "base64"
     )}`,
