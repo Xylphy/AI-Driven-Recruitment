@@ -20,55 +20,17 @@ export default function Profile() {
   });
 
   const { information, isAuthLoading } = useAuth(true, true);
-  const [isJobLoading, setIsJobLoading] = useState(true);
   const [isEvaluationLoading, setIsEvaluationLoading] = useState(true);
   const [progress, setProgress] = useState(0);
   const [starCount, setStarCount] = useState(0);
+  const [selectedStatus, setSelectedStatus] = useState("");
 
   useEffect(() => {
-    if (isAuthLoading) {
-      return;
+    const savedStatus = sessionStorage.getItem("candidateStatus");
+    if (savedStatus) {
+      setSelectedStatus(savedStatus);
     }
-
-    const fetchContent = async () => {
-      fetch("/api/joblisting", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-        .then((res) => {
-          if (!res.ok) {
-            alert("Failed to fetch job listings");
-            return null;
-          }
-          return res.json();
-        })
-        .then((body) => {
-          if (!body) {
-            return;
-          }
-          if (information) {
-            const formatJobDate = (
-              job: Pick<JobListing, "title" | "created_at">
-            ) => ({
-              ...job,
-              created_at: new Date(job.created_at).toLocaleDateString(),
-            });
-
-            setJobListed({
-              createdByThem: body.data.createdByThem.map(formatJobDate),
-              createdByOthers: body.data.createdByAll.map(formatJobDate),
-            });
-          }
-        })
-        .finally(() => {
-          setIsJobLoading(false);
-        });
-    };
-
-    fetchContent();
-  }, [isAuthLoading]);
+  });
 
   useEffect(() => {
     const delay = Math.floor(Math.random() * 5000) + 5000;
@@ -170,15 +132,15 @@ export default function Profile() {
                 </label>
                 <select
                   id="status"
+                  value={selectedStatus}
                   onChange={(e) => {
                     const newStatus = e.target.value;
-                    console.log("Selected status:", newStatus);
+                    setSelectedStatus(newStatus);
+                    sessionStorage.setItem("candidateStatus", newStatus);
                   }}
                   className="bg-red-600 text-white font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-600 hover:border-red-600 focus:outline-none"
                 >
-                  <option disabled selected>
-                    Select Status
-                  </option>
+                  <option value="">Select Status</option>
                   <option value="initial">Initial Interview</option>
                   <option value="for-interview">For Interview</option>
                   <option value="hired">Hired</option>

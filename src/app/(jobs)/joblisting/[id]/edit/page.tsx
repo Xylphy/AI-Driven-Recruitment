@@ -128,7 +128,7 @@ export default function Page() {
       alert("Failed to create job listing");
       return;
     } else {
-      alert("Job listing created successfully");
+      alert("Job listing updated successfully");
     }
 
     setJobListing({

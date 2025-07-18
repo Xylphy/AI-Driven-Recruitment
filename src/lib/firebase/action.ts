@@ -2,7 +2,7 @@ import { sendSignInLinkToEmail } from "firebase/auth";
 import { auth } from "./client";
 import { RegisterState } from "@/types/types";
 import { insertTokenData } from "../mongodb/action";
-import { auth as admin } from "./admin";
+import admin from "./admin";
 
 export async function sendEmailVerification(data: RegisterState) {
   const response = await insertTokenData(data);

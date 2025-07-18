@@ -6,6 +6,7 @@ import useAuth from "@/hooks/useAuth";
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Loading from "@/app/loading";
+import { JobListing } from "@/types/schema";
 
 export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
@@ -15,6 +16,15 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     true
   );
   const [candidatesLoading, isCandidatesLoading] = useState(true);
+
+  const [jobDetails, setJobDetails] = useState<Omit<JobListing, "created_by">>({
+    id: "",
+    title: "",
+    location: "",
+    is_fulltime: true,
+    created_at: "",
+    joblisting_id: "",
+  });
 
   // Admin only
   useEffect(() => {
@@ -79,7 +89,9 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
         }
         return res.json();
       })
-      .then((data) => {})
+      .then((data) => {
+        setCandidates(data.data || []);
+      })
       .catch((error) => {
         console.error("Error fetching job details:", error);
       })
@@ -127,10 +139,10 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                 Applicants for this job
               </h2>
               <ul className="space-y-4 text-gray-700 text-sm">
-                {/* {candidates.length === 0 ? (
+                {candidates?.length === 0 ? (
                   <p>No candidates yet.</p>
                 ) : (
-                  candidates.map((candidate) => (
+                  candidates?.map((candidate) => (
                     <li
                       key={candidate.id}
                       className="flex items-center justify-between border p-4 rounded shadow-sm"
@@ -141,12 +153,12 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                           {candidate.email || "No email"}
                         </p>
                         <p className="text-xs text-green-600 font-semibold mt-1">
-                          {candidate.score ?? 98}% Job Candidate Match
+                          98 % Job Candidate Match
                         </p>
                       </div>
                       <button
                         onClick={() =>
-                          router.push(`/candidate/${candidate.id}`)
+                          router.push(`/candidateprofile/${candidate.id}`)
                         }
                         className="bg-red-600 text-white px-3 py-1 rounded text-sm font-bold hover:bg-transparent hover:text-red-600 hover:border hover:border-red-600 transition-all"
                       >
@@ -154,7 +166,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                       </button>
                     </li>
                   ))
-                )} */}
+                )}
               </ul>
             </section>
           </div>
