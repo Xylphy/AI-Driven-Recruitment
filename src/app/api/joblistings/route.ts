@@ -153,8 +153,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    console.log("appliedData", appliedData);
-
     return NextResponse.json({
       message: "Success",
       status: 200,
@@ -213,24 +211,51 @@ export async function PUT(request: NextRequest) {
   }
 
   const supabase = await createClientServer(1, true);
-  const { error: updateError } = await supabase
-    .from("job_listings")
-    .update({
-      title: parsedData.data.title,
-      location: parsedData.data.location,
-      is_fulltime: parsedData.data.isFullTime,
-    })
-    .eq("id", jobId)
-    .select()
-    .single();
 
-  if (updateError) {
+  console.log("Parsed Data:", parsedData.data);
+  console.log("Job ID:", jobId);
+
+  const promises = await Promise.all([
+    supabase
+      .from("job_listings")
+      .update({
+        title: parsedData.data.title,
+        location: parsedData.data.location,
+        is_fulltime: parsedData.data.isFullTime,
+      })
+      .eq("id", jobId)
+      .select()
+      .single(),
+    supabase.from("jl_qualifications").delete().eq("joblisting_id", jobId),
+    supabase.from("jl_requirements").delete().eq("joblisting_id", jobId),
+    ...(parsedData.data.qualifications?.map((qualification) =>
+      supabase
+        .from("jl_qualifications")
+        .insert({
+          joblisting_id: jobId,
+          qualification: qualification.title,
+        })
+        .select()
+        .single()
+    ) || []),
+    ...(parsedData.data.requirements?.map((requirement) =>
+      supabase
+        .from("jl_requirements")
+        .insert({
+          joblisting_id: jobId,
+          requirement: requirement.title,
+        })
+        .select()
+        .single()
+    ) || []),
+  ]);
+
+  if (promises.some((promise) => promise.error)) {
     return NextResponse.json(
       { error: "Failed to update job listing" },
       { status: 500 }
     );
   }
-
   return NextResponse.json(
     { message: "Job listing updated successfully" },
     { status: 200 }
