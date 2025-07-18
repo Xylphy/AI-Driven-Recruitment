@@ -21,6 +21,9 @@ export default function Profile() {
 
   const { information, isAuthLoading } = useAuth(true, true);
   const [isJobLoading, setIsJobLoading] = useState(true);
+  const [isEvaluationLoading, setIsEvaluationLoading] = useState(true);
+  const [progress, setProgress] = useState(0);
+  const [starCount, setStarCount] = useState(0);
 
   useEffect(() => {
     if (isAuthLoading) {
@@ -66,6 +69,49 @@ export default function Profile() {
 
     fetchContent();
   }, [isAuthLoading]);
+
+  useEffect(() => {
+    const delay = Math.floor(Math.random() * 5000) + 5000;
+    const timer = setTimeout(() => {
+      setIsEvaluationLoading(false);
+
+      let current = 0;
+      const interval = setInterval(() => {
+        current += 1;
+        setProgress(current);
+        if (current >= 68) {
+          clearInterval(interval);
+        }
+      }, 15);
+    }, delay);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const delay = Math.floor(Math.random() * 5000) + 5000;
+
+    const timer = setTimeout(() => {
+      setIsEvaluationLoading(false);
+
+      let currentProgress = 0;
+      const progressInterval = setInterval(() => {
+        currentProgress += 1;
+        setProgress(currentProgress);
+        if (currentProgress >= 68) clearInterval(progressInterval);
+      }, 15);
+
+      let currentStars = 0;
+      const targetStars = Math.round(3.75);
+      const starInterval = setInterval(() => {
+        currentStars += 1;
+        setStarCount(currentStars);
+        if (currentStars >= targetStars) clearInterval(starInterval);
+      }, 200);
+    }, delay);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <main className="bg-white h-[75vh] overflow-hidden">
@@ -151,137 +197,148 @@ export default function Profile() {
             </div>
           </div>
           <div className="w-full md:w-2/3 p-6">
-            <h2 className="text-2xl font-bold mb-6">
-              <span className="text-red-600">Candidate</span> Evaluation
-            </h2>
-
-            {/* SCROLLABLE CONTAINER */}
-            <div className="h-[65vh] overflow-y-auto space-y-10 pr-2">
-              {/* FIRST EVALUATION BLOCK */}
-              <div className="bg-gray-50 border border-gray-200 p-6 rounded-lg shadow-sm space-y-6">
-                <div>
-                  <span className="block text-sm font-medium text-gray-700 mb-1">
-                    Raw Score:
-                  </span>
-                  <div className="flex items-center space-x-2">
-                    {[...Array(5)].map((_, i) => (
-                      <svg
-                        key={i}
-                        className={`w-5 h-5 ${
-                          i < Math.round(3.75)
-                            ? "text-yellow-400"
-                            : "text-gray-300"
-                        }`}
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.184 3.642a1 1 0 00.95.69h3.813c.969 0 1.371 1.24.588 1.81l-3.087 2.243a1 1 0 00-.364 1.118l1.184 3.642c.3.921-.755 1.688-1.54 1.118L10 13.347l-3.087 2.243c-.785.57-1.84-.197-1.54-1.118l1.184-3.642a1 1 0 00-.364-1.118L3.106 9.07c-.783-.57-.38-1.81.588-1.81h3.813a1 1 0 00.95-.69l1.184-3.642z" />
-                      </svg>
-                    ))}
-                    <span className="text-sm text-gray-600">(3.75/5)</span>
-                  </div>
-                </div>
-
-                <div>
-                  <span className="block text-sm font-medium text-gray-700 mb-1">
-                    Predictive Success:
-                  </span>
-                  <div className="w-full bg-gray-200 h-3 rounded">
-                    <div
-                      className="bg-green-500 h-3 rounded"
-                      style={{ width: "68%" }}
-                    ></div>
-                  </div>
-                  <span className="text-xs text-gray-600 mt-1 block">
-                    68% likelihood of success
-                  </span>
-                </div>
-
-                <div>
-                  <span className="block text-sm font-medium text-gray-700 mb-1">
-                    Evaluation Summary:
-                  </span>
-                  <p className="text-sm text-gray-700 leading-relaxed">
-                    Candidate scores moderately well based on the provided
-                    information...
-                  </p>
-                </div>
+            {isEvaluationLoading ? (
+              <div className="animate-pulse space-y-4">
+                <div className="w-1/3 h-6 bg-gray-300 rounded"></div>
+                <div className="w-full h-32 bg-gray-200 rounded"></div>
+                <div className="w-full h-64 bg-gray-200 rounded"></div>
+                <p className="text-gray-400 text-sm">
+                  Loading candidate evaluation...
+                </p>
               </div>
-
-              {/* SECOND EVALUATION BLOCK */}
-              <div className="bg-gray-50 border border-gray-200 p-6 rounded-lg shadow-sm space-y-6 text-sm text-gray-800">
-                <div>
-                  <h3 className="font-semibold text-gray-700">
-                    Sentiment Analysis
-                  </h3>
-                  <p>
-                    The overall sentiment expressed in Zing and Glue's
-                    introduction is highly positive...
-                  </p>
-                </div>
-
-                <div>
-                  <h3 className="font-semibold text-gray-700">
-                    Personality Traits
-                  </h3>
-                  <ul className="list-disc ml-6 space-y-1">
-                    <li>
-                      <strong>Openness:</strong> High...
-                    </li>
-                    <li>
-                      <strong>Conscientiousness:</strong> Strong...
-                    </li>
-                    <li>
-                      <strong>Extroversion:</strong> Moderate...
-                    </li>
-                    <li>
-                      <strong>Agreeableness:</strong> High...
-                    </li>
-                    <li>
-                      <strong>Neuroticism:</strong> Low...
-                    </li>
-                  </ul>
-                </div>
-
-                <div>
-                  <h3 className="font-semibold text-gray-700">
-                    Communication Style
-                  </h3>
-                  <p>Zing and Glue demonstrate an assertive style...</p>
-                </div>
-
-                <div>
-                  <h3 className="font-semibold text-gray-700">
-                    Interview Insights
-                  </h3>
-
-                  {hasTranscript ? (
+            ) : (
+              <>
+                <h2 className="text-2xl font-bold mb-6">
+                  <span className="text-red-600">Candidate</span> Evaluation
+                </h2>
+                <div className="h-[65vh] overflow-y-auto space-y-10 pr-2">
+                  <div className="bg-gray-50 border border-gray-200 p-6 rounded-lg shadow-sm space-y-6">
                     <div>
-                      <p>The intro highlights a proven track record...</p>
-                      <details className="bg-white border rounded p-3 mt-3">
-                        <summary className="cursor-pointer font-medium text-red-600">
-                          View Full Transcription
-                        </summary>
-                        <p className="mt-2 text-gray-700">
-                          "Hi everyone, my name is Zing and Glue and I'm a
-                          26-year-old American..."
-                        </p>
-                      </details>
+                      <span className="block text-sm font-medium text-gray-700 mb-1">
+                        Raw Score:
+                      </span>
+                      <div className="flex items-center space-x-2">
+                        {[...Array(5)].map((_, i) => (
+                          <svg
+                            key={i}
+                            className={`w-5 h-5 transition-colors duration-300 ${
+                              i < starCount
+                                ? "text-yellow-400"
+                                : "text-gray-300"
+                            }`}
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.184 3.642a1 1 0 00.95.69h3.813c.969 0 1.371 1.24.588 1.81l-3.087 2.243a1 1 0 00-.364 1.118l1.184 3.642c.3.921-.755 1.688-1.54 1.118L10 13.347l-3.087 2.243c-.785.57-1.84-.197-1.54-1.118l1.184-3.642a1 1 0 00-.364-1.118L3.106 9.07c-.783-.57-.38-1.81.588-1.81h3.813a1 1 0 00.95-.69l1.184-3.642z" />
+                          </svg>
+                        ))}
+                        <span className="text-sm text-gray-600">(3.75/5)</span>
+                      </div>
                     </div>
-                  ) : (
-                    <div className="mt-4 border border-dashed border-gray-300 p-4 text-center rounded">
-                      <p className="text-gray-500">No transcript uploaded.</p>
-                      <button
-                        className="bg-[#E30022] text-white font-bold mt-2 px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-500 hover:border-red-500"
-                        onClick={() => {}}
-                      >
-                        Upload Transcript
-                      </button>
+
+                    <div>
+                      <span className="block text-sm font-medium text-gray-700 mb-1">
+                        Predictive Success:
+                      </span>
+                      <div className="w-full bg-gray-200 h-3 rounded overflow-hidden">
+                        <div
+                          className="bg-green-500 h-3 rounded transition-all duration-200"
+                          style={{ width: `${progress}%` }}
+                        ></div>
+                      </div>
+                      <span className="text-xs text-gray-600 mt-1 block">
+                        {progress}% likelihood of success
+                      </span>
                     </div>
-                  )}
+
+                    <div>
+                      <span className="block text-sm font-medium text-gray-700 mb-1">
+                        Evaluation Summary:
+                      </span>
+                      <p className="text-sm text-gray-700 leading-relaxed">
+                        Candidate scores moderately well based on the provided
+                        information...
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50 border border-gray-200 p-6 rounded-lg shadow-sm space-y-6 text-sm text-gray-800">
+                    <div>
+                      <h3 className="font-semibold text-gray-700">
+                        Sentiment Analysis
+                      </h3>
+                      <p>
+                        The overall sentiment expressed in Zing and Glue's
+                        introduction is highly positive...
+                      </p>
+                    </div>
+
+                    <div>
+                      <h3 className="font-semibold text-gray-700">
+                        Personality Traits
+                      </h3>
+                      <ul className="list-disc ml-6 space-y-1">
+                        <li>
+                          <strong>Openness:</strong> High...
+                        </li>
+                        <li>
+                          <strong>Conscientiousness:</strong> Strong...
+                        </li>
+                        <li>
+                          <strong>Extroversion:</strong> Moderate...
+                        </li>
+                        <li>
+                          <strong>Agreeableness:</strong> High...
+                        </li>
+                        <li>
+                          <strong>Neuroticism:</strong> Low...
+                        </li>
+                      </ul>
+                    </div>
+
+                    <div>
+                      <h3 className="font-semibold text-gray-700">
+                        Communication Style
+                      </h3>
+                      <p>Zing and Glue demonstrate an assertive style...</p>
+                    </div>
+
+                    <div>
+                      <h3 className="font-semibold text-gray-700">
+                        Interview Insights
+                      </h3>
+
+                      {hasTranscript ? (
+                        <div>
+                          <p>The intro highlights a proven track record...</p>
+                          <details className="bg-white border rounded p-3 mt-3">
+                            <summary className="cursor-pointer font-medium text-red-600">
+                              View Full Transcription
+                            </summary>
+                            <p className="mt-2 text-gray-700">
+                              "Hi everyone, my name is Zing and Glue and I'm a
+                              26-year-old American..."
+                            </p>
+                          </details>
+                        </div>
+                      ) : (
+                        <div className="mt-4 border border-dashed border-gray-300 p-4 text-center rounded">
+                          <p className="text-gray-500">
+                            No transcript uploaded.
+                          </p>
+                          <button
+                            className="bg-[#E30022] text-white font-bold mt-2 px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-500 hover:border-red-500"
+                            onClick={() => {}}
+                          >
+                            Upload Transcript
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
+              </>
+            )}
           </div>
         </div>
       </div>
