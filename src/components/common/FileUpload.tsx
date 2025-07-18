@@ -77,9 +77,6 @@ export default function FileUpload({
           <p className="pl-1">or drag and drop</p>
         </div>
         <p className="text-sm font-medium text-gray-700">{fileName}</p>
-        <p className="text-xs text-gray-500">
-          DOC, DOCX, PDF, ODT, RTF up to 10MB
-        </p>
       </div>
     </div>
   );

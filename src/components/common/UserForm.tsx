@@ -28,6 +28,7 @@ export function UserForm({
   description,
   title,
   fileName,
+  handleTranscriptSelect,
 }: {
   socialLinksInfo: {
     socialLinks: SocialLink[];
@@ -57,6 +58,8 @@ export function UserForm({
   title: string;
   description: string;
   fileName?: string;
+  handleTranscriptSelect: (file: File | null) => void;
+  transcriptFileName?: string;
 }) {
   return (
     <>
@@ -395,6 +398,15 @@ export function UserForm({
             }}
             getSocialLinks={socialLinksInfo.socialLinks || []}
           />
+        </div>
+        <div className="mb-6">
+          <label
+            htmlFor="transcript"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Upload Interview Video
+          </label>
+          <FileUpload onFileSelect={handleTranscriptSelect} />
         </div>
         <button
           type="submit"

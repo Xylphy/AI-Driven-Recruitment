@@ -20,6 +20,17 @@ export default function SignupPage() {
 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [csrfToken, setCsrfToken] = useState<string | null>(null);
+  const [transcriptFileName, setTranscriptFileName] = useState<
+    string | undefined
+  >();
+
+  const handleTranscriptSelect = (file: File | null) => {
+    if (file) {
+      setTranscriptFileName(file.name);
+    } else {
+      setTranscriptFileName(undefined);
+    }
+  };
 
   useEffect(() => {
     const fetchCsrfToken = async () => {
@@ -100,6 +111,8 @@ export default function SignupPage() {
       response={response}
       description="Join a community of innovators, problem-solvers, and change-makers."
       title="REGISTRATION"
+      handleTranscriptSelect={handleTranscriptSelect}
+      transcriptFileName={transcriptFileName}
     />
   );
 }
