@@ -1,16 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { JobListing } from "@/types/types";
 import Qualifications from "@/components/joblisting/Qualifications";
 import useAuth from "@/hooks/useAuth";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { JOB_LOCATIONS } from "@/lib/constants";
 import { getCsrfToken } from "@/lib/library";
 
-export default function JobListingPage() {
+export default function Page() {
   const router = useRouter();
+  const params = useParams();
+  const jobId = params.id as string;
   const [isSubmitting] = useState(false);
+
   const [jobListing, setJobListing] = useState<
     Omit<JobListing, "created_at"> & {
       isFullTime: boolean;
@@ -22,7 +25,48 @@ export default function JobListingPage() {
     location: "",
     isFullTime: true,
   });
-  const { information } = useAuth(undefined, true);
+  const { information, isAuthLoading } = useAuth(undefined, true);
+
+  useEffect(() => {
+    if (isAuthLoading) {
+      return;
+    }
+
+    if (!information.admin) {
+      alert("You are not authorized to create a job listing");
+      router.push("/profile");
+    }
+
+    fetch(`/api/jobDetails?job=${jobId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => {
+        if (!res.ok) {
+          alert("Failed to fetch job details");
+        }
+
+        return res.json();
+      })
+      .then((data) => {
+        setJobListing({
+          ...data,
+          qualifications:
+            data.qualifications.map((qualification, index) => ({
+              title: qualification,
+              id: index,
+            })) || [],
+          requirements:
+            data.requirements.map((requirement, index) => ({
+              title: requirement,
+              id: index,
+            })) || [],
+          isFullTime: data.is_fulltime,
+        });
+      });
+  }, [information, router, isAuthLoading]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -32,10 +76,12 @@ export default function JobListingPage() {
   };
 
   const handleAdd = (field: "qualifications" | "requirements") => {
-    setJobListing((prev) => ({
-      ...prev,
-      [field]: [...prev[field], { id: prev[field].length + 1, title: "" }],
-    }));
+    setJobListing((prev) => {
+      return {
+        ...prev,
+        [field]: [...prev[field], { id: Date.now(), title: "" }],
+      };
+    });
   };
 
   const handleUpdate = (
@@ -69,13 +115,13 @@ export default function JobListingPage() {
       router.push("/profile");
     }
 
-    const response = await fetch("/api/joblistings", {
-      method: "POST",
+    const response = await fetch(`/api/joblistings?jobId=${jobId}`, {
+      method: "PUT",
       headers: {
         "Content-Type": "application/json",
         "X-CSRF-Token": (await getCsrfToken())!,
       },
-      body: JSON.stringify(jobListing),
+      body: JSON.stringify({ ...jobListing, jobId }),
     });
 
     if (!response.ok) {

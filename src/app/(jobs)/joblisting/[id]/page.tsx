@@ -13,6 +13,8 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id: jobId } = use(params);
   const { information, isAuthenticated } = useAuth(undefined, true);
   const [jobLoading, isJobLoading] = useState(true);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [jobDetails, setJobDetails] = useState<
     Omit<JobListing, "created_by"> & { requirements: string[] } & {
@@ -24,6 +26,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     location: "",
     is_fulltime: true,
     created_at: "",
+    joblisting_id: "",
     requirements: [],
     qualifications: [],
   });
@@ -59,12 +62,66 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
       });
   }, [isAuthenticated]);
 
+  const handleDeleteJob = async () => {
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/joblistings?jobId=${jobId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete job");
+      }
+
+      alert("Job deleted successfully");
+      router.push("/profile");
+    } catch (error) {
+      alert("Error deleting job: ");
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteModal(false);
+    }
+  };
+
   if (jobLoading) {
     return <Loading />;
   }
 
   return (
     <main className="bg-white min-h-screen py-5 px-4 md:px-20">
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-bold text-gray-800 mb-4">
+              Confirm Delete
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to delete this job listing? This action
+              cannot be undone.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                disabled={isDeleting}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteJob}
+                disabled={isDeleting}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
+              >
+                {isDeleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-4xl mx-auto">
         <div className="relative h-44">
           <Image
@@ -161,10 +218,16 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                 >
                   See Applicants
                 </button>
-                <button className="mt-2 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600">
+                <button
+                  onClick={() => setShowDeleteModal(true)}
+                  className="mt-2 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600"
+                >
                   Delete Job
                 </button>
-                <button className="mt-2 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600">
+                <button
+                  className="mt-2 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600"
+                  onClick={() => router.push(`/joblisting/${jobId}/edit`)}
+                >
                   Edit Job
                 </button>
               </>

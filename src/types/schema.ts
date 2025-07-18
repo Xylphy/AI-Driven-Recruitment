@@ -66,12 +66,15 @@ export interface JobApplicants
     Pick<Admin, "user_id"> {
   created_at: string;
   joblisting_id: string;
+  score: number;
+  status: "Initial Interview" | "For Interview" | "Hired" | "Rejected";
 }
 
 export interface JobListing
   extends IdentifiableItem,
     Pick<JobApplicants, "created_at">,
     Title {
+  joblisting_id: any;
   location: string;
   created_by: string;
   is_fulltime: boolean;

@@ -66,7 +66,7 @@ export default function Profile() {
     }
 
     const fetchContent = async () => {
-      fetch("/api/joblistings", {
+      return fetch("/api/joblistings", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -98,9 +98,17 @@ export default function Profile() {
             });
           } else {
             setJobListed({
-              createdByThem: body.data.jobApplied.map(formatJobDate),
-              createdByOthers: [],
+              createdByThem: [],
+              createdByOthers: body.data.map(formatJobDate),
             });
+            
+            setJobListed((prev) => ({
+              ...prev,
+              createdByOthers: prev.createdByOthers.map((job) => ({
+                ...job,
+                id: job.joblisting_id,
+              })),
+            }));
           }
         });
     };
@@ -108,7 +116,6 @@ export default function Profile() {
     fetchContent().finally(() => {
       setIsJobLoading(false);
     });
-
   }, [isAuthLoading]);
 
   const handleNotificationClick = () => {

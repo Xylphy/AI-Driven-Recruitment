@@ -5,60 +5,69 @@ import Image from "next/image";
 import useAuth from "@/hooks/useAuth";
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { JobListing } from "@/types/schema";
 import Loading from "@/app/loading";
 
 export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const { id: jobId } = use(params);
-  const { information, isAuthenticated } = useAuth(undefined, true);
-  const [jobLoading, isJobLoading] = useState(true);
+  const { information, isAuthenticated, isAuthLoading } = useAuth(
+    undefined,
+    true
+  );
+  const [candidatesLoading, isCandidatesLoading] = useState(true);
 
-  const candidates = [
-    {
-      id: "c1",
-      name: "Jane Doe",
-      email: "jane.doe@example.com",
-      score: "100",
-      resumeLink: "#",
-    },
-    {
-      id: "c2",
-      name: "John Smith",
-      email: "john.smith@example.com",
-      score: "99",
-      resumeLink: "#",
-    },
-    {
-      id: "c3",
-      name: "Maria Garcia",
-      email: "maria.garcia@example.com",
-      score: "98",
-      resumeLink: "#",
-    },
-  ];
-
-  const [jobDetails, setJobDetails] = useState<
-    Omit<JobListing, "created_by"> & {
-      requirements: string[];
-      qualifications: string[];
+  // Admin only
+  useEffect(() => {
+    if (isAuthLoading) {
+      return;
     }
-  >({
-    id: "",
-    title: "",
-    location: "",
-    is_fulltime: true,
-    created_at: "",
-    requirements: [],
-    qualifications: [],
-  });
+
+    if (!information.admin) {
+      if (window.history.length > 1) {
+        router.back();
+      } else {
+        router.push("/profile");
+      }
+    }
+  }, [isAuthLoading]);
+
+  // const candidates = [
+  //   {
+  //     id: "c1",
+  //     name: "Jane Doe",
+  //     email: "jane.doe@example.com",
+  //     score: "100",
+  //     resumeLink: "#",
+  //   },
+  //   {
+  //     id: "c2",
+  //     name: "John Smith",
+  //     email: "john.smith@example.com",
+  //     score: "99",
+  //     resumeLink: "#",
+  //   },
+  //   {
+  //     id: "c3",
+  //     name: "Maria Garcia",
+  //     email: "maria.garcia@example.com",
+  //     score: "98",
+  //     resumeLink: "#",
+  //   },
+  // ];
+  const [candidates, setCandidates] = useState<
+    {
+      id: string;
+      name: string;
+      email?: string;
+    }[]
+  >();
 
   useEffect(() => {
     if (!isAuthenticated) {
       return;
     }
 
-    fetch(`/api/jobDetails?job=${jobId}`, {
+    fetch(`/api/jobs/applicants?jobId=${jobId}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -70,21 +79,16 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
         }
         return res.json();
       })
-      .then((data) => {
-        setJobDetails({
-          ...data,
-          created_at: new Date(data.created_at).toLocaleDateString(),
-        });
-      })
+      .then((data) => {})
       .catch((error) => {
-        alert(error.message);
+        console.error("Error fetching job details:", error);
       })
       .finally(() => {
-        isJobLoading(false);
+        isCandidatesLoading(false);
       });
   }, [isAuthenticated]);
 
-  if (jobLoading) {
+  if (candidatesLoading) {
     return <Loading />;
   }
 
@@ -123,7 +127,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                 Applicants for this job
               </h2>
               <ul className="space-y-4 text-gray-700 text-sm">
-                {candidates.length === 0 ? (
+                {/* {candidates.length === 0 ? (
                   <p>No candidates yet.</p>
                 ) : (
                   candidates.map((candidate) => (
@@ -150,13 +154,13 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                       </button>
                     </li>
                   ))
-                )}
+                )} */}
               </ul>
             </section>
           </div>
 
           <div className="w-full lg:w-1/3 bg-gray-50 border-l p-6">
-            <section className="mb-8">
+            {/* <section className="mb-8">
               <h3 className="text-xl font-bold text-gray-800 mb-2">
                 Job Summary
               </h3>
@@ -172,7 +176,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                   <strong>Location:</strong> {jobDetails.location}
                 </li>
               </ul>
-            </section>
+            </section> */}
 
             <section>
               <h3 className="text-xl font-bold text-gray-800 mb-2">

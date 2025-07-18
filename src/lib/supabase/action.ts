@@ -78,3 +78,36 @@ export function updateTable(
 ) {
   return supabase.from(table).update(data).eq(matchColumn, matchValue);
 }
+
+export function findWithJoin<T>(
+  supabase: SupabaseClient,
+  mainTable: string,
+  joinConfig: {
+    foreignTable: string;
+    foreignKey: string;
+    fields: string;
+  }
+) {
+  return {
+    many: (filterColumn?: string, filterValue?: string) => {
+      let query = supabase.from(mainTable).select(`
+          *,
+          ${joinConfig.foreignTable}:${joinConfig.foreignKey} (${joinConfig.fields})
+        `);
+
+      if (filterColumn && filterValue) {
+        query = query.eq(filterColumn, filterValue);
+      }
+
+      return {
+        execute: async (): Promise<QueryResult<T[]>> => {
+          const result = await query;
+          return {
+            data: result.data as T[],
+            error: result.error,
+          };
+        },
+      };
+    },
+  };
+}

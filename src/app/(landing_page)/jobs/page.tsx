@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { checkAuthStatus } from "@/lib/library";
+import { checkAuthStatus, getCsrfToken } from "@/lib/library";
 import { JobListing } from "@/types/schema";
 import useAuth from "@/hooks/useAuth";
 
@@ -9,12 +9,10 @@ export default function Careers() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [jobs, setJobs] = useState<(JobListing & { applied: boolean })[]>();
 
-  const { csrfStore } = useAuth(isAuthenticated);
+  const { information } = useAuth(undefined, isAuthenticated);
 
   useEffect(() => {
-    checkAuthStatus().then((status) => {
-      setIsAuthenticated(status);
-    });
+    checkAuthStatus().then(setIsAuthenticated);
 
     fetch("/api/jobs", {
       method: "GET",
@@ -23,22 +21,18 @@ export default function Careers() {
       },
     })
       .then((res) => res.json())
-      .then((data) => {
-        setJobs(data.data || []);
-      })
-      .catch((error) => {
-        console.error("Error fetching jobs:", error);
-      });
+      .then((data) => setJobs(data.data || []))
+      .catch((error) => console.error("Error fetching jobs:", error));
   }, []);
 
   const handleApply = async (jobId: string) => {
     await checkAuthStatus();
 
-    fetch("/api/jobs/apply", {
+    fetch("/api/jobs/applicants", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-CSRF-Token": csrfStore.csrfToken || "",
+        "X-CSRF-Token": (await getCsrfToken()) || "",
       },
       body: JSON.stringify({ jobId }),
     })
@@ -103,7 +97,7 @@ export default function Careers() {
                   <span>{job.is_fulltime ? "Full-time" : "Part-time"}</span>
                 </div>
               </div>
-              {isAuthenticated && (
+              {isAuthenticated && !information.admin && (
                 <button
                   className={`font-bold px-4 py-2 rounded border transition-all duration-300 ease-in-out ${
                     job.applied
