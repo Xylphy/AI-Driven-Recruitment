@@ -115,28 +115,19 @@ export default function Page() {
       router.push("/profile");
     }
 
-    const response = await fetch(`/api/joblistings?jobId=${jobId}`, {
+    fetch(`/api/joblistings?jobId=${jobId}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
         "X-CSRF-Token": (await getCsrfToken())!,
       },
       body: JSON.stringify({ ...jobListing, jobId }),
-    });
-
-    if (!response.ok) {
-      alert("Failed to create job listing");
-      return;
-    } else {
-      alert("Job listing updated successfully");
-    }
-
-    setJobListing({
-      title: "",
-      qualifications: [],
-      requirements: [],
-      location: "",
-      isFullTime: true,
+    }).then((response) => {
+      if (response.ok) {
+        alert("Job listing updated successfully");
+      } else {
+        alert("Failed to update job listing");
+      }
     });
   };
 

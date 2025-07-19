@@ -1,16 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import { createClientServer } from "@/lib/supabase/supabase";
-import { deleteTable, find, insertTable } from "@/lib/supabase/action";
-import { JobApplicants, JobListing, User, Admin } from "@/types/schema";
+import {
+  deleteTable,
+  find,
+  insertTable,
+  updateTable,
+} from "@/lib/supabase/action";
+import { JobApplicants, JobListing, Admin } from "@/types/schema";
 import { jobListingSchema } from "@/lib/schemas/";
 import { JWT } from "@/types/types";
 
 export async function POST(request: NextRequest) {
-  const token = request.cookies.get("token")!;
-
   const { id: userId, isAdmin } = jwt.verify(
-    token.value,
+    request.cookies.get("token")!.value,
     process.env.JWT_SECRET!
   ) as JWT;
 
@@ -79,16 +82,18 @@ export async function POST(request: NextRequest) {
 // User: Get all applied joblistings
 // Usage: GET /api/joblistings?page=1&limit=10
 export async function GET(request: NextRequest) {
-  const token = request.cookies.get("token")!;
-  const page = parseInt(request.nextUrl.searchParams.get("page") || "1", 10);
   const limit = parseInt(
     request.nextUrl.searchParams.get("limit") || "100",
     10
   );
 
-  const offset = (page - 1) * limit;
+  const offset =
+    (parseInt(request.nextUrl.searchParams.get("page") || "1", 10) - 1) * limit;
 
-  const { id: userId } = jwt.verify(token.value, process.env.JWT_SECRET!) as {
+  const { id: userId } = jwt.verify(
+    request.cookies.get("token")!.value,
+    process.env.JWT_SECRET!
+  ) as {
     id: string;
   };
 
@@ -162,14 +167,16 @@ export async function GET(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const token = request.cookies.get("token")!;
   const jobId = request.nextUrl.searchParams.get("jobId");
 
   if (!jobId) {
     return NextResponse.json({ error: "Job ID is required" }, { status: 400 });
   }
 
-  const { isAdmin } = jwt.verify(token.value, process.env.JWT_SECRET!) as JWT;
+  const { isAdmin } = jwt.verify(
+    request.cookies.get("token")!.value,
+    process.env.JWT_SECRET!
+  ) as JWT;
 
   if (!isAdmin) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
@@ -189,8 +196,10 @@ export async function DELETE(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
-  const token = request.cookies.get("token")!;
-  const { isAdmin } = jwt.verify(token.value, process.env.JWT_SECRET!) as JWT;
+  const { isAdmin } = jwt.verify(
+    request.cookies.get("token")!.value,
+    process.env.JWT_SECRET!
+  ) as JWT;
 
   if (!isAdmin) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
@@ -212,42 +221,29 @@ export async function PUT(request: NextRequest) {
 
   const supabase = await createClientServer(1, true);
 
-  console.log("Parsed Data:", parsedData.data);
-  console.log("Job ID:", jobId);
+  await Promise.all([
+    deleteTable(supabase, "jl_qualifications", "joblisting_id", jobId),
+    deleteTable(supabase, "jl_requirements", "joblisting_id", jobId),
+  ]);
 
   const promises = await Promise.all([
-    supabase
-      .from("job_listings")
-      .update({
-        title: parsedData.data.title,
-        location: parsedData.data.location,
-        is_fulltime: parsedData.data.isFullTime,
+    updateTable(supabase, "job_listings", "id", jobId, {
+      title: parsedData.data.title,
+      location: parsedData.data.location,
+      is_fulltime: parsedData.data.isFullTime,
+    }),
+    ...(parsedData.data.qualifications?.map((qualification) =>
+      insertTable(supabase, "jl_qualifications", {
+        joblisting_id: jobId,
+        qualification: qualification.title,
       })
-      .eq("id", jobId)
-      .select()
-      .single(),
-    // supabase.from("jl_qualifications").delete().eq("joblisting_id", jobId),
-    // supabase.from("jl_requirements").delete().eq("joblisting_id", jobId),
-    // ...(parsedData.data.qualifications?.map((qualification) =>
-    //   supabase
-    //     .from("jl_qualifications")
-    //     .insert({
-    //       joblisting_id: jobId,
-    //       qualification: qualification.title,
-    //     })
-    //     .select()
-    //     .single()
-    // ) || []),
-    // ...(parsedData.data.requirements?.map((requirement) =>
-    //   supabase
-    //     .from("jl_requirements")
-    //     .insert({
-    //       joblisting_id: jobId,
-    //       requirement: requirement.title,
-    //     })
-    //     .select()
-    //     .single()
-    // ) || []),
+    ) || []),
+    ...(parsedData.data.requirements?.map((requirement) =>
+      insertTable(supabase, "jl_requirements", {
+        joblisting_id: jobId,
+        requirement: requirement.title,
+      })
+    ) || []),
   ]);
 
   if (promises.some((promise) => promise.error)) {
@@ -256,6 +252,7 @@ export async function PUT(request: NextRequest) {
       { status: 500 }
     );
   }
+
   return NextResponse.json(
     { message: "Job listing updated successfully" },
     { status: 200 }

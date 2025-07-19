@@ -10,7 +10,6 @@ import {
   JobExperiences,
 } from "@/types/schema";
 import { useRouter } from "next/navigation";
-import { useCsrfStore } from "@/lib/store";
 
 export default function useAuth(
   fetchUser = false,
@@ -38,13 +37,11 @@ export default function useAuth(
   });
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
-  const csrfStore = useCsrfStore();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user) {
         router.push("/login");
-        csrfStore.deleteCsrfToken();
       }
     });
 
@@ -108,8 +105,7 @@ export default function useAuth(
           }
         })
         .catch(() => {
-          console.error("Failed to fetch user information");
-          csrfStore.deleteCsrfToken();
+          alert("Failed to fetch user information");
           auth.signOut();
           return;
         })
@@ -125,6 +121,5 @@ export default function useAuth(
     information,
     isAuthenticated,
     isAuthLoading,
-    csrfStore,
   };
 }

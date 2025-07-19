@@ -8,6 +8,47 @@ const limiter = rateLimit({
   windowMs: 10 * 60 * 1000,
 });
 
+// Paths that do not require an access token
+const publicPathToken = [
+  {
+    path: "/api/users/email",
+    acceptedMethods: ["POST"],
+  },
+  {
+    path: "/api/users",
+    acceptedMethods: ["POST"],
+  },
+  {
+    path: "/api/auth/jwt",
+    acceptedMethods: ["GET"],
+  },
+  {
+    path: "/api/auth/status",
+    acceptedMethods: ["GET"],
+  },
+  {
+    path: "/api/auth/refresh",
+    acceptedMethods: ["GET"],
+  },
+  {
+    path: "/api/csrf",
+    acceptedMethods: ["GET"],
+  },
+  {
+    path: "/api/jobs",
+    acceptedMethods: ["GET"],
+  },
+];
+
+// Paths that do not require CSRF token
+const publicPathCsrf = [
+  "/api/auth/status",
+  "/api/auth/refresh",
+  "/api/auth/jwt", "/api/joblistings",
+  "/api/csrf",
+  "/api/jobs",
+];
+
 export async function middleware(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith("/api")) {
     if (!(await limiter.check(request)).success) {
@@ -35,16 +76,6 @@ export async function middleware(request: NextRequest) {
 
     const pathname = request.nextUrl.pathname;
 
-    // Paths that do not require CSRF token
-    const publicPathCsrf = [
-      "/api/auth/status",
-      "/api/auth/refresh",
-      "/api/auth/jwt",
-      "/api/joblistings",
-      "/api/csrf",
-      "/api/jobs",
-    ];
-
     if (!publicPathCsrf.includes(pathname) && request.method !== "GET") {
       const csrfToken = request.headers.get("X-CSRF-Token");
 
@@ -62,38 +93,6 @@ export async function middleware(request: NextRequest) {
         );
       }
     }
-
-    // Paths that do not require an access token
-    const publicPathToken = [
-      {
-        path: "/api/users/email",
-        acceptedMethods: ["POST"],
-      },
-      {
-        path: "/api/users",
-        acceptedMethods: ["POST"],
-      },
-      {
-        path: "/api/auth/jwt",
-        acceptedMethods: ["GET"],
-      },
-      {
-        path: "/api/auth/status",
-        acceptedMethods: ["GET"],
-      },
-      {
-        path: "/api/auth/refresh",
-        acceptedMethods: ["GET"],
-      },
-      {
-        path: "/api/csrf",
-        acceptedMethods: ["GET"],
-      },
-      {
-        path: "/api/jobs",
-        acceptedMethods: ["GET"],
-      },
-    ];
 
     if (
       !request.cookies.get("token") &&

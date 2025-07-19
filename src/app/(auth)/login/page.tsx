@@ -5,7 +5,6 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase/client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useCsrfStore } from "@/lib/store";
 import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
@@ -13,8 +12,8 @@ export default function LoginPage() {
   const [isAuthLoading, setIsAuthLoading] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
-      if (user && !isAuthLoading) {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
         setIsAuthLoading(false);
         router.push("/profile");
       }
@@ -26,52 +25,45 @@ export default function LoginPage() {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
 
-    let email = formData.get("email");
-    let password = formData.get("password");
+    let email = formData.get("email")?.toString().trim();
+    let password = formData.get("password")?.toString().trim();
 
     if (!email) {
       alert("Please enter a valid email address");
       return;
     }
-    email = email.toString().trim();
 
     if (!password) {
       alert("Please enter a valid password");
       return;
     }
 
-    password = password.toString().trim();
-
     try {
-      setIsAuthLoading(true);
-
       const userCredential = await signInWithEmailAndPassword(
         auth,
         email,
         password
       );
 
-      const response = await fetch("/api/auth/jwt", {
+      fetch("/api/auth/jwt", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${userCredential.user.uid}`,
         },
         credentials: "include",
-      });
-
-      if (!response.ok) {
-        auth.signOut();
-        alert("Authentication failed");
-        return;
-      }
-
-      const data = await response.json();
-      if (data) {
-        console.log(data.csrfToken);
-        useCsrfStore.getState().setCsrfToken(data.csrfToken);
-        router.push("/profile");
-      }
+      })
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error("Failed to authenticate");
+          }
+          return res.json();
+        })
+        .then(() => router.push("/profile"))
+        .catch((error) => {
+          alert("Authentication failed: " + error.message);
+          auth.signOut();
+        });
     } catch (error) {
       alert(
         "Authentication failed: " +

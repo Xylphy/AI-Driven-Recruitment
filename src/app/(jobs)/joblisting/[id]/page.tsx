@@ -78,7 +78,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
 
       alert("Job deleted successfully");
       router.push("/profile");
-    } catch (error) {
+    } catch {
       alert("Error deleting job: ");
     } finally {
       setIsDeleting(false);
