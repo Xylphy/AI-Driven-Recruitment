@@ -11,7 +11,6 @@ import {
 import { auth } from "@/lib/firebase/client";
 import { useRouter } from "next/navigation";
 import { checkAuthStatus, cleanArrayData, getCsrfToken } from "@/lib/library";
-import { useCsrfStore } from "@/lib/store";
 
 export default function EditProfilePage() {
   const router = useRouter();
@@ -239,7 +238,7 @@ export default function EditProfilePage() {
       handleFileSelect={handleFileSelect}
       response={response}
       title="Update Profile"
-      description="WAHAHAHAAHAHAHA"
+      description="Update"
       fileName={information.user?.resume_id || "No file selected"}
     />
   );

@@ -58,7 +58,7 @@ export function UserForm({
   title: string;
   description: string;
   fileName?: string;
-  handleTranscriptSelect: (file: File | null) => void;
+  handleTranscriptSelect?: (file: File | null) => void;
   transcriptFileName?: string;
 }) {
   return (
@@ -406,7 +406,9 @@ export function UserForm({
           >
             Upload Interview Video
           </label>
-          <FileUpload onFileSelect={handleTranscriptSelect} />
+          {handleTranscriptSelect && (
+            <FileUpload onFileSelect={handleTranscriptSelect} />
+          )}
         </div>
         <button
           type="submit"

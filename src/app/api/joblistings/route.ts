@@ -226,28 +226,28 @@ export async function PUT(request: NextRequest) {
       .eq("id", jobId)
       .select()
       .single(),
-    supabase.from("jl_qualifications").delete().eq("joblisting_id", jobId),
-    supabase.from("jl_requirements").delete().eq("joblisting_id", jobId),
-    ...(parsedData.data.qualifications?.map((qualification) =>
-      supabase
-        .from("jl_qualifications")
-        .insert({
-          joblisting_id: jobId,
-          qualification: qualification.title,
-        })
-        .select()
-        .single()
-    ) || []),
-    ...(parsedData.data.requirements?.map((requirement) =>
-      supabase
-        .from("jl_requirements")
-        .insert({
-          joblisting_id: jobId,
-          requirement: requirement.title,
-        })
-        .select()
-        .single()
-    ) || []),
+    // supabase.from("jl_qualifications").delete().eq("joblisting_id", jobId),
+    // supabase.from("jl_requirements").delete().eq("joblisting_id", jobId),
+    // ...(parsedData.data.qualifications?.map((qualification) =>
+    //   supabase
+    //     .from("jl_qualifications")
+    //     .insert({
+    //       joblisting_id: jobId,
+    //       qualification: qualification.title,
+    //     })
+    //     .select()
+    //     .single()
+    // ) || []),
+    // ...(parsedData.data.requirements?.map((requirement) =>
+    //   supabase
+    //     .from("jl_requirements")
+    //     .insert({
+    //       joblisting_id: jobId,
+    //       requirement: requirement.title,
+    //     })
+    //     .select()
+    //     .single()
+    // ) || []),
   ]);
 
   if (promises.some((promise) => promise.error)) {

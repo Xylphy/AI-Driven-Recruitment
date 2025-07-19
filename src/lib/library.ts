@@ -1,5 +1,3 @@
-import { useCsrfStore } from "./store";
-
 // Note: Cannot be used for getting HTTP-only cookies
 export function getCookie(name: string): string | null {
   if (typeof document === "undefined") {

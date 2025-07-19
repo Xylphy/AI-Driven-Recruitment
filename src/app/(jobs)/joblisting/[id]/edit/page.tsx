@@ -143,11 +143,11 @@ export default function Page() {
   return (
     <div className="flex flex-col justify-center items-center mt-10">
       <h1 className="text-4xl font-bold text-[#E30022] text-center mb-2 uppercase tracking-wide">
-        CREATE JOB LISTING
+        UPDATE JOB LISTING
       </h1>
       <hr className="w-1/4 mx-auto border-t border-black-600 my-1" />
       <p className="text-center text-sm text-gray-700 mt-2 mb-6">
-        Post your job listing and find the best talent.
+        Update your job listing and find the best talent.
       </p>
 
       <form onSubmit={handleSubmit} className="w-full max-w-2xl mt-6 space-y-4">
