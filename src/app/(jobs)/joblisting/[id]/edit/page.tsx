@@ -54,12 +54,12 @@ export default function Page() {
         setJobListing({
           ...data,
           qualifications:
-            data.qualifications.map((qualification, index) => ({
+            data.qualifications.map((qualification: string, index: number) => ({
               title: qualification,
               id: index,
             })) || [],
           requirements:
-            data.requirements.map((requirement, index) => ({
+            data.requirements.map((requirement: string, index: number) => ({
               title: requirement,
               id: index,
             })) || [],

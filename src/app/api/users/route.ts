@@ -1,12 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClientServer } from "@/lib/supabase/supabase";
 import { ObjectId } from "mongodb";
-import { deleteTable, insertTable, updateTable } from "@/lib/supabase/action";
-import { EducationalDetail, JobExperience, SocialLink } from "@/types/types";
+import {
+  deleteTable,
+  insertTable,
+  updateTable,
+  find,
+} from "@/lib/supabase/action";
+import {
+  EducationalDetail,
+  JobExperience,
+  SocialLink,
+  JWT,
+} from "@/types/types";
 import { deleteOne, findOne } from "@/lib/mongodb/action";
 import { ErrorResponse } from "@/types/classes";
 import jwt from "jsonwebtoken";
-import { find } from "@/lib/supabase/action";
 import {
   EducationalDetails,
   JobExperiences,
@@ -266,7 +275,7 @@ export async function PUT(request: NextRequest) {
   const { id: userId } = jwt.verify(
     tokenCookie.value,
     process.env.JWT_SECRET as string
-  ) as jwt.JwtPayload & { id: string };
+  ) as JWT;
 
   const validatedData = userSchema.safeParse({
     ...parseFormData(formData, [
@@ -299,12 +308,8 @@ export async function PUT(request: NextRequest) {
   const promises = [];
 
   if (isValidFile(validatedData.data.resume || null)) {
-    if (userData.resume_id !== null) {
-      promises.push(
-        getFileInfo(userData.resume_id).then((resume) =>
-          deleteFile(resume.publicId)
-        )
-      );
+    if (userData.resume_id) {
+      promises.push(deleteFile(userData.resume_id));
     }
 
     promises.push(
@@ -340,7 +345,7 @@ export async function PUT(request: NextRequest) {
       state: validatedUserData.state,
       country: validatedUserData.country,
     }),
-    ...(validatedUserData.educationalDetails?.map((educationalDetails) =>
+    ...(validatedUserData.educationalDetails || []).map((educationalDetails) =>
       insertTable(supabase, "educational_details", {
         user_id: userId,
         currently_pursuing: educationalDetails.currentlyPursuing,
@@ -352,14 +357,14 @@ export async function PUT(request: NextRequest) {
         institute: educationalDetails.institute,
         major: educationalDetails.major,
       })
-    ) || []),
-    ...(validatedUserData.socialLinks?.map((socialLink) =>
+    ),
+    ...(validatedUserData.socialLinks || []).map((socialLink) =>
       insertTable(supabase, "social_links", {
         user_id: userId,
         link: socialLink.value,
       })
-    ) || []),
-    ...(validatedUserData.jobExperiences?.map((jobExperience) =>
+    ),
+    ...(validatedUserData.jobExperiences || []).map((jobExperience) =>
       insertTable(supabase, "job_experiences", {
         user_id: userId,
         currently_working: jobExperience.currentlyWorking,
@@ -371,20 +376,18 @@ export async function PUT(request: NextRequest) {
         company: jobExperience.company,
         summary: jobExperience.summary,
       })
-    ) || []),
-    ...(validatedData.data.skillSet
-      ? validatedData.data.skillSet.split(",").map((skill) =>
-          insertTable(supabase, "skills", {
-            user_id: userId,
-            skill: skill.trim(),
-          })
-        )
-      : [])
+    ),
+    ...(validatedData.data.skillSet || "").split(",").map((skill) =>
+      insertTable(supabase, "skills", {
+        user_id: userId,
+        skill: skill.trim(),
+      })
+    )
   );
 
-  await Promise.all(promises);
+  const awaitedPromises = await Promise.all(promises);
 
-  if (promises.some((p) => p instanceof Error)) {
+  if (awaitedPromises.some((p) => p instanceof Error)) {
     return NextResponse.json(
       { error: "Error updating user data" },
       { status: 500 }

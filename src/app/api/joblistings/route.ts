@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
-  const parsedData = jobListingSchema.safeParse(await request.json()); // Parse without throwing an error unlike .parse()
+  const parsedData = jobListingSchema.safeParse(await request.json());
 
   if (!parsedData.success) {
     return NextResponse.json(
