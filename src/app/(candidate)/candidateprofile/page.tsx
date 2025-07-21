@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 
 export default function Profile() {
   const router = useRouter();
-  const hasTranscript = false;
+  const hasTranscript = true;
   const [jobListed, setJobListed] = useState<{
     createdByThem: JobListing[];
     createdByOthers: JobListing[];
@@ -218,8 +218,22 @@ export default function Profile() {
                         Evaluation Summary:
                       </span>
                       <p className="text-sm text-gray-700 leading-relaxed">
-                        Candidate scores moderately well based on the provided
-                        information...
+                        Based on the resume, the candidate possesses a strong
+                        academic background and relevant experience in the
+                        field. The transcript reveals a consistent high
+                        performance in related coursework, indicating a solid
+                        understanding of the core concepts. The sentimental
+                        analysis of the application materials suggests a
+                        positive and enthusiastic attitude towards the role and
+                        the company. Furthermore, the personality traits
+                        analysis highlights qualities such as conscientiousness,
+                        teamwork, and adaptability, which are highly desirable
+                        for this position. Communication style insights indicate
+                        clear and concise communication abilities, both written
+                        and verbal. While there are no specific interview
+                        insights available at this time, the combined
+                        information paints a picture of a well-qualified and
+                        promising candidate.
                       </p>
                     </div>
                   </div>
@@ -230,8 +244,21 @@ export default function Profile() {
                         Sentiment Analysis
                       </h3>
                       <p>
-                        The overall sentiment expressed in Zing and Glue's
-                        introduction is highly positive...
+                        The overall sentiment of the interview is positive and
+                        forward-looking, driven by Zing and Glue's enthusiasm
+                        for technology's potential impact and their ambition to
+                        contribute to world-changing companies. Their
+                        communication style is direct and assertive, reflecting
+                        confidence in their past accomplishments and future
+                        aspirations. The key takeaway is their passion for
+                        leveraging technology for social good, coupled with
+                        their understanding of the Silicon Valley ethos. This
+                        demonstrates a degree of self-awareness and the ability
+                        to align personal values with professional goals.
+                        Further exploration of their risk assessment and
+                        problem-solving approaches are recommended, but their
+                        demonstrated soft skills such as initiative,
+                        self-direction, and goal orientation are apparent.
                       </p>
                     </div>
 
@@ -239,30 +266,50 @@ export default function Profile() {
                       <h3 className="font-semibold text-gray-700">
                         Personality Traits
                       </h3>
-                      <ul className="list-disc ml-6 space-y-1">
-                        <li>
-                          <strong>Openness:</strong> High...
-                        </li>
-                        <li>
-                          <strong>Conscientiousness:</strong> Strong...
-                        </li>
-                        <li>
-                          <strong>Extroversion:</strong> Moderate...
-                        </li>
-                        <li>
-                          <strong>Agreeableness:</strong> High...
-                        </li>
-                        <li>
-                          <strong>Neuroticism:</strong> Low...
-                        </li>
-                      </ul>
+                      <p>
+                        Based on the limited transcript, Zing and Glue displays
+                        characteristics suggesting high openness,
+                        conscientiousness, and extroversion. Their co-founding
+                        of a social enterprise and their move to the Bay Area
+                        indicate a willingness to embrace new experiences and a
+                        proactive approach to seeking opportunities, which
+                        reflects openness. The successful establishment and
+                        self-sustainability of their company suggests
+                        conscientiousness, implying organization, diligence, and
+                        responsibility. Their confident self-introduction and
+                        clear articulation of their accomplishments point
+                        towards extroversion, indicating comfort in expressing
+                        themselves and engaging with others. It's difficult to
+                        assess agreeableness and neuroticism without further
+                        interaction; however, the focus on 'mission-inspired'
+                        work hints at a desire to align with collaborative and
+                        meaningful goals.
+                      </p>
                     </div>
 
                     <div>
                       <h3 className="font-semibold text-gray-700">
                         Communication Style
                       </h3>
-                      <p>Zing and Glue demonstrate an assertive style...</p>
+                      <p>
+                        Zing and Glue exhibits a primarily assertive and direct
+                        communication style. They confidently introduce
+                        themselves and their accomplishments, demonstrating
+                        self-assurance. The language used, such as 'I co-founded
+                        an award-winning social enterprise,' and 'Today, this
+                        company is self-sustaining,' suggests a directness and a
+                        clear articulation of their achievements. There's a
+                        noticeable absence of hedging or qualifiers, further
+                        reinforcing their assertive communication. Moreover,
+                        their statement about Silicon Valley valuing 'smart
+                        risk-taking, innovation, and ruthless efficiency'
+                        combined with their desire to join a 'mission-inspired'
+                        company indicates an ability to communicate their values
+                        and expectations clearly. The overall tone suggests
+                        confidence and a proactive communication style, aligning
+                        with someone who is clear about their goals and
+                        motivations.
+                      </p>
                     </div>
 
                     <div>
@@ -272,14 +319,44 @@ export default function Profile() {
 
                       {hasTranscript ? (
                         <div>
-                          <p>The intro highlights a proven track record...</p>
+                          <p>
+                            The overall sentiment of the interview is positive
+                            and forward-looking, driven by Zing and Glue's
+                            enthusiasm for technology's potential impact and
+                            their ambition to contribute to world-changing
+                            companies. Their communication style is direct and
+                            assertive, reflecting confidence in their past
+                            accomplishments and future aspirations. The key
+                            takeaway is their passion for leveraging technology
+                            for social good, coupled with their understanding of
+                            the Silicon Valley ethos. This demonstrates a degree
+                            of self-awareness and the ability to align personal
+                            values with professional goals. Further exploration
+                            of their risk assessment and problem-solving
+                            approaches are recommended, but their demonstrated
+                            soft skills such as initiative, self-direction, and
+                            goal orientation are apparent.
+                          </p>
                           <details className="bg-white border rounded p-3 mt-3">
                             <summary className="cursor-pointer font-medium text-red-600">
                               View Full Transcription
                             </summary>
                             <p className="mt-2 text-gray-700">
                               "Hi everyone, my name is Zing and Glue and I'm a
-                              26-year-old American..."
+                              26-year-old American from Atlanta, Georgia. I've
+                              recently arrived in the Bay Area after spending
+                              the past three and a half years in China. When
+                              2012, I co-founded an award-winning social
+                              enterprise to scratch. Using web, mobile and
+                              video, my team and I placed hundreds of blue
+                              collar workers and good jobs. Today, this company
+                              is self-sustaining. I saw with my own eyes the
+                              power that technology has to accelerate impact.
+                              This is why I'm now here. Because Silicon Valley
+                              values smart risk-taking, innovation and ruthless
+                              efficiency. I'm looking for a company that's
+                              mission-inspired and out to change the world.
+                              Because I am too."
                             </p>
                           </details>
                         </div>
