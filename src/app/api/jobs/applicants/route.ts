@@ -2,7 +2,7 @@ import { createClientServer } from "@/lib/supabase/supabase";
 import { NextRequest, NextResponse } from "next/server";
 import { JWT } from "@/types/types";
 import jwt from "jsonwebtoken";
-import { insertTable, findWithJoin, find } from "@/lib/supabase/action";
+import { insertTable, findWithJoin } from "@/lib/supabase/action";
 import auth from "@/lib/firebase/admin";
 import { JobApplicants, User } from "@/types/schema";
 

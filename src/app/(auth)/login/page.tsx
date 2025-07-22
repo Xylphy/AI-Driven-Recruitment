@@ -25,8 +25,8 @@ export default function LoginPage() {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
 
-    let email = formData.get("email")?.toString().trim();
-    let password = formData.get("password")?.toString().trim();
+    const email = formData.get("email")?.toString().trim();
+    const password = formData.get("password")?.toString().trim();
 
     if (!email) {
       alert("Please enter a valid email address");

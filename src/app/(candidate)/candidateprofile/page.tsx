@@ -4,33 +4,25 @@ import { FaFacebook, FaInstagram } from "react-icons/fa";
 import { MdEmail, MdPhone } from "react-icons/md";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { JobListing } from "@/types/schema";
 import useAuth from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 
 export default function Profile() {
   const router = useRouter();
   const hasTranscript = true;
-  const [jobListed, setJobListed] = useState<{
-    createdByThem: JobListing[];
-    createdByOthers: JobListing[];
-  }>({
-    createdByThem: [],
-    createdByOthers: [],
-  });
+  // const [jobListed, setJobListed] = useState<{
+  //   createdByThem: JobListing[];
+  //   createdByOthers: JobListing[];
+  // }>({
+  //   createdByThem: [],
+  //   createdByOthers: [],
+  // });
 
   const { information, isAuthLoading } = useAuth(true, true);
   const [isEvaluationLoading, setIsEvaluationLoading] = useState(true);
   const [progress, setProgress] = useState(0);
   const [starCount, setStarCount] = useState(0);
   const [selectedStatus, setSelectedStatus] = useState("");
-
-  useEffect(() => {
-    const savedStatus = sessionStorage.getItem("candidateStatus");
-    if (savedStatus) {
-      setSelectedStatus(savedStatus);
-    }
-  });
 
   useEffect(() => {
     const delay = Math.floor(Math.random() * 5000) + 5000;
@@ -244,7 +236,7 @@ export default function Profile() {
                         Sentiment Analysis
                       </h3>
                       <p>
-                        The overall sentiment of the interview is positive and
+                        {/* The overall sentiment of the interview is positive and
                         forward-looking, driven by Zing and Glue's enthusiasm
                         for technology's potential impact and their ambition to
                         contribute to world-changing companies. Their
@@ -258,7 +250,7 @@ export default function Profile() {
                         Further exploration of their risk assessment and
                         problem-solving approaches are recommended, but their
                         demonstrated soft skills such as initiative,
-                        self-direction, and goal orientation are apparent.
+                        self-direction, and goal orientation are apparent. */}
                       </p>
                     </div>
 
@@ -267,7 +259,7 @@ export default function Profile() {
                         Personality Traits
                       </h3>
                       <p>
-                        Based on the limited transcript, Zing and Glue displays
+                        {/* Based on the limited transcript, Zing and Glue displays
                         characteristics suggesting high openness,
                         conscientiousness, and extroversion. Their co-founding
                         of a social enterprise and their move to the Bay Area
@@ -283,7 +275,7 @@ export default function Profile() {
                         assess agreeableness and neuroticism without further
                         interaction; however, the focus on 'mission-inspired'
                         work hints at a desire to align with collaborative and
-                        meaningful goals.
+                        meaningful goals. */}
                       </p>
                     </div>
 
@@ -292,7 +284,7 @@ export default function Profile() {
                         Communication Style
                       </h3>
                       <p>
-                        Zing and Glue exhibits a primarily assertive and direct
+                        {/* Zing and Glue exhibits a primarily assertive and direct
                         communication style. They confidently introduce
                         themselves and their accomplishments, demonstrating
                         self-assurance. The language used, such as 'I co-founded
@@ -308,7 +300,7 @@ export default function Profile() {
                         and expectations clearly. The overall tone suggests
                         confidence and a proactive communication style, aligning
                         with someone who is clear about their goals and
-                        motivations.
+                        motivations. */}
                       </p>
                     </div>
 
@@ -320,7 +312,7 @@ export default function Profile() {
                       {hasTranscript ? (
                         <div>
                           <p>
-                            The overall sentiment of the interview is positive
+                            {/* The overall sentiment of the interview is positive
                             and forward-looking, driven by Zing and Glue's
                             enthusiasm for technology's potential impact and
                             their ambition to contribute to world-changing
@@ -335,14 +327,14 @@ export default function Profile() {
                             of their risk assessment and problem-solving
                             approaches are recommended, but their demonstrated
                             soft skills such as initiative, self-direction, and
-                            goal orientation are apparent.
+                            goal orientation are apparent. */}
                           </p>
                           <details className="bg-white border rounded p-3 mt-3">
                             <summary className="cursor-pointer font-medium text-red-600">
                               View Full Transcription
                             </summary>
                             <p className="mt-2 text-gray-700">
-                              "Hi everyone, my name is Zing and Glue and I'm a
+                              {/* "Hi everyone, my name is Zing and Glue and I'm a
                               26-year-old American from Atlanta, Georgia. I've
                               recently arrived in the Bay Area after spending
                               the past three and a half years in China. When
@@ -356,7 +348,7 @@ export default function Profile() {
                               values smart risk-taking, innovation and ruthless
                               efficiency. I'm looking for a company that's
                               mission-inspired and out to change the world.
-                              Because I am too."
+                              Because I am too." */}
                             </p>
                           </details>
                         </div>

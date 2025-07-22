@@ -3,34 +3,23 @@
 import { FaFacebook, FaInstagram } from "react-icons/fa";
 import { MdEmail, MdPhone } from "react-icons/md";
 import Image from "next/image";
-import { useEffect, useState } from "react";
-import { JobListing } from "@/types/schema";
+import { useState } from "react";
 import useAuth from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 
-export default function Profile({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+// export default function Page({ params }: { params: Promise<{ id: string }> }) {
+export default function Page() {
   const router = useRouter();
 
-  const [jobListed, setJobListed] = useState<{
-    createdByThem: JobListing[];
-    createdByOthers: JobListing[];
-  }>({
-    createdByThem: [],
-    createdByOthers: [],
-  });
+  // const [jobListed, setJobListed] = useState<{
+  //   createdByThem: JobListing[];
+  //   createdByOthers: JobListing[];
+  // }>({
+  //   createdByThem: [],
+  //   createdByOthers: [],
+  // });
 
   const [selectedStatus, setSelectedStatus] = useState("");
-
-  useEffect(() => {
-    const savedStatus = sessionStorage.getItem("candidateStatus");
-    if (savedStatus) {
-      setSelectedStatus(savedStatus);
-    }
-  });
 
   const { information, isAuthLoading } = useAuth(true, true);
 
@@ -71,7 +60,6 @@ export default function Profile({
                 <span>
                   {/* {information.user?.first_name || "No"}{" "}
                   {information.user?.last_name || "Name"} */}
-                  Roqi Todo
                 </span>
               )}
             </h2>
@@ -183,7 +171,7 @@ export default function Profile({
                     Sentiment Analysis
                   </h3>
                   <p>
-                    The overall sentiment expressed in Zing and Glue's
+                    The overall sentiment expressed in Zing and Glue`&apos`s
                     introduction is highly positive...
                   </p>
                 </div>
@@ -230,8 +218,8 @@ export default function Profile({
                     View Full Transcription
                   </summary>
                   <p className="mt-2 text-gray-700">
-                    "Hi everyone, my name is Zing and Glue and I'm a 26-year-old
-                    American..."
+                    `&quot`Hi everyone, my name is Zing and Glue and I`&apos`m a
+                    26-year-old American...`&quot`
                   </p>
                 </details>
               </div>

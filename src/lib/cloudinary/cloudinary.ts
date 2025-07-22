@@ -68,7 +68,7 @@ export async function getFileInfo(publicId: string) {
         width: result.width,
         height: result.height,
       };
-    } catch (error) {
+    } catch {
       continue;
     }
   }

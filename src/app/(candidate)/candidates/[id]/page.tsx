@@ -17,7 +17,9 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   );
   const [candidatesLoading, isCandidatesLoading] = useState(true);
 
-  const [jobDetails, setJobDetails] = useState<Omit<JobListing, "created_by">>({
+  const [jobDetails /* , setJobDetails */] = useState<
+    Omit<JobListing, "created_by">
+  >({
     id: "",
     title: "",
     location: "",
@@ -39,7 +41,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
         router.push("/profile");
       }
     }
-  }, [isAuthLoading]);
+  }, [isAuthLoading, router]);
 
   // const candidates = [
   //   {
