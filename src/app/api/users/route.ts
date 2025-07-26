@@ -76,20 +76,29 @@ export async function POST(request: NextRequest) {
       job_title: data.jobTitle,
     } as User);
 
-    if (error) {
+    if (error || !insertedData || !insertedData[0] || !insertedData[0].id) {
       console.error("Error inserting user into Supabase:", error);
-    } else {
-      console.log("User inserted into Supabase:", insertedData);
-    }
-
-    if (!insertedData || !insertedData[0] || !insertedData[0].id) {
       return NextResponse.json(
         { error: "Failed to insert user into Supabase" },
         { status: 500 }
       );
     }
+
+    const resumeParserURL = new URL("http://localhost:8000/parseresume/");
+    resumeParserURL.searchParams.set("public_id", data.public_id);
+    resumeParserURL.searchParams.set(
+      "applicant_id",
+      insertedData[0].id.toString()
+    );
+
+    fetch(resumeParserURL.toString(), {
+      method: "POST",
+    }).catch((err) => {
+      console.error("Error calling resume parser:", err);
+    });
+
     const userId = insertedData[0].id;
-    const skills = data.skillSet ? data.skillSet.split(",") : []; // Split skills by comma
+    const skills = data.skillSet?.split(",") || [];
 
     const results = await Promise.all([
       ...data.educationalDetails.map((detail: Omit<EducationalDetail, "id">) =>
@@ -312,13 +321,19 @@ export async function PUT(request: NextRequest) {
       promises.push(deleteFile(userData.resume_id));
     }
 
-    promises.push(
-      uploadFile(validatedData.data.resume!, "resumes").then((resumeId) =>
-        updateTable(supabase, "users", "id", userId, {
-          resume_id: resumeId,
-        })
-      )
-    );
+    uploadFile(validatedData.data.resume!, "resumes").then((resumeId) => {
+      updateTable(supabase, "users", "id", userId, {
+        resume_id: resumeId,
+      });
+
+      const link = new URL("http://127.0.0.1:8000/parseresume/");
+      link.searchParams.set("public_id", resumeId);
+      link.searchParams.set("applicant_id", userId.toString());
+
+      fetch(link.toString(), {
+        method: "POST",
+      });
+    });
   }
 
   await Promise.all([
