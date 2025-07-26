@@ -27,6 +27,9 @@ export default function EditProfilePage() {
     EducationalDetail[]
   >([]);
   const [jobExperiences, setJobExperience] = useState<JobExperience[]>([]);
+  const [transcriptFileName, setTranscriptFileName] = useState<
+    string | undefined
+  >();
 
   const [userInfo, setUserInfo] = useState<User>({
     // Initialize with default values
@@ -217,29 +220,37 @@ export default function EditProfilePage() {
     }
   };
 
+  const handleTranscriptSelect = (file: File | null) => {
+    if (file) {
+      setTranscriptFileName(file.name);
+    } else {
+      setTranscriptFileName(undefined);
+    }
+  };
+
   if (isAuthLoading) {
     return <div>Loading...</div>;
   }
 
   return (
-    <UserForm
-      userInfo={{ user: userInfo, setUserInfo }}
-      socialLinksInfo={{ socialLinks, setSocialLinks }}
-      educationalDetailsInfo={{
-        educationalDetails,
-        setEducationalDetails,
-      }}
-      jobExperiencesInfo={{
-        jobExperiences,
-        setJobExperience,
-      }}
-      isSubmitting={isSubmitting}
-      handleSubmit={handleSubmit}
-      handleFileSelect={handleFileSelect}
-      response={response}
-      title="Update Profile"
-      description="Update"
-      fileName={information.user?.resume_id || "No file selected"}
-    />
+    <div className="flex justify-center">
+      <div className="w-full max-w-4xl px-4 py-2">
+        <UserForm
+          userInfo={{ user: userInfo, setUserInfo }}
+          socialLinksInfo={{ socialLinks, setSocialLinks }}
+          educationalDetailsInfo={{ educationalDetails, setEducationalDetails }}
+          jobExperiencesInfo={{ jobExperiences, setJobExperience }}
+          isSubmitting={isSubmitting}
+          handleSubmit={handleSubmit}
+          handleFileSelect={handleFileSelect}
+          response={response}
+          title="Update Profile"
+          description="Update your resume and personal information"
+          fileName={information.user?.resume_id || "No file selected"}
+          handleTranscriptSelect={handleTranscriptSelect}
+          transcriptFileName={transcriptFileName}
+        />
+      </div>
+    </div>
   );
 }
