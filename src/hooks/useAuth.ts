@@ -48,7 +48,6 @@ export default function useAuth(
     const checkAuth = async () => {
       if (!(await checkAuthStatus())) {
         auth.signOut();
-        router.push("/login");
         return;
       } else {
         setIsAuthenticated(true);

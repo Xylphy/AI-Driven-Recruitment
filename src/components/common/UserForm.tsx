@@ -29,6 +29,7 @@ export function UserForm({
   title,
   fileName,
   handleTranscriptSelect,
+  transcriptFileName,
 }: {
   socialLinksInfo: {
     socialLinks: SocialLink[];
@@ -407,7 +408,10 @@ export function UserForm({
             Upload Interview Video
           </label>
           {handleTranscriptSelect && (
-            <FileUpload onFileSelect={handleTranscriptSelect} />
+            <FileUpload
+              onFileSelect={handleTranscriptSelect}
+              defaultFileName={transcriptFileName}
+            />
           )}
         </div>
         <button

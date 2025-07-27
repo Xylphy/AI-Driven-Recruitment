@@ -44,7 +44,8 @@ const publicPathToken = [
 const publicPathCsrf = [
   "/api/auth/status",
   "/api/auth/refresh",
-  "/api/auth/jwt", "/api/joblistings",
+  "/api/auth/jwt",
+  "/api/joblistings",
   "/api/csrf",
   "/api/jobs",
 ];
@@ -131,7 +132,6 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  // return await updateSession(request); // if you want to use supabase session but since we use firebase, we don't need this
   return NextResponse.next();
 }
 

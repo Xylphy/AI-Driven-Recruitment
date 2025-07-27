@@ -38,8 +38,44 @@ export const userSchema = z.object({
   socialLinks: z.array(socialLinkSchema).optional(),
   jobExperiences: z.array(jobExperiences).optional(),
   skillSet: z.string().optional(),
-  resume: z.instanceof(File).optional(),
+  resume: z
+    .instanceof(File)
+    .optional()
+    .refine(
+      (file) => !file || file.size <= 10 * 1024 * 1024,
+      "Resume file must be smaller than 10MB"
+    )
+    .refine(
+      (file) =>
+        !file ||
+        [
+          "application/pdf",
+          "application/msword",
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          "application/octet-stream",
+        ].includes(file.type),
+      "Resume must be a PDF or Word document"
+    ),
   state: z.string().optional(),
+  video: z
+    .instanceof(File)
+    .optional()
+    .refine(
+      (file) => !file || file.size <= 90 * 1024 * 1024,
+      "Video file must be smaller than 90MB"
+    )
+    .refine(
+      (file) =>
+        !file ||
+        [
+          "video/mp4",
+          "video/webm",
+          "video/ogg",
+          "video/x-msvideo",
+          "video/quicktime",
+        ].includes(file.type),
+      "Video must be in MP4, WebM, OGG, AVI, or MOV format"
+    ),
 });
 
 // Schema for after the user clicks the verification link

@@ -29,7 +29,7 @@ import {
   uploadFile,
 } from "@/lib/cloudinary/cloudinary";
 import { userSchema, verificationSchema } from "@/lib/schemas";
-import { isValidFile, parseFormData } from "@/lib/library";
+import { parseFormData } from "@/lib/library";
 
 // This function handles the POST request to set the password
 export async function POST(request: NextRequest) {
@@ -191,7 +191,7 @@ export async function GET(request: NextRequest) {
   const decoded = jwt.verify(
     tokenCookie.value,
     process.env.JWT_SECRET as string
-  ) as jwt.JwtPayload;
+  ) as JWT;
   const supabase = await createClientServer(1, true);
 
   const [userData, skillsData, socialLinksData, educationData, experienceData] =
@@ -245,6 +245,11 @@ export async function GET(request: NextRequest) {
               (await getFileInfo(userData.data.resume_id)).url.split(
                 "resumes/"
               )[1],
+            transcript_id:
+              userData.data?.transcript_id &&
+              (await getFileInfo(userData.data.transcript_id)).url.split(
+                "transcripts/"
+              )[1],
           }
         : null,
       admin: decoded.isAdmin,
@@ -292,7 +297,14 @@ export async function PUT(request: NextRequest) {
       "jobExperiences",
       "socialLinks",
     ]),
-    resume: formData.get("resume") as File | null,
+    ...(formData.get("resume") &&
+      (formData.get("resume") as File).size > 0 && {
+        resume: formData.get("resume") as File,
+      }),
+    ...(formData.get("video") &&
+      (formData.get("video") as File).size > 0 && {
+        video: formData.get("video") as File,
+      }),
   });
 
   if (!validatedData.success) {
@@ -316,24 +328,60 @@ export async function PUT(request: NextRequest) {
 
   const promises = [];
 
-  if (isValidFile(validatedData.data.resume || null)) {
-    if (userData.resume_id) {
-      promises.push(deleteFile(userData.resume_id));
+  if (validatedData.data.resume) {
+    promises.push(
+      (async () => {
+        if (userData.resume_id) {
+          await deleteFile(userData.resume_id);
+        }
+
+        return await uploadFile(validatedData.data.resume!, "resumes").then(
+          (resumeId) => {
+            const link = new URL("http://localhost:8000/parseresume/");
+            link.searchParams.set("public_id", resumeId);
+            link.searchParams.set("applicant_id", userId.toString());
+
+            fetch(link.toString(), {
+              method: "POST",
+            });
+
+            return updateTable(supabase, "users", "id", userId, {
+              resume_id: resumeId,
+            });
+          }
+        );
+      })()
+    );
+  }
+
+  if (validatedData.data.video) {
+    if (userData.transcript_id) {
+      promises.push(deleteFile(userData.transcript_id));
     }
 
-    uploadFile(validatedData.data.resume!, "resumes").then((resumeId) => {
-      updateTable(supabase, "users", "id", userId, {
-        resume_id: resumeId,
-      });
+    promises.push(
+      (async () => {
+        if (userData.transcript_id) {
+          await deleteFile(userData.transcript_id);
+        }
 
-      const link = new URL("http://127.0.0.1:8000/parseresume/");
-      link.searchParams.set("public_id", resumeId);
-      link.searchParams.set("applicant_id", userId.toString());
+        return await uploadFile(validatedData.data.video!, "transcripts").then(
+          (transcriptId) => {
+            // const link = new URL("http://localhost:8000/transcribe/");
+            // link.searchParams.set("public_id", transcriptId);
+            // link.searchParams.set("applicant_id", userId.toString());
 
-      fetch(link.toString(), {
-        method: "POST",
-      });
-    });
+            // fetch(link.toString(), {
+            //   method: "POST",
+            // });
+            //
+            return updateTable(supabase, "users", "id", userId, {
+              transcript_id: transcriptId,
+            });
+          }
+        );
+      })()
+    );
   }
 
   await Promise.all([
@@ -345,7 +393,7 @@ export async function PUT(request: NextRequest) {
 
   const validatedUserData = validatedData.data;
 
-  // Warning: do not use ...jobExperience (includes all data) since supabase doesn't insert if column doesn't exist
+  // Warning: do not use ...object (include all data) since supabase doesn't insert if column doesn't exist
   promises.push(
     updateTable(supabase, "users", "id", userId, {
       first_name: validatedUserData.firstName,
@@ -400,17 +448,33 @@ export async function PUT(request: NextRequest) {
     )
   );
 
-  const awaitedPromises = await Promise.all(promises);
+  try {
+    const awaitedPromises = await Promise.all(promises);
 
-  if (awaitedPromises.some((p) => p instanceof Error)) {
+    const hasErrors = awaitedPromises.some(
+      (result) =>
+        result &&
+        typeof result === "object" &&
+        "error" in result &&
+        result.error
+    );
+
+    if (hasErrors) {
+      return NextResponse.json(
+        { error: "Error updating user data" },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json(
-      { error: "Error updating user data" },
+      { message: "User data updated successfully" },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Error in PUT /api/users:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
-
-  return NextResponse.json(
-    { message: "User data updated successfully" },
-    { status: 200 }
-  );
 }

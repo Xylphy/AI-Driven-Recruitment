@@ -1,6 +1,7 @@
 import { Title } from "./types";
 
 // -------------------------------- Database Schema -------------------------------- //
+// For Database Schema, we use snake_case for field names
 
 interface DateRange {
   start_month: string;
@@ -31,6 +32,9 @@ export interface User extends IdentifiableItem {
   state: string | null;
   country: string | null;
   job_title: string | null;
+  parsed_resume_id: string | null;
+  transcript_id: string | null;
+  transcribed_id: string | null;
 }
 
 export interface EducationalDetails

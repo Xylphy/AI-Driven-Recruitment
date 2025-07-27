@@ -7,7 +7,7 @@ import useAuth from "@/hooks/useAuth";
 const profileImageUrl = "/default-avatar.png";
 
 export default function Navbar() {
-  const { information } = useAuth(undefined, true);
+  const { information } = useAuth();
 
   return (
     <nav className="bg-white text-black shadow-md">

@@ -1,4 +1,6 @@
+// Types not directly related to the database schema but used throughout the application
 // --------------- Types for common attributes | meant for extends --------------- //
+
 export interface IdentifiableItem {
   id: number;
 }
@@ -29,7 +31,8 @@ export interface User {
   country: string;
   jobTitle: string;
   skillSet: string;
-  public_id?: string; // Resume ID
+  publicId?: string; // Resume ID
+  transcriptId?: string;
 }
 
 export interface RegisterState extends User {

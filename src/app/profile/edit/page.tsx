@@ -27,12 +27,8 @@ export default function EditProfilePage() {
     EducationalDetail[]
   >([]);
   const [jobExperiences, setJobExperience] = useState<JobExperience[]>([]);
-  const [transcriptFileName, setTranscriptFileName] = useState<
-    string | undefined
-  >();
-
+  const [transcriptFile, setTranscriptFile] = useState<File | null>(null);
   const [userInfo, setUserInfo] = useState<User>({
-    // Initialize with default values
     prefix: "",
     firstName: "",
     lastName: "",
@@ -45,11 +41,10 @@ export default function EditProfilePage() {
     jobTitle: "",
     email: "",
     mobileNumber: "",
-    public_id: "",
+    publicId: "",
     skillSet: "",
   });
-
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null); // resume
   const [response, setResponse] = useState<{
     success?: boolean;
     message?: string;
@@ -108,7 +103,7 @@ export default function EditProfilePage() {
       jobTitle: information.user?.job_title || "",
       email: auth.currentUser?.email || "",
       mobileNumber: information.user?.phone_number || "",
-      public_id: information.user?.resume_id || "",
+      publicId: information.user?.resume_id || "",
       skillSet: information.skills.join(", ") || "",
     });
   }, [isAuthLoading]);
@@ -126,14 +121,12 @@ export default function EditProfilePage() {
     if (!(await checkAuthStatus())) {
       alert("Authentication failed. Please log in again.");
       auth.signOut();
-      router.push("/login");
       return;
     }
 
     setIsSubmitting(true);
 
     const formData = new FormData(formElement);
-
     const keysToDelete = [];
 
     for (const [key, value] of formData.entries()) {
@@ -179,6 +172,9 @@ export default function EditProfilePage() {
     if (selectedFile) {
       formData.set("resume", selectedFile);
     }
+    if (transcriptFile) {
+      formData.set("video", transcriptFile);
+    }
 
     try {
       fetch("/api/users", {
@@ -205,8 +201,7 @@ export default function EditProfilePage() {
             });
           }
         })
-        .catch((error) => {
-          console.error("Error updating profile:", error);
+        .catch(() => {
           setResponse({
             success: false,
             message: "Failed to update profile.",
@@ -221,11 +216,7 @@ export default function EditProfilePage() {
   };
 
   const handleTranscriptSelect = (file: File | null) => {
-    if (file) {
-      setTranscriptFileName(file.name);
-    } else {
-      setTranscriptFileName(undefined);
-    }
+    setTranscriptFile(file);
   };
 
   if (isAuthLoading) {
@@ -248,7 +239,7 @@ export default function EditProfilePage() {
           description="Update your resume and personal information"
           fileName={information.user?.resume_id || "No file selected"}
           handleTranscriptSelect={handleTranscriptSelect}
-          transcriptFileName={transcriptFileName}
+          transcriptFileName={information.user?.transcript_id || "No file selected"}
         />
       </div>
     </div>
