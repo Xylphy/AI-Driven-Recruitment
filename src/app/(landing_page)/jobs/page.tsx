@@ -5,10 +5,13 @@ import { checkAuthStatus, getCsrfToken } from "@/lib/library";
 import { JobListing } from "@/types/schema";
 import useAuth from "@/hooks/useAuth";
 
+interface Jobs extends JobListing {
+  applied: boolean;
+}
+
 export default function Careers() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [jobs, setJobs] = useState<(JobListing & { applied: boolean })[]>();
-
+  const [jobs, setJobs] = useState<Jobs[]>([]);
   const { information } = useAuth(undefined, isAuthenticated);
 
   useEffect(() => {
@@ -32,7 +35,7 @@ export default function Careers() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-CSRF-Token": (await getCsrfToken()) || "",
+        "X-CSRF-Token": (await getCsrfToken()) ?? "",
       },
       body: JSON.stringify({ jobId }),
     })

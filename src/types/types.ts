@@ -1,6 +1,8 @@
 // Types not directly related to the database schema but used throughout the application
 // --------------- Types for common attributes | meant for extends --------------- //
 
+import { JwtPayload } from "jsonwebtoken";
+
 export interface IdentifiableItem {
   id: number;
 }
@@ -75,7 +77,7 @@ export interface DbIdentification {
   db_id: string;
 }
 
-export interface JWT {
+export interface JWT extends JwtPayload {
   id: string;
   isAdmin: boolean;
 }

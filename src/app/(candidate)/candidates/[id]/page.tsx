@@ -35,6 +35,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     }
 
     if (!information.admin) {
+      alert("You are not authorized to view this page.");
       if (window.history.length > 1) {
         router.back();
       } else {

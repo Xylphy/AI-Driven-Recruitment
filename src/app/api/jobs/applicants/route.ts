@@ -1,23 +1,15 @@
 import { createClientServer } from "@/lib/supabase/supabase";
 import { NextRequest, NextResponse } from "next/server";
-import { JWT } from "@/types/types";
+import { JobListing, JWT } from "@/types/types";
 import jwt from "jsonwebtoken";
-import { insertTable, findWithJoin } from "@/lib/supabase/action";
+import { insertTable, findWithJoin, find } from "@/lib/supabase/action";
 import auth from "@/lib/firebase/admin";
 import { JobApplicants, User } from "@/types/schema";
 
 // API for applying for a job
 export async function POST(request: NextRequest) {
-  const token = request.cookies.get("token")?.value;
-  if (!token) {
-    return NextResponse.json(
-      { error: "Authentication required" },
-      { status: 401 }
-    );
-  }
-
   const { id: userId, isAdmin } = jwt.verify(
-    token,
+    request.cookies.get("token")!.value,
     process.env.JWT_SECRET!
   ) as JWT;
 
@@ -29,9 +21,39 @@ export async function POST(request: NextRequest) {
   }
 
   const { jobId } = await request.json();
+  if (!jobId) {
+    return NextResponse.json({ error: "Job ID is required" }, { status: 400 });
+  }
 
-  const { error } = await insertTable(
-    await createClientServer(1, true),
+  const supabaseClient = await createClientServer(1, true);
+
+  const { data: existingApplicant, error: existingError } =
+    await find<JobApplicants>(
+      supabaseClient,
+      "job_applicants",
+      `user_id.eq.${userId},joblisting_id.eq.${jobId}`,
+      undefined,
+      "*"
+    )
+      .many()
+      .execute();
+
+  if (existingError) {
+    return NextResponse.json(
+      { error: "Failed to check existing applications" },
+      { status: 500 }
+    );
+  }
+
+  if (existingApplicant && existingApplicant.length > 0) {
+    return NextResponse.json(
+      { error: "You have already applied for this job" },
+      { status: 409 }
+    );
+  }
+
+  const { data: applicantsID, error } = await insertTable(
+    supabaseClient,
     "job_applicants",
     {
       user_id: userId,
@@ -46,6 +68,18 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const scoreAPI = new URL("http://localhost:8000/score/");
+  scoreAPI.searchParams.set("job_id", jobId);
+  scoreAPI.searchParams.set("user_id", userId);
+  scoreAPI.searchParams.set("applicant_id", applicantsID[0].id);
+
+  fetch(scoreAPI.toString(), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
   return NextResponse.json({
     message: "Application submitted successfully",
   });
@@ -58,15 +92,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Job ID is required" }, { status: 400 });
   }
 
-  const token = request.cookies.get("token")?.value;
-  if (!token) {
-    return NextResponse.json(
-      { error: "Authentication required" },
-      { status: 401 }
-    );
-  }
-
-  const { isAdmin } = jwt.verify(token, process.env.JWT_SECRET!) as JWT;
+  const { isAdmin } = jwt.verify(
+    request.cookies.get("token")!.value,
+    process.env.JWT_SECRET!
+  ) as JWT;
 
   if (!isAdmin) {
     return NextResponse.json(

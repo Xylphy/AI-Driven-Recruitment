@@ -23,10 +23,6 @@ const publicPathToken = [
     acceptedMethods: ["GET"],
   },
   {
-    path: "/api/auth/status",
-    acceptedMethods: ["GET"],
-  },
-  {
     path: "/api/auth/refresh",
     acceptedMethods: ["GET"],
   },
@@ -64,11 +60,9 @@ export async function middleware(request: NextRequest) {
       process.env.NODE_ENV === "development"
         ? ["http://localhost:3000", "null"]
         : [process.env.NEXT_PUBLIC_SITE_URL].filter(Boolean);
-
     const isSameOrigin = !origin || origin === process.env.NEXT_PUBLIC_SITE_URL;
-    const isAllowedOrigin = origin && allowedOrigins.includes(origin);
 
-    if (!isSameOrigin && !isAllowedOrigin) {
+    if (!isSameOrigin && !(origin && allowedOrigins.includes(origin))) {
       return NextResponse.json(
         { error: "Origin not allowed" },
         { status: 403 }
