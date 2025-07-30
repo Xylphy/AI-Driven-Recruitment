@@ -8,25 +8,124 @@ import useAuth from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { use } from "react";
 
+interface WorkExperience {
+  company: string;
+  start_date?: Date;
+  title: string;
+  end_date?: Date;
+}
+
+interface EducationalBackground {
+  degree: string;
+  institution: string;
+  start_date: Date;
+}
+
+interface Project {
+  description: string;
+  name: string;
+  start_date: Date;
+}
+
+interface Resume {
+  city: string;
+  contact_number: string;
+  educational_background: EducationalBackground[];
+  email: string;
+  hard_skills: string[];
+  name: string;
+  projects: Project[];
+  soft_skills: string[];
+  work_experience: WorkExperience[];
+}
+
+interface ScoreData {
+  predictive_success: number;
+  raw_score: number;
+  reason: string;
+}
+
+interface Score {
+  score_data: ScoreData;
+}
+
+interface TranscriptionInfo {
+  transcription: string;
+  communication_style_insights: string;
+  interview_insights: string;
+  personality_traits: string;
+  sentimental_analysis: string;
+}
+
+interface Transcription {
+  transcription: TranscriptionInfo;
+}
+
+interface CandidateProfile {
+  resume: Resume | null;
+  score: Score | null;
+  transcribed: Transcription | null;
+  firstName: string;
+  lastName: string;
+}
+
 export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
-  const { id: candidateId } = use(params);
+  const { id: candidateId } = use(params); // userId
   const [selectedStatus, setSelectedStatus] = useState("");
   const { information, isAuthLoading } = useAuth(true, true);
+  const [candidateProfile, setCandidateProfile] =
+    useState<CandidateProfile | null>(null);
 
   useEffect(() => {
     if (isAuthLoading) {
       return;
     }
 
-    fetch("/api/users/candidateProfile?userId=" + candidateId, {
+    if (!information.admin) {
+      alert("You are not authorized to view this page.");
+      if (window.history.length > 0) {
+        router.back();
+      } else {
+        router.push("/profile");
+      }
+    }
+
+    const candidateAPI = new URL(
+      "/api/users/candidateProfile",
+      window.location.origin
+    );
+
+    candidateAPI.searchParams.set("userId", candidateId);
+    candidateAPI.searchParams.set("score", "true");
+    candidateAPI.searchParams.set("transcribed", "true");
+    candidateAPI.searchParams.set("resume", "true");
+
+    fetch(candidateAPI.toString(), {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
       },
-    }).then();
-
+    })
+      .then((res) => {
+        if (res.ok) {
+          return res.json();
+        } else {
+          throw new Error("Failed to fetch candidate profile");
+        }
+      })
+      .then((data) => {
+        setCandidateProfile({
+          resume: data.parsedResume,
+          score: data.score,
+          transcribed: data.transcribed,
+          firstName: data.user.firstName,
+          lastName: data.user.lastName,
+        });
+      });
   }, [candidateId, isAuthLoading]);
+
+  console.log("Candidate Profile Data:", candidateProfile);
 
   return (
     <main className="bg-white h-[75vh] overflow-hidden">
@@ -63,8 +162,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                 </div>
               ) : (
                 <span>
-                  {/* {information.user?.first_name || "No"}{" "}
-                  {information.user?.last_name || "Name"} */}
+                  {candidateProfile?.firstName} {candidateProfile?.lastName}
                 </span>
               )}
             </h2>
@@ -75,32 +173,29 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
               <FaInstagram className="text-red-600" />
               <MdPhone className="text-red-600" />
             </div>
-            {information.admin && (
-              <div className="mt-4">
-                <label
-                  htmlFor="status"
-                  className="block text-sm text-center font-semibold text-gray-700 mb-1"
-                >
-                  Candidate Status
-                </label>
-                <select
-                  id="status"
-                  value={selectedStatus}
-                  onChange={(e) => {
-                    const newStatus = e.target.value;
-                    setSelectedStatus(newStatus);
-                    sessionStorage.setItem("candidateStatus", newStatus);
-                  }}
-                  className="bg-red-600 text-white font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-600 hover:border-red-600 focus:outline-none"
-                >
-                  <option value="">Select Status</option>
-                  <option value="initial">Initial Interview</option>
-                  <option value="for-interview">For Interview</option>
-                  <option value="hired">Hired</option>
-                  <option value="rejected">Rejected</option>
-                </select>
-              </div>
-            )}
+            <div className="mt-4">
+              <label
+                htmlFor="status"
+                className="block text-sm text-center font-semibold text-gray-700 mb-1"
+              >
+                Candidate Status
+              </label>
+              <select
+                id="status"
+                value={selectedStatus}
+                onChange={(e) => {
+                  const newStatus = e.target.value;
+                  setSelectedStatus(newStatus);
+                }}
+                className="bg-red-600 text-white font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-600 hover:border-red-600 focus:outline-none"
+              >
+                <option value="">Select Status</option>
+                <option value="initial">Initial Interview</option>
+                <option value="for-interview">For Interview</option>
+                <option value="hired">Hired</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </div>
 
             <div className="flex flex-col gap-4 my-4">
               <button
@@ -129,7 +224,10 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                       <svg
                         key={i}
                         className={`w-5 h-5 ${
-                          i < Math.round(3.75)
+                          i <
+                          Math.round(
+                            candidateProfile?.score?.score_data.raw_score || 0
+                          )
                             ? "text-yellow-400"
                             : "text-gray-300"
                         }`}
@@ -139,7 +237,9 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.184 3.642a1 1 0 00.95.69h3.813c.969 0 1.371 1.24.588 1.81l-3.087 2.243a1 1 0 00-.364 1.118l1.184 3.642c.3.921-.755 1.688-1.54 1.118L10 13.347l-3.087 2.243c-.785.57-1.84-.197-1.54-1.118l1.184-3.642a1 1 0 00-.364-1.118L3.106 9.07c-.783-.57-.38-1.81.588-1.81h3.813a1 1 0 00.95-.69l1.184-3.642z" />
                       </svg>
                     ))}
-                    <span className="text-sm text-gray-600">(3.75/5)</span>
+                    <span className="text-sm text-gray-600">
+                      ({candidateProfile?.score?.score_data?.raw_score || 0}/5)
+                    </span>
                   </div>
                 </div>
 
@@ -150,11 +250,18 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                   <div className="w-full bg-gray-200 h-3 rounded">
                     <div
                       className="bg-green-500 h-3 rounded"
-                      style={{ width: "68%" }}
+                      style={{
+                        width: `${
+                          candidateProfile?.score?.score_data
+                            ?.predictive_success ?? 0
+                        }%`,
+                      }}
                     ></div>
                   </div>
                   <span className="text-xs text-gray-600 mt-1 block">
-                    68% likelihood of success
+                    {candidateProfile?.score?.score_data.predictive_success ||
+                      0}
+                    % likelihood of success
                   </span>
                 </div>
 
@@ -163,8 +270,8 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                     Evaluation Summary:
                   </span>
                   <p className="text-sm text-gray-700 leading-relaxed">
-                    Candidate scores moderately well based on the provided
-                    information...
+                    {candidateProfile?.score?.score_data.reason ||
+                      "No insights available."}
                   </p>
                 </div>
               </div>
@@ -176,46 +283,30 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                     Sentiment Analysis
                   </h3>
                   <p>
-                    The overall sentiment expressed in Zing and Glue's
-                    introduction is highly positive...
+                    {candidateProfile?.transcribed?.transcription
+                      ?.sentimental_analysis ||
+                      "No sentiment analysis available."}
                   </p>
                 </div>
-
-                <div>
-                  <h3 className="font-semibold text-gray-700">
-                    Personality Traits
-                  </h3>
-                  <ul className="list-disc ml-6 space-y-1">
-                    <li>
-                      <strong>Openness:</strong> High...
-                    </li>
-                    <li>
-                      <strong>Conscientiousness:</strong> Strong...
-                    </li>
-                    <li>
-                      <strong>Extroversion:</strong> Moderate...
-                    </li>
-                    <li>
-                      <strong>Agreeableness:</strong> High...
-                    </li>
-                    <li>
-                      <strong>Neuroticism:</strong> Low...
-                    </li>
-                  </ul>
-                </div>
-
                 <div>
                   <h3 className="font-semibold text-gray-700">
                     Communication Style
                   </h3>
-                  <p>Zing and Glue demonstrate an assertive style...</p>
+                  <p>
+                    {candidateProfile?.transcribed?.transcription
+                      .communication_style_insights ||
+                      "No communication style insights available."}
+                  </p>
                 </div>
 
                 <div>
                   <h3 className="font-semibold text-gray-700">
                     Interview Insights
                   </h3>
-                  <p>The intro highlights a proven track record...</p>
+                  <p>
+                    {candidateProfile?.transcribed?.transcription
+                      .interview_insights || "No interview insights available."}
+                  </p>
                 </div>
 
                 <details className="bg-white border rounded p-3">
@@ -223,8 +314,8 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                     View Full Transcription
                   </summary>
                   <p className="mt-2 text-gray-700">
-                    `&quot`Hi everyone, my name is Zing and Glue and I`&apos`m a
-                    26-year-old American...`&quot`
+                    {candidateProfile?.transcribed?.transcription
+                      .transcription || "No transcription available."}
                   </p>
                 </details>
               </div>

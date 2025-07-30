@@ -176,8 +176,8 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// Fetches information that calls the API
 export async function GET(request: NextRequest) {
-  const tokenCookie = request.cookies.get("token");
   const doUser = request.nextUrl.searchParams.get("user") === "true";
   const doSkills = request.nextUrl.searchParams.get("skills") === "true";
   const doSocialLinks =
@@ -185,16 +185,8 @@ export async function GET(request: NextRequest) {
   const doEducation = request.nextUrl.searchParams.get("education") === "true";
   const doExperience =
     request.nextUrl.searchParams.get("experience") === "true";
-
-  if (!tokenCookie || !tokenCookie.value) {
-    return NextResponse.json({
-      message: "Token not found",
-      status: 401,
-    });
-  }
-
   const decoded = jwt.verify(
-    tokenCookie.value,
+    request.cookies.get("token")!.value,
     process.env.JWT_SECRET as string
   ) as JWT;
   const supabase = await createClientServer(1, true);
