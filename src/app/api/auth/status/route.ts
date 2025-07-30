@@ -1,11 +1,12 @@
 import { NextRequest } from "next/server";
 import jwt from "jsonwebtoken";
+import { JWT } from "@/types/types";
 
 export async function GET(request: NextRequest) {
   const decoded = jwt.verify(
     request.cookies.get("token")!.value,
     process.env.JWT_SECRET as string
-  ) as jwt.JwtPayload;
+  ) as JWT;
 
   // Check if token is about to expire in 15 minutes
   if (decoded.exp && decoded.exp - Math.floor(Date.now() / 1000) < 15 * 60) {

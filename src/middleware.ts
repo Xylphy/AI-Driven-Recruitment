@@ -23,10 +23,6 @@ const publicPathToken = [
     acceptedMethods: ["GET"],
   },
   {
-    path: "/api/auth/status",
-    acceptedMethods: ["GET"],
-  },
-  {
     path: "/api/auth/refresh",
     acceptedMethods: ["GET"],
   },
@@ -44,7 +40,8 @@ const publicPathToken = [
 const publicPathCsrf = [
   "/api/auth/status",
   "/api/auth/refresh",
-  "/api/auth/jwt", "/api/joblistings",
+  "/api/auth/jwt",
+  "/api/joblistings",
   "/api/csrf",
   "/api/jobs",
 ];
@@ -63,11 +60,9 @@ export async function middleware(request: NextRequest) {
       process.env.NODE_ENV === "development"
         ? ["http://localhost:3000", "null"]
         : [process.env.NEXT_PUBLIC_SITE_URL].filter(Boolean);
-
     const isSameOrigin = !origin || origin === process.env.NEXT_PUBLIC_SITE_URL;
-    const isAllowedOrigin = origin && allowedOrigins.includes(origin);
 
-    if (!isSameOrigin && !isAllowedOrigin) {
+    if (!isSameOrigin && !(origin && allowedOrigins.includes(origin))) {
       return NextResponse.json(
         { error: "Origin not allowed" },
         { status: 403 }
@@ -131,7 +126,6 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  // return await updateSession(request); // if you want to use supabase session but since we use firebase, we don't need this
   return NextResponse.next();
 }
 

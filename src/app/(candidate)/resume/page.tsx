@@ -125,7 +125,6 @@ export default function Profile() {
                   <strong>Email:</strong> jameskennethacabal@gmail.com
                 </p>
               </div>
-
               <div>
                 <h3 className="text-lg font-semibold text-gray-700 mb-2">
                   Education

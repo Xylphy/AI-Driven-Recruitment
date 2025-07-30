@@ -87,19 +87,7 @@ export async function refreshToken(): Promise<boolean> {
       "Content-Type": "application/json",
     },
     credentials: "include",
-  })
-    .then((res) => {
-      if (!res.ok) {
-        throw new Error("Token refresh failed");
-      }
-      return res.json();
-    })
-    .then(() => {
-      return true;
-    })
-    .catch(() => {
-      return false;
-    });
+  }).then((res) => res.ok);
 }
 
 // Parses FormData and converts specified fields to JSON
@@ -123,21 +111,6 @@ export function parseFormData(formData: FormData, jsonFields: string[] = []) {
   }
 
   return data;
-}
-
-// Supported file types across the application
-export function isValidFile(file: File | null): boolean {
-  return (
-    !!file &&
-    [
-      "application/pdf",
-      "application/msword",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      "application/octet-stream",
-    ].includes(file.type) &&
-    file.size <= 10 * 1024 * 1024 &&
-    file.size > 0
-  );
 }
 
 /**

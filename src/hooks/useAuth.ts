@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase/client";
@@ -48,7 +50,6 @@ export default function useAuth(
     const checkAuth = async () => {
       if (!(await checkAuthStatus())) {
         auth.signOut();
-        router.push("/login");
         return;
       } else {
         setIsAuthenticated(true);
@@ -114,7 +115,20 @@ export default function useAuth(
         });
     };
 
+    const checkAuthInterval = setInterval(() => {
+      checkAuthStatus().then((status) => {
+        if (!status) {
+          auth.signOut();
+          clearInterval(checkAuthInterval);
+          return;
+        }
+        setIsAuthenticated(true);
+      });
+    }, 60000 * 50); // Check every 50 minutes since the expiry of the session is 60 minutes
+
     setInfo();
+
+    return () => clearInterval(checkAuthInterval);
   }, [isAuthenticated]);
 
   return {

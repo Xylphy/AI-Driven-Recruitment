@@ -29,7 +29,8 @@ import {
   uploadFile,
 } from "@/lib/cloudinary/cloudinary";
 import { userSchema, verificationSchema } from "@/lib/schemas";
-import { isValidFile, parseFormData } from "@/lib/library";
+import { parseFormData } from "@/lib/library";
+import mongoDb_client from "@/lib/mongodb/mongodb";
 
 // This function handles the POST request to set the password
 export async function POST(request: NextRequest) {
@@ -49,6 +50,8 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    await mongoDb_client.connect();
 
     const data = await findOne("ai-driven-recruitment", "verification_tokens", {
       _id: ObjectId.createFromHexString(body.token),
@@ -76,20 +79,29 @@ export async function POST(request: NextRequest) {
       job_title: data.jobTitle,
     } as User);
 
-    if (error) {
+    if (error || !insertedData || !insertedData[0] || !insertedData[0].id) {
       console.error("Error inserting user into Supabase:", error);
-    } else {
-      console.log("User inserted into Supabase:", insertedData);
-    }
-
-    if (!insertedData || !insertedData[0] || !insertedData[0].id) {
       return NextResponse.json(
         { error: "Failed to insert user into Supabase" },
         { status: 500 }
       );
     }
+
+    const resumeParserURL = new URL("http://localhost:8000/parseresume/");
+    resumeParserURL.searchParams.set("public_id", data.public_id);
+    resumeParserURL.searchParams.set(
+      "applicant_id",
+      insertedData[0].id.toString()
+    );
+
+    fetch(resumeParserURL.toString(), {
+      method: "POST",
+    }).catch((err) => {
+      console.error("Error calling resume parser:", err);
+    });
+
     const userId = insertedData[0].id;
-    const skills = data.skillSet ? data.skillSet.split(",") : []; // Split skills by comma
+    const skills = data.skillSet?.split(",") || [];
 
     const results = await Promise.all([
       ...data.educationalDetails.map((detail: Omit<EducationalDetail, "id">) =>
@@ -144,6 +156,8 @@ export async function POST(request: NextRequest) {
       _id: ObjectId.createFromHexString(body.token),
     });
 
+    await mongoDb_client.close();
+
     return NextResponse.json(
       { message: "Password set successfully" },
       { status: 200 }
@@ -162,8 +176,8 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// Fetches information that calls the API
 export async function GET(request: NextRequest) {
-  const tokenCookie = request.cookies.get("token");
   const doUser = request.nextUrl.searchParams.get("user") === "true";
   const doSkills = request.nextUrl.searchParams.get("skills") === "true";
   const doSocialLinks =
@@ -171,18 +185,10 @@ export async function GET(request: NextRequest) {
   const doEducation = request.nextUrl.searchParams.get("education") === "true";
   const doExperience =
     request.nextUrl.searchParams.get("experience") === "true";
-
-  if (!tokenCookie || !tokenCookie.value) {
-    return NextResponse.json({
-      message: "Token not found",
-      status: 401,
-    });
-  }
-
   const decoded = jwt.verify(
-    tokenCookie.value,
+    request.cookies.get("token")!.value,
     process.env.JWT_SECRET as string
-  ) as jwt.JwtPayload;
+  ) as JWT;
   const supabase = await createClientServer(1, true);
 
   const [userData, skillsData, socialLinksData, educationData, experienceData] =
@@ -236,6 +242,11 @@ export async function GET(request: NextRequest) {
               (await getFileInfo(userData.data.resume_id)).url.split(
                 "resumes/"
               )[1],
+            transcript_id:
+              userData.data?.transcript_id &&
+              (await getFileInfo(userData.data.transcript_id)).url.split(
+                "transcripts/"
+              )[1],
           }
         : null,
       admin: decoded.isAdmin,
@@ -283,7 +294,14 @@ export async function PUT(request: NextRequest) {
       "jobExperiences",
       "socialLinks",
     ]),
-    resume: formData.get("resume") as File | null,
+    ...(formData.get("resume") &&
+      (formData.get("resume") as File).size > 0 && {
+        resume: formData.get("resume") as File,
+      }),
+    ...(formData.get("video") &&
+      (formData.get("video") as File).size > 0 && {
+        video: formData.get("video") as File,
+      }),
   });
 
   if (!validatedData.success) {
@@ -307,18 +325,56 @@ export async function PUT(request: NextRequest) {
 
   const promises = [];
 
-  if (isValidFile(validatedData.data.resume || null)) {
-    if (userData.resume_id) {
-      promises.push(deleteFile(userData.resume_id));
+  if (validatedData.data.resume) {
+    if (userData!.resume_id) {
+      promises.push(deleteFile(userData!.resume_id));
     }
 
-    promises.push(
-      uploadFile(validatedData.data.resume!, "resumes").then((resumeId) =>
-        updateTable(supabase, "users", "id", userId, {
-          resume_id: resumeId,
-        })
-      )
-    );
+    async function uploadResume() {
+      return await uploadFile(validatedData.data!.resume!, "resumes").then(
+        (resumeId) => {
+          const link = new URL("http://localhost:8000/parseresume/");
+          link.searchParams.set("public_id", resumeId);
+          link.searchParams.set("applicant_id", userId.toString());
+
+          fetch(link.toString(), {
+            method: "POST",
+          });
+
+          return updateTable(supabase, "users", "id", userId, {
+            resume_id: resumeId,
+          });
+        }
+      );
+    }
+
+    promises.push(uploadResume());
+  }
+
+  if (validatedData.data.video) {
+    if (userData.transcript_id) {
+      promises.push(deleteFile(userData.transcript_id));
+    }
+
+    async function uploadTranscript() {
+      return await uploadFile(validatedData.data!.video!, "transcripts").then(
+        (transcriptId) => {
+          const link = new URL("http://localhost:8000/transcribe/");
+          link.searchParams.set("public_id", transcriptId);
+          link.searchParams.set("applicant_id", userId.toString());
+
+          fetch(link.toString(), {
+            method: "POST",
+          });
+
+          return updateTable(supabase, "users", "id", userId, {
+            transcript_id: transcriptId,
+          });
+        }
+      );
+    }
+
+    promises.push(uploadTranscript());
   }
 
   await Promise.all([
@@ -330,7 +386,7 @@ export async function PUT(request: NextRequest) {
 
   const validatedUserData = validatedData.data;
 
-  // Warning: do not use ...jobExperience (includes all data) since supabase doesn't insert if column doesn't exist
+  // Warning: do not use ...object (include all data) since supabase doesn't insert if column doesn't exist
   promises.push(
     updateTable(supabase, "users", "id", userId, {
       first_name: validatedUserData.firstName,
@@ -385,17 +441,33 @@ export async function PUT(request: NextRequest) {
     )
   );
 
-  const awaitedPromises = await Promise.all(promises);
+  try {
+    const awaitedPromises = await Promise.all(promises);
 
-  if (awaitedPromises.some((p) => p instanceof Error)) {
+    const hasErrors = awaitedPromises.some(
+      (result) =>
+        result &&
+        typeof result === "object" &&
+        "error" in result &&
+        result.error
+    );
+
+    if (hasErrors) {
+      return NextResponse.json(
+        { error: "Error updating user data" },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json(
-      { error: "Error updating user data" },
+      { message: "User data updated successfully" },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Error in PUT /api/users:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
-
-  return NextResponse.json(
-    { message: "User data updated successfully" },
-    { status: 200 }
-  );
 }

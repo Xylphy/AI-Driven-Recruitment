@@ -8,6 +8,13 @@ import { useRouter } from "next/navigation";
 import Loading from "@/app/loading";
 import { JobListing } from "@/types/schema";
 
+interface Candidate {
+  id: string;
+  name: string;
+  email?: string;
+  predictiveSuccess?: number;
+}
+
 export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const { id: jobId } = use(params);
@@ -16,10 +23,8 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     true
   );
   const [candidatesLoading, isCandidatesLoading] = useState(true);
-
-  const [jobDetails /* , setJobDetails */] = useState<
-    Omit<JobListing, "created_by">
-  >({
+  const [candidates, setCandidates] = useState<Candidate[]>();
+  const [jobDetails, setJobDetails] = useState<Omit<JobListing, "created_by">>({
     id: "",
     title: "",
     location: "",
@@ -35,6 +40,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     }
 
     if (!information.admin) {
+      alert("You are not authorized to view this page.");
       if (window.history.length > 1) {
         router.back();
       } else {
@@ -42,37 +48,6 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
       }
     }
   }, [isAuthLoading, router]);
-
-  // const candidates = [
-  //   {
-  //     id: "c1",
-  //     name: "Jane Doe",
-  //     email: "jane.doe@example.com",
-  //     score: "100",
-  //     resumeLink: "#",
-  //   },
-  //   {
-  //     id: "c2",
-  //     name: "John Smith",
-  //     email: "john.smith@example.com",
-  //     score: "99",
-  //     resumeLink: "#",
-  //   },
-  //   {
-  //     id: "c3",
-  //     name: "Maria Garcia",
-  //     email: "maria.garcia@example.com",
-  //     score: "98",
-  //     resumeLink: "#",
-  //   },
-  // ];
-  const [candidates, setCandidates] = useState<
-    {
-      id: string;
-      name: string;
-      email?: string;
-    }[]
-  >();
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -99,6 +74,28 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
       })
       .finally(() => {
         isCandidatesLoading(false);
+      });
+
+    fetch(`/api/jobDetails?job=${jobId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Failed to fetch job details");
+        }
+        return res.json();
+      })
+      .then((data) => {
+        setJobDetails({
+          ...data,
+          created_at: new Date(data.created_at).toLocaleDateString(),
+        });
+      })
+      .catch((error) => {
+        alert("Error fetching job details: " + error.message);
       });
   }, [isAuthenticated]);
 
@@ -155,7 +152,8 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                           {candidate.email || "No email"}
                         </p>
                         <p className="text-xs text-green-600 font-semibold mt-1">
-                          98 % Job Candidate Match
+                          {candidate.predictiveSuccess || 0} % Job Candidate
+                          Match
                         </p>
                       </div>
                       <button
@@ -174,7 +172,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
           </div>
 
           <div className="w-full lg:w-1/3 bg-gray-50 border-l p-6">
-            {/* <section className="mb-8">
+            <section className="mb-8">
               <h3 className="text-xl font-bold text-gray-800 mb-2">
                 Job Summary
               </h3>
@@ -190,7 +188,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                   <strong>Location:</strong> {jobDetails.location}
                 </li>
               </ul>
-            </section> */}
+            </section>
 
             <section>
               <h3 className="text-xl font-bold text-gray-800 mb-2">
@@ -205,29 +203,27 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
             </section>
 
             {information.admin && (
-              <button
-                onClick={() => router.push(`/joblisting/${jobId}`)}
-                className="mt-6 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600"
-              >
-                See Job Details
-              </button>
+              <>
+                <button
+                  onClick={() => router.push(`/joblisting/${jobId}`)}
+                  className="mt-6 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600"
+                >
+                  See Job Details
+                </button>
+                <button className="mt-2 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600">
+                  Delete Job
+                </button>
+                <button className="mt-2 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600">
+                  Edit Job
+                </button>
+                <button
+                  onClick={() => router.back()}
+                  className="mt-2 w-full bg-gray-300 text-gray-800 font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-gray-500 hover:border-gray-500"
+                >
+                  Back
+                </button>
+              </>
             )}
-            {information.admin && (
-              <button className="mt-2 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600">
-                Delete Job
-              </button>
-            )}
-            {information.admin && (
-              <button className="mt-2 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600">
-                Edit Job
-              </button>
-            )}
-            <button
-              onClick={() => router.back()}
-              className="mt-2 w-full bg-gray-300 text-gray-800 font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-gray-500 hover:border-gray-500"
-            >
-              Back
-            </button>
           </div>
         </div>
       </div>

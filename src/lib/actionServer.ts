@@ -3,7 +3,6 @@
 import { isEmailRegistered, sendEmailVerification } from "./firebase/action";
 import { uploadFile } from "./cloudinary/cloudinary";
 import { verifyCsrfToken } from "./csrf";
-import { isValidFile } from "./library";
 
 export async function signup(formData: FormData) {
   const csrfToken = formData.get("csrfToken");
@@ -27,13 +26,6 @@ export async function signup(formData: FormData) {
     let resume_id = undefined;
 
     if (file) {
-      if (!isValidFile(file)) {
-        return {
-          success: false,
-          message: "Not a valid file type or size exceeds the limit of 10MB.",
-        };
-      }
-
       resume_id = await uploadFile(file, "resumes");
     }
 
@@ -55,7 +47,7 @@ export async function signup(formData: FormData) {
         formData.get("educationalDetails") as string
       ),
       socialLinks: JSON.parse(formData.get("socialLinks") as string),
-      public_id: resume_id,
+      publicId: resume_id,
       jobExperiences: JSON.parse(formData.get("jobExperiences") as string),
     });
 

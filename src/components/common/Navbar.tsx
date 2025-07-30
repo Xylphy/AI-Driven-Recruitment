@@ -7,7 +7,7 @@ import useAuth from "@/hooks/useAuth";
 const profileImageUrl = "/default-avatar.png";
 
 export default function Navbar() {
-  const { information } = useAuth(undefined, true);
+  const { isAuthenticated } = useAuth();
 
   return (
     <nav className="bg-white text-black shadow-md">
@@ -39,7 +39,7 @@ export default function Navbar() {
           </Link>
         </ul>
 
-        {!information.admin ? (
+        {isAuthenticated ? (
           <Link href="/profile">
             <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-red-500 hover:border-black transition-all duration-300">
               <Image

@@ -3,9 +3,12 @@ import { auth } from "./client";
 import { RegisterState } from "@/types/types";
 import { insertTokenData } from "../mongodb/action";
 import admin from "./admin";
+import mongoDb_client from "../mongodb/mongodb";
 
 export async function sendEmailVerification(data: RegisterState) {
+  await mongoDb_client.connect();
   const response = await insertTokenData(data);
+  await mongoDb_client.close();
 
   if (response === null) {
     throw new Error("Failed to insert token data");
