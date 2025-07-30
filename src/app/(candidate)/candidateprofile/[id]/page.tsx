@@ -225,7 +225,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                         key={i}
                         className={`w-5 h-5 ${
                           i <
-                          Math.round(
+                          Math.floor(
                             candidateProfile?.score?.score_data.raw_score || 0
                           )
                             ? "text-yellow-400"
