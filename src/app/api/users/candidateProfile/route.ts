@@ -3,8 +3,8 @@ import jwt from "jsonwebtoken";
 import { JWT } from "@/types/types";
 import { findOne } from "@/lib/mongodb/action";
 import mongoDb_client from "@/lib/mongodb/mongodb";
-import { find } from "@/lib/supabase/action";
-import { User } from "@/types/schema";
+import { find, updateTable } from "@/lib/supabase/action";
+import { JobApplicants, User } from "@/types/schema";
 import { createClientServer } from "@/lib/supabase/supabase";
 
 export async function GET(request: NextRequest) {
@@ -31,27 +31,30 @@ export async function GET(request: NextRequest) {
   }
 
   await mongoDb_client.connect();
+  const supabaseClient = await createClientServer(1, true);
 
-  const [parsedResume, score, transcribed, userData] = await Promise.all([
-    resumeParam &&
-      findOne("ai-driven-recruitment", "parsed_resume", {
-        user_id: userId,
-      }),
-    scoreParam &&
-      findOne("ai-driven-recruitment", "scored_candidates", {
-        user_id: userId,
-      }),
-    transcribedParam &&
-      findOne("ai-driven-recruitment", "transcribed", {
-        user_id: userId,
-      }),
-    find<User>(
-      await createClientServer(1, true),
-      "users",
-      "id",
-      userId
-    ).single(),
-  ]);
+  const [parsedResume, score, transcribed, userData, status] =
+    await Promise.all([
+      resumeParam &&
+        findOne("ai-driven-recruitment", "parsed_resume", {
+          user_id: userId,
+        }),
+      scoreParam &&
+        findOne("ai-driven-recruitment", "scored_candidates", {
+          user_id: userId,
+        }),
+      transcribedParam &&
+        findOne("ai-driven-recruitment", "transcribed", {
+          user_id: userId,
+        }),
+      find<User>(supabaseClient, "users", "id", userId).single(),
+      find<JobApplicants>(
+        supabaseClient,
+        "job_applicants",
+        "user_id",
+        userId
+      ).single(),
+    ]);
 
   await mongoDb_client.close();
 
@@ -63,5 +66,42 @@ export async function GET(request: NextRequest) {
       firstName: userData.data?.first_name || "",
       lastName: userData.data?.last_name || "",
     },
+    status: status.data?.status || "",
   });
+}
+
+// For changing candidate status
+export async function PUT(request: NextRequest) {
+  const { isAdmin } = jwt.verify(
+    request.cookies.get("token")!.value,
+    process.env.JWT_SECRET!
+  ) as JWT;
+
+  if (!isAdmin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+
+  const body = await request.json();
+
+  const { error } = await updateTable(
+    await createClientServer(1, true),
+    "job_applicants",
+    "user_id",
+    body.userId,
+    {
+      status: body.status,
+    }
+  );
+
+  if (error) {
+    return NextResponse.json(
+      { error: "Failed to update status" },
+      { status: 500 }
+    );
+  }
+
+  return NextResponse.json(
+    { message: "Status updated successfully" },
+    { status: 200 }
+  );
 }
