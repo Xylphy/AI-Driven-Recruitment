@@ -10,6 +10,7 @@ import {
 import { JobApplicants, JobListing, Admin } from "@/types/schema";
 import { jobListingSchema } from "@/lib/schemas/";
 import { JWT } from "@/types/types";
+import { deleteDocument } from "@/lib/mongodb/action";
 
 export async function POST(request: NextRequest) {
   const { id: userId, isAdmin } = jwt.verify(
@@ -191,6 +192,10 @@ export async function DELETE(request: NextRequest) {
       { status: 500 }
     );
   }
+
+  await deleteDocument("ai-driven-recruitment", "scored_candidates", {
+    job_id: jobId,
+  }).many();
 
   return NextResponse.json({ message: "Job listing deleted successfully" });
 }

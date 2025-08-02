@@ -13,7 +13,7 @@ import {
   SocialLink,
   JWT,
 } from "@/types/types";
-import { deleteOne, findOne } from "@/lib/mongodb/action";
+import { deleteDocument, findOne } from "@/lib/mongodb/action";
 import { ErrorResponse } from "@/types/classes";
 import jwt from "jsonwebtoken";
 import {
@@ -152,9 +152,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await deleteOne("ai-driven-recruitment", "verification_tokens", {
+    await deleteDocument("ai-driven-recruitment", "verification_tokens", {
       _id: ObjectId.createFromHexString(body.token),
-    });
+    }).single();
 
     await mongoDb_client.close();
 

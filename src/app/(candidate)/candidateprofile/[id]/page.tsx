@@ -114,9 +114,9 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
       .then((res) => {
         if (res.ok) {
           return res.json();
-        } else {
-          throw new Error("Failed to fetch candidate profile");
         }
+
+        throw new Error("Failed to fetch candidate profile");
       })
       .then((data) => {
         setCandidateProfile({

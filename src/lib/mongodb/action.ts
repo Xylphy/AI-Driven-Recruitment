@@ -23,6 +23,19 @@ export async function findOne(db: string, collection: string, query: object) {
   return await mongoDb_client.db(db).collection(collection).findOne(query);
 }
 
-export async function deleteOne(db: string, collection: string, query: object) {
-  return await mongoDb_client.db(db).collection(collection).deleteOne(query);
+export function deleteDocument(db: string, collection: string, query: object) {
+  return {
+    many: async () => {
+      return await mongoDb_client
+        .db(db)
+        .collection(collection)
+        .deleteMany(query);
+    },
+    single: async () => {
+      return await mongoDb_client
+        .db(db)
+        .collection(collection)
+        .deleteOne(query);
+    },
+  };
 }
