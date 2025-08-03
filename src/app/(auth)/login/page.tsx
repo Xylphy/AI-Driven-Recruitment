@@ -15,7 +15,6 @@ export default function LoginPage() {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
         setIsAuthLoading(false);
-        router.push("/profile");
       }
     });
     return () => unsubscribe();

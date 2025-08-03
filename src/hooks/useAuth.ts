@@ -43,6 +43,7 @@ export default function useAuth(
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user) {
+        setIsAuthenticated(false);
         router.push("/login");
       }
     });
@@ -75,7 +76,9 @@ export default function useAuth(
       education: fetchEducation,
       experience: fetchExperience,
     }).forEach(([key, value]) => {
-      if (value) params.append(key, "true");
+      if (value) {
+        params.append(key, "true");
+      }
     });
 
     const setInfo = async () => {
@@ -105,8 +108,8 @@ export default function useAuth(
             });
           }
         })
-        .catch(() => {
-          alert("Failed to fetch user information");
+        .catch((error) => {
+          alert(error.message);
           auth.signOut();
           return;
         })
