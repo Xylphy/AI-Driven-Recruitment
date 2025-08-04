@@ -4,6 +4,7 @@ import { createClientServer } from "@/lib/supabase/supabase";
 import {
   deleteTable,
   find,
+  findWithJoin,
   insertTable,
   updateTable,
 } from "@/lib/supabase/action";
@@ -147,10 +148,15 @@ export async function GET(request: NextRequest) {
       },
     });
   } else {
-    const { data: appliedData, error: appliedError } =
-      await find<JobApplicants>(supabase, "job_applicants", "user_id", userId)
-        .many()
-        .execute();
+    const { data: appliedData, error: appliedError } = await findWithJoin<
+      JobApplicants & { job_listings: JobListing }
+    >(supabase, "job_applicants", {
+      foreignTable: "job_listings",
+      foreignKey: "joblisting_id",
+      fields: "title",
+    })
+      .many()
+      .execute();
 
     if (appliedError) {
       return NextResponse.json(
@@ -162,7 +168,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       message: "Success",
       status: 200,
-      data: appliedData,
+      data: appliedData?.map((item) => ({
+        ...item,
+        ...item.job_listings,
+        job_listings: undefined,
+      })),
     });
   }
 }

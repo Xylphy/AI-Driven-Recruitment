@@ -45,19 +45,11 @@ export default function useAuth(
       if (!user) {
         setIsAuthenticated(false);
         router.push("/login");
-      }
-    });
-
-    const checkAuth = async () => {
-      if (!(await checkAuthStatus())) {
-        auth.signOut();
-        return;
       } else {
         setIsAuthenticated(true);
       }
-    };
+    });
 
-    checkAuth();
     return () => unsubscribe();
   }, [router]);
 
