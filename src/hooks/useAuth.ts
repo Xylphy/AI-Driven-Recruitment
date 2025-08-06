@@ -50,6 +50,16 @@ export default function useAuth(
       }
     });
 
+    const checkAuth = async () => {
+      if (await checkAuthStatus()) {
+        //
+      } else {
+        auth.signOut();
+        return;
+      }
+    };
+
+    checkAuth();
     return () => unsubscribe();
   }, [router]);
 
