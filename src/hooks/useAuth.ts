@@ -12,15 +12,27 @@ import {
   JobExperiences,
 } from "@/types/schema";
 import { useRouter } from "next/navigation";
+import { getCsrfToken } from "@/lib/library";
 
-export default function useAuth(
+type UseAuthOptions = {
+  fetchUser?: boolean;
+  fetchAdmin?: boolean;
+  fetchSkills?: boolean;
+  fetchSocialLinks?: boolean;
+  fetchEducation?: boolean;
+  fetchExperience?: boolean;
+  routerActivation?: boolean;
+};
+
+export default function useAuth({
   fetchUser = false,
   fetchAdmin = false,
   fetchSkills = false,
   fetchSocialLinks = false,
   fetchEducation = false,
-  fetchExperience = false
-) {
+  fetchExperience = false,
+  routerActivation = true,
+}: UseAuthOptions = {}) {
   const router = useRouter();
   const [information, setInformation] = useState<{
     user: Omit<User, "id"> | null;
@@ -39,20 +51,45 @@ export default function useAuth(
   });
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [csrfToken, setCsrfToken] = useState<string | null>(null);
 
   useEffect(() => {
+    const fetchCsrfToken = async () => {
+      const token = await getCsrfToken();
+      setCsrfToken(token);
+    };
+
+    fetchCsrfToken();
+  }, []);
+
+  useEffect(() => {
+    if (!csrfToken) return;
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user) {
-        setIsAuthenticated(false);
-        router.push("/login");
-      } else {
-        setIsAuthenticated(true);
+        fetch("/api/auth/jwt", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": csrfToken,
+          },
+          credentials: "include",
+        }).then((res) => {
+          if (!res.ok) {
+          } else {
+            setIsAuthenticated(false);
+
+            if (routerActivation) {
+              router.push("/login");
+            }
+          }
+        });
       }
     });
 
     const checkAuth = async () => {
       if (await checkAuthStatus()) {
-        //
+        setIsAuthenticated(true);
       } else {
         auth.signOut();
         return;
@@ -60,8 +97,9 @@ export default function useAuth(
     };
 
     checkAuth();
+
     return () => unsubscribe();
-  }, [router]);
+  }, [router, csrfToken]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -140,5 +178,6 @@ export default function useAuth(
     information,
     isAuthenticated,
     isAuthLoading,
+    csrfToken,
   };
 }

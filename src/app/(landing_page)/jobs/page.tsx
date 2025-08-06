@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { checkAuthStatus, getCsrfToken } from "@/lib/library";
+import { checkAuthStatus } from "@/lib/library";
 import { JobListing } from "@/types/schema";
 import useAuth from "@/hooks/useAuth";
 
@@ -12,7 +12,10 @@ interface Jobs extends JobListing {
 export default function Careers() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [jobs, setJobs] = useState<Jobs[]>([]);
-  const { information } = useAuth(undefined, isAuthenticated);
+  const { information, csrfToken } = useAuth({
+    fetchAdmin: isAuthenticated,
+    routerActivation: false,
+  });
 
   useEffect(() => {
     checkAuthStatus().then(setIsAuthenticated);
@@ -35,7 +38,7 @@ export default function Careers() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-CSRF-Token": (await getCsrfToken()) ?? "",
+        "X-CSRF-Token": csrfToken ?? "",
       },
       body: JSON.stringify({ jobId }),
     })

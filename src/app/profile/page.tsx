@@ -57,7 +57,10 @@ export default function Profile() {
     createdByOthers: [] as JobListing[],
   });
 
-  const { information, isAuthLoading } = useAuth(true, true);
+  const { information, isAuthLoading } = useAuth({
+    fetchUser: true,
+    fetchAdmin: true,
+  });
   const [isJobLoading, setIsJobLoading] = useState(true);
 
   useEffect(() => {
@@ -101,7 +104,7 @@ export default function Profile() {
               createdByThem: [],
               createdByOthers: body.data.map(formatJobDate),
             });
-            
+
             setJobListed((prev) => ({
               ...prev,
               createdByOthers: prev.createdByOthers.map((job) => ({

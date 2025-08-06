@@ -18,10 +18,9 @@ interface Candidate {
 export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const { id: jobId } = use(params);
-  const { information, isAuthenticated, isAuthLoading } = useAuth(
-    undefined,
-    true
-  );
+  const { information, isAuthenticated, isAuthLoading } = useAuth({
+    fetchAdmin: true,
+  });
   const [candidatesLoading, isCandidatesLoading] = useState(true);
   const [candidates, setCandidates] = useState<Candidate[]>();
   const [jobDetails, setJobDetails] = useState<Omit<JobListing, "created_by">>({

@@ -6,7 +6,6 @@ import Qualifications from "@/components/joblisting/Qualifications";
 import useAuth from "@/hooks/useAuth";
 import { useRouter, useParams } from "next/navigation";
 import { JOB_LOCATIONS } from "@/lib/constants";
-import { getCsrfToken } from "@/lib/library";
 
 export default function Page() {
   const router = useRouter();
@@ -25,7 +24,9 @@ export default function Page() {
     location: "",
     isFullTime: true,
   });
-  const { information, isAuthLoading } = useAuth(undefined, true);
+  const { information, isAuthLoading, csrfToken } = useAuth({
+    fetchAdmin: true,
+  });
 
   useEffect(() => {
     if (isAuthLoading) {
@@ -119,7 +120,7 @@ export default function Page() {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        "X-CSRF-Token": (await getCsrfToken())!,
+        "X-CSRF-Token": csrfToken ?? "",
       },
       body: JSON.stringify({ ...jobListing, jobId }),
     }).then((response) => {

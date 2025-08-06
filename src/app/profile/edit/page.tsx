@@ -10,18 +10,18 @@ import {
 } from "@/types/types";
 import { auth } from "@/lib/firebase/client";
 import { useRouter } from "next/navigation";
-import { cleanArrayData, getCsrfToken } from "@/lib/library";
+import { cleanArrayData } from "@/lib/library";
 
 export default function EditProfilePage() {
   const router = useRouter();
-  const { information, isAuthLoading } = useAuth(
-    true,
-    false,
-    true,
-    true,
-    true,
-    true
-  );
+  const { information, isAuthLoading, csrfToken } = useAuth({
+    fetchUser: true,
+    fetchAdmin: false,
+    fetchSkills: true,
+    fetchSocialLinks: true,
+    fetchEducation: true,
+    fetchExperience: true,
+  });
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
   const [educationalDetails, setEducationalDetails] = useState<
     EducationalDetail[]
@@ -174,7 +174,7 @@ export default function EditProfilePage() {
       fetch("/api/users", {
         method: "PUT",
         headers: {
-          "X-CSRF-Token": (await getCsrfToken()) || "",
+          "X-CSRF-Token": csrfToken || "",
         },
         body: formData,
       })

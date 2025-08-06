@@ -7,7 +7,6 @@ import { useEffect, useState } from "react";
 import useAuth from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { use } from "react";
-import { getCsrfToken } from "@/lib/library";
 
 interface WorkExperience {
   company: string;
@@ -76,7 +75,10 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const { id: candidateId } = use(params); // userId
   const [selectedStatus, setSelectedStatus] = useState("");
-  const { information, isAuthLoading } = useAuth(true, true);
+  const { information, isAuthLoading, csrfToken } = useAuth({
+    fetchUser: true,
+    fetchAdmin: true,
+  });
   const [candidateProfile, setCandidateProfile] =
     useState<CandidateProfile | null>(null);
   const [onResume, setOnResume] = useState(false);
@@ -141,7 +143,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        "X-CSRF-Token": (await getCsrfToken()) || "",
+        "X-CSRF-Token": csrfToken ?? "",
       },
 
       body: JSON.stringify({

@@ -11,7 +11,7 @@ import Loading from "@/app/loading";
 export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const { id: jobId } = use(params);
-  const { information, isAuthenticated } = useAuth(undefined, true);
+  const { information, isAuthenticated } = useAuth({ fetchAdmin: true });
   const [jobLoading, isJobLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);

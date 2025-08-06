@@ -6,7 +6,6 @@ import Qualifications from "@/components/joblisting/Qualifications";
 import useAuth from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { JOB_LOCATIONS } from "@/lib/constants";
-import { getCsrfToken } from "@/lib/library";
 
 export default function JobListingPage() {
   const router = useRouter();
@@ -22,7 +21,9 @@ export default function JobListingPage() {
     location: "",
     isFullTime: true,
   });
-  const { information } = useAuth(undefined, true);
+  const { information, csrfToken } = useAuth({
+    fetchAdmin: true,
+  });
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -73,7 +74,7 @@ export default function JobListingPage() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-CSRF-Token": (await getCsrfToken())!,
+        "X-CSRF-Token": csrfToken ?? "",
       },
       body: JSON.stringify(jobListing),
     });
