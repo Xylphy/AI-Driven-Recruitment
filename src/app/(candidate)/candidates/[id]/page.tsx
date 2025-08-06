@@ -32,6 +32,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     created_at: "",
     joblisting_id: "",
   });
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // Admin only
   useEffect(() => {
@@ -98,6 +99,19 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
         alert("Error fetching job details: " + error.message);
       });
   }, [isAuthenticated]);
+
+  const handleDeleteJob = async () => {
+    fetch(`/api/joblisting/${jobId}`, {
+      method: "DELETE",
+    }).then((res) => {
+      if (!res.ok) {
+        alert("Failed to delete job listing");
+        return;
+      }
+      alert("Job listing deleted successfully");
+      router.push("/profile");
+    });
+  };
 
   if (candidatesLoading) {
     return <Loading />;
@@ -210,10 +224,16 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                 >
                   See Job Details
                 </button>
-                <button className="mt-2 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600">
+                <button
+                  className="mt-2 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600"
+                  onClick={() => setShowDeleteModal(true)}
+                >
                   Delete Job
                 </button>
-                <button className="mt-2 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600">
+                <button
+                  className="mt-2 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600"
+                  onClick={() => router.push(`/joblisting/${jobId}/edit`)}
+                >
                   Edit Job
                 </button>
                 <button
@@ -227,6 +247,28 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
           </div>
         </div>
       </div>
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded shadow-lg max-w-sm w-full">
+            <h2 className="text-lg font-bold mb-4">Confirm Delete</h2>
+            <p className="mb-4">Are you sure you want to delete this job?</p>
+            <div className="flex justify-end gap-2">
+              <button
+                className="bg-gray-300 text-gray-800 px-4 py-2 rounded"
+                onClick={() => setShowDeleteModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="bg-red-600 text-white px-4 py-2 rounded font-bold"
+                onClick={handleDeleteJob}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
