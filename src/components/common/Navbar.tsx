@@ -2,12 +2,20 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import useAuth from "@/hooks/useAuth";
+import { auth } from "@/lib/firebase/client";
+import { useEffect, useState } from "react";
 
 const profileImageUrl = "/default-avatar.png";
 
 export default function Navbar() {
-  const { isAuthenticated } = useAuth();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) =>
+      setIsAuthenticated(!!user)
+    );
+    return () => unsubscribe();
+  }, []);
 
   return (
     <nav className="bg-white text-black shadow-md">
