@@ -47,13 +47,12 @@ export async function GET(request: NextRequest) {
         findOne("ai-driven-recruitment", "transcribed", {
           user_id: userId,
         }),
-      find<User>(supabaseClient, "users", "id", userId).single(),
-      find<JobApplicants>(
-        supabaseClient,
-        "job_applicants",
-        "user_id",
-        userId
-      ).single(),
+      find<User>(supabaseClient, "users", [
+        { column: "id", value: userId },
+      ]).single(),
+      find<JobApplicants>(supabaseClient, "job_applicants", [
+        { column: "user_id", value: userId },
+      ]).single(),
     ]);
 
   await mongoDb_client.close();

@@ -58,11 +58,7 @@ export default function LoginPage() {
           }
           return res.json();
         })
-        .then(() => router.push("/profile"))
-        .catch((error) => {
-          alert("Authentication failed: " + error.message);
-          auth.signOut();
-        });
+        .then(() => router.push("/profile"));
     } catch (error) {
       alert(
         "Authentication failed: " +

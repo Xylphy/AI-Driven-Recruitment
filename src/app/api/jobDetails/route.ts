@@ -5,7 +5,10 @@ import {
   JobListing,
   JobListingQualifications,
   JobListingRequirements,
+  JobApplicants,
 } from "@/types/schema";
+import { JWT } from "@/types/types";
+import jwt from "jsonwebtoken";
 
 export async function GET(request: NextRequest) {
   const jobId = request.nextUrl.searchParams.get("job");
@@ -15,7 +18,7 @@ export async function GET(request: NextRequest) {
   const supabase = await createClientServer(1, true);
   const { data: jobListing, error: errorJobListing } = await find<
     Omit<JobListing, "created_by">
-  >(supabase, "job_listings", "id", jobId).single();
+  >(supabase, "job_listings", [{ column: "id", value: jobId }]).single();
 
   if (errorJobListing || !jobListing) {
     return NextResponse.json(
@@ -24,31 +27,47 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const [qualifications, requirements] = await Promise.all([
-    find<JobListingQualifications>(
-      supabase,
-      "jl_qualifications",
-      "joblisting_id",
-      jobId
-    )
-      .many()
-      .execute(),
-    find<JobListingRequirements>(
-      supabase,
-      "jl_requirements",
-      "joblisting_id",
-      jobId
-    )
-      .many()
-      .execute(),
-  ]);
+  const qualificationsPromise = find<JobListingQualifications>(
+    supabase,
+    "jl_qualifications",
+    [{ column: "joblisting_id", value: jobId }]
+  )
+    .many()
+    .execute();
 
-  if (requirements.error || qualifications.error) {
+  const requirementsPromise = find<JobListingRequirements>(
+    supabase,
+    "jl_requirements",
+    [{ column: "joblisting_id", value: jobId }]
+  )
+    .many()
+    .execute();
+
+  let applicantCheckPromise;
+  const token = request.cookies.get("token");
+  if (token) {
+    const { id } = jwt.verify(
+      token.value,
+      process.env.JWT_SECRET as string
+    ) as JWT;
+
+    applicantCheckPromise = find<JobApplicants>(supabase, "job_applicants", [
+      { column: "joblisting_id", value: jobId },
+      { column: "user_id", value: id },
+    ]).single();
+  }
+
+  const qualifications = await qualificationsPromise;
+  const requirements = await requirementsPromise;
+
+  if (qualifications.error || requirements.error) {
     return NextResponse.json(
       { error: "Failed to fetch job listing details" },
       { status: 500 }
     );
   }
+
+  const applicantCheck = await applicantCheckPromise;
 
   return NextResponse.json(
     {
@@ -56,6 +75,7 @@ export async function GET(request: NextRequest) {
       requirements: requirements.data?.map((item) => item.requirement) || [],
       qualifications:
         qualifications.data?.map((item) => item.qualification) || [],
+      isApplicant: !!applicantCheck?.data,
     },
     {
       status: 200,

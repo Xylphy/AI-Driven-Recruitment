@@ -11,9 +11,9 @@ export default function Navbar() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) =>
-      setIsAuthenticated(!!user)
-    );
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setIsAuthenticated(!!user);
+    });
     return () => unsubscribe();
   }, []);
 

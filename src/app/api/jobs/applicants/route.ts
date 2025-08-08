@@ -1,6 +1,6 @@
 import { createClientServer } from "@/lib/supabase/supabase";
 import { NextRequest, NextResponse } from "next/server";
-import { JobListing, JWT } from "@/types/types";
+import { JWT } from "@/types/types";
 import jwt from "jsonwebtoken";
 import { insertTable, findWithJoin, find } from "@/lib/supabase/action";
 import auth from "@/lib/firebase/admin";
@@ -33,8 +33,10 @@ export async function POST(request: NextRequest) {
     await find<JobApplicants>(
       supabaseClient,
       "job_applicants",
-      `user_id.eq.${userId},joblisting_id.eq.${jobId}`,
-      undefined,
+      [
+        { column: "user_id", value: userId },
+        { column: "joblisting_id", value: jobId },
+      ],
       "*"
     )
       .many()
@@ -113,7 +115,7 @@ export async function GET(request: NextRequest) {
       foreignKey: "user_id",
       fields: "id, first_name, last_name, firebase_uid",
     })
-      .many()
+      .many([{ column: "joblisting_id", value: jobId }])
       .execute();
 
   if (errorApplicants) {

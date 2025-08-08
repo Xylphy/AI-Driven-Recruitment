@@ -55,8 +55,7 @@ export default function useAuth({
 
   useEffect(() => {
     const fetchCsrfToken = async () => {
-      const token = await getCsrfToken();
-      setCsrfToken(token);
+      setCsrfToken(await getCsrfToken());
     };
 
     fetchCsrfToken();

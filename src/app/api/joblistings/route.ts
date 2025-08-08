@@ -101,16 +101,15 @@ export async function GET(request: NextRequest) {
 
   const supabase = await createClientServer(1, true);
 
-  const { data: adminData } = await find<Admin>(
-    supabase,
-    "admins",
-    "user_id",
-    userId
-  ).single();
+  const { data: adminData } = await find<Admin>(supabase, "admins", [
+    { column: "user_id", value: userId },
+  ]).single();
 
   if (adminData) {
     const [themResults, allResults] = await Promise.all([
-      find<JobListing>(supabase, "job_listings", "created_by", userId)
+      find<JobListing>(supabase, "job_listings", [
+        { column: "created_by", value: userId },
+      ])
         .many()
         .range(offset, offset + limit - 1)
         .order("created_at", { ascending: false })

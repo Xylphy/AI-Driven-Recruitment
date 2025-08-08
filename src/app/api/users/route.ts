@@ -193,26 +193,32 @@ export async function GET(request: NextRequest) {
 
   const [userData, skillsData, socialLinksData, educationData, experienceData] =
     await Promise.all([
-      doUser && find<User>(supabase, "users", "id", decoded.id).single(),
+      doUser &&
+        find<User>(supabase, "users", [
+          { column: "id", value: decoded.id },
+        ]).single(),
       doSkills &&
-        find<Skills>(supabase, "skills", "user_id", decoded.id)
+        find<Skills>(supabase, "skills", [
+          { column: "user_id", value: decoded.id },
+        ])
           .many()
           .execute(),
       doSocialLinks &&
-        find<SocialLinks>(supabase, "social_links", "user_id", decoded.id)
+        find<SocialLinks>(supabase, "social_links", [
+          { column: "user_id", value: decoded.id },
+        ])
           .many()
           .execute(),
       doEducation &&
-        find<EducationalDetails>(
-          supabase,
-          "educational_details",
-          "user_id",
-          decoded.id
-        )
+        find<EducationalDetails>(supabase, "educational_details", [
+          { column: "user_id", value: decoded.id },
+        ])
           .many()
           .execute(),
       doExperience &&
-        find<JobExperiences>(supabase, "job_experiences", "user_id", decoded.id)
+        find<JobExperiences>(supabase, "job_experiences", [
+          { column: "user_id", value: decoded.id },
+        ])
           .many()
           .execute(),
     ]);

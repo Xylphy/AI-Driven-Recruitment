@@ -1,24 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { checkAuthStatus } from "@/lib/library";
 import { JobListing } from "@/types/schema";
 import useAuth from "@/hooks/useAuth";
+import { useRouter } from "next/navigation";
 
 interface Jobs extends JobListing {
   applied: boolean;
 }
 
 export default function Careers() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const router = useRouter();
   const [jobs, setJobs] = useState<Jobs[]>([]);
-  const { information, csrfToken } = useAuth({
-    fetchAdmin: isAuthenticated,
+  const { isAuthenticated } = useAuth({
+    fetchAdmin: true,
     routerActivation: false,
   });
 
   useEffect(() => {
-    checkAuthStatus().then(setIsAuthenticated);
+    if (!isAuthenticated) return;
 
     fetch("/api/jobs", {
       method: "GET",
@@ -31,30 +31,7 @@ export default function Careers() {
       .catch(() =>
         alert("Failed to fetch job listings. Please try again later.")
       );
-  }, []);
-
-  const handleApply = async (jobId: string) => {
-    fetch("/api/jobs/applicants", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": csrfToken ?? "",
-      },
-      body: JSON.stringify({ jobId }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        alert(data.error || data.message);
-        setJobs((prevJobs) =>
-          prevJobs?.map((job) =>
-            job.id === jobId ? { ...job, applied: true } : job
-          )
-        );
-      })
-      .catch(() => {
-        alert("Failed to apply for the job. Please try again later.");
-      });
-  };
+  }, [isAuthenticated]);
 
   return (
     <div className="text-gray-800">
@@ -94,6 +71,7 @@ export default function Careers() {
             <div
               key={index}
               className="flex items-center justify-between p-4 border border-gray-200 rounded-md hover:shadow"
+              onClick={() => router.push(`/joblisting/${job.id}`)}
             >
               <div>
                 <h3 className="text-lg font-bold">{job.title}</h3>
@@ -103,19 +81,6 @@ export default function Careers() {
                   <span>{job.is_fulltime ? "Full-time" : "Part-time"}</span>
                 </div>
               </div>
-              {isAuthenticated && !information.admin && (
-                <button
-                  className={`font-bold px-4 py-2 rounded border transition-all duration-300 ease-in-out ${
-                    job.applied
-                      ? "bg-gray-400 text-gray-600 border-gray-400 cursor-not-allowed"
-                      : "bg-[#E30022] text-white border-transparent hover:bg-transparent hover:text-red-500 hover:border-red-500"
-                  }`}
-                  onClick={() => !job.applied && handleApply(job.id)}
-                  disabled={job.applied}
-                >
-                  {job.applied ? "Applied" : "Apply Now"}
-                </button>
-              )}
             </div>
           ))}
         </div>

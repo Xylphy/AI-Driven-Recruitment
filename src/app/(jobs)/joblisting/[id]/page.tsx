@@ -11,14 +11,19 @@ import Loading from "@/app/loading";
 export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const { id: jobId } = use(params);
-  const { information, isAuthenticated } = useAuth({ fetchAdmin: true });
+  const { information, isAuthenticated, csrfToken } = useAuth({
+    fetchAdmin: true,
+  });
   const [jobLoading, isJobLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isApplying, setIsApplying] = useState(false);
 
   const [jobDetails, setJobDetails] = useState<
-    Omit<JobListing, "created_by"> & { requirements: string[] } & {
+    Omit<JobListing, "created_by"> & {
+      requirements: string[];
       qualifications: string[];
+      isApplicant: boolean;
     }
   >({
     id: "",
@@ -29,8 +34,37 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     joblisting_id: "",
     requirements: [],
     qualifications: [],
+    isApplicant: true,
   });
 
+  const handleApply = async () => {
+    setIsApplying(true);
+    fetch("/api/jobs/applicants", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": csrfToken ?? "",
+      },
+      body: JSON.stringify({ jobId }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data.error) {
+          alert(data.message);
+          setJobDetails((prev) => ({
+            ...prev,
+            isApplicant: true,
+          }));
+          return;
+        }
+
+        throw new Error(data.error);
+      })
+      .catch(() =>
+        alert("Failed to apply for the job. Please try again later.")
+      )
+      .finally(() => setIsApplying(false));
+  };
   useEffect(() => {
     if (!isAuthenticated) {
       return;
@@ -79,7 +113,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
       alert("Job deleted successfully");
       router.push("/profile");
     } catch {
-      alert("Error deleting job: ");
+      alert("Error deleting job");
     } finally {
       setIsDeleting(false);
       setShowDeleteModal(false);
@@ -229,6 +263,26 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                   onClick={() => router.push(`/joblisting/${jobId}/edit`)}
                 >
                   Edit Job
+                </button>
+              </>
+            )}
+
+            {isAuthenticated && !information.admin && (
+              <>
+                <button
+                  className={`mt-2 w-full font-bold py-2 rounded border border-transparent transition-all duration-300 ease-in-out ${
+                    jobDetails.isApplicant
+                      ? "bg-gray-400 text-gray-600 cursor-not-allowed"
+                      : "bg-red-600 text-white hover:bg-transparent hover:text-red-600 hover:border-red-600"
+                  }`}
+                  onClick={handleApply}
+                  disabled={jobDetails.isApplicant || isApplying}
+                >
+                  {jobDetails.isApplicant
+                    ? "Applied"
+                    : isApplying
+                    ? "Applying..."
+                    : "Apply Job"}
                 </button>
               </>
             )}

@@ -25,17 +25,18 @@ export function deleteTable(
 export function find<T>(
   supabase: SupabaseClient,
   table: string,
-  column?: string,
-  value?: string,
+  filters?: Array<{ column: string; value: string }>,
   select: string = "*"
 ) {
   return {
     single: async (): Promise<QueryResult<T>> => {
-      let queryBuilder = supabase.from(table).select(select);
-      if (column && value) {
-        queryBuilder = queryBuilder.eq(column, value);
+      let query = supabase.from(table).select(select);
+      if (filters) {
+        filters.forEach(({ column, value }) => {
+          query = query.eq(column, value);
+        });
       }
-      const result = await queryBuilder.single();
+      const result = await query.single();
       return {
         data: result.data as T,
         error: result.error,
@@ -44,8 +45,10 @@ export function find<T>(
     many: () => {
       let query = supabase.from(table).select(select);
 
-      if (column && value) {
-        query = query.eq(column, value);
+      if (filters) {
+        filters.forEach(({ column, value }) => {
+          query = query.eq(column, value);
+        });
       }
 
       return {
@@ -62,7 +65,7 @@ export function find<T>(
           return {
             data: result.data as T[],
             error: result.error,
-          };
+          } as QueryResult<T[]>;
         },
       };
     },
@@ -89,14 +92,20 @@ export function findWithJoin<T>(
   }
 ) {
   return {
-    many: (filterColumn?: string, filterValue?: string) => {
+    many: (filters?: Array<{ column: string; value: string }>) => {
       let query = supabase.from(mainTable).select(`
           *,
           ${joinConfig.foreignTable}:${joinConfig.foreignKey} (${joinConfig.fields})
         `);
 
-      if (filterColumn && filterValue) {
-        query = query.eq(filterColumn, filterValue);
+      // if (filterColumn && filterValue) {
+      //   query = query.eq(filterColumn, filterValue);
+      // }
+      //
+      if (filters) {
+        filters.forEach(({ column, value }) => {
+          query = query.eq(column, value);
+        });
       }
 
       return {

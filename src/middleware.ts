@@ -31,7 +31,7 @@ const publicPathToken = [
     acceptedMethods: ["GET"],
   },
   {
-    path: "/api/jobs",
+    path: "/api/jobDetails",
     acceptedMethods: ["GET"],
   },
 ];
@@ -43,12 +43,12 @@ const publicPathCsrf = [
   "/api/auth/jwt",
   "/api/joblistings",
   "/api/csrf",
-  "/api/jobs",
 ];
 
 export async function middleware(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith("/api")) {
-    if (!(await limiter.check(request)).success) {
+    const { success } = await limiter.check(request);
+    if (!success) {
       return NextResponse.json(
         { error: "Rate limit exceeded" },
         { status: 429 }

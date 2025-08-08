@@ -41,7 +41,12 @@ export async function GET(request: NextRequest) {
       IdentifiableItem & {
         admins: IdentifiableItem | null;
       }
-    >(supabase, "users", "id", decoded.userId, "id, admins!left(id)").single();
+    >(
+      supabase,
+      "users",
+      [{ column: "id", value: decoded.userId }],
+      "id, admins!left(id)"
+    ).single();
 
     if (!data || error) {
       const response = NextResponse.json(

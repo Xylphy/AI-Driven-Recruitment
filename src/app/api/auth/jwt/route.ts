@@ -25,8 +25,7 @@ export async function GET(request: NextRequest) {
     >(
       supabase,
       "users",
-      "firebase_uid",
-      authHeader.split(" ")[1],
+      [{ column: "firebase_uid", value: authHeader.split(" ")[1] }],
       "id, admins!left(id)"
     ).single();
 
