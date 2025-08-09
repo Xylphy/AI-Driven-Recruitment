@@ -321,8 +321,7 @@ export async function PUT(request: NextRequest) {
   const { data: userData, error: userError } = await find<User>(
     supabase,
     "users",
-    "id",
-    userId
+    [{ column: "id", value: userId }]
   ).single();
 
   if (userError || !userData) {
