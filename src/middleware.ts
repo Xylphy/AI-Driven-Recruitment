@@ -34,6 +34,10 @@ const publicPathToken = [
     path: "/api/jobDetails",
     acceptedMethods: ["GET"],
   },
+  {
+    path: "/api/jobs",
+    acceptedMethods: ["GET"],
+  },
 ];
 
 // Paths that do not require CSRF token

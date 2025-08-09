@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { JobListing } from "@/types/schema";
-import useAuth from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 
 interface Jobs extends JobListing {
@@ -12,14 +11,8 @@ interface Jobs extends JobListing {
 export default function Careers() {
   const router = useRouter();
   const [jobs, setJobs] = useState<Jobs[]>([]);
-  const { isAuthenticated } = useAuth({
-    fetchAdmin: true,
-    routerActivation: false,
-  });
 
   useEffect(() => {
-    if (!isAuthenticated) return;
-
     fetch("/api/jobs", {
       method: "GET",
       headers: {
@@ -31,7 +24,7 @@ export default function Careers() {
       .catch(() =>
         alert("Failed to fetch job listings. Please try again later.")
       );
-  }, [isAuthenticated]);
+  }, []);
 
   return (
     <div className="text-gray-800">
