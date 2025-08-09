@@ -13,6 +13,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id: jobId } = use(params);
   const { information, isAuthenticated, csrfToken } = useAuth({
     fetchAdmin: true,
+    routerActivation: false,
   });
   const [jobLoading, isJobLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -65,11 +66,8 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
       )
       .finally(() => setIsApplying(false));
   };
+  
   useEffect(() => {
-    if (!isAuthenticated) {
-      return;
-    }
-
     fetch(`/api/jobDetails?job=${jobId}`, {
       method: "GET",
       headers: {
@@ -94,7 +92,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
       .finally(() => {
         isJobLoading(false);
       });
-  }, [isAuthenticated]);
+  }, []);
 
   const handleDeleteJob = async () => {
     setIsDeleting(true);
