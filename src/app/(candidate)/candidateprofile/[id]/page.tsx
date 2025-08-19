@@ -43,6 +43,7 @@ interface ScoreData {
   predictive_success: number;
   raw_score: number;
   reason: string;
+  phrases: Array<string>;
 }
 
 interface Score {
@@ -55,6 +56,7 @@ interface TranscriptionInfo {
   interview_insights: string;
   personality_traits: string;
   sentimental_analysis: string;
+  cultural_fit_insights: string;
 }
 
 interface Transcription {
