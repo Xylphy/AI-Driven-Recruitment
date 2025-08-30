@@ -36,30 +36,30 @@ const Header: React.FC = () => {
               </Link>
             </li>
             <li>
-              <Link href="/aboutus/" className="hover:underline">
+              <Link href="/aboutus" className="hover:underline">
                 ABOUT US
               </Link>
             </li>
-            <li>
-              <Link href="/news/" className="mr-4 hover:underline">
+            {/* <li>
+              <Link href="/news" className="mr-4 hover:underline">
                 NEWS AND EVENTS
               </Link>
-            </li>
+            </li> */}
             <li>
-              <Link href="/trainings/" className="hover:underline">
+              <Link href="/trainings" className="hover:underline">
                 TRAININGS
               </Link>
             </li>
             <li>
-              <Link href="/joblistings/" className="mr-2 hover:underline">
+              <Link href="/jobs" className="mr-2 hover:underline">
                 JOB LISTINGS
               </Link>
             </li>
-            <li>
-              <Link href="/privacypolicy/" className="hover:underline">
+            {/* <li>
+              <Link href="/privacypolicy" className="hover:underline">
                 PRIVACY POLICY
               </Link>
-            </li>
+            </li> */}
           </ul>
         </nav>
       </div>

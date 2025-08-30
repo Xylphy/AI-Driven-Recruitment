@@ -23,6 +23,10 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "100mb",
     },
   },
+  typedRoutes: true,
+  eslint: {
+    dirs: ["src"],
+  },
 };
 
 export default nextConfig;

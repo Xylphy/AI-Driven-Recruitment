@@ -130,7 +130,7 @@ export default function LoginPage() {
         the first step toward a rewarding career.
       </p>
       <Link
-        href="/signup/"
+        href="/signup"
         className="flex justify-center items-center w-full bg-red-600 text-white font-bold px-4 py-3 rounded-md border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-500 hover:border-red-500"
       >
         Get Started Here

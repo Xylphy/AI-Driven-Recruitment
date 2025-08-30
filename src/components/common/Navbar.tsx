@@ -30,17 +30,17 @@ export default function Navbar() {
               Home
             </li>
           </Link>
-          <Link href="/aboutus/">
+          <Link href="/aboutus">
             <li className="relative inline-block pb-1 after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:h-[2px] after:w-0 after:bg-red-500 after:transition-all after:duration-300 hover:after:w-full hover:after:left-0 transform after:-translate-x-1/2 hover:after:translate-x-0">
               About Us
             </li>
           </Link>
-          <Link href="/jobs/">
+          <Link href="/jobs">
             <li className="relative inline-block pb-1 after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:h-[2px] after:w-0 after:bg-red-500 after:transition-all after:duration-300 hover:after:w-full hover:after:left-0 transform after:-translate-x-1/2 hover:after:translate-x-0">
               Jobs
             </li>
           </Link>
-          <Link href="/contactus/">
+          <Link href="/contactus">
             <li className="relative inline-block pb-1 after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:h-[2px] after:w-0 after:bg-red-500 after:transition-all after:duration-300 hover:after:w-full hover:after:left-0 transform after:-translate-x-1/2 hover:after:translate-x-0">
               Contact Us
             </li>

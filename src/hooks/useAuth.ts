@@ -73,14 +73,11 @@ export default function useAuth({
             "X-CSRF-Token": csrfToken,
           },
           credentials: "include",
-        }).then((res) => {
-          if (!res.ok) {
-          } else {
-            setIsAuthenticated(false);
+        }).then(() => {
+          setIsAuthenticated(false);
 
-            if (routerActivation) {
-              router.push("/login");
-            }
+          if (routerActivation) {
+            router.push("/login");
           }
         });
       }
