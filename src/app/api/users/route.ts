@@ -335,25 +335,21 @@ export async function PUT(request: NextRequest) {
       promises.push(deleteFile(userData!.resume_id));
     }
 
-    async function uploadResume() {
-      return await uploadFile(validatedData.data!.resume!, "resumes").then(
-        (resumeId) => {
-          const link = new URL("http://localhost:8000/parseresume/");
-          link.searchParams.set("public_id", resumeId);
-          link.searchParams.set("applicant_id", userId.toString());
+    promises.push(
+      uploadFile(validatedData.data!.resume!, "resumes").then((resumeId) => {
+        const link = new URL("http://localhost:8000/parseresume/");
+        link.searchParams.set("public_id", resumeId);
+        link.searchParams.set("applicant_id", userId.toString());
 
-          fetch(link.toString(), {
-            method: "POST",
-          });
+        fetch(link.toString(), {
+          method: "POST",
+        });
 
-          return updateTable(supabase, "users", "id", userId, {
-            resume_id: resumeId,
-          });
-        }
-      );
-    }
-
-    promises.push(uploadResume());
+        return updateTable(supabase, "users", "id", userId, {
+          resume_id: resumeId,
+        });
+      })
+    );
   }
 
   if (validatedData.data.video) {
@@ -361,8 +357,8 @@ export async function PUT(request: NextRequest) {
       promises.push(deleteFile(userData.transcript_id));
     }
 
-    async function uploadTranscript() {
-      return await uploadFile(validatedData.data!.video!, "transcripts").then(
+    promises.push(
+      uploadFile(validatedData.data!.video!, "transcripts").then(
         (transcriptId) => {
           const link = new URL("http://localhost:8000/transcribe/");
           link.searchParams.set("public_id", transcriptId);
@@ -376,10 +372,8 @@ export async function PUT(request: NextRequest) {
             transcript_id: transcriptId,
           });
         }
-      );
-    }
-
-    promises.push(uploadTranscript());
+      )
+    );
   }
 
   await Promise.all([

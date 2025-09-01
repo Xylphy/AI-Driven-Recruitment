@@ -44,6 +44,7 @@ interface ScoreData {
   raw_score: number;
   reason: string;
   phrases: Array<string>;
+  skill_gaps_recommendations: string;
 }
 
 interface Score {
@@ -295,17 +296,25 @@ function CandidateProfile({
               </span>
             </div>
 
+            <div className="mt-2">
+              <span className="block text-sm font-medium text-gray-700 mb-1">
+                Key Highlights:
+              </span>
+              <ul className="list-disc ml-6 text-sm text-gray-700">
+                {candidateProfile?.score?.score_data.phrases.map(
+                  (phrase, idx) => (
+                    <li key={idx}>{phrase}</li>
+                  )
+                )}
+              </ul>
+            </div>
+
             <div>
               <span className="block text-sm font-medium text-gray-700 mb-1">
                 Evaluation Summary:
               </span>
               <p className="text-sm text-gray-700 leading-relaxed">
-                {candidateProfile?.score?.score_data.reason
-                  ? highlightPhrases(
-                      candidateProfile.score.score_data.reason,
-                      candidateProfile.score.score_data.phrases || []
-                    )
-                  : "No insights available."}
+                {candidateProfile?.score?.score_data.reason},
               </p>
             </div>
           </div>
@@ -347,7 +356,19 @@ function CandidateProfile({
               </h3>
               <p>
                 {candidateProfile?.transcribed?.transcription
-                  .cultural_fit_insights || "No interview insights available."}
+                  .cultural_fit_insights ||
+                  "No cultural fit insights available."}
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-gray-700">
+                Skill Gaps Recommendations
+              </h3>
+              <p>
+                {candidateProfile?.score?.score_data
+                  .skill_gaps_recommendations ||
+                  "No skill gaps recommendations available."}
               </p>
             </div>
 
@@ -504,24 +525,4 @@ function CandidateResume({
       </div>
     </div>
   );
-}
-
-function highlightPhrases(reason: string, phrases: string[]) {
-  if (!reason || !phrases || phrases.length === 0) return reason;
-
-  const escapedPhrases = phrases.map((p) =>
-    p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-  );
-
-  return reason
-    .split(new RegExp(`(${escapedPhrases.join("|")})`, "gi"))
-    .map((part, i) =>
-      phrases.some((phrase) => part.toLowerCase() === phrase.toLowerCase()) ? (
-        <strong key={i} className="font-bold">
-          {part}
-        </strong>
-      ) : (
-        part
-      )
-    );
 }
