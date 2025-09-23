@@ -10,8 +10,8 @@ interface DateRange {
   end_year: number | null;
 }
 
-interface IdentifiableItem {
-  id: string;
+interface IdentifiableItem<T = string> {
+  id: T;
 }
 
 export interface Admin extends IdentifiableItem {
@@ -95,3 +95,11 @@ export interface JobListingRequirements
     Pick<JobApplicants, "joblisting_id"> {
   requirement: string;
 }
+
+export interface Tags extends IdentifiableItem<number> {
+  name: string;
+}
+
+export interface JobTags
+  extends Pick<JobListing, "joblisting_id">,
+    IdentifiableItem<number> {}

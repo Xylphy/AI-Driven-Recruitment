@@ -4,24 +4,18 @@ import { Button } from "@/components/common/Button";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase/client";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const router = useRouter();
   const [isAuthLoading, setIsAuthLoading] = useState(false);
 
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (user) {
-        setIsAuthLoading(false);
-      }
-    });
-    return () => unsubscribe();
-  }, [router, isAuthLoading]);
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    setIsAuthLoading(true);
+
     const formData = new FormData(e.currentTarget);
 
     const email = formData.get("email")?.toString().trim();

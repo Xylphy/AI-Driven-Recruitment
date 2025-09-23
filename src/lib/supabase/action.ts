@@ -98,10 +98,6 @@ export function findWithJoin<T>(
           ${joinConfig.foreignTable}:${joinConfig.foreignKey} (${joinConfig.fields})
         `);
 
-      // if (filterColumn && filterValue) {
-      //   query = query.eq(filterColumn, filterValue);
-      // }
-      //
       if (filters) {
         filters.forEach(({ column, value }) => {
           query = query.eq(column, value);

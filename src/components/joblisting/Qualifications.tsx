@@ -1,6 +1,6 @@
 "use client";
 
-export default function Qualifications({
+export default function ListInputSection({
   items,
   update,
   deleteItem,

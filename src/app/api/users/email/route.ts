@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
 
   if (!validationResult.success) {
     return NextResponse.json(
-      { error: validationResult.error.errors.map((e) => e.message).join(", ") },
+      { error: validationResult.error.issues.map((e) => e.message).join(", ") },
       { status: 400 }
     );
   }
