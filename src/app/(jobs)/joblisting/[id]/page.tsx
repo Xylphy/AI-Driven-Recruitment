@@ -25,6 +25,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
       requirements: string[];
       qualifications: string[];
       isApplicant: boolean;
+      tags: string[];
     }
   >({
     id: "",
@@ -36,6 +37,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     requirements: [],
     qualifications: [],
     isApplicant: true,
+    tags: [],
   });
 
   const handleApply = async () => {
@@ -66,7 +68,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
       )
       .finally(() => setIsApplying(false));
   };
-  
+
   useEffect(() => {
     fetch(`/api/jobDetails?job=${jobId}`, {
       method: "GET",
@@ -205,6 +207,19 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                   <li key={index} className="flex items-start gap-2">
                     <MdChevronRight className="text-red-600 mt-1" />
                     <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+            <section>
+              <h2 className="text-2xl font-bold text-red-600 mb-4">Tags</h2>
+              <ul className="space-y-2 text-gray-700 text-sm">
+                {jobDetails.tags.map((tag, index) => (
+                  <li
+                    key={index}
+                    className="inline-block bg-gray-200 text-gray-800 px-3 py-1 rounded-full text-sm mr-2 mb-2"
+                  >
+                    {tag}
                   </li>
                 ))}
               </ul>

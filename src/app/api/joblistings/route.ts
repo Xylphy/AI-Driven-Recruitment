@@ -261,7 +261,7 @@ export async function PUT(request: NextRequest) {
   const parsedData = jobListingSchema.safeParse(await request.json());
   if (!parsedData.success) {
     return NextResponse.json(
-      { error: parsedData.error.format() },
+      { error: parsedData.error.issues.map((e) => e.message).join(", ") },
       { status: 422 }
     );
   }
