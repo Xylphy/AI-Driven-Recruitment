@@ -51,6 +51,39 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const { data: tagRows, error: tagError } = await supabase
+    .from("tags")
+    .upsert(
+      Array.from(new Set(parsedData.data.tags?.map((tag) => tag.title))).map(
+        (name) => ({ name })
+      ),
+      { onConflict: "slug" }
+    )
+    .select("id, name");
+
+  if (tagError) {
+    await deleteTable(supabase, "job_listings", "id", insertedData[0].id);
+    return NextResponse.json(
+      { error: "Failed to create job listings" },
+      { status: 500 }
+    );
+  }
+
+  const { error: errorLink } = await supabase.from("job_tags").insert(
+    tagRows.map((t) => ({
+      joblisting_id: insertedData[0].id,
+      tag_id: t.id,
+    }))
+  );
+
+  if (errorLink) {
+    await deleteTable(supabase, "job_listings", "id", insertedData[0].id);
+    return NextResponse.json(
+      { error: "Failed to create job listings" },
+      { status: 500 }
+    );
+  }
+
   const results = await Promise.all([
     ...(parsedData.data.qualifications?.map((qualification) =>
       insertTable(supabase, "jl_qualifications", {

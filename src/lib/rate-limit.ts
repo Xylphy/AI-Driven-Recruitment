@@ -9,7 +9,7 @@ const rateLimitCache = new LRUCache<string, number[]>({
 
 export function rateLimit(config: { max: number; windowMs: number }) {
   return {
-    async check(request: NextRequest) {
+    check(request: NextRequest) {
       const ip =
         request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
         "unknown";

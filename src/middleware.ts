@@ -51,8 +51,7 @@ const publicPathCsrf = [
 
 export async function middleware(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith("/api")) {
-    const { success } = await limiter.check(request);
-    if (!success) {
+    if (!limiter.check(request).success) {
       return NextResponse.json(
         { error: "Rate limit exceeded" },
         { status: 429 }

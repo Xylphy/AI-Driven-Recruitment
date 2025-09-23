@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { JobListing } from "@/types/types";
-import Qualifications from "@/components/joblisting/Qualifications";
+import ListInputSection from "@/components/joblisting/Qualifications";
 import useAuth from "@/hooks/useAuth";
 import { useRouter, useParams } from "next/navigation";
 import { JOB_LOCATIONS } from "@/lib/constants";
@@ -162,7 +162,7 @@ export default function Page() {
           />
         </div>
 
-        <Qualifications
+        <ListInputSection
           items={jobListing.qualifications}
           title="Qualifications"
           update={(id, value) => handleUpdate("qualifications", id, value)}
@@ -170,7 +170,7 @@ export default function Page() {
           add={() => handleAdd("qualifications")}
         />
 
-        <Qualifications
+        <ListInputSection
           items={jobListing.requirements}
           title="Requirements"
           update={(id, value) => handleUpdate("requirements", id, value)}

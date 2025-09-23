@@ -81,3 +81,11 @@ export interface JWT extends JwtPayload {
   id: string;
   isAdmin: boolean;
 }
+
+interface Tag extends IdentifiableItem {
+  title: string;
+}
+
+export interface Tags {
+  tags: Tag[];
+}
