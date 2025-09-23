@@ -85,18 +85,18 @@ export async function POST(request: NextRequest) {
   }
 
   const results = await Promise.all([
-    ...(parsedData.data.qualifications?.map((qualification) =>
+    ...(parsedData.data.qualifications || []).map((qualification) =>
       insertTable(supabase, "jl_qualifications", {
         joblisting_id: insertedData[0].id,
         qualification: qualification.title,
       })
-    ) || []),
-    ...(parsedData.data.requirements?.map((requirement) =>
+    ),
+    ...(parsedData.data.requirements || []).map((requirement) =>
       insertTable(supabase, "jl_requirements", {
         joblisting_id: insertedData[0].id,
         requirement: requirement.title,
       })
-    ) || []),
+    ),
   ]);
 
   if (results.some((result) => result.error)) {
@@ -271,7 +271,39 @@ export async function PUT(request: NextRequest) {
   await Promise.all([
     deleteTable(supabase, "jl_qualifications", "joblisting_id", jobId),
     deleteTable(supabase, "jl_requirements", "joblisting_id", jobId),
+    deleteTable(supabase, "job_tags", "joblisting_id", jobId),
   ]);
+
+  const { data: tagRows, error: tagError } = await supabase
+    .from("tags")
+    .upsert(
+      Array.from(new Set(parsedData.data.tags?.map((tag) => tag.title))).map(
+        (name) => ({ name })
+      ),
+      { onConflict: "slug" }
+    )
+    .select("id, name");
+
+  if (tagError) {
+    return NextResponse.json(
+      { error: "Failed to update job listing" },
+      { status: 500 }
+    );
+  }
+
+  const { error: errorLink } = await supabase.from("job_tags").insert(
+    tagRows.map((t) => ({
+      joblisting_id: jobId,
+      tag_id: t.id,
+    }))
+  );
+
+  if (errorLink) {
+    return NextResponse.json(
+      { error: "Failed to create job listings" },
+      { status: 500 }
+    );
+  }
 
   const promises = await Promise.all([
     updateTable(supabase, "job_listings", "id", jobId, {
@@ -279,18 +311,18 @@ export async function PUT(request: NextRequest) {
       location: parsedData.data.location,
       is_fulltime: parsedData.data.isFullTime,
     }),
-    ...(parsedData.data.qualifications?.map((qualification) =>
+    ...(parsedData.data.qualifications || []).map((qualification) =>
       insertTable(supabase, "jl_qualifications", {
         joblisting_id: jobId,
         qualification: qualification.title,
       })
-    ) || []),
-    ...(parsedData.data.requirements?.map((requirement) =>
+    ),
+    ...(parsedData.data.requirements || []).map((requirement) =>
       insertTable(supabase, "jl_requirements", {
         joblisting_id: jobId,
         requirement: requirement.title,
       })
-    ) || []),
+    ),
   ]);
 
   if (promises.some((promise) => promise.error)) {

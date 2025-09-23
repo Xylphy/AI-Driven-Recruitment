@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { JobListing } from "@/types/types";
+import { JobListing, Tags } from "@/types/types";
 import ListInputSection from "@/components/joblisting/Qualifications";
 import useAuth from "@/hooks/useAuth";
 import { useRouter, useParams } from "next/navigation";
@@ -16,11 +16,12 @@ export default function Page() {
   const [jobListing, setJobListing] = useState<
     Omit<JobListing, "created_at"> & {
       isFullTime: boolean;
-    }
+    } & Tags
   >({
     title: "",
     qualifications: [],
     requirements: [],
+    tags: [],
     location: "",
     isFullTime: true,
   });
@@ -65,6 +66,11 @@ export default function Page() {
               id: index,
             })) || [],
           isFullTime: data.is_fulltime,
+          tags:
+            data.tags.map((tag: string, index: number) => ({
+              title: tag,
+              id: index,
+            })) || [],
         });
       });
   }, [information, router, isAuthLoading]);
@@ -76,7 +82,7 @@ export default function Page() {
     setJobListing((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleAdd = (field: "qualifications" | "requirements") => {
+  const handleAdd = (field: "qualifications" | "requirements" | "tags") => {
     setJobListing((prev) => {
       return {
         ...prev,
@@ -86,7 +92,7 @@ export default function Page() {
   };
 
   const handleUpdate = (
-    field: "qualifications" | "requirements",
+    field: "qualifications" | "requirements" | "tags",
     id: number,
     value: string
   ) => {
@@ -99,7 +105,7 @@ export default function Page() {
   };
 
   const handleDelete = (
-    field: "qualifications" | "requirements",
+    field: "qualifications" | "requirements" | "tags",
     id: number
   ) => {
     setJobListing((prev) => ({
@@ -176,6 +182,14 @@ export default function Page() {
           update={(id, value) => handleUpdate("requirements", id, value)}
           deleteItem={(id) => handleDelete("requirements", id)}
           add={() => handleAdd("requirements")}
+        />
+
+        <ListInputSection
+          items={jobListing.tags}
+          title="Tags"
+          update={(id, value) => handleUpdate("tags", id, value)}
+          deleteItem={(id) => handleDelete("tags", id)}
+          add={() => handleAdd("tags")}
         />
 
         <div className="mb-4">
