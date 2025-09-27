@@ -3,22 +3,26 @@
 import { MdLocationOn, MdAccessTime, MdChevronRight } from "react-icons/md";
 import Image from "next/image";
 import useAuth from "@/hooks/useAuth";
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { JobListing } from "@/types/schema";
 import Loading from "@/app/loading";
 
-export default function Page({ params }: { params: Promise<{ id: string }> }) {
+type Props = { params: { id: string } };
+
+export default function Page({ params }: Props) {
   const router = useRouter();
-  const { id: jobId } = use(params);
+  const jobId = params.id;
   const { information, isAuthenticated, csrfToken } = useAuth({
     fetchAdmin: true,
     routerActivation: false,
   });
-  const [jobLoading, isJobLoading] = useState(true);
+
+  const [jobLoading, setJobLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isApplying, setIsApplying] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const [jobDetails, setJobDetails] = useState<
     Omit<JobListing, "created_by"> & {
@@ -36,93 +40,136 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     joblisting_id: "",
     requirements: [],
     qualifications: [],
-    isApplicant: true,
+    isApplicant: false,
     tags: [],
   });
 
-  const handleApply = async () => {
-    setIsApplying(true);
-    fetch("/api/jobs/applicants", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": csrfToken ?? "",
-      },
-      body: JSON.stringify({ jobId }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (!data.error) {
-          alert(data.message);
-          setJobDetails((prev) => ({
-            ...prev,
-            isApplicant: true,
-          }));
-          return;
-        }
+  const formatDate = (value?: string) => {
+    if (!value) return "";
+    try {
+      return new Date(value).toLocaleDateString();
+    } catch {
+      return value;
+    }
+  };
 
-        throw new Error(data.error);
-      })
-      .catch(() =>
-        alert("Failed to apply for the job. Please try again later.")
-      )
-      .finally(() => setIsApplying(false));
+  const handleApply = async () => {
+    if (!csrfToken) {
+      alert("Unable to apply: missing CSRF token. Try reloading the page.");
+      return;
+    }
+    setIsApplying(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/jobs/applicants", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken,
+        },
+        body: JSON.stringify({ jobId }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        throw new Error(data?.error || data?.message || "Failed to apply");
+      }
+
+      // Success
+      alert(data.message || "Applied successfully");
+      setJobDetails((prev) => ({ ...prev, isApplicant: true }));
+    } catch (err: any) {
+      setError(err?.message ?? "Failed to apply for the job.");
+    } finally {
+      setIsApplying(false);
+    }
   };
 
   useEffect(() => {
-    fetch(`/api/jobDetails?job=${jobId}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("Failed to fetch job details");
-        }
-        return res.json();
-      })
-      .then((data) => {
+    const controller = new AbortController();
+
+    const load = async () => {
+      setJobLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(
+          `/api/jobDetails?job=${encodeURIComponent(jobId)}`,
+          {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+            signal: controller.signal,
+          }
+        );
+        if (!res.ok) throw new Error("Failed to fetch job details");
+        const data = await res.json();
+
+        const requirements = Array.isArray(data.requirements)
+          ? data.requirements
+          : typeof data.requirements === "string"
+          ? data.requirements.split("\n").filter(Boolean)
+          : [];
+
+        const qualifications = Array.isArray(data.qualifications)
+          ? data.qualifications
+          : typeof data.qualifications === "string"
+          ? data.qualifications.split("\n").filter(Boolean)
+          : [];
+
+        const tags = Array.isArray(data.tags)
+          ? data.tags
+          : typeof data.tags === "string"
+          ? data.tags
+              .split(",")
+              .map((t: string) => t.trim())
+              .filter(Boolean)
+          : [];
+
         setJobDetails({
           ...data,
-          created_at: new Date(data.created_at).toLocaleDateString(),
+          requirements,
+          qualifications,
+          tags,
+          created_at: formatDate(data.created_at),
+          isApplicant: Boolean(data.isApplicant),
         });
-      })
-      .catch((error) => {
-        alert(error.message);
-      })
-      .finally(() => {
-        isJobLoading(false);
-      });
-  }, []);
+      } catch (err: any) {
+        if (err.name !== "AbortError") {
+          setError(err?.message ?? "Unable to load job details.");
+        }
+      } finally {
+        setJobLoading(false);
+      }
+    };
+
+    load();
+    return () => controller.abort();
+  }, [jobId]);
 
   const handleDeleteJob = async () => {
+    if (!confirm("This will permanently delete the job listing. Continue?"))
+      return;
     setIsDeleting(true);
+    setError(null);
     try {
-      const response = await fetch(`/api/joblistings?jobId=${jobId}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete job");
-      }
-
+      const res = await fetch(
+        `/api/joblistings?jobId=${encodeURIComponent(jobId)}`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+      if (!res.ok) throw new Error("Failed to delete job");
       alert("Job deleted successfully");
       router.push("/profile");
-    } catch {
-      alert("Error deleting job");
+    } catch (err: any) {
+      setError(err?.message ?? "Error deleting job");
     } finally {
       setIsDeleting(false);
       setShowDeleteModal(false);
     }
   };
 
-  if (jobLoading) {
-    return <Loading />;
-  }
+  if (jobLoading) return <Loading />;
 
   return (
     <main className="bg-white min-h-screen py-5 px-4 md:px-20">
@@ -211,7 +258,8 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                 ))}
               </ul>
             </section>
-            <section>
+
+            <section className="mt-8">
               <h2 className="text-2xl font-bold text-red-600 mb-4">Tags</h2>
               <ul className="space-y-2 text-gray-700 text-sm">
                 {jobDetails.tags.map((tag, index) => (
@@ -227,6 +275,11 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
           </div>
 
           <div className="w-full lg:w-1/3 bg-gray-50 border-l p-6">
+            {error && (
+              <div className="mb-4 rounded bg-red-50 border border-red-200 text-red-700 px-4 py-2">
+                {error}
+              </div>
+            )}
             <section className="mb-8">
               <h3 className="text-xl font-bold text-gray-800 mb-2">
                 Job Summary
