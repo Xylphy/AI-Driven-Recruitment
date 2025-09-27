@@ -3,16 +3,14 @@
 import { MdLocationOn, MdAccessTime, MdChevronRight } from "react-icons/md";
 import Image from "next/image";
 import useAuth from "@/hooks/useAuth";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useEffect, useState } from "react";
+import { useRouter, useParams } from "next/navigation";
 import { JobListing } from "@/types/schema";
 import Loading from "@/app/loading";
 
-type Props = { params: { id: string } };
-
-export default function Page({ params }: Props) {
+export default function Page() {
   const router = useRouter();
-  const jobId = params.id;
+  const jobId = useParams().id as string;
   const { information, isAuthenticated, csrfToken } = useAuth({
     fetchAdmin: true,
     routerActivation: false,
@@ -78,8 +76,9 @@ export default function Page({ params }: Props) {
       // Success
       alert(data.message || "Applied successfully");
       setJobDetails((prev) => ({ ...prev, isApplicant: true }));
-    } catch (err: any) {
-      setError(err?.message ?? "Failed to apply for the job.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err ?? "Failed to apply for the job.");
+      setError(message);
     } finally {
       setIsApplying(false);
     }
@@ -132,9 +131,15 @@ export default function Page({ params }: Props) {
           created_at: formatDate(data.created_at),
           isApplicant: Boolean(data.isApplicant),
         });
-      } catch (err: any) {
-        if (err.name !== "AbortError") {
-          setError(err?.message ?? "Unable to load job details.");
+      } catch (err: unknown) {
+        const errName =
+          typeof err === "object" && err !== null && "name" in err
+            ? (err as { name?: unknown }).name
+            : undefined;
+
+        if (errName !== "AbortError") {
+          const message = err instanceof Error ? err.message : String(err ?? "Unable to load job details.");
+          setError(message);
         }
       } finally {
         setJobLoading(false);
@@ -146,10 +151,13 @@ export default function Page({ params }: Props) {
   }, [jobId]);
 
   const handleDeleteJob = async () => {
-    if (!confirm("This will permanently delete the job listing. Continue?"))
+    if (!confirm("This will permanently delete the job listing. Continue?")) {
       return;
+    }
+
     setIsDeleting(true);
     setError(null);
+
     try {
       const res = await fetch(
         `/api/joblistings?jobId=${encodeURIComponent(jobId)}`,
@@ -161,8 +169,10 @@ export default function Page({ params }: Props) {
       if (!res.ok) throw new Error("Failed to delete job");
       alert("Job deleted successfully");
       router.push("/profile");
-    } catch (err: any) {
-      setError(err?.message ?? "Error deleting job");
+
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err ?? "Error deleting job");
+      setError(message);
     } finally {
       setIsDeleting(false);
       setShowDeleteModal(false);
