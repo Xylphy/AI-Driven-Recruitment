@@ -1,13 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { onAuthStateChanged } from "firebase/auth";
+import {
+  onAuthStateChanged,
+  type User as FirebaseAuthUser,
+} from "firebase/auth";
 import { auth } from "@/lib/firebase/client";
 import { useEffect } from "react";
 import { checkAuthStatus } from "@/lib/library";
 import {
   Skills,
-  User,
+  User as SchemaUser,
   EducationalDetails,
   JobExperiences,
 } from "@/types/schema";
@@ -24,6 +27,19 @@ type UseAuthOptions = {
   routerActivation?: boolean;
 };
 
+type UsersApiData = {
+  user: Omit<SchemaUser, "id"> | null;
+  admin: boolean | null;
+  skills: Pick<Skills, "skill">[];
+  socialLinks: string[];
+  education: Omit<EducationalDetails, "user_id" | "id">[];
+  experience: Omit<JobExperiences, "user_id" | "id">[];
+};
+
+type UsersApiResponse = {
+  data: UsersApiData;
+};
+
 export default function useAuth({
   fetchUser = false,
   fetchAdmin = false,
@@ -32,10 +48,22 @@ export default function useAuth({
   fetchEducation = false,
   fetchExperience = false,
   routerActivation = true,
-}: UseAuthOptions = {}) {
+}: UseAuthOptions = {}): {
+  information: {
+    user: Omit<SchemaUser, "id"> | null;
+    admin: boolean | null;
+    skills: Pick<Skills, "skill">[];
+    socialLinks: string[];
+    education: Omit<EducationalDetails, "user_id" | "id">[];
+    experience: Omit<JobExperiences, "user_id" | "id">[];
+  };
+  isAuthenticated: boolean;
+  isAuthLoading: boolean;
+  csrfToken: string | null;
+} {
   const router = useRouter();
   const [information, setInformation] = useState<{
-    user: Omit<User, "id"> | null;
+    user: Omit<SchemaUser, "id"> | null;
     admin: boolean | null;
     skills: Pick<Skills, "skill">[];
     socialLinks: string[];
@@ -64,31 +92,39 @@ export default function useAuth({
   useEffect(() => {
     if (!csrfToken) return;
 
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        fetch("/api/auth/jwt", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRF-Token": csrfToken,
-          },
-          credentials: "include",
-        }).then(() => {
-          setIsAuthenticated(false);
+    const unsubscribe = onAuthStateChanged(
+      auth,
+      async (firebaseUser: FirebaseAuthUser | null) => {
+        if (!firebaseUser) {
+          try {
+            await fetch("/api/auth/jwt", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-Token": csrfToken,
+              },
+              credentials: "include",
+            });
 
-          if (routerActivation) {
-            router.push("/login");
+            setIsAuthenticated(false);
+
+            if (routerActivation) {
+              router.push("/login");
+            }
+          } catch (e) {
+            setIsAuthenticated(false);
+            if (routerActivation) router.push("/login");
           }
-        });
+        }
       }
-    });
+    );
 
-    const checkAuth = async () => {
-      if (await checkAuthStatus()) {
+    const checkAuth = async (): Promise<void> => {
+      const status = await checkAuthStatus();
+      if (status) {
         setIsAuthenticated(true);
       } else {
-        auth.signOut();
-        return;
+        await auth.signOut();
       }
     };
 
@@ -117,41 +153,41 @@ export default function useAuth({
       }
     });
 
-    const setInfo = async () => {
-      fetch(`/api/users?${params.toString()}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-      })
-        .then((res) => {
-          if (!res.ok) {
-            throw new Error("Failed to fetch user information");
-          }
-          return res.json();
-        })
-        .then((body) => {
-          if (body) {
-            const data = body.data;
-            setInformation({
-              user: data.user,
-              admin: data.admin,
-              skills: data.skills,
-              socialLinks: data.socialLinks,
-              education: data.education,
-              experience: data.experience,
-            });
-          }
-        })
-        .catch((error) => {
-          alert(error.message);
-          auth.signOut();
-          return;
-        })
-        .finally(() => {
-          setIsAuthLoading(false);
+    const setInfo = async (): Promise<void> => {
+      try {
+        const res = await fetch(`/api/users?${params.toString()}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
         });
+
+        if (!res.ok) {
+          throw new Error("Failed to fetch user information");
+        }
+
+        const body = (await res.json()) as UsersApiResponse | null;
+
+        if (body?.data) {
+          const data = body.data;
+          setInformation({
+            user: data.user,
+            admin: data.admin,
+            skills: data.skills,
+            socialLinks: data.socialLinks,
+            education: data.education,
+            experience: data.experience,
+          });
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        alert(message);
+        await auth.signOut();
+        return;
+      } finally {
+        setIsAuthLoading(false);
+      }
     };
 
     const checkAuthInterval = setInterval(() => {
