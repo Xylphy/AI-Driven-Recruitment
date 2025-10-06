@@ -200,6 +200,12 @@ export default function Profile() {
                 </svg>
               </button>
             )}
+            <button
+              onClick={() => router.push("/admin")}
+              className="mt-4 bg-red-600 text-white font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-600 hover:border-red-600 flex items-center justify-center gap-2"
+            >
+              Switch to Admin View
+            </button>
 
             <div className="flex flex-col gap-4 my-6 mt-auto">
               <div className="flex gap-4 justify-center">
