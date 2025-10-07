@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import {
   BarChart,
@@ -15,11 +14,22 @@ import {
   CartesianGrid,
 } from "recharts";
 
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+const jobActivity = [
+  { name: "Mon", jobs: 2 },
+  { name: "Tue", jobs: 5 },
+  { name: "Wed", jobs: 3 },
+  { name: "Thu", jobs: 7 },
+  { name: "Fri", jobs: 4 },
+];
+
+const candidateGrowth = [
+  { name: "Week 1", candidates: 25 },
+  { name: "Week 2", candidates: 40 },
+  { name: "Week 3", candidates: 32 },
+  { name: "Week 4", candidates: 50 },
+];
+
+export default function AdminLayout() {
   const [stats, setStats] = useState({
     totalJobs: 0,
     totalCandidates: 0,
@@ -28,7 +38,6 @@ export default function AdminLayout({
   });
 
   useEffect(() => {
-    // Replace with your real data fetch logic
     setStats({
       totalJobs: 24,
       totalCandidates: 186,
@@ -36,21 +45,6 @@ export default function AdminLayout({
       shortlisted: 32,
     });
   }, []);
-
-  const jobActivity = [
-    { name: "Mon", jobs: 2 },
-    { name: "Tue", jobs: 5 },
-    { name: "Wed", jobs: 3 },
-    { name: "Thu", jobs: 7 },
-    { name: "Fri", jobs: 4 },
-  ];
-
-  const candidateGrowth = [
-    { name: "Week 1", candidates: 25 },
-    { name: "Week 2", candidates: 40 },
-    { name: "Week 3", candidates: 32 },
-    { name: "Week 4", candidates: 50 },
-  ];
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -65,18 +59,21 @@ export default function AdminLayout({
                 {stats.totalJobs}
               </p>
             </div>
+
             <div className="bg-white p-5 rounded-lg shadow-md text-center">
               <h3 className="text-gray-500 text-sm">Total Candidates</h3>
               <p className="text-3xl font-bold text-[#E30022]">
                 {stats.totalCandidates}
               </p>
             </div>
+
             <div className="bg-white p-5 rounded-lg shadow-md text-center">
               <h3 className="text-gray-500 text-sm">Active Jobs</h3>
               <p className="text-3xl font-bold text-[#E30022]">
                 {stats.activeJobs}
               </p>
             </div>
+
             <div className="bg-white p-5 rounded-lg shadow-md text-center">
               <h3 className="text-gray-500 text-sm">Shortlisted</h3>
               <p className="text-3xl font-bold text-[#E30022]">

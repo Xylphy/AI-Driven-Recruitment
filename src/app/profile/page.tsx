@@ -127,7 +127,9 @@ export default function Profile() {
 
   const markAsRead = (id: string) => {
     setNotifications((prev) =>
-      prev.map((notif) => (notif.id === id ? { ...notif, read: true } : notif))
+      prev.map((notification) =>
+        notification.id === id ? { ...notification, read: true } : notification
+      )
     );
   };
 
@@ -330,7 +332,10 @@ export default function Profile() {
                 <button
                   onClick={() => {
                     setNotifications((prev) =>
-                      prev.map((notif) => ({ ...notif, read: true }))
+                      prev.map((notification) => ({
+                        ...notification,
+                        read: true,
+                      }))
                     );
                   }}
                   className="w-full text-red-600 hover:text-red-700 text-sm font-medium"

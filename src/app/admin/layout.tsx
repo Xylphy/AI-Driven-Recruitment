@@ -13,6 +13,7 @@ import {
   MdDashboard,
 } from "react-icons/md";
 import AdminDashboard from "@/components/AdminDashboard";
+import useAuth from "@/hooks/useAuth";
 
 export default function AdminLayout({
   children,
@@ -20,7 +21,29 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const pathname = usePathname();
+  const pathName = usePathname();
+  const { admin } = useAuth({ fetchAdmin: true }).information;
+
+  if (!admin) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <div className="bg-white p-8 rounded shadow text-center">
+          <h1 className="text-2xl font-bold mb-4 text-red-600">
+            Access Denied
+          </h1>
+          <p className="text-gray-700">
+            You do not have permission to access this page.
+          </p>
+          <Link
+            href="/"
+            className="mt-6 inline-block text-blue-500 hover:underline"
+          >
+            Go to Home
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -46,7 +69,7 @@ export default function AdminLayout({
               <Link
                 href="/admin"
                 className={`flex items-center gap-3 hover:bg-white/20 px-3 py-2 rounded-md transition ${
-                  pathname === "/admin" ? "bg-white/30" : ""
+                  pathName === "/admin" ? "bg-white/30" : ""
                 }`}
               >
                 <MdDashboard /> Dashboard
@@ -55,7 +78,7 @@ export default function AdminLayout({
               <Link
                 href="/admin/jobs"
                 className={`flex items-center gap-3 hover:bg-white/20 px-3 py-2 rounded-md transition ${
-                  pathname === "/admin/jobs" ? "bg-white/30" : ""
+                  pathName === "/admin/jobs" ? "bg-white/30" : ""
                 }`}
               >
                 <MdWork /> Jobs
@@ -64,7 +87,7 @@ export default function AdminLayout({
               <Link
                 href="/admin/applicants"
                 className={`flex items-center gap-3 hover:bg-white/20 px-3 py-2 rounded-md transition ${
-                  pathname === "/admin/candidates" ? "bg-white/30" : ""
+                  pathName === "/admin/applicants" ? "bg-white/30" : ""
                 }`}
               >
                 <MdPeople /> Candidates
@@ -73,7 +96,7 @@ export default function AdminLayout({
               <Link
                 href="/admin/compare"
                 className={`flex items-center gap-3 hover:bg-white/20 px-3 py-2 rounded-md transition ${
-                  pathname === "/admin/compare" ? "bg-white/30" : ""
+                  pathName === "/admin/compare" ? "bg-white/30" : ""
                 }`}
               >
                 <MdCompareArrows /> Compare
@@ -98,11 +121,7 @@ export default function AdminLayout({
         </header>
 
         <main className="flex-1 p-6 overflow-y-auto">
-          {pathname === "/admin" ? (
-            <AdminDashboard children={undefined} />
-          ) : (
-            children
-          )}
+          {pathName === "/admin" ? <AdminDashboard /> : children}
         </main>
       </div>
     </div>

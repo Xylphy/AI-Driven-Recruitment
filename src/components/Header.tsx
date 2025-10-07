@@ -1,5 +1,5 @@
 "use client";
-import { Bell, Search, User } from "lucide-react";
+import { Search } from "lucide-react";
 import { useState } from "react";
 
 export default function Header() {

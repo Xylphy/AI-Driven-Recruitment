@@ -105,15 +105,11 @@ export default function useAuth({
               },
               credentials: "include",
             });
-
+          } finally {
             setIsAuthenticated(false);
-
             if (routerActivation) {
               router.push("/login");
             }
-          } catch (e) {
-            setIsAuthenticated(false);
-            if (routerActivation) router.push("/login");
           }
         }
       }
