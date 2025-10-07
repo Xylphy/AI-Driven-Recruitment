@@ -116,8 +116,8 @@ export default function Profile() {
             })),
           }));
         }
-      } catch (error: any) {
-        if (error.name === "AbortError") {
+      } catch (error: unknown) {
+        if (error instanceof DOMException && error.name === "AbortError") {
           // Request was aborted, do nothing
           return;
         }
@@ -341,14 +341,14 @@ export default function Profile() {
 
               <div className="p-4 border-t">
                 <button
-                  onClick={() => {
+                  onClick={() =>
                     setNotifications((prev) =>
                       prev.map((notification) => ({
                         ...notification,
                         read: true,
                       }))
-                    );
-                  }}
+                    )
+                  }
                   className="w-full text-red-600 hover:text-red-700 text-sm font-medium"
                 >
                   Mark all as read
