@@ -1,5 +1,10 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 
+interface QueryFilter {
+  column: string;
+  value: string;
+}
+
 interface QueryResult<T> {
   data: T | null;
   error: { message: string } | null;
@@ -25,7 +30,7 @@ export function deleteTable(
 export function find<T>(
   supabase: SupabaseClient,
   table: string,
-  filters?: Array<{ column: string; value: string }>,
+  filters?: Array<QueryFilter>,
   select: string = "*"
 ) {
   return {
@@ -114,5 +119,25 @@ export function findWithJoin<T>(
         },
       };
     },
+  };
+}
+
+export async function countTable(
+  supabase: SupabaseClient,
+  table: string,
+  filters?: Array<{ column: string; value: string }>
+): Promise<QueryResult<number>> {
+  let query = supabase.from(table).select("*", { count: "exact", head: true }); // returns only count and no data
+
+  if (filters) {
+    filters.forEach(({ column, value }) => {
+      query = query.eq(column, value);
+    });
+  }
+
+  const result = await query;
+  return {
+    data: result.count || 0,
+    error: result.error,
   };
 }

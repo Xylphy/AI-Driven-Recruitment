@@ -13,37 +13,73 @@ import {
   Line,
   CartesianGrid,
 } from "recharts";
+import { ActiveJob, WeeklyCumulativeApplicants } from "@/types/schema";
 
-const jobActivity = [
-  { name: "Mon", jobs: 2 },
-  { name: "Tue", jobs: 5 },
-  { name: "Wed", jobs: 3 },
-  { name: "Thu", jobs: 7 },
-  { name: "Fri", jobs: 4 },
-];
+interface CandidateGrowth {
+  name: string;
+  candidates: number;
+}
 
-const candidateGrowth = [
-  { name: "Week 1", candidates: 25 },
-  { name: "Week 2", candidates: 40 },
-  { name: "Week 3", candidates: 32 },
-  { name: "Week 4", candidates: 50 },
-];
+interface JobActivityType {
+  name: string;
+  jobs: number;
+}
+
+interface AdminStats {
+  totalJobs: number;
+  activeJobs: number; // Total Jobs and Active Jobs are the same for now
+  totalCandidates: number;
+  jobActivity: JobActivityType[];
+  shortListed: number;
+  candidateGrowth: CandidateGrowth[];
+}
+
+interface AdminStatsResponse
+  extends Omit<AdminStats, "candidateGrowth" | "jobActivity"> {
+  candidateGrowth: WeeklyCumulativeApplicants[];
+  jobActivity: ActiveJob[];
+}
 
 export default function AdminLayout() {
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<AdminStats>({
     totalJobs: 0,
     totalCandidates: 0,
     activeJobs: 0,
-    shortlisted: 0,
+    jobActivity: [],
+    shortListed: 0,
+    candidateGrowth: [],
   });
 
   useEffect(() => {
-    setStats({
-      totalJobs: 24,
-      totalCandidates: 186,
-      activeJobs: 15,
-      shortlisted: 32,
-    });
+    const fetchStats = async () => {
+      fetch("/api/admin/stats")
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error("Failed to fetch stats");
+          }
+          return res.json();
+        })
+        .then((data: AdminStatsResponse) => {
+          setStats({
+            ...data,
+            candidateGrowth: data.candidateGrowth.map(
+              (item: WeeklyCumulativeApplicants) => ({
+                name: `Week ${item.iso_week}`,
+                candidates: item.applicants,
+              })
+            ),
+            jobActivity: data.jobActivity.map((item: ActiveJob) => ({
+              name: item.weekday,
+              jobs: item.jobs,
+            })),
+          });
+        })
+        .catch((error) => {
+          alert(error.message);
+        });
+    };
+
+    fetchStats();
   }, []);
 
   return (
@@ -77,7 +113,7 @@ export default function AdminLayout() {
             <div className="bg-white p-5 rounded-lg shadow-md text-center">
               <h3 className="text-gray-500 text-sm">Shortlisted</h3>
               <p className="text-3xl font-bold text-[#E30022]">
-                {stats.shortlisted}
+                {stats.shortListed}
               </p>
             </div>
           </section>
@@ -88,7 +124,7 @@ export default function AdminLayout() {
                 Weekly Job Activity
               </h3>
               <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={jobActivity}>
+                <BarChart data={stats.jobActivity}>
                   <XAxis dataKey="name" />
                   <YAxis />
                   <Tooltip />
@@ -102,7 +138,7 @@ export default function AdminLayout() {
                 Candidate Growth
               </h3>
               <ResponsiveContainer width="100%" height={250}>
-                <LineChart data={candidateGrowth}>
+                <LineChart data={stats.candidateGrowth}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis />
