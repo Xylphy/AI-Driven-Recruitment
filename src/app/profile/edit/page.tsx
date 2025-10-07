@@ -52,7 +52,8 @@ export default function EditProfilePage() {
   const controllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    return () => controllerRef.current?.abort(); // cancel the request on unmount
+    const controller = controllerRef.current;
+    return () => controller?.abort(); // cancel the request on unmount
   }, []);
 
   useEffect(() => {
@@ -211,6 +212,7 @@ export default function EditProfilePage() {
       setResponse(null);
     } catch {
     } finally {
+      controllerRef.current = null;
       setIsSubmitting(false);
     }
   };

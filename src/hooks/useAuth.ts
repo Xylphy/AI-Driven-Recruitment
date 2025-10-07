@@ -130,8 +130,8 @@ export default function useAuth({
     checkAuth();
 
     return () => {
-      controller.abort(); // cancel the request on unmount
       unsubscribe();
+      controller.abort(); // cancel the request on unmount
     };
   }, [router, csrfToken]);
 
@@ -184,7 +184,9 @@ export default function useAuth({
             experience: data.experience,
           });
         }
-      } catch (error) {
+      } catch (error: unknown) {
+        if (error instanceof Error && error.name === "AbortError") return;
+
         const message = error instanceof Error ? error.message : String(error);
         alert(message);
         await auth.signOut();

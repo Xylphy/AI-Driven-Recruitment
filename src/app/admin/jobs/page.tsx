@@ -1,8 +1,28 @@
 "use client";
+
+import { useRouter } from "next/navigation";
+
 export default function JobsPage() {
+  const router = useRouter();
   const jobs = [
-    { title: "Software Engineer", applicants: 12, status: "Open" },
-    { title: "Graphic Designer", applicants: 5, status: "Closed" },
+    {
+      title: "Web Developer",
+      applicants: 1,
+      status: "Open",
+      id: "4096b1dc-13d1-4a10-b499-b0e2684dfa31",
+    },
+    {
+      title: "Some random job",
+      applicants: 0,
+      status: "Open",
+      id: "7d8a2d72-432f-40a5-899d-5d93086afb0e",
+    },
+    {
+      title: "Test title",
+      applicants: 0,
+      status: "Open",
+      id: "9721e964-67ca-42ad-9542-2c2d893e498e",
+    },
   ];
 
   return (
@@ -17,8 +37,19 @@ export default function JobsPage() {
           </tr>
         </thead>
         <tbody>
-          {jobs.map((job, i) => (
-            <tr key={i} className="border-t hover:bg-gray-50 transition">
+          {jobs.map((job) => (
+            <tr
+              key={job.id}
+              className="border-t hover:bg-gray-50 transition cursor-pointer"
+              role="button"
+              tabIndex={0}
+              onClick={() => router.push(`/joblisting/${job.id}`)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  router.push(`/joblisting/${job.id}`);
+                }
+              }}
+            >
               <td className="p-4">{job.title}</td>
               <td className="p-4">{job.applicants}</td>
               <td className="p-4">

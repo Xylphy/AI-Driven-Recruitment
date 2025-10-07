@@ -67,8 +67,8 @@ export default function AdminLayout() {
           setStats({
             ...data,
             candidateGrowth: data.candidateGrowth.map(
-              (item: WeeklyCumulativeApplicants) => ({
-                name: `Week ${item.iso_week}`,
+              (item: WeeklyCumulativeApplicants, index) => ({
+                name: `Week ${index + 1}`,
                 candidates: item.applicants,
               })
             ),

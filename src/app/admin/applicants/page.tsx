@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 
 interface Candidate {
@@ -13,40 +14,17 @@ interface Candidate {
 
 export default function ApplicantsPage() {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const router = useRouter();
 
   useEffect(() => {
     setCandidates([
       {
         id: 1,
-        name: "John Doe",
-        email: "john.doe@email.com",
-        jobTitle: "Frontend Developer",
-        status: "Shortlisted",
-        matchScore: 92,
-      },
-      {
-        id: 2,
-        name: "Jane Smith",
-        email: "jane.smith@email.com",
-        jobTitle: "UI/UX Designer",
-        status: "Interviewed",
-        matchScore: 88,
-      },
-      {
-        id: 3,
-        name: "Michael Reyes",
-        email: "michael.reyes@email.com",
-        jobTitle: "Backend Developer",
-        status: "Pending Review",
-        matchScore: 74,
-      },
-      {
-        id: 4,
-        name: "Angela Cruz",
-        email: "angela.cruz@email.com",
-        jobTitle: "Project Manager",
-        status: "Hired",
-        matchScore: 95,
+        name: "Roqi Todo",
+        email: "todoroqi@gmail.com",
+        jobTitle: "Web Developer",
+        status: "Pending",
+        matchScore: 75,
       },
     ]);
   }, []);
@@ -110,7 +88,12 @@ export default function ApplicantsPage() {
                 </td>
                 <td className="py-3 px-4 text-center">
                   <div className="flex justify-center gap-2">
-                    <button className="px-3 py-1 text-sm bg-[#E30022] text-white rounded hover:bg-red-700 transition">
+                    <button
+                      className="px-3 py-1 text-sm bg-[#E30022] text-white rounded hover:bg-red-700 transition"
+                      onClick={() =>
+                        router.push(`/candidateprofile/${candidate.id}`)
+                      }
+                    >
                       View
                     </button>
                     <button className="px-3 py-1 text-sm border border-[#E30022] text-[#E30022] rounded hover:bg-red-50 transition">

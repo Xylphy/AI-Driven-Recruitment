@@ -63,8 +63,7 @@ export default function LoginPage() {
         })
         .then(() => router.push("/profile"));
     } catch (error) {
-      const isAbort =
-        typeof error === "object" && (error as any).name === "AbortError";
+      const isAbort = typeof error === "object" && (error as Error)?.name === "AbortError";
 
       if (!isAbort) {
         alert(

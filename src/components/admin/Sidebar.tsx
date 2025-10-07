@@ -2,8 +2,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Briefcase, Users, BarChart2 } from "lucide-react";
+import type { ReactElement } from "react";
 
-const navItems = [
+const navItems: { name: string; href: string; icon: ReactElement }[] = [
   { name: "Jobs", href: "/admin/jobs", icon: <Briefcase /> },
   { name: "Candidates", href: "/admin/candidates", icon: <Users /> },
   { name: "Compare", href: "/admin/compare", icon: <BarChart2 /> },
@@ -21,7 +22,7 @@ export default function Sidebar() {
         {navItems.map((item) => (
           <Link
             key={item.name}
-            href={item.href as any}
+            href={{ pathname: item.href }}
             className={`flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 font-medium transition-all ${
               pathname === item.href
                 ? "bg-red-100 text-red-600"

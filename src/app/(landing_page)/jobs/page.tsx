@@ -23,9 +23,10 @@ export default function Careers() {
     })
       .then((res) => res.json())
       .then((data) => setJobs(data.data || []))
-      .catch(() =>
-        alert("Failed to fetch job listings. Please try again later.")
-      );
+      .catch((error) => {
+        if (error.name === "AbortError") return;
+        alert("Failed to fetch job listings. Please try again later.");
+      });
 
     return () => controller.abort(); // cancel the request on unmount
   }, []);

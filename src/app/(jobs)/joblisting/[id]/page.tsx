@@ -94,7 +94,7 @@ export default function Page() {
       const isAbort =
         typeof err === "object" &&
         err !== null &&
-        (err as any).name === "AbortError";
+        (err as Error).name === "AbortError";
       if (!isAbort) {
         const message =
           err instanceof Error
@@ -202,7 +202,7 @@ export default function Page() {
       const isAbort =
         typeof err === "object" &&
         err !== null &&
-        (err as any).name === "AbortError";
+        (err as Error).name === "AbortError";
       if (!isAbort) {
         const message =
           err instanceof Error

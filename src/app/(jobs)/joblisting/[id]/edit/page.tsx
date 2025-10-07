@@ -6,7 +6,6 @@ import ListInputSection from "@/components/joblisting/Qualifications";
 import useAuth from "@/hooks/useAuth";
 import { useRouter, useParams } from "next/navigation";
 import { JOB_LOCATIONS } from "@/lib/constants";
-import { useReducedMotion } from "framer-motion";
 
 export default function Page() {
   const router = useRouter();

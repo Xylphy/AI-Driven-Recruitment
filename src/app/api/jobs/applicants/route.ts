@@ -92,10 +92,6 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   const jobId = request.nextUrl.searchParams.get("jobId");
 
-  if (!jobId) {
-    return NextResponse.json({ error: "Job ID is required" }, { status: 400 });
-  }
-
   const { isAdmin } = jwt.verify(
     request.cookies.get("token")!.value,
     process.env.JWT_SECRET!
@@ -115,7 +111,7 @@ export async function GET(request: NextRequest) {
       foreignKey: "user_id",
       fields: "id, first_name, last_name, firebase_uid",
     })
-      .many([{ column: "joblisting_id", value: jobId }])
+      .many()
       .execute();
 
   if (errorApplicants) {

@@ -71,52 +71,58 @@ export default function Profile() {
     const controller = new AbortController();
 
     const fetchContent = async () => {
-      return fetch("/api/joblistings", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        signal: controller.signal,
-      })
-        .then((res) => {
-          if (!res.ok) {
-            alert("Failed to fetch job listings");
-            return null;
-          }
-          return res.json();
-        })
-        .then((body) => {
-          if (!body) {
-            return;
-          }
+      try {
+        const res = await fetch("/api/joblistings", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          signal: controller.signal,
+        });
 
-          const formatJobDate = (
-            job: Pick<JobListing, "title" | "created_at">
-          ) => ({
-            ...job,
-            created_at: new Date(job.created_at).toLocaleDateString(),
+        if (!res.ok) {
+          alert("Failed to fetch job listings");
+          return null;
+        }
+
+        const body = await res.json();
+        if (!body) {
+          return;
+        }
+
+        const formatJobDate = (
+          job: Pick<JobListing, "title" | "created_at">
+        ) => ({
+          ...job,
+          created_at: new Date(job.created_at).toLocaleDateString(),
+        });
+
+        if (information.admin) {
+          setJobListed({
+            createdByThem: body.data.createdByThem.map(formatJobDate),
+            createdByOthers: body.data.createdByAll.map(formatJobDate),
+          });
+        } else {
+          setJobListed({
+            createdByThem: [],
+            createdByOthers: body.data.map(formatJobDate),
           });
 
-          if (information.admin) {
-            setJobListed({
-              createdByThem: body.data.createdByThem.map(formatJobDate),
-              createdByOthers: body.data.createdByAll.map(formatJobDate),
-            });
-          } else {
-            setJobListed({
-              createdByThem: [],
-              createdByOthers: body.data.map(formatJobDate),
-            });
-
-            setJobListed((prev) => ({
-              ...prev,
-              createdByOthers: prev.createdByOthers.map((job) => ({
-                ...job,
-                id: job.joblisting_id,
-              })),
-            }));
-          }
-        });
+          setJobListed((prev) => ({
+            ...prev,
+            createdByOthers: prev.createdByOthers.map((job) => ({
+              ...job,
+              id: job.joblisting_id,
+            })),
+          }));
+        }
+      } catch (error: any) {
+        if (error.name === "AbortError") {
+          // Request was aborted, do nothing
+          return;
+        }
+        alert("Failed to fetch job listings");
+      }
     };
 
     fetchContent().finally(() => {
