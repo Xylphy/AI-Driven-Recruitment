@@ -1,15 +1,10 @@
-import Header from "@/components/Header";
+import AdminDashboard from "@/components/admin/AdminDashboard";
 
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function AdminLayout() {
   return (
     <div className="flex min-h-screen bg-gray-50">
       <div className="flex-1 flex flex-col">
-        <Header />
-        <main className="flex-1 p-6">{children}</main>
+        <AdminDashboard />
       </div>
     </div>
   );

@@ -3,7 +3,7 @@
 import { FaFacebook, FaInstagram } from "react-icons/fa";
 import { MdEmail, MdPhone } from "react-icons/md";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import useAuth from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { use } from "react";
@@ -85,6 +85,11 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const [candidateProfile, setCandidateProfile] =
     useState<CandidateProfile | null>(null);
   const [onResume, setOnResume] = useState(false);
+  const controllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    return () => controllerRef.current?.abort(); // cancel the request on unmount
+  }, []);
 
   useEffect(() => {
     if (isAuthLoading) {
@@ -104,6 +109,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
       "/api/users/candidateProfile",
       window.location.origin
     );
+    const controller = new AbortController();
 
     candidateAPI.searchParams.set("userId", candidateId);
     candidateAPI.searchParams.set("score", "true");
@@ -115,6 +121,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
       headers: {
         "Content-Type": "application/json",
       },
+      signal: controller.signal,
     })
       .then((res) => {
         if (res.ok) {
@@ -134,6 +141,8 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
 
         setSelectedStatus(data.status || "");
       });
+
+    return () => controller.abort(); // cancel the request on unmount
   }, [candidateId, isAuthLoading]);
 
   const handleStatusChange = async (
@@ -142,17 +151,26 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     const newStatus = e.target.value;
     setSelectedStatus(newStatus);
 
+    controllerRef.current?.abort(); // Abort any ongoing request
+    controllerRef.current = new AbortController();
+
     fetch("/api/users/candidateProfile", {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
         "X-CSRF-Token": csrfToken ?? "",
       },
-
+      signal: controllerRef.current.signal,
       body: JSON.stringify({
         userId: candidateId,
         status: newStatus,
       }),
+    }).catch((err) => {
+      if (err.name === "AbortError") {
+        // Request was aborted
+        return;
+      }
+      alert("Failed to update status. Please try again.");
     });
   };
 

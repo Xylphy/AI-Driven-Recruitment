@@ -3,7 +3,7 @@
 import { MdLocationOn, MdAccessTime } from "react-icons/md";
 import Image from "next/image";
 import useAuth from "@/hooks/useAuth";
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Loading from "@/app/loading";
 import { JobListing } from "@/types/schema";
@@ -32,6 +32,11 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     joblisting_id: "",
   });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const controllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    return () => controllerRef.current?.abort(); // Abort any ongoing request on unmount
+  }, []);
 
   // Admin only
   useEffect(() => {
@@ -54,11 +59,14 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
       return;
     }
 
+    const controller = new AbortController();
+
     fetch(`/api/jobs/applicants?jobId=${jobId}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
       },
+      signal: controller.signal,
     })
       .then((res) => {
         if (!res.ok) {
@@ -81,6 +89,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
       headers: {
         "Content-Type": "application/json",
       },
+      signal: controller.signal,
     })
       .then((res) => {
         if (!res.ok) {
@@ -97,19 +106,39 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
       .catch((error) => {
         alert("Error fetching job details: " + error.message);
       });
+
+    return () => controller.abort(); // cancel the request on unmount
   }, [isAuthenticated]);
 
   const handleDeleteJob = async () => {
+    if (!information.admin) {
+      alert("You are not authorized to perform this action.");
+      setShowDeleteModal(false);
+      return;
+    }
+
+    controllerRef.current?.abort(); // Abort any ongoing request
+    controllerRef.current = new AbortController();
+
     fetch(`/api/joblisting/${jobId}`, {
       method: "DELETE",
-    }).then((res) => {
-      if (!res.ok) {
-        alert("Failed to delete job listing");
-        return;
-      }
-      alert("Job listing deleted successfully");
-      router.push("/profile");
-    });
+      signal: controllerRef.current.signal,
+    })
+      .then((res) => {
+        if (!res.ok) {
+          alert("Failed to delete job listing");
+          return;
+        }
+        alert("Job listing deleted successfully");
+        router.push("/profile");
+      })
+      .catch((err) => {
+        if (err.name === "AbortError") {
+          // Request was aborted
+          return;
+        }
+        alert("Failed to delete job listing. Please try again.");
+      });
   };
 
   if (candidatesLoading) {

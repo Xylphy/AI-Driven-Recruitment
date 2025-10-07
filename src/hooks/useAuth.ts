@@ -92,6 +92,8 @@ export default function useAuth({
   useEffect(() => {
     if (!csrfToken) return;
 
+    const controller = new AbortController();
+
     const unsubscribe = onAuthStateChanged(
       auth,
       async (firebaseUser: FirebaseAuthUser | null) => {
@@ -104,6 +106,7 @@ export default function useAuth({
                 "X-CSRF-Token": csrfToken,
               },
               credentials: "include",
+              signal: controller.signal,
             });
           } finally {
             setIsAuthenticated(false);
@@ -126,7 +129,10 @@ export default function useAuth({
 
     checkAuth();
 
-    return () => unsubscribe();
+    return () => {
+      controller.abort(); // cancel the request on unmount
+      unsubscribe();
+    };
   }, [router, csrfToken]);
 
   useEffect(() => {
@@ -134,6 +140,7 @@ export default function useAuth({
       return;
     }
 
+    const controller = new AbortController();
     const params = new URLSearchParams();
 
     Object.entries({
@@ -157,6 +164,7 @@ export default function useAuth({
             "Content-Type": "application/json",
           },
           credentials: "include",
+          signal: controller.signal,
         });
 
         if (!res.ok) {
@@ -199,7 +207,10 @@ export default function useAuth({
 
     setInfo();
 
-    return () => clearInterval(checkAuthInterval);
+    return () => {
+      controller.abort(); // cancel the request on unmount
+      clearInterval(checkAuthInterval);
+    };
   }, [isAuthenticated]);
 
   return {

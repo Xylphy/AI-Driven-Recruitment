@@ -68,12 +68,15 @@ export default function Profile() {
       return;
     }
 
+    const controller = new AbortController();
+
     const fetchContent = async () => {
       return fetch("/api/joblistings", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
         },
+        signal: controller.signal,
       })
         .then((res) => {
           if (!res.ok) {
@@ -119,6 +122,8 @@ export default function Profile() {
     fetchContent().finally(() => {
       setIsJobLoading(false);
     });
+
+    return () => controller.abort(); // cancel the request on unmount
   }, [isAuthLoading]);
 
   const handleNotificationClick = () => {

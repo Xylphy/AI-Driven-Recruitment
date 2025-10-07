@@ -12,7 +12,6 @@ import {
   MdCompareArrows,
   MdDashboard,
 } from "react-icons/md";
-import AdminDashboard from "@/components/AdminDashboard";
 import useAuth from "@/hooks/useAuth";
 
 export default function AdminLayout({
@@ -120,9 +119,7 @@ export default function AdminLayout({
           </h1>
         </header>
 
-        <main className="flex-1 p-6 overflow-y-auto">
-          {pathName === "/admin" ? <AdminDashboard /> : children}
-        </main>
+        <main className="flex-1 p-6 overflow-y-auto">{children}</main>
       </div>
     </div>
   );

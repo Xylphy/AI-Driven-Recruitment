@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Header from "@/components/Header";
+import Header from "@/components/admin/Header";
 import {
   BarChart,
   Bar,
@@ -51,8 +51,12 @@ export default function AdminLayout() {
   });
 
   useEffect(() => {
+    const controller = new AbortController();
+
     const fetchStats = async () => {
-      fetch("/api/admin/stats")
+      fetch("/api/admin/stats", {
+        signal: controller.signal,
+      })
         .then((res) => {
           if (!res.ok) {
             throw new Error("Failed to fetch stats");
@@ -75,11 +79,14 @@ export default function AdminLayout() {
           });
         })
         .catch((error) => {
+          if (error.name === "AbortError") return;
           alert(error.message);
         });
     };
 
     fetchStats();
+
+    return () => controller.abort();
   }, []);
 
   return (

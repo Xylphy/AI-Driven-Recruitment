@@ -4,12 +4,17 @@ import { Button } from "@/components/common/Button";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase/client";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const router = useRouter();
   const [isAuthLoading, setIsAuthLoading] = useState(false);
+  const controllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    return () => controllerRef.current?.abort();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -31,6 +36,9 @@ export default function LoginPage() {
       return;
     }
 
+    controllerRef.current?.abort();
+    controllerRef.current = new AbortController();
+
     try {
       const userCredential = await signInWithEmailAndPassword(
         auth,
@@ -44,6 +52,7 @@ export default function LoginPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${userCredential.user.uid}`,
         },
+        signal: controllerRef.current?.signal,
         credentials: "include",
       })
         .then((res) => {
@@ -54,11 +63,16 @@ export default function LoginPage() {
         })
         .then(() => router.push("/profile"));
     } catch (error) {
-      alert(
-        "Authentication failed: " +
-          (error instanceof Error ? error.message : "Unknown error")
-      );
-      auth.signOut();
+      const isAbort =
+        typeof error === "object" && (error as any).name === "AbortError";
+
+      if (!isAbort) {
+        alert(
+          "Authentication failed: " +
+            (error instanceof Error ? error.message : "Unknown error")
+        );
+        auth.signOut();
+      }
     } finally {
       setIsAuthLoading(false);
     }

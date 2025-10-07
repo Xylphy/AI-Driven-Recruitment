@@ -1,3 +1,4 @@
+"use client";
 export default function JobsPage() {
   const jobs = [
     { title: "Software Engineer", applicants: 12, status: "Open" },

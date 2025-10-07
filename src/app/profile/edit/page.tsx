@@ -1,7 +1,7 @@
 "use client";
 import { UserForm } from "@/components/common/UserForm";
 import useAuth from "@/hooks/useAuth";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   SocialLink,
   EducationalDetail,
@@ -49,6 +49,11 @@ export default function EditProfilePage() {
     success?: boolean;
     message?: string;
   } | null>(null);
+  const controllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    return () => controllerRef.current?.abort(); // cancel the request on unmount
+  }, []);
 
   useEffect(() => {
     if (isAuthLoading) return;
@@ -176,6 +181,7 @@ export default function EditProfilePage() {
         headers: {
           "X-CSRF-Token": csrfToken || "",
         },
+        signal: controllerRef.current?.signal,
         body: formData,
       })
         .then((response) => {
