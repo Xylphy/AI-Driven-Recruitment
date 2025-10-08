@@ -1,8 +1,14 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 
-interface QueryFilter {
+export interface QueryFilter {
   column: string;
   value: string;
+}
+
+interface QueryForeignKey {
+  foreignTable: string;
+  foreignKey: string;
+  fields: string;
 }
 
 interface QueryResult<T> {
@@ -90,18 +96,15 @@ export function updateTable(
 export function findWithJoin<T>(
   supabase: SupabaseClient,
   mainTable: string,
-  joinConfig: {
-    foreignTable: string;
-    foreignKey: string;
-    fields: string;
-  }
+  joinConfigs: Array<QueryForeignKey>
 ) {
   return {
     many: (filters?: Array<{ column: string; value: string }>) => {
-      let query = supabase.from(mainTable).select(`
-          *,
-          ${joinConfig.foreignTable}:${joinConfig.foreignKey} (${joinConfig.fields})
-        `);
+      const joinSelect = joinConfigs
+        .map((j) => `${j.foreignTable}:${j.foreignKey} (${j.fields})`)
+        .join(",\n          ");
+
+      let query = supabase.from(mainTable).select(`*, ${joinSelect} `);
 
       if (filters) {
         filters.forEach(({ column, value }) => {

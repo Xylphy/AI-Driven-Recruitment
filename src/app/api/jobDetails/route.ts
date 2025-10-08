@@ -53,11 +53,13 @@ export async function GET(request: NextRequest) {
   const tagsPromise = findWithJoin<JobTags & { tags: { name: string } }>(
     supabase,
     "job_tags",
-    {
-      foreignTable: "tags",
-      foreignKey: "tag_id",
-      fields: "id, name",
-    }
+    [
+      {
+        foreignTable: "tags",
+        foreignKey: "tag_id",
+        fields: "id, name",
+      },
+    ]
   )
     .many([{ column: "joblisting_id", value: jobId }])
     .execute();

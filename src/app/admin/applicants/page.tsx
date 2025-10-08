@@ -9,7 +9,7 @@ interface Candidate {
   email: string;
   jobTitle: string;
   status: string;
-  matchScore: number;
+  predictiveSuccess: number;
 }
 
 export default function ApplicantsPage() {
@@ -17,16 +17,25 @@ export default function ApplicantsPage() {
   const router = useRouter();
 
   useEffect(() => {
-    setCandidates([
-      {
-        id: 1,
-        name: "Roqi Todo",
-        email: "todoroqi@gmail.com",
-        jobTitle: "Web Developer",
-        status: "Pending",
-        matchScore: 75,
-      },
-    ]);
+    const controller = new AbortController();
+    fetch("/api/jobs/applicants", {
+      signal: controller.signal,
+    })
+      .then((res) => {
+        if (res.ok) {
+          return res.json();
+        }
+      })
+      .then((data) => {
+        setCandidates(data.data);
+      })
+      .catch((error) => {
+        if (error.name !== "AbortError") {
+          alert("Failed to fetch candidates. Please try again later.");
+        }
+      });
+
+    return () => controller.abort();
   }, []);
 
   return (
@@ -68,21 +77,21 @@ export default function ApplicantsPage() {
                         : "bg-gray-100 text-gray-700"
                     }`}
                   >
-                    {candidate.status}
+                    {candidate.status || "Pending"}
                   </span>
                 </td>
                 <td className="py-3 px-4 text-center font-semibold">
                   <div className="flex items-center justify-center gap-2">
                     <span
                       className={`${
-                        candidate.matchScore >= 85
+                        candidate.predictiveSuccess >= 85
                           ? "text-green-600"
-                          : candidate.matchScore >= 70
+                          : candidate.predictiveSuccess >= 70
                           ? "text-yellow-600"
                           : "text-red-600"
                       }`}
                     >
-                      {candidate.matchScore}%
+                      {candidate.predictiveSuccess}%
                     </span>
                   </div>
                 </td>
