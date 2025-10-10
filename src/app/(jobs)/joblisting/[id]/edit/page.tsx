@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { JobListing, Tags } from "@/types/types";
 import ListInputSection from "@/components/joblisting/Qualifications";
 import useAuth from "@/hooks/useAuth";
@@ -12,7 +12,6 @@ export default function Page() {
   const params = useParams();
   const jobId = params.id as string;
   const [isSubmitting] = useState(false);
-
   const [jobListing, setJobListing] = useState<
     Omit<JobListing, "created_at"> & {
       isFullTime: boolean;
@@ -28,6 +27,11 @@ export default function Page() {
   const { information, isAuthLoading, csrfToken } = useAuth({
     fetchAdmin: true,
   });
+  const controllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    return () => controllerRef.current?.abort();
+  }, []);
 
   useEffect(() => {
     if (isAuthLoading) {
@@ -39,11 +43,14 @@ export default function Page() {
       router.push("/profile");
     }
 
+    const controller = new AbortController();
+
     fetch(`/api/jobDetails?job=${jobId}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
       },
+      signal: controller.signal,
     })
       .then((res) => {
         if (!res.ok) {
@@ -73,6 +80,8 @@ export default function Page() {
             })) || [],
         });
       });
+
+    return () => controller.abort(); // cancel the request on unmount
   }, [information, router, isAuthLoading]);
 
   const handleInputChange = (
@@ -122,20 +131,28 @@ export default function Page() {
       router.push("/profile");
     }
 
+    controllerRef.current?.abort(); // Abort any ongoing request
+    controllerRef.current = new AbortController();
+
     fetch(`/api/joblistings?jobId=${jobId}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
         "X-CSRF-Token": csrfToken ?? "",
       },
+      signal: controllerRef.current?.signal,
       body: JSON.stringify({ ...jobListing, jobId }),
-    }).then((response) => {
-      if (response.ok) {
-        alert("Job listing updated successfully");
-      } else {
-        alert("Failed to update job listing");
-      }
-    });
+    })
+      .then((response) => {
+        if (response.ok) {
+          alert("Job listing updated successfully");
+        } else {
+          alert("Failed to update job listing");
+        }
+      })
+      .catch((error) => {
+        if (error.name === "AbortError") return;
+      });
   };
 
   return (

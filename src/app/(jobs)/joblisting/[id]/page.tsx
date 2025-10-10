@@ -3,7 +3,7 @@
 import { MdLocationOn, MdAccessTime, MdChevronRight } from "react-icons/md";
 import Image from "next/image";
 import useAuth from "@/hooks/useAuth";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { JobListing } from "@/types/schema";
 import Loading from "@/app/loading";
@@ -21,6 +21,15 @@ export default function Page() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isApplying, setIsApplying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const controllerApply = useRef<AbortController | null>(null);
+  const controllerDelete = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    return () => {
+      controllerApply.current?.abort();
+      controllerDelete.current?.abort();
+    };
+  }, []);
 
   const [jobDetails, setJobDetails] = useState<
     Omit<JobListing, "created_by"> & {
@@ -58,6 +67,10 @@ export default function Page() {
     }
     setIsApplying(true);
     setError(null);
+
+    controllerApply.current?.abort();
+    controllerApply.current = new AbortController();
+
     try {
       const res = await fetch("/api/jobs/applicants", {
         method: "POST",
@@ -65,6 +78,7 @@ export default function Page() {
           "Content-Type": "application/json",
           "X-CSRF-Token": csrfToken,
         },
+        signal: controllerApply.current.signal,
         body: JSON.stringify({ jobId }),
       });
 
@@ -77,8 +91,17 @@ export default function Page() {
       alert(data.message || "Applied successfully");
       setJobDetails((prev) => ({ ...prev, isApplicant: true }));
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err ?? "Failed to apply for the job.");
-      setError(message);
+      const isAbort =
+        typeof err === "object" &&
+        err !== null &&
+        (err as Error).name === "AbortError";
+      if (!isAbort) {
+        const message =
+          err instanceof Error
+            ? err.message
+            : String(err ?? "Failed to apply for the job.");
+        setError(message);
+      }
     } finally {
       setIsApplying(false);
     }
@@ -138,7 +161,10 @@ export default function Page() {
             : undefined;
 
         if (errName !== "AbortError") {
-          const message = err instanceof Error ? err.message : String(err ?? "Unable to load job details.");
+          const message =
+            err instanceof Error
+              ? err.message
+              : String(err ?? "Unable to load job details.");
           setError(message);
         }
       } finally {
@@ -154,9 +180,11 @@ export default function Page() {
     if (!confirm("This will permanently delete the job listing. Continue?")) {
       return;
     }
-
     setIsDeleting(true);
     setError(null);
+
+    controllerDelete.current?.abort();
+    controllerDelete.current = new AbortController();
 
     try {
       const res = await fetch(
@@ -164,15 +192,25 @@ export default function Page() {
         {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
+          signal: controllerDelete.current.signal,
         }
       );
       if (!res.ok) throw new Error("Failed to delete job");
       alert("Job deleted successfully");
       router.push("/profile");
-
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err ?? "Error deleting job");
-      setError(message);
+      const isAbort =
+        typeof err === "object" &&
+        err !== null &&
+        (err as Error).name === "AbortError";
+      if (!isAbort) {
+        const message =
+          err instanceof Error
+            ? err.message
+            : String(err ?? "Error deleting job");
+
+        setError(message);
+      }
     } finally {
       setIsDeleting(false);
       setShowDeleteModal(false);

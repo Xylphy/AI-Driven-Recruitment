@@ -13,17 +13,22 @@ export default function Careers() {
   const [jobs, setJobs] = useState<Jobs[]>([]);
 
   useEffect(() => {
+    const controller = new AbortController();
     fetch("/api/jobs", {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
       },
+      signal: controller.signal,
     })
       .then((res) => res.json())
       .then((data) => setJobs(data.data || []))
-      .catch(() =>
-        alert("Failed to fetch job listings. Please try again later.")
-      );
+      .catch((error) => {
+        if (error.name === "AbortError") return;
+        alert("Failed to fetch job listings. Please try again later.");
+      });
+
+    return () => controller.abort(); // cancel the request on unmount
   }, []);
 
   return (
@@ -32,7 +37,7 @@ export default function Careers() {
         className="relative w-full h-[300px] bg-cover bg-center"
         style={{ backgroundImage: "url('/workspace.jpg')" }}
       >
-        <div className="absolute inset-0 bg-black bg-black/50 flex flex-col items-center justify-center">
+        <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center">
           <h1 className="text-white text-4xl sm:text-5xl font-bold">CAREERS</h1>
           <hr className="w-1/4 mx-auto border-t border-red-600 my-1" />
           <p className="text-white max-w-3xl text-center">

@@ -47,6 +47,7 @@ const publicPathCsrf = [
   "/api/auth/jwt",
   "/api/joblistings",
   "/api/csrf",
+  "/api/admin/stats",
 ];
 
 export async function middleware(request: NextRequest) {

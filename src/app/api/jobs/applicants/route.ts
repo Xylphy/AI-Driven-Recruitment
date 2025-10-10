@@ -2,7 +2,12 @@ import { createClientServer } from "@/lib/supabase/supabase";
 import { NextRequest, NextResponse } from "next/server";
 import { JWT } from "@/types/types";
 import jwt from "jsonwebtoken";
-import { insertTable, findWithJoin, find } from "@/lib/supabase/action";
+import {
+  insertTable,
+  findWithJoin,
+  find,
+  QueryFilter,
+} from "@/lib/supabase/action";
 import auth from "@/lib/firebase/admin";
 import { JobApplicants, User } from "@/types/schema";
 import { findOne } from "@/lib/mongodb/action";
@@ -89,12 +94,13 @@ export async function POST(request: NextRequest) {
   });
 }
 
+/**
+ * GET /api/jobs/applicants
+ * @param request NextRequest with optional jobId query parameter
+ * @returns A JSON response containing a list of applicants with their names, emails, and predictive success scores
+ */
 export async function GET(request: NextRequest) {
   const jobId = request.nextUrl.searchParams.get("jobId");
-
-  if (!jobId) {
-    return NextResponse.json({ error: "Job ID is required" }, { status: 400 });
-  }
 
   const { isAdmin } = jwt.verify(
     request.cookies.get("token")!.value,
@@ -109,13 +115,25 @@ export async function GET(request: NextRequest) {
   }
 
   const supabaseClient = await createClientServer(1, true);
+
+  const filter: QueryFilter[] = jobId
+    ? [{ column: "joblisting_id", value: jobId }]
+    : [];
+
   const { data: applicantsWithUsers, error: errorApplicants } =
-    await findWithJoin(supabaseClient, "job_applicants", {
-      foreignTable: "users",
-      foreignKey: "user_id",
-      fields: "id, first_name, last_name, firebase_uid",
-    })
-      .many([{ column: "joblisting_id", value: jobId }])
+    await findWithJoin(supabaseClient, "job_applicants", [
+      {
+        foreignTable: "users",
+        foreignKey: "user_id",
+        fields: "id, first_name, last_name, firebase_uid",
+      },
+      {
+        foreignTable: "job_listings",
+        foreignKey: "joblisting_id",
+        fields: "title",
+      },
+    ])
+      .many(filter)
       .execute();
 
   if (errorApplicants) {
@@ -143,6 +161,7 @@ export async function GET(request: NextRequest) {
       (applicantsWithUsers || []) as Array<
         JobApplicants & {
           users: Pick<User, "id" | "last_name" | "first_name" | "firebase_uid">;
+          job_listings: { title: string };
         }
       >
     ).map(async (applicant) => ({
@@ -163,6 +182,8 @@ export async function GET(request: NextRequest) {
       name: applicant.first_name + " " + applicant.last_name,
       email: applicant.email,
       predictiveSuccess: applicant.candidateMatch,
+      status: applicant.status,
+      jobTitle: applicant.job_listings.title,
     })),
   });
 }

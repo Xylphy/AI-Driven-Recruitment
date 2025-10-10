@@ -1,5 +1,16 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 
+export interface QueryFilter {
+  column: string;
+  value: string;
+}
+
+interface QueryForeignKey {
+  foreignTable: string;
+  foreignKey: string;
+  fields: string;
+}
+
 interface QueryResult<T> {
   data: T | null;
   error: { message: string } | null;
@@ -25,7 +36,7 @@ export function deleteTable(
 export function find<T>(
   supabase: SupabaseClient,
   table: string,
-  filters?: Array<{ column: string; value: string }>,
+  filters?: Array<QueryFilter>,
   select: string = "*"
 ) {
   return {
@@ -85,18 +96,15 @@ export function updateTable(
 export function findWithJoin<T>(
   supabase: SupabaseClient,
   mainTable: string,
-  joinConfig: {
-    foreignTable: string;
-    foreignKey: string;
-    fields: string;
-  }
+  joinConfigs: Array<QueryForeignKey>
 ) {
   return {
-    many: (filters?: Array<{ column: string; value: string }>) => {
-      let query = supabase.from(mainTable).select(`
-          *,
-          ${joinConfig.foreignTable}:${joinConfig.foreignKey} (${joinConfig.fields})
-        `);
+    many: (filters?: Array<QueryFilter>) => {
+      const joinSelect = joinConfigs
+        .map((j) => `${j.foreignTable}(${j.fields || "*"})`)
+        .join(", ");
+
+      let query = supabase.from(mainTable).select(`*, ${joinSelect}`);
 
       if (filters) {
         filters.forEach(({ column, value }) => {
@@ -114,5 +122,25 @@ export function findWithJoin<T>(
         },
       };
     },
+  };
+}
+
+export async function countTable(
+  supabase: SupabaseClient,
+  table: string,
+  filters?: Array<{ column: string; value: string }>
+): Promise<QueryResult<number>> {
+  let query = supabase.from(table).select("*", { count: "exact", head: true }); // returns only count and no data
+
+  if (filters) {
+    filters.forEach(({ column, value }) => {
+      query = query.eq(column, value);
+    });
+  }
+
+  const result = await query;
+  return {
+    data: result.count || 0,
+    error: result.error,
   };
 }

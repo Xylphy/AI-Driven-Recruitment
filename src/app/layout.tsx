@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
 import { poppins } from "../styles/fonts";
 import "./globals.css";
-import Navbar from "@/components/common/Navbar";
-import Footer from "@/components/common/Footer";
-import { Suspense } from "react";
-import Loading from "./loading";
+import ClientProviders from "@/components/providers/ClientProviders";
 
 export const metadata: Metadata = {
   title: "AI-Driven Recruitment",
@@ -24,11 +21,9 @@ export default function RootLayout({
       <body
         className={`${poppins.className} antialiased min-h-screen flex flex-col`}
       >
-        <Navbar />
-        <Suspense fallback={<Loading />}>
+        <ClientProviders>
           <main className="flex-grow">{children}</main>
-        </Suspense>
-        <Footer />
+        </ClientProviders>
       </body>
     </html>
   );

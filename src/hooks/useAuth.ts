@@ -92,6 +92,8 @@ export default function useAuth({
   useEffect(() => {
     if (!csrfToken) return;
 
+    const controller = new AbortController();
+
     const unsubscribe = onAuthStateChanged(
       auth,
       async (firebaseUser: FirebaseAuthUser | null) => {
@@ -104,16 +106,13 @@ export default function useAuth({
                 "X-CSRF-Token": csrfToken,
               },
               credentials: "include",
+              signal: controller.signal,
             });
-
+          } finally {
             setIsAuthenticated(false);
-
             if (routerActivation) {
               router.push("/login");
             }
-          } catch (e) {
-            setIsAuthenticated(false);
-            if (routerActivation) router.push("/login");
           }
         }
       }
@@ -130,7 +129,10 @@ export default function useAuth({
 
     checkAuth();
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      controller.abort(); // cancel the request on unmount
+    };
   }, [router, csrfToken]);
 
   useEffect(() => {
@@ -138,6 +140,7 @@ export default function useAuth({
       return;
     }
 
+    const controller = new AbortController();
     const params = new URLSearchParams();
 
     Object.entries({
@@ -161,6 +164,7 @@ export default function useAuth({
             "Content-Type": "application/json",
           },
           credentials: "include",
+          signal: controller.signal,
         });
 
         if (!res.ok) {
@@ -180,7 +184,9 @@ export default function useAuth({
             experience: data.experience,
           });
         }
-      } catch (error) {
+      } catch (error: unknown) {
+        if (error instanceof Error && error.name === "AbortError") return;
+
         const message = error instanceof Error ? error.message : String(error);
         alert(message);
         await auth.signOut();
@@ -203,7 +209,10 @@ export default function useAuth({
 
     setInfo();
 
-    return () => clearInterval(checkAuthInterval);
+    return () => {
+      controller.abort(); // cancel the request on unmount
+      clearInterval(checkAuthInterval);
+    };
   }, [isAuthenticated]);
 
   return {

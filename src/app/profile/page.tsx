@@ -68,57 +68,68 @@ export default function Profile() {
       return;
     }
 
-    const fetchContent = async () => {
-      return fetch("/api/joblistings", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-        .then((res) => {
-          if (!res.ok) {
-            alert("Failed to fetch job listings");
-            return null;
-          }
-          return res.json();
-        })
-        .then((body) => {
-          if (!body) {
-            return;
-          }
+    const controller = new AbortController();
 
-          const formatJobDate = (
-            job: Pick<JobListing, "title" | "created_at">
-          ) => ({
-            ...job,
-            created_at: new Date(job.created_at).toLocaleDateString(),
+    const fetchContent = async () => {
+      try {
+        const res = await fetch("/api/joblistings", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          signal: controller.signal,
+        });
+
+        if (!res.ok) {
+          alert("Failed to fetch job listings");
+          return null;
+        }
+
+        const body = await res.json();
+        if (!body) {
+          return;
+        }
+
+        const formatJobDate = (
+          job: Pick<JobListing, "title" | "created_at">
+        ) => ({
+          ...job,
+          created_at: new Date(job.created_at).toLocaleDateString(),
+        });
+
+        if (information.admin) {
+          setJobListed({
+            createdByThem: body.data.createdByThem.map(formatJobDate),
+            createdByOthers: body.data.createdByAll.map(formatJobDate),
+          });
+        } else {
+          setJobListed({
+            createdByThem: [],
+            createdByOthers: body.data.map(formatJobDate),
           });
 
-          if (information.admin) {
-            setJobListed({
-              createdByThem: body.data.createdByThem.map(formatJobDate),
-              createdByOthers: body.data.createdByAll.map(formatJobDate),
-            });
-          } else {
-            setJobListed({
-              createdByThem: [],
-              createdByOthers: body.data.map(formatJobDate),
-            });
-
-            setJobListed((prev) => ({
-              ...prev,
-              createdByOthers: prev.createdByOthers.map((job) => ({
-                ...job,
-                id: job.joblisting_id,
-              })),
-            }));
-          }
-        });
+          setJobListed((prev) => ({
+            ...prev,
+            createdByOthers: prev.createdByOthers.map((job) => ({
+              ...job,
+              id: job.joblisting_id,
+            })),
+          }));
+        }
+      } catch (error: unknown) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          // Request was aborted, do nothing
+          return;
+        }
+        alert("Failed to fetch job listings");
+      }
     };
 
     fetchContent().finally(() => {
       setIsJobLoading(false);
     });
+
+    return () => controller.abort(); // cancel the request on unmount
   }, [isAuthLoading]);
 
   const handleNotificationClick = () => {
@@ -127,7 +138,9 @@ export default function Profile() {
 
   const markAsRead = (id: string) => {
     setNotifications((prev) =>
-      prev.map((notif) => (notif.id === id ? { ...notif, read: true } : notif))
+      prev.map((notification) =>
+        notification.id === id ? { ...notification, read: true } : notification
+      )
     );
   };
 
@@ -200,6 +213,12 @@ export default function Profile() {
                 </svg>
               </button>
             )}
+            <button
+              onClick={() => router.push("/admin")}
+              className="mt-4 bg-red-600 text-white font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-600 hover:border-red-600 flex items-center justify-center gap-2"
+            >
+              Switch to Admin View
+            </button>
 
             <div className="flex flex-col gap-4 my-6 mt-auto">
               <div className="flex gap-4 justify-center">
@@ -322,11 +341,14 @@ export default function Profile() {
 
               <div className="p-4 border-t">
                 <button
-                  onClick={() => {
+                  onClick={() =>
                     setNotifications((prev) =>
-                      prev.map((notif) => ({ ...notif, read: true }))
-                    );
-                  }}
+                      prev.map((notification) => ({
+                        ...notification,
+                        read: true,
+                      }))
+                    )
+                  }
                   className="w-full text-red-600 hover:text-red-700 text-sm font-medium"
                 >
                   Mark all as read

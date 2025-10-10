@@ -10,7 +10,7 @@ interface DateRange {
   end_year: number | null;
 }
 
-interface IdentifiableItem<T = string> {
+export interface IdentifiableItem<T = string> {
   id: T;
 }
 
@@ -103,3 +103,17 @@ export interface Tags extends IdentifiableItem<number> {
 export interface JobTags
   extends Pick<JobListing, "joblisting_id">,
     IdentifiableItem<number> {}
+
+export interface ActiveJob {
+  date: string;
+  dow: number;
+  weekday: string;
+  jobs: number;
+}
+
+export interface WeeklyCumulativeApplicants {
+  week_start: string;
+  week_end: string;
+  iso_week: string;
+  applicants: number;
+}

@@ -5,7 +5,6 @@ import Link from "next/link";
 import AnimatedSection from "@/components/common/AnimatedSection";
 import Image from "next/image";
 import Loading from "./loading";
-
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {

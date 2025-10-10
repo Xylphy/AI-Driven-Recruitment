@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { JobListing } from "@/types/types";
 import ListInputSection from "@/components/joblisting/Qualifications";
 import useAuth from "@/hooks/useAuth";
@@ -26,6 +26,11 @@ export default function JobListingPage() {
   const { information, csrfToken } = useAuth({
     fetchAdmin: true,
   });
+  const controllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    return () => controllerRef.current?.abort();
+  }, []);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -72,6 +77,9 @@ export default function JobListingPage() {
       router.push("/profile");
     }
 
+    controllerRef.current?.abort(); // Abort any ongoing request
+    controllerRef.current = new AbortController();
+
     const response = await fetch("/api/joblistings", {
       method: "POST",
       headers: {
@@ -79,9 +87,12 @@ export default function JobListingPage() {
         "X-CSRF-Token": csrfToken ?? "",
       },
       body: JSON.stringify(jobListing),
+      signal: controllerRef.current.signal,
+    }).catch((error) => {
+      if (error.name === "AbortError") return;
     });
 
-    if (!response.ok) {
+    if (!response || !response.ok) {
       alert("Failed to create job listing");
       return;
     }
