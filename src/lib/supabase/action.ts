@@ -99,12 +99,12 @@ export function findWithJoin<T>(
   joinConfigs: Array<QueryForeignKey>
 ) {
   return {
-    many: (filters?: Array<{ column: string; value: string }>) => {
+    many: (filters?: Array<QueryFilter>) => {
       const joinSelect = joinConfigs
-        .map((j) => `${j.foreignTable}:${j.foreignKey} (${j.fields})`)
-        .join(",\n          ");
+        .map((j) => `${j.foreignTable}(${j.fields || "*"})`)
+        .join(", ");
 
-      let query = supabase.from(mainTable).select(`*, ${joinSelect} `);
+      let query = supabase.from(mainTable).select(`*, ${joinSelect}`);
 
       if (filters) {
         filters.forEach(({ column, value }) => {

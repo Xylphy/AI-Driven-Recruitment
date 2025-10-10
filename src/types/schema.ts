@@ -10,7 +10,7 @@ interface DateRange {
   end_year: number | null;
 }
 
-interface IdentifiableItem<T = string> {
+export interface IdentifiableItem<T = string> {
   id: T;
 }
 
