@@ -25,19 +25,11 @@ export default function SignupPage() {
   >();
 
   const handleTranscriptSelect = (file: File | null) => {
-    if (file) {
-      setTranscriptFileName(file.name);
-    } else {
-      setTranscriptFileName(undefined);
-    }
+    setTranscriptFileName(file?.name);
   };
 
   useEffect(() => {
-    const fetchCsrfToken = async () => {
-      setCsrfToken(await getCsrfToken());
-    };
-
-    fetchCsrfToken();
+    getCsrfToken().then(setCsrfToken);
   }, []);
 
   const handleFileSelect = (file: File | null) => {
@@ -49,14 +41,6 @@ export default function SignupPage() {
     const form = e.currentTarget; // To prevent getting affected by React's synthetic event system
 
     if (!csrfToken) {
-      setResponse({
-        success: false,
-        message: "CSRF token is missing. Please try again.",
-      });
-      return;
-    }
-
-    if (csrfToken === null) {
       setResponse({
         success: false,
         message: "CSRF token is missing. Please try again.",

@@ -121,7 +121,6 @@ export async function GET(request: NextRequest) {
     request.nextUrl.searchParams.get("limit") || "100",
     10
   );
-
   const offset =
     (parseInt(request.nextUrl.searchParams.get("page") || "1", 10) - 1) * limit;
 
