@@ -26,8 +26,7 @@ export async function sendEmailVerification(data: RegisterState) {
 
 export async function isEmailRegistered(email: string): Promise<boolean> {
   try {
-    await admin.getUserByEmail(email);
-    return true;
+    return !!(await admin.getUserByEmail(email));
   } catch (error) {
     if (
       error &&

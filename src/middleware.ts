@@ -101,6 +101,7 @@ export async function middleware(request: NextRequest) {
           publicPath.acceptedMethods.includes(request.method)
       )
     ) {
+      console.log(request.cookies);
       return NextResponse.json({ error: "Token is required" }, { status: 403 });
     }
 

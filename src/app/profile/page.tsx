@@ -77,16 +77,21 @@ export default function Profile() {
           headers: {
             "Content-Type": "application/json",
           },
+          credentials: "include",
           signal: controller.signal,
         });
 
+        if (controller.signal.aborted) {
+          return;
+        }
+
         if (!res.ok) {
-          alert("Failed to fetch job listings");
-          return null;
+          console.log("Failed to fetch job listings");
+          return;
         }
 
         const body = await res.json();
-        if (!body) {
+        if (!body || !body.data) {
           return;
         }
 
@@ -117,8 +122,7 @@ export default function Profile() {
           }));
         }
       } catch (error: unknown) {
-        if (error instanceof DOMException && error.name === "AbortError") {
-          // Request was aborted, do nothing
+        if (controller.signal.aborted) {
           return;
         }
         alert("Failed to fetch job listings");
