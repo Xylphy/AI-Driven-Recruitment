@@ -57,11 +57,8 @@ export default function ApplicantsPage() {
             </tr>
           </thead>
           <tbody className="text-gray-700">
-            {candidates.map((candidate) => (
-              <tr
-                key={candidate.id}
-                className="border-t hover:bg-gray-50 transition"
-              >
+            {candidates.map((candidate, index) => (
+              <tr key={index} className="border-t hover:bg-gray-50 transition">
                 <td className="py-3 px-4 font-medium">{candidate.name}</td>
                 <td className="py-3 px-4">{candidate.email}</td>
                 <td className="py-3 px-4">{candidate.jobTitle}</td>
