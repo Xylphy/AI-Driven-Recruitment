@@ -50,7 +50,7 @@ const publicPathCsrf = [
   "/api/admin/stats",
 ];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith("/api")) {
     if (!limiter.check(request).success) {
       return NextResponse.json(
