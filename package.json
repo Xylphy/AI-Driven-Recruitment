@@ -3,11 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
-    "dev:trace": "NODE_OPTIONS='--trace-deprecation' next dev --turbopack",
+    "dev": "next dev",
+    "dev:trace": "NODE_OPTIONS='--trace-deprecation' next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint"
   },
   "dependencies": {
     "@apollo/client": "^4.0.7",
