@@ -6,7 +6,7 @@ import { IdentifiableItem } from "@/types/types";
 
 // This API endpoint retrieves all job listings with pagination
 // Usage: GET /api/jobs?page=1&limit=10  // Disabled pagination for now
-export async function GET(request: NextRequest) {
+export async function GET(/*request: NextRequest*/) {
   // const page = parseInt(request.nextUrl.searchParams.get("page") || "1", 10);
   // const limit = parseInt(
   //   request.nextUrl.searchParams.get("limit") || "100",

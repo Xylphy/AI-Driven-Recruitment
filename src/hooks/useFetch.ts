@@ -1,16 +1,18 @@
 import { useEffect, useState } from "react";
 
-export default function useFetch({
+export default function useFetch<T>({
   url,
   method,
   credentials,
+  defaultData,
 }: {
   url: string;
   method: "GET" | "POST" | "PUT" | "DELETE";
   credentials?: RequestCredentials;
+  defaultData?: T;
 }) {
-  const [data, setData] = useState(null);
-  const [error, setError] = useState<string | null>(null);
+  const [data, setData] = useState<T>(defaultData as T);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -37,7 +39,7 @@ export default function useFetch({
           })
           .catch((err) => {
             if (err.name !== "AbortError") {
-              setError(err.message);
+              setErrorMessage(err.message);
             }
           });
       } finally {
@@ -50,5 +52,5 @@ export default function useFetch({
     return () => controller.abort();
   }, [url]);
 
-  return { data, error, loading };
+  return { data, errorMessage, loading };
 }

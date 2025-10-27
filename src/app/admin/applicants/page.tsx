@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import useFetch from "@/hooks/useFetch";
 
 interface Candidate {
   id: number;
@@ -13,30 +13,109 @@ interface Candidate {
 }
 
 export default function ApplicantsPage() {
-  const [candidates, setCandidates] = useState<Candidate[]>([]);
   const router = useRouter();
+  const {
+    data: candidates,
+    errorMessage,
+    loading,
+  } = useFetch<Candidate[]>({
+    url: "/api/jobs/applicants",
+    method: "GET",
+    credentials: "same-origin",
+  });
 
-  useEffect(() => {
-    const controller = new AbortController();
-    fetch("/api/jobs/applicants", {
-      signal: controller.signal,
-    })
-      .then((res) => {
-        if (res.ok) {
-          return res.json();
-        }
-      })
-      .then((data) => {
-        setCandidates(data.data);
-      })
-      .catch((error) => {
-        if (error.name !== "AbortError") {
-          alert("Failed to fetch candidates. Please try again later.");
-        }
-      });
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center p-6">
+        <div className="flex items-center gap-3">
+          <svg
+            className="animate-spin h-8 w-8 text-red-600"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            ></circle>
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+            ></path>
+          </svg>
+          <span className="text-gray-700 font-medium">Loading candidates…</span>
+        </div>
 
-    return () => controller.abort();
-  }, []);
+        <div className="w-full mt-6">
+          <div className="bg-white p-4 rounded-lg shadow-sm">
+            <div className="animate-pulse">
+              <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
+
+              {[...Array(4)].map((_, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-4 py-3 border-b last:border-b-0"
+                >
+                  <div className="h-5 bg-gray-200 rounded w-48"></div>
+                  <div className="h-5 bg-gray-200 rounded w-56"></div>
+                  <div className="h-5 bg-gray-200 rounded w-40"></div>
+                  <div className="ml-auto flex items-center gap-3">
+                    <div className="h-6 bg-gray-200 rounded w-20"></div>
+                    <div className="h-6 bg-gray-200 rounded w-20"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (errorMessage) {
+    return (
+      <div className="p-6">
+        <div className="flex items-start gap-4 bg-red-50 border border-red-100 p-4 rounded">
+          <svg
+            className="h-6 w-6 text-red-600"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M10 14l2-2m0 0l2-2m-2 2l2 2m-2-2l-2 2M12 6v6"
+            />
+          </svg>
+
+          <div>
+            <p className="text-red-700 font-semibold">
+              Failed to load candidates
+            </p>
+            <p className="mt-1 text-sm text-red-600">{errorMessage}</p>
+            <div className="mt-3">
+              <button
+                onClick={() => router.refresh()}
+                className="px-3 py-1 text-sm bg-[#E30022] text-white rounded hover:bg-red-700 transition"
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
