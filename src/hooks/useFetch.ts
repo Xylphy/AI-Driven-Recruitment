@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { startTransition, useEffect, useState } from "react";
 
 export default function useFetch<T>({
   url,
-  method,
-  credentials,
+  method = "GET",
+  credentials = "same-origin",
   defaultData,
 }: {
   url: string;
@@ -17,37 +17,30 @@ export default function useFetch<T>({
 
   useEffect(() => {
     const controller = new AbortController();
+    startTransition(() => setLoading(true));
 
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        fetch(url, {
-          method: method,
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: credentials,
-          signal: controller.signal,
-        })
-          .then((res) => {
-            if (res.ok) {
-              return res.json();
-            }
-          })
-          .then((data) => {
-            setData(data);
-          })
-          .catch((err) => {
-            if (err.name !== "AbortError") {
-              setErrorMessage(err.message);
-            }
-          });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+    fetch(url, {
+      method: method,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: credentials,
+      signal: controller.signal,
+    })
+      .then((res) => {
+        if (res.ok) {
+          return res.json();
+        }
+      })
+      .then((data) => {
+        setData(data);
+      })
+      .catch((err) => {
+        if (err.name !== "AbortError") {
+          setErrorMessage(err.message);
+        }
+      })
+      .finally(() => setLoading(false));
 
     return () => controller.abort();
   }, [url]);

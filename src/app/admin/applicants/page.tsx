@@ -49,7 +49,9 @@ export default function ApplicantsPage() {
               d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
             ></path>
           </svg>
-          <span className="text-gray-700 font-medium">Loading candidates…</span>
+          <span className="text-gray-700 font-medium">
+            Loading candidates...
+          </span>
         </div>
 
         <div className="w-full mt-6">

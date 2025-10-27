@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, startTransition } from "react";
 
 interface Candidate {
   id: number;
@@ -13,78 +13,75 @@ interface Candidate {
   matchScore: number;
 }
 
+const mockJobs = [
+  "Frontend Developer",
+  "Backend Developer",
+  "UI/UX Designer",
+  "Marketing Specialist",
+];
+
+const mockCandidates: Candidate[] = [
+  {
+    id: 1,
+    name: "John Doe",
+    jobTitle: "Frontend Developer",
+    email: "john.doe@email.com",
+    experience: "3 years at ABC Corp",
+    education: "BS in Computer Science",
+    skills: ["React", "Tailwind", "TypeScript"],
+    matchScore: 92,
+  },
+  {
+    id: 2,
+    name: "Jane Smith",
+    jobTitle: "Frontend Developer",
+    email: "jane.smith@email.com",
+    experience: "4 years at XYZ Tech",
+    education: "BS in Information Technology",
+    skills: ["Next.js", "UI Design", "CSS"],
+    matchScore: 88,
+  },
+  {
+    id: 3,
+    name: "Michael Reyes",
+    jobTitle: "Backend Developer",
+    email: "michael.reyes@email.com",
+    experience: "5 years at Softline Solutions",
+    education: "BS in Computer Engineering",
+    skills: ["Node.js", "Express", "MongoDB"],
+    matchScore: 79,
+  },
+  {
+    id: 4,
+    name: "Anna Cruz",
+    jobTitle: "UI/UX Designer",
+    email: "anna.cruz@email.com",
+    experience: "2 years at DesignPro Studio",
+    education: "BA in Graphic Design",
+    skills: ["Figma", "Adobe XD", "Prototyping"],
+    matchScore: 90,
+  },
+];
+
 export default function ComparePage() {
-  const [jobs, setJobs] = useState<string[]>([]);
+  const [jobs] = useState<string[]>(mockJobs);
   const [selectedJob, setSelectedJob] = useState<string>("");
-  const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [candidates] = useState<Candidate[]>(mockCandidates);
   const [filteredCandidates, setFilteredCandidates] = useState<Candidate[]>([]);
   const [selectedA, setSelectedA] = useState<number | null>(null);
   const [selectedB, setSelectedB] = useState<number | null>(null);
 
   useEffect(() => {
-    const mockJobs = [
-      "Frontend Developer",
-      "Backend Developer",
-      "UI/UX Designer",
-      "Marketing Specialist",
-    ];
-
-    const mockCandidates: Candidate[] = [
-      {
-        id: 1,
-        name: "John Doe",
-        jobTitle: "Frontend Developer",
-        email: "john.doe@email.com",
-        experience: "3 years at ABC Corp",
-        education: "BS in Computer Science",
-        skills: ["React", "Tailwind", "TypeScript"],
-        matchScore: 92,
-      },
-      {
-        id: 2,
-        name: "Jane Smith",
-        jobTitle: "Frontend Developer",
-        email: "jane.smith@email.com",
-        experience: "4 years at XYZ Tech",
-        education: "BS in Information Technology",
-        skills: ["Next.js", "UI Design", "CSS"],
-        matchScore: 88,
-      },
-      {
-        id: 3,
-        name: "Michael Reyes",
-        jobTitle: "Backend Developer",
-        email: "michael.reyes@email.com",
-        experience: "5 years at Softline Solutions",
-        education: "BS in Computer Engineering",
-        skills: ["Node.js", "Express", "MongoDB"],
-        matchScore: 79,
-      },
-      {
-        id: 4,
-        name: "Anna Cruz",
-        jobTitle: "UI/UX Designer",
-        email: "anna.cruz@email.com",
-        experience: "2 years at DesignPro Studio",
-        education: "BA in Graphic Design",
-        skills: ["Figma", "Adobe XD", "Prototyping"],
-        matchScore: 90,
-      },
-    ];
-
-    setJobs(mockJobs);
-    setCandidates(mockCandidates);
-  }, []);
-
-  useEffect(() => {
     if (selectedJob) {
-      setFilteredCandidates(
-        candidates.filter((c) => c.jobTitle === selectedJob)
-      );
-      setSelectedA(null);
-      setSelectedB(null);
+      startTransition(() => {
+        setFilteredCandidates(
+          candidates.filter((c) => c.jobTitle === selectedJob)
+        );
+        setSelectedA(null);
+        setSelectedB(null);
+      });
     } else {
-      setFilteredCandidates([]);
+      startTransition(() => setFilteredCandidates([]));
     }
   }, [selectedJob, candidates]);
 
