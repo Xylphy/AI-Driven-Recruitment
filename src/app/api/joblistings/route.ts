@@ -12,6 +12,7 @@ import { JobApplicants, JobListing, Admin } from "@/types/schema";
 import { jobListingSchema } from "@/lib/schemas/";
 import { JWT } from "@/types/types";
 import { deleteDocument } from "@/lib/mongodb/action";
+import mongoDb_client from "@/lib/mongodb/mongodb";
 
 export async function POST(request: NextRequest) {
   const { id: userId, isAdmin } = jwt.verify(
@@ -236,9 +237,13 @@ export async function DELETE(request: NextRequest) {
     );
   }
 
+  await mongoDb_client.connect();
+
   await deleteDocument("ai-driven-recruitment", "scored_candidates", {
     job_id: jobId,
   }).many();
+
+  await mongoDb_client.close();
 
   return NextResponse.json({ message: "Job listing deleted successfully" });
 }

@@ -7,6 +7,7 @@ import {
   findWithJoin,
   find,
   QueryFilter,
+  deleteTable,
 } from "@/lib/supabase/action";
 import auth from "@/lib/firebase/admin";
 import { JobApplicants, User } from "@/types/schema";
@@ -82,12 +83,27 @@ export async function POST(request: NextRequest) {
   scoreAPI.searchParams.set("user_id", userId);
   scoreAPI.searchParams.set("applicant_id", applicantsID[0].id);
 
-  fetch(scoreAPI.toString(), {
+  // Please in the future if there's a local AI, then don't wait for this API to respond
+  const response = await fetch(scoreAPI.toString(), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
   });
+
+  if (!response.ok) {
+    await deleteTable(
+      supabaseClient,
+      "job_applicants",
+      "id",
+      applicantsID[0].id
+    );
+
+    return NextResponse.json(
+      { error: "Failed to process application" },
+      { status: 500 }
+    );
+  }
 
   return NextResponse.json({
     message: "Application submitted successfully",

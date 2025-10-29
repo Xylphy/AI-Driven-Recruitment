@@ -5,9 +5,11 @@ import { useState } from "react";
 export default function FileUpload({
   onFileSelect,
   defaultFileName = "No file selected",
+  labelName,
 }: {
   onFileSelect: (file: File | null) => void;
   defaultFileName?: string;
+  labelName: string;
 }) {
   const [fileName, setFileName] = useState(defaultFileName);
   const [isDragging, setIsDragging] = useState(false);
@@ -61,13 +63,13 @@ export default function FileUpload({
         </svg>
         <div className="flex text-sm text-gray-600">
           <label
-            htmlFor="resume"
+            htmlFor={labelName}
             className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500"
           >
             <span>Upload a file</span>
             <input
-              id="resume"
-              name="resume"
+              id={labelName}
+              name={labelName}
               type="file"
               accept=".doc,.docx,.pdf,.odt,.rtf"
               className="sr-only"

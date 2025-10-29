@@ -84,7 +84,7 @@ export function parseFormData(formData: FormData, jsonFields: string[] = []) {
 }
 
 /**
- * Cleans string fields in an array of objects
+ * Cleans an array of objects by trimming specified string fields and optionally removing objects with all empty string fields.
  * @param items Array of objects to clean
  * @param stringFields Fields that should be trimmed and empty strings converted to undefined
  * @param filterEmptyObjects If true, objects with all empty string fields will be removed
@@ -114,3 +114,4 @@ export function cleanArrayData<T extends Record<string, unknown>>(
       );
     });
 }
+

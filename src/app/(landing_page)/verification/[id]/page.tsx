@@ -17,10 +17,14 @@ export default function Verification({
   params: Promise<{ id: string }>;
 }) {
   const router = useRouter();
-  const csrfToken = use(getCsrfToken());
+  const [csrfToken, setCsrfToken] = useState<string | null>(null);
   const [email, setEmail] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const { id } = use(params);
+
+  useEffect(() => {
+    getCsrfToken().then(setCsrfToken);
+  }, []);
 
   useEffect(() => {
     if (!csrfToken) {

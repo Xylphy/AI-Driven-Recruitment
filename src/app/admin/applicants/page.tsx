@@ -22,6 +22,7 @@ export default function ApplicantsPage() {
     url: "/api/jobs/applicants",
     method: "GET",
     credentials: "same-origin",
+    defaultData: [],
   });
 
   if (loading) {

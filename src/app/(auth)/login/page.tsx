@@ -22,7 +22,6 @@ export default function LoginPage() {
     setIsAuthLoading(true);
 
     const formData = new FormData(e.currentTarget);
-
     const email = formData.get("email")?.toString().trim();
     const password = formData.get("password")?.toString().trim();
 
@@ -63,7 +62,8 @@ export default function LoginPage() {
         })
         .then(() => router.push("/profile"));
     } catch (error) {
-      const isAbort = typeof error === "object" && (error as Error)?.name === "AbortError";
+      const isAbort =
+        typeof error === "object" && (error as Error)?.name === "AbortError";
 
       if (!isAbort) {
         alert(

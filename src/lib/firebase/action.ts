@@ -14,14 +14,22 @@ export async function sendEmailVerification(data: RegisterState) {
     throw new Error("Failed to insert token data");
   }
 
-  await sendSignInLinkToEmail(auth, data.email, {
-    url: `${
+  try {
+    const verificationUrl = `${
       process.env.NODE_ENV === "development"
         ? "http://localhost:3000/"
         : process.env.NEXT_PUBLIC_SITE_URL
-    }/verification/${response?.insertedId}`,
-    handleCodeInApp: true,
-  });
+    }/verification/${response.insertedId}`;
+    console.log("Verification URL:", verificationUrl);
+
+    await sendSignInLinkToEmail(auth, data.email, {
+      url: verificationUrl,
+      handleCodeInApp: true,
+    });
+    console.log("Sent verification email to", data.email);
+  } catch (err) {
+    console.log(String(err));
+  }
 }
 
 export async function isEmailRegistered(email: string): Promise<boolean> {

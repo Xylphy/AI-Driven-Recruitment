@@ -1,43 +1,49 @@
 import { z } from "zod";
 import { dateRangeSchema } from "./common";
 
-const educationalDetailSchema = z
-  .object({
-    degree: z.string().optional(),
-    institute: z.string().optional(),
+const educationalDetailSchema = z.intersection(
+  z.object({
+    degree: z.string().optional().default(""),
+    institute: z.string().optional().default(""),
     currentlyPursuing: z.boolean(),
-    major: z.string().optional(),
-  })
-  .merge(dateRangeSchema);
+    major: z.string().optional().default(""),
+  }),
+  dateRangeSchema
+);
 
 const socialLinkSchema = z.object({
-  value: z.string().url("Invalid URL"),
+  value: z.url("Invalid URL"),
 });
 
-const jobExperiences = z
-  .object({
-    title: z.string().optional(),
-    company: z.string().optional(),
-    summary: z.string().optional(),
+const jobExperiences = z.intersection(
+  z.object({
+    title: z.string().optional().default(""),
+    company: z.string(),
+    summary: z.string().optional().default(""),
     currentlyWorking: z.boolean(),
-  })
-  .merge(dateRangeSchema);
+  }),
+  dateRangeSchema
+);
 
 export const userSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
-  prefix: z.string().optional(),
-  mobileNumber: z.string().optional(),
-  countryCode: z.enum(["+63", "+1", "+44", "+91"]).optional(),
-  street: z.string().optional(),
-  zip: z.string().optional(),
-  country: z.enum(["PH", "US", "CA", "GB", "AU", "IN"]).optional(),
-  city: z.string().optional(),
-  jobTitle: z.string().optional(),
-  educationalDetails: z.array(educationalDetailSchema).optional(),
-  socialLinks: z.array(socialLinkSchema).optional(),
-  jobExperiences: z.array(jobExperiences).optional(),
-  skillSet: z.string().optional(),
+  email: z.email("Invalid email address"),
+  prefix: z.string().optional().default(""),
+  mobileNumber: z.string().optional().default(""),
+  countryCode: z.enum(["+63", "+1", "+44", "+91"]).optional().default("+1"),
+  street: z.string().optional().default(""),
+  zip: z.string().optional().default(""),
+  country: z
+    .enum(["PH", "US", "CA", "GB", "AU", "IN", ""])
+    .optional()
+    .default(""),
+  city: z.string().optional().default(""),
+  jobTitle: z.string().optional().default(""),
+  educationalDetails: z.array(educationalDetailSchema).optional().default([]),
+  socialLinks: z.array(socialLinkSchema).optional().default([]),
+  jobExperiences: z.array(jobExperiences).optional().default([]),
+  skillSet: z.string().optional().default(""),
   resume: z
     .instanceof(File)
     .optional()
@@ -56,7 +62,7 @@ export const userSchema = z.object({
         ].includes(file.type),
       "Resume must be a PDF or Word document"
     ),
-  state: z.string().optional(),
+  state: z.string().optional().default(""),
   video: z
     .instanceof(File)
     .optional()

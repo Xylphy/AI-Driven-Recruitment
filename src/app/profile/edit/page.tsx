@@ -41,7 +41,7 @@ export default function EditProfilePage() {
     jobTitle: "",
     email: "",
     mobileNumber: "",
-    publicId: "",
+    resumeId: "",
     skillSet: "",
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null); // resume
@@ -109,7 +109,7 @@ export default function EditProfilePage() {
       jobTitle: information.user?.job_title || "",
       email: auth.currentUser?.email || "",
       mobileNumber: information.user?.phone_number || "",
-      publicId: information.user?.resume_id || "",
+      resumeId: information.user?.resume_id || "",
       skillSet: information.skills.join(", ") || "",
     });
   }, [isAuthLoading]);
@@ -129,9 +129,11 @@ export default function EditProfilePage() {
     const formData = new FormData(formElement);
     const keysToDelete = [];
 
+    // Cleanup empty string fields
     for (const [key, value] of formData.entries()) {
-      if (typeof value === "string" && value.trim() === "")
+      if (typeof value === "string" && value.trim() === "") {
         keysToDelete.push(key);
+      }
     }
 
     keysToDelete.forEach((key) => {
@@ -222,7 +224,34 @@ export default function EditProfilePage() {
   };
 
   if (isAuthLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="flex flex-col items-center">
+          <svg
+            className="animate-spin h-12 w-12 text-red-600"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+          >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+              fill="none"
+            />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+            />
+          </svg>
+          <p className="mt-3 text-gray-600">Loading your profile…</p>
+        </div>
+      </div>
+    );
   }
 
   return (

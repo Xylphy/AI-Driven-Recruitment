@@ -33,14 +33,14 @@ export interface User {
   country: string;
   jobTitle: string;
   skillSet: string;
-  publicId?: string; // Resume ID
+  resumeId?: string; // Resume ID
   transcriptId?: string;
 }
 
 export interface RegisterState extends User {
-  educationalDetails: EducationalDetail[];
-  socialLinks: SocialLink[];
-  jobExperiences: JobExperience[];
+  educationalDetails: Omit<EducationalDetail, "id">[];
+  socialLinks: Omit<SocialLink, "id">[];
+  jobExperiences: Omit<JobExperience, "id">[];
 }
 
 export interface SocialLink extends IdentifiableItem {

@@ -5,11 +5,15 @@ export default function useFetch<T>({
   method = "GET",
   credentials = "same-origin",
   defaultData,
+  headers = {},
+  body,
 }: {
   url: string;
   method: "GET" | "POST" | "PUT" | "DELETE";
   credentials?: RequestCredentials;
   defaultData?: T;
+  headers?: Record<string, string>;
+  body?: BodyInit;
 }) {
   const [data, setData] = useState<T>(defaultData as T);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -21,11 +25,10 @@ export default function useFetch<T>({
 
     fetch(url, {
       method: method,
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: headers,
       credentials: credentials,
       signal: controller.signal,
+      body: body,
     })
       .then((res) => {
         if (res.ok) {
@@ -33,7 +36,7 @@ export default function useFetch<T>({
         }
       })
       .then((data) => {
-        setData(data);
+        setData(data.data);
       })
       .catch((err) => {
         if (err.name !== "AbortError") {

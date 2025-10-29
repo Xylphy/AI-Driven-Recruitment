@@ -31,6 +31,7 @@ import {
 import { userSchema, verificationSchema } from "@/lib/schemas";
 import { parseFormData } from "@/lib/library";
 import mongoDb_client from "@/lib/mongodb/mongodb";
+import { z } from "zod";
 
 // This function handles the POST request to set the password
 export async function POST(request: NextRequest) {
@@ -39,7 +40,7 @@ export async function POST(request: NextRequest) {
     const validatedData = verificationSchema.safeParse(body);
     if (!validatedData.success) {
       return NextResponse.json(
-        { error: validatedData.error.format() },
+        { error: z.treeifyError(validatedData.error) },
         { status: 400 }
       );
     }
@@ -69,7 +70,8 @@ export async function POST(request: NextRequest) {
       phone_number: data.mobileNumber,
       prefix: data.prefix,
       firebase_uid: body.uid,
-      resume_id: data.public_id,
+      resume_id: data.resumeId,
+      transcript_id: data.transcriptId,
       country_code: data.countryCode,
       street: data.street,
       zip: data.zip,
@@ -88,8 +90,15 @@ export async function POST(request: NextRequest) {
     }
 
     const resumeParserURL = new URL("http://localhost:8000/parseresume/");
-    resumeParserURL.searchParams.set("public_id", data.public_id);
+    resumeParserURL.searchParams.set("public_id", data.resumeId);
     resumeParserURL.searchParams.set(
+      "applicant_id",
+      insertedData[0].id.toString()
+    );
+
+    const transcribeURL = new URL("http://localhost:8000/transcribe/");
+    transcribeURL.searchParams.set("public_id", data.transcriptId);
+    transcribeURL.searchParams.set(
       "applicant_id",
       insertedData[0].id.toString()
     );
@@ -98,6 +107,12 @@ export async function POST(request: NextRequest) {
       method: "POST",
     }).catch((err) => {
       console.error("Error calling resume parser:", err);
+    });
+
+    fetch(transcribeURL.toString(), {
+      method: "POST",
+    }).catch((err) => {
+      console.error("Error calling transcribe service:", err);
     });
 
     const userId = insertedData[0].id;

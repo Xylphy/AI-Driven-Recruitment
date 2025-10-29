@@ -1,10 +1,9 @@
 "use client";
 
-import { signup } from "@/lib/actionServer";
 import { useState, useEffect } from "react";
 import { UserForm } from "@/components/common/UserForm";
 import { EducationalDetail, JobExperience, SocialLink } from "@/types/types";
-import { getCsrfToken } from "@/lib/library";
+import { cleanArrayData, getCsrfToken } from "@/lib/library";
 
 export default function SignupPage() {
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
@@ -17,15 +16,12 @@ export default function SignupPage() {
     success?: boolean;
     message?: string;
   } | null>(null);
-
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [csrfToken, setCsrfToken] = useState<string | null>(null);
-  const [transcriptFileName, setTranscriptFileName] = useState<
-    string | undefined
-  >();
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [transcriptFile, setTranscriptFile] = useState<File | null>(null);
 
   const handleTranscriptSelect = (file: File | null) => {
-    setTranscriptFileName(file?.name);
+    setTranscriptFile(file);
   };
 
   useEffect(() => {
@@ -40,50 +36,91 @@ export default function SignupPage() {
     e.preventDefault();
     const form = e.currentTarget; // To prevent getting affected by React's synthetic event system
 
-    if (!csrfToken) {
-      setResponse({
-        success: false,
-        message: "CSRF token is missing. Please try again.",
-      });
-      return;
-    }
-
     setIsSubmitting(true);
 
-    try {
-      const formData = new FormData(form);
+    const formData = new FormData(form);
+    const keysToDelete = [];
 
-      formData.set("educationalDetails", JSON.stringify(educationalDetails));
-      formData.set("socialLinks", JSON.stringify(socialLinks));
-      formData.set("jobExperiences", JSON.stringify(jobExperiences));
-
-      if (selectedFile) {
-        formData.set("resume", selectedFile);
+    for (const [key, value] of formData.entries()) {
+      if (typeof value === "string" && value.trim() === "") {
+        keysToDelete.push(key);
       }
+    }
 
-      formData.set("csrfToken", csrfToken);
+    keysToDelete.forEach((key) => {
+      formData.delete(key);
+    });
 
-      const result = await signup(formData);
-      setResponse(result);
+    formData.set(
+      "educationalDetails",
+      JSON.stringify(
+        cleanArrayData(
+          educationalDetails as unknown as Record<string, unknown>[],
+          ["institute", "major", "endMonth"]
+        )
+      )
+    );
 
-      if (result.success) {
+    formData.set(
+      "socialLinks",
+      JSON.stringify(
+        cleanArrayData(socialLinks as unknown as Record<string, unknown>[], [
+          "value",
+        ])
+      )
+    );
+
+    formData.set(
+      "jobExperiences",
+      JSON.stringify(
+        cleanArrayData(jobExperiences as unknown as Record<string, unknown>[], [
+          "title",
+          "company",
+          "summary",
+          "endMonth",
+        ])
+      )
+    );
+
+    if (selectedFile) {
+      formData.set("resume", selectedFile);
+    }
+
+    if (transcriptFile) {
+      formData.set("video", transcriptFile);
+    }
+
+    fetch("/api/users/signup", {
+      method: "POST",
+      headers: {
+        "X-CSRF-Token": csrfToken || "",
+      },
+      body: formData,
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        setResponse(data);
         form.reset();
         setSocialLinks([]);
         setEducationalDetails([]);
         setJobExperience([]);
         setSelectedFile(null);
-      }
-    } catch (error) {
-      setResponse({
-        success: false,
-        message: `An unexpected error occurred. ${
-          error instanceof Error ? error.message : ""
-        }`,
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+        setTranscriptFile(null);
+      })
+      .catch((error) => {
+        setResponse({
+          success: false,
+          message: error instanceof Error ? error.message : "Submission failed",
+        });
+      })
+      .finally(() => setIsSubmitting(false));
   };
+
   return (
     <UserForm
       socialLinksInfo={{ socialLinks, setSocialLinks }}
@@ -96,7 +133,7 @@ export default function SignupPage() {
       description="Join a community of innovators, problem-solvers, and change-makers."
       title="REGISTRATION"
       handleTranscriptSelect={handleTranscriptSelect}
-      transcriptFileName={transcriptFileName}
+      transcriptFileName={transcriptFile?.name}
     />
   );
 }

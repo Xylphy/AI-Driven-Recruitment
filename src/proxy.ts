@@ -38,6 +38,10 @@ const publicPathToken = [
     path: "/api/jobs",
     acceptedMethods: ["GET"],
   },
+  {
+    path: "/api/users/signup",
+    acceptedMethods: ["POST"],
+  },
 ];
 
 // Paths that do not require CSRF token
@@ -101,7 +105,6 @@ export async function proxy(request: NextRequest) {
           publicPath.acceptedMethods.includes(request.method)
       )
     ) {
-      console.log(request.cookies);
       return NextResponse.json({ error: "Token is required" }, { status: 403 });
     }
 
