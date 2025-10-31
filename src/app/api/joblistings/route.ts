@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import { createClientServer } from "@/lib/supabase/supabase";
 import {
-  deleteTable,
+  deleteRow,
   find,
   findWithJoin,
   insertTable,
@@ -13,6 +13,7 @@ import { jobListingSchema } from "@/lib/schemas/";
 import { JWT } from "@/types/types";
 import { deleteDocument } from "@/lib/mongodb/action";
 import mongoDb_client from "@/lib/mongodb/mongodb";
+import { z } from "zod";
 
 export async function POST(request: NextRequest) {
   const { id: userId, isAdmin } = jwt.verify(
@@ -28,7 +29,7 @@ export async function POST(request: NextRequest) {
 
   if (!parsedData.success) {
     return NextResponse.json(
-      { error: parsedData.error.format() },
+      { error: z.treeifyError(parsedData.error) },
       { status: 422 }
     );
   }
@@ -63,7 +64,7 @@ export async function POST(request: NextRequest) {
     .select("id, name");
 
   if (tagError) {
-    await deleteTable(supabase, "job_listings", "id", insertedData[0].id);
+    await deleteRow(supabase, "job_listings", "id", insertedData[0].id);
     return NextResponse.json(
       { error: "Failed to create job listings" },
       { status: 500 }
@@ -78,7 +79,7 @@ export async function POST(request: NextRequest) {
   );
 
   if (errorLink) {
-    await deleteTable(supabase, "job_listings", "id", insertedData[0].id);
+    await deleteRow(supabase, "job_listings", "id", insertedData[0].id);
     return NextResponse.json(
       { error: "Failed to create job listings" },
       { status: 500 }
@@ -101,7 +102,7 @@ export async function POST(request: NextRequest) {
   ]);
 
   if (results.some((result) => result.error)) {
-    await deleteTable(supabase, "job_listings", "id", insertedData[0].id);
+    await deleteRow(supabase, "job_listings", "id", insertedData[0].id);
     return NextResponse.json(
       { error: "Failed to create job listings" },
       { status: 500 }
@@ -228,7 +229,7 @@ export async function DELETE(request: NextRequest) {
   }
 
   const supabase = await createClientServer(1, true);
-  const { error } = await deleteTable(supabase, "job_listings", "id", jobId);
+  const { error } = await deleteRow(supabase, "job_listings", "id", jobId);
 
   if (error) {
     return NextResponse.json(
@@ -275,9 +276,9 @@ export async function PUT(request: NextRequest) {
   const supabase = await createClientServer(1, true);
 
   await Promise.all([
-    deleteTable(supabase, "jl_qualifications", "joblisting_id", jobId),
-    deleteTable(supabase, "jl_requirements", "joblisting_id", jobId),
-    deleteTable(supabase, "job_tags", "joblisting_id", jobId),
+    deleteRow(supabase, "jl_qualifications", "joblisting_id", jobId),
+    deleteRow(supabase, "jl_requirements", "joblisting_id", jobId),
+    deleteRow(supabase, "job_tags", "joblisting_id", jobId),
   ]);
 
   const { data: tagRows, error: tagError } = await supabase

@@ -7,7 +7,7 @@ import {
   findWithJoin,
   find,
   QueryFilter,
-  deleteTable,
+  deleteRow,
 } from "@/lib/supabase/action";
 import auth from "@/lib/firebase/admin";
 import { JobApplicants, User } from "@/types/schema";
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
   });
 
   if (!response.ok) {
-    await deleteTable(
+    await deleteRow(
       supabaseClient,
       "job_applicants",
       "id",

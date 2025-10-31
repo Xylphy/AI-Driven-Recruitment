@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClientServer } from "@/lib/supabase/supabase";
 import { ObjectId } from "mongodb";
 import {
-  deleteTable,
+  deleteRow,
   insertTable,
   updateTable,
   find,
@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
     ]);
 
     if (results.some((result) => result.error)) {
-      deleteTable(supabase, "users", "id", userId.toString());
+      deleteRow(supabase, "users", "id", userId.toString());
       return NextResponse.json(
         { error: "Something wrong saving data" },
         { status: 500 }
@@ -327,7 +327,7 @@ export async function PUT(request: NextRequest) {
 
   if (!validatedData.success) {
     return NextResponse.json(
-      { error: validatedData.error.format() },
+      { error: z.treeifyError(validatedData.error) },
       { status: 400 }
     );
   }
@@ -392,10 +392,10 @@ export async function PUT(request: NextRequest) {
   }
 
   await Promise.all([
-    deleteTable(supabase, "educational_details", "user_id", userId),
-    deleteTable(supabase, "social_links", "user_id", userId),
-    deleteTable(supabase, "job_experiences", "user_id", userId),
-    deleteTable(supabase, "skills", "user_id", userId),
+    deleteRow(supabase, "educational_details", "user_id", userId),
+    deleteRow(supabase, "social_links", "user_id", userId),
+    deleteRow(supabase, "job_experiences", "user_id", userId),
+    deleteRow(supabase, "skills", "user_id", userId),
   ]);
 
   const validatedUserData = validatedData.data;

@@ -24,7 +24,7 @@ export function insertTable(
   return supabase.from(table).insert(data).select("id");
 }
 
-export function deleteTable(
+export function deleteRow(
   supabase: SupabaseClient,
   table: string,
   column: string,
