@@ -92,12 +92,7 @@ export async function POST(request: NextRequest) {
   });
 
   if (!response.ok) {
-    await deleteRow(
-      supabaseClient,
-      "job_applicants",
-      "id",
-      applicantsID[0].id
-    );
+    await deleteRow(supabaseClient, "job_applicants", "id", applicantsID[0].id);
 
     return NextResponse.json(
       { error: "Failed to process application" },

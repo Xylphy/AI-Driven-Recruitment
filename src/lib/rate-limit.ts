@@ -7,9 +7,11 @@ const rateLimitCache = new LRUCache<string, number[]>({
   ttl: 15 * 60 * 1000,
 });
 
+type RateLimitRequest = Pick<NextRequest, "headers"> | NextRequest;
+
 export function rateLimit(config: { max: number; windowMs: number }) {
   return {
-    check(request: NextRequest) {
+    check(request: RateLimitRequest) {
       const ip =
         request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
         "unknown";
@@ -17,6 +19,9 @@ export function rateLimit(config: { max: number; windowMs: number }) {
 
       let requestTimestamps = rateLimitCache.get(key) || [];
       const now = Date.now();
+
+      console.log("IP Address: " + ip);
+      console.log("Request Timestamps: ", requestTimestamps);
 
       requestTimestamps = requestTimestamps.filter(
         (timestamp) => now - timestamp < config.windowMs

@@ -81,10 +81,6 @@ export default function Profile() {
           signal: controller.signal,
         });
 
-        if (controller.signal.aborted) {
-          return;
-        }
-
         if (!res.ok) {
           console.log("Failed to fetch job listings");
           return;
@@ -121,10 +117,11 @@ export default function Profile() {
             })),
           }));
         }
-      } catch (error: unknown) {
-        if (controller.signal.aborted) {
+      } catch (error) {
+        if (error instanceof Error && error.name === "AbortError") {
           return;
         }
+        console.log(error);
         alert("Failed to fetch job listings");
       }
     };

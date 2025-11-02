@@ -140,7 +140,7 @@ export async function GET(request: NextRequest) {
   ]).single();
 
   if (adminData) {
-    const [themResults, allResults] = await Promise.all([
+    const [theirResult, allResults] = await Promise.all([
       find<JobListing>(supabase, "job_listings", [
         { column: "created_by", value: userId },
       ])
@@ -155,7 +155,7 @@ export async function GET(request: NextRequest) {
         .execute(),
     ]);
 
-    if (themResults.error || allResults.error) {
+    if (theirResult.error || allResults.error) {
       return NextResponse.json(
         { error: "Failed to fetch job listings" },
         { status: 500 }
@@ -167,7 +167,7 @@ export async function GET(request: NextRequest) {
       status: 200,
       data: {
         createdByThem:
-          themResults.data?.map((item) => ({
+          theirResult.data?.map((item) => ({
             id: item.id,
             title: item.title,
             created_at: item.created_at,

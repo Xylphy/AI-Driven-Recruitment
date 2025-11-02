@@ -1,13 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   onAuthStateChanged,
   type User as FirebaseAuthUser,
 } from "firebase/auth";
 import { auth } from "@/lib/firebase/client";
-import { useEffect } from "react";
-import { checkAuthStatus } from "@/lib/library";
+import { refreshToken } from "@/lib/library";
 import {
   Skills,
   User as SchemaUser,
@@ -16,6 +15,7 @@ import {
 } from "@/types/schema";
 import { useRouter } from "next/navigation";
 import { getCsrfToken } from "@/lib/library";
+import { trpc } from "@/lib/trpc/client";
 
 type UseAuthOptions = {
   fetchUser?: boolean;
@@ -49,27 +49,13 @@ export default function useAuth({
   fetchExperience = false,
   routerActivation = true,
 }: UseAuthOptions = {}): {
-  information: {
-    user: Omit<SchemaUser, "id"> | null;
-    admin: boolean | null;
-    skills: Pick<Skills, "skill">[];
-    socialLinks: string[];
-    education: Omit<EducationalDetails, "user_id" | "id">[];
-    experience: Omit<JobExperiences, "user_id" | "id">[];
-  };
+  information: UsersApiData;
   isAuthenticated: boolean;
   isAuthLoading: boolean;
   csrfToken: string | null;
 } {
   const router = useRouter();
-  const [information, setInformation] = useState<{
-    user: Omit<SchemaUser, "id"> | null;
-    admin: boolean | null;
-    skills: Pick<Skills, "skill">[];
-    socialLinks: string[];
-    education: Omit<EducationalDetails, "user_id" | "id">[];
-    experience: Omit<JobExperiences, "user_id" | "id">[];
-  }>({
+  const [information, setInformation] = useState<UsersApiData>({
     user: null,
     admin: null,
     skills: [],
@@ -81,6 +67,34 @@ export default function useAuth({
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [csrfToken, setCsrfToken] = useState<string | null>(null);
 
+  // Use tRPC for auth status checking
+  const authStatus = trpc.auth.checkStatus.useQuery(undefined, {
+    enabled: isAuthenticated,
+    refetchInterval: 60000 * 15, // Refetch every 15 minutes (token expires in less than 15 mins)
+    retry: false, // Do not retry on failure
+    refetchOnWindowFocus: false, // Do not refetch on window focus
+  });
+
+  // Handle auth status errors (token expiring or expired)
+  useEffect(() => {
+    if (!authStatus.error) return;
+
+    const handleTokenRefresh = async () => {
+      const refreshed = await refreshToken();
+      if (!refreshed) {
+        await auth.signOut();
+        setIsAuthenticated(false);
+        setIsAuthLoading(false);
+        if (routerActivation) {
+          router.push("/login");
+        }
+      }
+    };
+
+    handleTokenRefresh();
+  }, [authStatus.error, router, routerActivation]);
+
+  // Fetch CSRF token on mount
   useEffect(() => {
     const fetchCsrfToken = async () => {
       setCsrfToken(await getCsrfToken());
@@ -89,6 +103,7 @@ export default function useAuth({
     fetchCsrfToken();
   }, []);
 
+  // Handle Firebase auth state changes
   useEffect(() => {
     if (!csrfToken) return;
 
@@ -99,6 +114,7 @@ export default function useAuth({
       async (firebaseUser: FirebaseAuthUser | null) => {
         if (!firebaseUser) {
           try {
+            // Clear session cookie
             await fetch("/api/auth/jwt", {
               method: "POST",
               headers: {
@@ -108,33 +124,32 @@ export default function useAuth({
               credentials: "include",
               signal: controller.signal,
             });
+          } catch (error) {
+            if (error instanceof Error && error.name !== "AbortError") {
+              console.error("Error clearing session:", error);
+            }
           } finally {
             setIsAuthenticated(false);
+            setIsAuthLoading(false);
             if (routerActivation) {
               router.push("/login");
             }
           }
+        } else {
+          // User is signed in
+          setIsAuthenticated(true);
+          setIsAuthLoading(false);
         }
       }
     );
 
-    const checkAuth = async (): Promise<void> => {
-      const status = await checkAuthStatus();
-      if (status) {
-        setIsAuthenticated(true);
-      } else {
-        await auth.signOut();
-      }
-    };
-
-    checkAuth();
-
     return () => {
       unsubscribe();
-      controller.abort(); // cancel the request on unmount
+      controller.abort();
     };
-  }, [router, csrfToken]);
+  }, [csrfToken, router, routerActivation]);
 
+  // Fetch user information when authenticated
   useEffect(() => {
     if (!isAuthenticated) {
       return;
@@ -188,32 +203,25 @@ export default function useAuth({
         if (error instanceof Error && error.name === "AbortError") return;
 
         const message = error instanceof Error ? error.message : String(error);
-        alert(message);
+        console.error("Failed to fetch user information:", message);
         await auth.signOut();
-        return;
-      } finally {
-        setIsAuthLoading(false);
       }
     };
-
-    const checkAuthInterval = setInterval(() => {
-      checkAuthStatus().then((status) => {
-        if (!status) {
-          auth.signOut();
-          clearInterval(checkAuthInterval);
-          return;
-        }
-        setIsAuthenticated(true);
-      });
-    }, 60000 * 50); // Check every 50 minutes since the expiry of the session is 60 minutes
 
     setInfo();
 
     return () => {
-      controller.abort(); // cancel the request on unmount
-      clearInterval(checkAuthInterval);
+      controller.abort();
     };
-  }, [isAuthenticated]);
+  }, [
+    isAuthenticated,
+    fetchAdmin,
+    fetchUser,
+    fetchSkills,
+    fetchSocialLinks,
+    fetchEducation,
+    fetchExperience,
+  ]);
 
   return {
     information,

@@ -19,31 +19,6 @@ export async function getCsrfToken(): Promise<string | null> {
   }
 }
 
-export async function checkAuthStatus(): Promise<boolean> {
-  if (typeof document === "undefined") {
-    // This code is running on the server, so we can't access document.cookie
-    return false;
-  }
-
-  try {
-    const response = await fetch("/api/auth/status", {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "include",
-    });
-
-    if (response.ok) {
-      return true;
-    }
-
-    return await refreshToken();
-  } catch {
-    return false;
-  }
-}
-
 // Refreshes access and csrf token
 export async function refreshToken(): Promise<boolean> {
   if (typeof document === "undefined") {
@@ -114,4 +89,3 @@ export function cleanArrayData<T extends Record<string, unknown>>(
       );
     });
 }
-
