@@ -117,6 +117,7 @@ export const authenticatedProcedure = protectedProcedure.use(
     if (!ctx.userJWT) {
       throw new TRPCError({ code: "UNAUTHORIZED" });
     }
+
     return next();
   }
 );

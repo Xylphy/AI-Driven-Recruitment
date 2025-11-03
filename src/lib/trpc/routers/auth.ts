@@ -1,7 +1,7 @@
 import { authorizedProcedure, createTRPCRouter } from "@/lib/trpc/init";
 import { TRPCError } from "@trpc/server";
 
-export const authRouter = createTRPCRouter({
+const authRouter = createTRPCRouter({
   checkStatus: authorizedProcedure.query(({ ctx }) => {
     const decoded = ctx.userJWT!;
 
@@ -13,4 +13,9 @@ export const authRouter = createTRPCRouter({
     }
     return { message: "Token is valid" };
   }),
+  decodeJWT: authorizedProcedure.query(({ ctx }) => {
+    return { user: ctx.userJWT! };
+  }),
 });
+
+export default authRouter;

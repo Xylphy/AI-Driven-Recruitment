@@ -49,7 +49,6 @@ const publicPathCsrf = [
   "/api/auth/status",
   "/api/auth/refresh",
   "/api/auth/jwt",
-  "/api/joblistings",
   "/api/csrf",
   "/api/admin/stats",
 ];

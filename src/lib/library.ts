@@ -89,3 +89,15 @@ export function cleanArrayData<T extends Record<string, unknown>>(
       );
     });
 }
+
+export function formatDate(iso?: string) {
+  if (!iso) return "";
+  const date = new Date(iso);
+  return date.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
