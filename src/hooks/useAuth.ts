@@ -10,6 +10,7 @@ import { refreshToken } from "@/lib/library";
 import { useRouter } from "next/navigation";
 import { getCsrfToken } from "@/lib/library";
 import { trpc } from "@/lib/trpc/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 type UseAuthOptions = {
   fetchUser?: boolean;
@@ -54,6 +55,8 @@ export default function useAuth({
     }
   );
 
+  const queryClient = useQueryClient();
+
   // Handle auth status errors (token expiring or expired)
   useEffect(() => {
     if (!authStatus.error) return;
@@ -85,16 +88,19 @@ export default function useAuth({
       async (firebaseUser: FirebaseAuthUser | null) => {
         if (!firebaseUser) {
           try {
-            // Clear session cookie
-            await fetch("/api/auth/jwt", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "X-CSRF-Token": csrfToken,
-              },
-              credentials: "include",
-              signal: controller.signal,
-            });
+            await Promise.all([
+              fetch("/api/auth/jwt", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "X-CSRF-Token": csrfToken,
+                },
+                credentials: "include",
+                signal: controller.signal,
+              }),
+              queryClient.cancelQueries(), // Cancel any ongoing queries
+            ]);
+            queryClient.clear(); // Clear all cached data
           } catch (error) {
             if (error instanceof Error && error.name !== "AbortError") {
               console.error("Error clearing session:", error);
@@ -119,7 +125,7 @@ export default function useAuth({
 
   return {
     userInfo,
-    authStatus,
+    isAuthenticated,
     csrfToken,
   };
 }

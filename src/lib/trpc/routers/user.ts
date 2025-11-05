@@ -82,21 +82,30 @@ const userRouter = createTRPCRouter({
         });
       }
 
+      let resumeInfo = null;
+      let transcriptInfo = null;
+      if (userData) {
+        [resumeInfo, transcriptInfo] = await Promise.all([
+          userData.data?.resume_id
+            ? getFileInfo(userData.data.resume_id)
+            : null,
+          userData.data?.transcript_id
+            ? getFileInfo(userData.data.transcript_id)
+            : null,
+        ]);
+      }
+
       return {
         user: userData
           ? {
               ...userData.data,
               id: undefined,
-              resume_id:
-                userData.data?.resume_id &&
-                (await getFileInfo(userData.data.resume_id)).url.split(
-                  "resumes/"
-                )[1],
-              transcript_id:
-                userData.data?.transcript_id &&
-                (await getFileInfo(userData.data.transcript_id)).url.split(
-                  "transcripts/"
-                )[1],
+              resume_id: resumeInfo
+                ? resumeInfo.url.split("resumes/")[1]
+                : null,
+              transcript_id: transcriptInfo
+                ? transcriptInfo.url.split("transcripts/")[1]
+                : null,
             }
           : null,
         skills: skillsData ? skillsData.data?.map((skill) => skill.skill) : [],

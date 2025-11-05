@@ -54,15 +54,15 @@ export default function Profile() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] =
     useState<Notification[]>(defaultNotification);
-  const { userInfo } = useAuth({
+  const { userInfo, isAuthenticated } = useAuth({
     fetchUser: true,
   });
   const jwtInfo = trpc.auth.decodeJWT.useQuery(undefined, {
-    enabled: userInfo.isSuccess,
+    enabled: isAuthenticated,
   });
   const isAdmin = userInfo.isSuccess && jwtInfo.data?.user.isAdmin;
   const joblistingStatus = trpc.joblisting.joblistings.useQuery(undefined, {
-    enabled: userInfo.isSuccess,
+    enabled: isAuthenticated,
   });
 
   const handleNotificationClick = () => {

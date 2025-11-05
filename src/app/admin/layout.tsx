@@ -12,7 +12,7 @@ import {
   MdCompareArrows,
   MdDashboard,
 } from "react-icons/md";
-import useAuth from "@/hooks/useAuth";
+import { trpc } from "@/lib/trpc/client";
 
 export default function AdminLayout({
   children,
@@ -21,9 +21,13 @@ export default function AdminLayout({
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const pathName = usePathname();
-  const { admin } = useAuth({ fetchAdmin: true }).information;
+  const jwtDecoded = trpc.auth.decodeJWT.useQuery();
 
-  if (!admin) {
+  if (
+    jwtDecoded.isLoading ||
+    !jwtDecoded.isSuccess ||
+    !jwtDecoded.data.user.isAdmin
+  ) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-100">
         <div className="bg-white p-8 rounded shadow text-center">

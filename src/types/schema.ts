@@ -22,7 +22,7 @@ export interface User extends IdentifiableItem {
   first_name: string;
   last_name: string;
   phone_number: string | null;
-  prefix: string | null;
+  prefix: string;
   firebase_uid: string;
   country_code: string;
   resume_id: string | null;
@@ -48,7 +48,7 @@ export interface EducationalDetails
 }
 
 export interface SocialLinks extends IdentifiableItem, Pick<Admin, "user_id"> {
-  link: string | null;
+  link: string;
 }
 
 export interface Skills extends IdentifiableItem, Pick<Admin, "user_id"> {

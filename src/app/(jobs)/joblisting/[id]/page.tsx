@@ -7,13 +7,16 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { JobListing } from "@/types/schema";
 import Loading from "@/app/loading";
+import { trpc } from "@/lib/trpc/client";
 
 export default function Page() {
   const router = useRouter();
   const jobId = useParams().id as string;
-  const { information, isAuthenticated, csrfToken } = useAuth({
-    fetchAdmin: true,
+  const { userInfo, csrfToken, isAuthenticated } = useAuth({
     routerActivation: false,
+  });
+  const jwtDecoded = trpc.auth.decodeJWT.useQuery(undefined, {
+    enabled: isAuthenticated,
   });
 
   const [jobLoading, setJobLoading] = useState(true);
