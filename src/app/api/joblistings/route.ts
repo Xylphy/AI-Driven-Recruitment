@@ -1,18 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import { createClientServer } from "@/lib/supabase/supabase";
-import {
-  deleteRow,
-  find,
-  findWithJoin,
-  insertTable,
-  updateTable,
-} from "@/lib/supabase/action";
-import { JobApplicants, JobListing, Admin } from "@/types/schema";
+import { deleteRow, insertTable, updateTable } from "@/lib/supabase/action";
 import { jobListingSchema } from "@/lib/schemas/";
 import { JWT } from "@/types/types";
-import { deleteDocument } from "@/lib/mongodb/action";
-import mongoDb_client from "@/lib/mongodb/mongodb";
 import { z } from "zod";
 
 export async function POST(request: NextRequest) {
@@ -113,43 +104,6 @@ export async function POST(request: NextRequest) {
     message: "Success",
     status: 401,
   });
-}
-
-export async function DELETE(request: NextRequest) {
-  const jobId = request.nextUrl.searchParams.get("jobId");
-
-  if (!jobId) {
-    return NextResponse.json({ error: "Job ID is required" }, { status: 400 });
-  }
-
-  const { isAdmin } = jwt.verify(
-    request.cookies.get("token")!.value,
-    process.env.JWT_SECRET!
-  ) as JWT;
-
-  if (!isAdmin) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-  }
-
-  const supabase = await createClientServer(1, true);
-  const { error } = await deleteRow(supabase, "job_listings", "id", jobId);
-
-  if (error) {
-    return NextResponse.json(
-      { error: "Failed to delete job listing" },
-      { status: 500 }
-    );
-  }
-
-  await mongoDb_client.connect();
-
-  await deleteDocument("ai-driven-recruitment", "scored_candidates", {
-    job_id: jobId,
-  }).many();
-
-  await mongoDb_client.close();
-
-  return NextResponse.json({ message: "Job listing deleted successfully" });
 }
 
 export async function PUT(request: NextRequest) {

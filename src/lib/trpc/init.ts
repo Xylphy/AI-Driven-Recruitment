@@ -5,7 +5,6 @@ import superjson from "superjson";
 import jwt from "jsonwebtoken";
 import { JWT } from "@/types/types";
 import { TRPCError } from "@trpc/server";
-import { verifyCsrfToken } from "@/lib/csrf";
 import { rateLimit } from "@/lib/rate-limit";
 import { NextRequest } from "next/server";
 
@@ -30,7 +29,11 @@ export const createTRPCContext = cache(async () => {
     }
   }
 
-  return { userJWT, headers: headersList };
+  return {
+    userJWT,
+    headers: headersList,
+    cookies: cookieStore,
+  };
 });
 
 // Avoid exporting the entire t-object
@@ -83,15 +86,16 @@ export const rateLimitedProcedure = baseProcedure.use(async ({ ctx, next }) => {
 export const protectedProcedure = rateLimitedProcedure.use(
   async ({ ctx, next }) => {
     const csrfToken = ctx.headers?.get("x-csrf-token");
+    const csrfCookie = ctx.cookies.get("csrf_token");
 
-    if (!csrfToken) {
+    if (!csrfToken || !csrfCookie) {
       throw new TRPCError({
         code: "FORBIDDEN",
         message: "CSRF token is required",
       });
     }
 
-    if (!verifyCsrfToken(csrfToken)) {
+    if (csrfToken !== csrfCookie.value) {
       throw new TRPCError({
         code: "FORBIDDEN",
         message: "Invalid CSRF token",

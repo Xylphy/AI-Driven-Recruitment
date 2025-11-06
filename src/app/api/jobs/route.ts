@@ -1,5 +1,5 @@
 import { createClientServer } from "@/lib/supabase/supabase";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { JobListing } from "@/types/schema";
 import { findWithJoin } from "@/lib/supabase/action";
 import { IdentifiableItem } from "@/types/types";

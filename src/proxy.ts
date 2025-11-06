@@ -30,10 +30,7 @@ const publicPathToken = [
     path: "/api/csrf",
     acceptedMethods: ["GET"],
   },
-  {
-    path: "/api/jobDetails",
-    acceptedMethods: ["GET"],
-  },
+  
   {
     path: "/api/jobs",
     acceptedMethods: ["GET"],
@@ -46,7 +43,6 @@ const publicPathToken = [
 
 // Paths that do not require CSRF token
 const publicPathCsrf = [
-  "/api/auth/status",
   "/api/auth/refresh",
   "/api/auth/jwt",
   "/api/csrf",

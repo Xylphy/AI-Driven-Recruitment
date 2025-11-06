@@ -19,7 +19,7 @@ export async function getCsrfToken(): Promise<string | null> {
   }
 }
 
-// Refreshes access and csrf token
+// Refreshes access and refresh token
 export async function refreshToken(): Promise<boolean> {
   if (typeof document === "undefined") {
     // This code is running on the server, so we can't access document.cookie
@@ -90,10 +90,14 @@ export function cleanArrayData<T extends Record<string, unknown>>(
     });
 }
 
+/**
+ * Converts an ISO string to a formatted date string.
+ * @param iso ISO String
+ * @returns Formatted Date
+ */
 export function formatDate(iso?: string) {
   if (!iso) return "";
-  const date = new Date(iso);
-  return date.toLocaleDateString(undefined, {
+  return new Date(iso).toLocaleDateString(undefined, {
     year: "numeric",
     month: "short",
     day: "numeric",

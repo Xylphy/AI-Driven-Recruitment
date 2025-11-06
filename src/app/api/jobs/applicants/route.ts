@@ -2,110 +2,13 @@ import { createClientServer } from "@/lib/supabase/supabase";
 import { NextRequest, NextResponse } from "next/server";
 import { JWT } from "@/types/types";
 import jwt from "jsonwebtoken";
-import {
-  insertTable,
-  findWithJoin,
-  find,
-  QueryFilter,
-  deleteRow,
-} from "@/lib/supabase/action";
+import { findWithJoin, QueryFilter } from "@/lib/supabase/action";
 import auth from "@/lib/firebase/admin";
 import { JobApplicants, User } from "@/types/schema";
 import { findOne } from "@/lib/mongodb/action";
 import mongoDb_client from "@/lib/mongodb/mongodb";
 
-// API for applying for a job
-export async function POST(request: NextRequest) {
-  const { id: userId, isAdmin } = jwt.verify(
-    request.cookies.get("token")!.value,
-    process.env.JWT_SECRET!
-  ) as JWT;
-
-  if (isAdmin) {
-    return NextResponse.json(
-      { error: "Admins cannot apply for jobs" },
-      { status: 403 }
-    );
-  }
-
-  const { jobId } = await request.json();
-  if (!jobId) {
-    return NextResponse.json({ error: "Job ID is required" }, { status: 400 });
-  }
-
-  const supabaseClient = await createClientServer(1, true);
-
-  const { data: existingApplicant, error: existingError } =
-    await find<JobApplicants>(
-      supabaseClient,
-      "job_applicants",
-      [
-        { column: "user_id", value: userId },
-        { column: "joblisting_id", value: jobId },
-      ],
-      "*"
-    )
-      .many()
-      .execute();
-
-  if (existingError) {
-    return NextResponse.json(
-      { error: "Failed to check existing applications" },
-      { status: 500 }
-    );
-  }
-
-  if (existingApplicant && existingApplicant.length > 0) {
-    return NextResponse.json(
-      { error: "You have already applied for this job" },
-      { status: 409 }
-    );
-  }
-
-  const { data: applicantsID, error } = await insertTable(
-    supabaseClient,
-    "job_applicants",
-    {
-      user_id: userId,
-      joblisting_id: jobId,
-    }
-  );
-
-  if (error) {
-    return NextResponse.json(
-      { error: "Failed to apply for the job" },
-      { status: 500 }
-    );
-  }
-
-  const scoreAPI = new URL("http://localhost:8000/score/");
-  scoreAPI.searchParams.set("job_id", jobId);
-  scoreAPI.searchParams.set("user_id", userId);
-  scoreAPI.searchParams.set("applicant_id", applicantsID[0].id);
-
-  // Please in the future if there's a local AI, then don't wait for this API to respond
-  const response = await fetch(scoreAPI.toString(), {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-
-  if (!response.ok) {
-    await deleteRow(supabaseClient, "job_applicants", "id", applicantsID[0].id);
-
-    return NextResponse.json(
-      { error: "Failed to process application" },
-      { status: 500 }
-    );
-  }
-
-  return NextResponse.json({
-    message: "Application submitted successfully",
-  });
-}
-
-/**
+  /**
  * GET /api/jobs/applicants
  * @param request NextRequest with optional jobId query parameter
  * @returns A JSON response containing a list of applicants with their names, emails, and predictive success scores
