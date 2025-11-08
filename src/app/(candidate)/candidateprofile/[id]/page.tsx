@@ -145,9 +145,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     return () => controller.abort(); // cancel the request on unmount
   }, [candidateId, isAuthLoading]);
 
-  const handleStatusChange = (
-    e: React.ChangeEvent<HTMLSelectElement>
-  ) => {
+  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newStatus = e.target.value;
     setSelectedStatus(newStatus);
 

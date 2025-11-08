@@ -17,7 +17,7 @@ type UIState = {
 
 export default function Page() {
   const router = useRouter();
-  const jobId = String(useParams().id ?? "");
+  const jobId = useParams().id as string;
 
   const { isAuthenticated } = useAuth({
     routerActivation: false,

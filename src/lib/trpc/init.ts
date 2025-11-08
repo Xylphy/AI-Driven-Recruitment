@@ -9,7 +9,7 @@ import { rateLimit } from "@/lib/rate-limit";
 import { NextRequest } from "next/server";
 
 const standardLimiter = rateLimit({
-  max: 100,
+  max: process.env.NODE_ENV === "development" ? 1000 : 100,
   windowMs: 15 * 60 * 1000,
 });
 

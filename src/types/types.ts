@@ -69,7 +69,7 @@ export interface IdentifiableTitle extends IdentifiableItem, Title {}
 export interface JobListing extends Title {
   qualifications: IdentifiableTitle[];
   requirements: IdentifiableTitle[];
-  location: string;
+  location: "Cebu City" | "Manila" | "Tokyo";
   created_at: string;
 }
 

@@ -11,6 +11,7 @@ import {
   findWithJoin,
   deleteRow,
   insertTable,
+  updateTable,
 } from "@/lib/supabase/action";
 import { TRPCError } from "@trpc/server";
 import mongoDb_client from "@/lib/mongodb/mongodb";
@@ -23,6 +24,7 @@ import {
   JobTags,
   Admin,
 } from "@/types/schema";
+import { jobListingSchema } from "@/lib/schemas";
 
 const jobListingRouter = createTRPCRouter({
   joblistings: authorizedProcedure
@@ -294,6 +296,90 @@ const jobListingRouter = createTRPCRouter({
         success: true,
         message: "Application submitted successfully",
       };
+    }),
+  updateJoblisting: authenticatedProcedure
+    .input(
+      jobListingSchema.extend({
+        jobId: z.uuid(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      if (!ctx.userJWT!.isAdmin) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "Insufficient permissions",
+        });
+      }
+
+      const supabase = await createClientServer(1, true);
+
+      await Promise.all([
+        deleteRow(supabase, "jl_qualifications", "joblisting_id", input.jobId),
+        deleteRow(supabase, "jl_requirements", "joblisting_id", input.jobId),
+        deleteRow(supabase, "job_tags", "joblisting_id", input.jobId),
+      ]);
+
+      const { data: tagRows, error: tagError } = await supabase
+        .from("tags")
+        .upsert(
+          Array.from(new Set(input.tags?.map((tag) => tag.title))).map(
+            (name) => ({
+              name,
+            })
+          ),
+          { onConflict: "slug" }
+        )
+        .select("id, name");
+
+      if (tagError) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create job listings",
+        });
+      }
+
+      const { error: errorLink } = await supabase.from("job_tags").insert(
+        tagRows.map((t) => ({
+          joblisting_id: input.jobId,
+          tag_id: t.id,
+        }))
+      );
+
+      if (errorLink) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create job listings",
+        });
+      }
+
+      const promises = await Promise.all([
+        updateTable(supabase, "job_listings", "id", input.jobId, {
+          title: input.title,
+          location: input.location,
+          is_fulltime: input.isFullTime,
+        }),
+        ...(input.qualifications || []).map((qualification) =>
+          insertTable(supabase, "jl_qualifications", {
+            joblisting_id: input.jobId,
+            qualification: qualification.title,
+          })
+        ),
+        ...(input.requirements || []).map((requirement) =>
+          insertTable(supabase, "jl_requirements", {
+            joblisting_id: input.jobId,
+            requirement: requirement.title,
+          })
+        ),
+      ]);
+
+      if (promises.some((promise) => promise.error)) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update job listing",
+        });
+      }
+
+      return { success: true, message: "Job listing updated successfully" };
     }),
 });
 

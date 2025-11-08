@@ -18,19 +18,19 @@ export default function ListInputSection({
       <label className="block text-sm font-medium text-gray-700 mb-1">
         {title}
       </label>
-      {items.map((item) => (
-        <div key={item.id} className="flex items-center gap-2 mb-2">
+      {items.map((value) => (
+        <div key={value.id} className="flex items-center gap-2 mb-2">
           <input
             type="text"
-            value={item.title}
-            onChange={(e) => update(item.id, e.target.value)}
+            value={value.title}
+            onChange={(e) => update(value.id, e.target.value)}
             placeholder={`Enter ${title.toLowerCase()}`}
             className="w-full px-3 py-2 border border-gray-300 rounded"
             required
           />
           <button
             type="button"
-            onClick={() => deleteItem(item.id)}
+            onClick={() => deleteItem(value.id)}
             className="text-sm text-red-600 underline"
           >
             Delete

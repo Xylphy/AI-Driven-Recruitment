@@ -36,33 +36,37 @@ let _cachedCsrf: { token: string | null; expiresAt?: number } = {
   token: null,
 };
 
-const trpcClient = trpc.createClient({
-  links: [
-    httpBatchLink({
-      transformer: superjson,
-      url: getUrl(),
-      async headers() {
-        if (
-          _cachedCsrf.token &&
-          _cachedCsrf.expiresAt &&
-          Date.now() < _cachedCsrf.expiresAt
-        ) {
-          return {
-            "x-csrf-token": _cachedCsrf.token,
-          };
-        }
-        const token = await getCsrfToken();
-        _cachedCsrf = {
-          token,
-          expiresAt: Date.now() + 5 * 60 * 1000, // Cache for 5 minutes
-        };
-        return {
-          "x-csrf-token": token ?? undefined,
-        };
-      },
-    }),
-  ],
-});
+// Deduplicate concurrent CSRF fetches by storing a pending promise
+let _csrfPromise: Promise<string | null> | null = null;
+
+async function getCachedCsrfToken(): Promise<string | null> {
+  if (
+    _cachedCsrf.token &&
+    _cachedCsrf.expiresAt &&
+    Date.now() < _cachedCsrf.expiresAt
+  ) {
+    return _cachedCsrf.token;
+  }
+
+  if (_csrfPromise) {
+    return _csrfPromise;
+  }
+
+  _csrfPromise = (async () => {
+    try {
+      const token = await getCsrfToken();
+      _cachedCsrf = {
+        token,
+        expiresAt: Date.now() + 5 * 60 * 1000, // cache 5 minutes
+      };
+      return token;
+    } finally {
+      _csrfPromise = null;
+    }
+  })();
+
+  return _csrfPromise;
+}
 
 export function TRPCProvider(
   props: Readonly<{
@@ -70,7 +74,17 @@ export function TRPCProvider(
   }>
 ) {
   const queryClient = getQueryClient();
-
+  const trpcClient = trpc.createClient({
+    links: [
+      httpBatchLink({
+        transformer: superjson,
+        url: getUrl(),
+        async headers() {
+          return { "x-csrf-token": (await getCachedCsrfToken()) ?? undefined };
+        },
+      }),
+    ],
+  });
   // NOTE: Avoid useState when initializing the query client if you don't
   //       have a suspense boundary between this and the code that may
   //       suspend because React will throw away the client on the initial
