@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { JobListing } from "@/types/types";
 import ListInputSection from "@/components/joblisting/Qualifications";
 import useAuth from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { JOB_LOCATIONS } from "@/lib/constants";
 import { Tags } from "@/types/types";
+import { trpc } from "@/lib/trpc/client";
 
 export default function JobListingPage() {
   const router = useRouter();
@@ -20,17 +21,14 @@ export default function JobListingPage() {
     qualifications: [],
     requirements: [],
     tags: [],
-    location: "",
+    location: "Cebu City",
     isFullTime: true,
   });
-  const { information, csrfToken } = useAuth({
-    fetchAdmin: true,
+  const { isAuthenticated } = useAuth();
+  const userJWT = trpc.auth.decodeJWT.useQuery(undefined, {
+    enabled: isAuthenticated,
   });
-  const controllerRef = useRef<AbortController | null>(null);
-
-  useEffect(() => {
-    return () => controllerRef.current?.abort();
-  }, []);
+  const createJoblisting = trpc.joblisting.createJoblisting.useMutation();
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -72,40 +70,37 @@ export default function JobListingPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!information.admin) {
+    if (!userJWT.data?.user.isAdmin) {
       alert("You are not authorized to create a job listing");
       router.push("/profile");
     }
 
-    controllerRef.current?.abort(); // Abort any ongoing request
-    controllerRef.current = new AbortController();
-
-    const response = await fetch("/api/joblistings", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": csrfToken ?? "",
+    await createJoblisting.mutateAsync(
+      {
+        title: jobListing.title,
+        qualifications: jobListing.qualifications,
+        requirements: jobListing.requirements,
+        tags: jobListing.tags,
+        location: jobListing.location,
+        isFullTime: jobListing.isFullTime,
       },
-      body: JSON.stringify(jobListing),
-      signal: controllerRef.current.signal,
-    }).catch((error) => {
-      if (error.name === "AbortError") return;
-    });
-
-    if (!response || !response.ok) {
-      alert("Failed to create job listing");
-      return;
-    }
-
-    alert("Job listing created successfully");
-    setJobListing({
-      title: "",
-      qualifications: [],
-      requirements: [],
-      tags: [],
-      location: "",
-      isFullTime: true,
-    });
+      {
+        onSuccess: (data) => {
+          alert(data.message);
+          setJobListing({
+            title: "",
+            qualifications: [],
+            requirements: [],
+            tags: [],
+            location: "Cebu City",
+            isFullTime: true,
+          });
+        },
+        onError: (error) => {
+          alert(error.message);
+        },
+      }
+    );
   };
 
   return (

@@ -7,6 +7,7 @@ import { JWT } from "@/types/types";
 import { TRPCError } from "@trpc/server";
 import { rateLimit } from "@/lib/rate-limit";
 import { NextRequest } from "next/server";
+import admin from "../firebase/admin";
 
 const standardLimiter = rateLimit({
   max: process.env.NODE_ENV === "development" ? 1000 : 100,

@@ -381,6 +381,108 @@ const jobListingRouter = createTRPCRouter({
 
       return { success: true, message: "Job listing updated successfully" };
     }),
+  createJoblisting: authenticatedProcedure
+    .input(jobListingSchema)
+    .mutation(async ({ input, ctx }) => {
+      if (!ctx.userJWT!.isAdmin) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "Insufficient permissions",
+        });
+      }
+
+      const supabase = await createClientServer(1, true);
+
+      const { data: tagRows, error: tagError } = await supabase
+        .from("tags")
+        .upsert(
+          Array.from(new Set(input.tags?.map((tag) => tag.title))).map(
+            (name) => ({ name })
+          ),
+          { onConflict: "slug" }
+        )
+        .select("id, name");
+
+      if (tagError) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create job listings",
+        });
+      }
+
+      const { data: insertedData, error: insertedError } = await insertTable(
+        supabase,
+        "job_listings",
+        {
+          title: input.title,
+          location: input.location,
+          created_by: ctx.userJWT!.id,
+          is_fulltime: input.isFullTime,
+        }
+      );
+
+      if (insertedError) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create job listings",
+        });
+      }
+
+      const { error: errorLink } = await supabase.from("job_tags").insert(
+        tagRows.map((t) => ({
+          joblisting_id: insertedData[0].id,
+          tag_id: t.id,
+        }))
+      );
+
+      if (errorLink) {
+        await deleteRow(supabase, "job_listings", "id", insertedData[0].id);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create job listings",
+        });
+      }
+
+      const results = await Promise.all([
+        ...(input.qualifications || []).map((qualification) =>
+          insertTable(supabase, "jl_qualifications", {
+            joblisting_id: insertedData[0].id,
+            qualification: qualification.title,
+          })
+        ),
+        ...(input.requirements || []).map((requirement) =>
+          insertTable(supabase, "jl_requirements", {
+            joblisting_id: insertedData[0].id,
+            requirement: requirement.title,
+          })
+        ),
+      ]);
+
+      if (results.some((result) => result.error)) {
+        await Promise.all([
+          deleteRow(supabase, "job_listings", "id", insertedData[0].id),
+          deleteRow(supabase, "job_tags", "joblisting_id", insertedData[0].id),
+          deleteRow(
+            supabase,
+            "jl_qualifications",
+            "joblisting_id",
+            insertedData[0].id
+          ),
+          deleteRow(
+            supabase,
+            "jl_requirements",
+            "joblisting_id",
+            insertedData[0].id
+          ),
+        ]);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create job listings",
+        });
+      }
+
+      return { success: true, message: "Job listing created successfully" };
+    }),
 });
 
 export default jobListingRouter;
