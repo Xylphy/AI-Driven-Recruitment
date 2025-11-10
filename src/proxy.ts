@@ -31,14 +31,6 @@ const publicPathToken = [
     acceptedMethods: ["GET"],
   },
   {
-    path: "/api/jobDetails",
-    acceptedMethods: ["GET"],
-  },
-  {
-    path: "/api/jobs",
-    acceptedMethods: ["GET"],
-  },
-  {
     path: "/api/users/signup",
     acceptedMethods: ["POST"],
   },
@@ -46,16 +38,21 @@ const publicPathToken = [
 
 // Paths that do not require CSRF token
 const publicPathCsrf = [
-  "/api/auth/status",
   "/api/auth/refresh",
   "/api/auth/jwt",
-  "/api/joblistings",
   "/api/csrf",
   "/api/admin/stats",
 ];
 
 export async function proxy(request: NextRequest) {
-  if (request.nextUrl.pathname.startsWith("/api")) {
+  const pathname = request.nextUrl.pathname;
+
+  if (pathname.startsWith("/api")) {
+    // Bypass tRPC requests
+    if (pathname.startsWith("/api/trpc")) {
+      return NextResponse.next();
+    }
+
     if (!limiter.check(request).success) {
       return NextResponse.json(
         { error: "Rate limit exceeded" },
@@ -76,8 +73,6 @@ export async function proxy(request: NextRequest) {
         { status: 403 }
       );
     }
-
-    const pathname = request.nextUrl.pathname;
 
     if (!publicPathCsrf.includes(pathname) && request.method !== "GET") {
       const csrfToken = request.headers.get("X-CSRF-Token");

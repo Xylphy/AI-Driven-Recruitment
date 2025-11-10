@@ -3,10 +3,12 @@
 import { MdLocationOn, MdAccessTime } from "react-icons/md";
 import Image from "next/image";
 import useAuth from "@/hooks/useAuth";
-import { use, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { startTransition, useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 import Loading from "@/app/loading";
-import { JobListing } from "@/types/schema";
+import { JobListing } from "@/types/types";
+import { trpc } from "@/lib/trpc/client";
+import { formatDate } from "@/lib/library";
 
 interface Candidate {
   id: string;
@@ -15,133 +17,91 @@ interface Candidate {
   predictiveSuccess?: number;
 }
 
-export default function Page({ params }: { params: Promise<{ id: string }> }) {
+export default function Page() {
   const router = useRouter();
-  const { id: jobId } = use(params);
-  const { information, isAuthenticated, isAuthLoading } = useAuth({
-    fetchAdmin: true,
-  });
-  const [candidatesLoading, isCandidatesLoading] = useState(true);
+  const jobId = useParams().id as string;
+  const { isAuthenticated } = useAuth();
   const [candidates, setCandidates] = useState<Candidate[]>();
-  const [jobDetails, setJobDetails] = useState<Omit<JobListing, "created_by">>({
-    id: "",
+  const [jobDetails, setJobDetails] = useState<
+    Omit<JobListing, "qualifications" | "requirements"> & {
+      createdAt: string;
+    }
+  >({
     title: "",
-    location: "",
-    is_fulltime: true,
-    created_at: "",
-    joblisting_id: "",
+    location: "Cebu City",
+    isFullTime: true,
+    createdAt: "",
   });
+  const userJWT = trpc.auth.decodeJWT.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
+  const joblistingDetails = trpc.joblisting.getJobDetails.useQuery(
+    { jobId },
+    {
+      enabled: isAuthenticated,
+    }
+  );
+  const candidatesData = trpc.candidate.getCandidateFromJob.useQuery(
+    { jobId },
+    {
+      enabled: isAuthenticated && !!userJWT.data?.user.isAdmin,
+    }
+  );
+  const deleteJobMutation = trpc.joblisting.deleteJoblisting.useMutation();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const controllerRef = useRef<AbortController | null>(null);
-
-  useEffect(() => {
-    return () => controllerRef.current?.abort(); // Abort any ongoing request on unmount
-  }, []);
 
   // Admin only
   useEffect(() => {
-    if (isAuthLoading) {
+    if (userJWT.isLoading || !userJWT.isEnabled) {
       return;
     }
 
-    if (!information.admin) {
+    if (!userJWT.data?.user.isAdmin) {
       alert("You are not authorized to view this page.");
-      if (window.history.length > 1) {
-        router.back();
-      } else {
-        router.push("/profile");
-      }
+      router.push("/profile");
     }
-  }, [isAuthLoading, router]);
+  }, [userJWT.data]);
+
+  // Propagate job details
+  useEffect(() => {
+    if (joblistingDetails.data) {
+      startTransition(() =>
+        setJobDetails({
+          title: joblistingDetails.data.title,
+          location: joblistingDetails.data.location,
+          isFullTime: joblistingDetails.data.is_fulltime,
+          createdAt: joblistingDetails.data.created_at,
+        })
+      );
+    }
+  }, [joblistingDetails.data]);
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      return;
+    if (candidatesData.data) {
+      startTransition(() => setCandidates(candidatesData.data.applicants));
     }
-
-    const controller = new AbortController();
-
-    fetch(`/api/jobs/applicants?jobId=${jobId}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      signal: controller.signal,
-    })
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("Failed to fetch job details");
-        }
-        return res.json();
-      })
-      .then((data) => {
-        setCandidates(data.data || []);
-      })
-      .catch((error) => {
-        console.error("Error fetching job details:", error);
-      })
-      .finally(() => {
-        isCandidatesLoading(false);
-      });
-
-    fetch(`/api/jobDetails?job=${jobId}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      signal: controller.signal,
-    })
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("Failed to fetch job details");
-        }
-        return res.json();
-      })
-      .then((data) => {
-        setJobDetails({
-          ...data,
-          created_at: new Date(data.created_at).toLocaleDateString(),
-        });
-      })
-      .catch((error) => {
-        alert("Error fetching job details: " + error.message);
-      });
-
-    return () => controller.abort(); // cancel the request on unmount
-  }, [isAuthenticated]);
+  }, [candidatesData.data]);
 
   const handleDeleteJob = async () => {
-    if (!information.admin) {
-      alert("You are not authorized to perform this action.");
-      setShowDeleteModal(false);
+    if (!confirm("This will permanently delete the job listing. Continue?")) {
       return;
     }
 
-    controllerRef.current?.abort(); // Abort any ongoing request
-    controllerRef.current = new AbortController();
-
-    fetch(`/api/joblisting/${jobId}`, {
-      method: "DELETE",
-      signal: controllerRef.current.signal,
-    })
-      .then((res) => {
-        if (!res.ok) {
-          alert("Failed to delete job listing");
-          return;
-        }
-        alert("Job listing deleted successfully");
-        router.push("/profile");
-      })
-      .catch((err) => {
-        if (err.name === "AbortError") {
-          // Request was aborted
-          return;
-        }
-        alert("Failed to delete job listing. Please try again.");
-      });
+    await deleteJobMutation.mutateAsync(
+      { joblistingId: jobId },
+      {
+        onSuccess() {
+          alert("Job deleted successfully");
+          router.push("/profile");
+        },
+        onError(error) {
+          alert("Error deleting job: " + error.message);
+        },
+      }
+    );
   };
 
-  if (candidatesLoading) {
+  if (!candidatesData.data || !joblistingDetails.data) {
     return <Loading />;
   }
 
@@ -168,7 +128,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
               </span>
               <span className="flex items-center gap-1">
                 <MdAccessTime className="text-red-600" />{" "}
-                {jobDetails.is_fulltime ? "Full-Time" : "Part-Time"}
+                {jobDetails.isFullTime ? "Full-Time" : "Part-Time"}
               </span>
             </div>
           </div>
@@ -220,11 +180,11 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
               </h3>
               <ul className="text-sm text-gray-700 space-y-1">
                 <li>
-                  <strong>Published:</strong> {jobDetails.created_at}
+                  <strong>Published:</strong> {formatDate(jobDetails.createdAt)}
                 </li>
                 <li>
                   <strong>Job Nature:</strong>{" "}
-                  {jobDetails.is_fulltime ? "Full-Time" : "Part-Time"}
+                  {jobDetails.isFullTime ? "Full-Time" : "Part-Time"}
                 </li>
                 <li>
                   <strong>Location:</strong> {jobDetails.location}
@@ -244,34 +204,30 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
               </p>
             </section>
 
-            {information.admin && (
-              <>
-                <button
-                  onClick={() => router.push(`/joblisting/${jobId}`)}
-                  className="mt-6 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600"
-                >
-                  See Job Details
-                </button>
-                <button
-                  className="mt-2 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600"
-                  onClick={() => setShowDeleteModal(true)}
-                >
-                  Delete Job
-                </button>
-                <button
-                  className="mt-2 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600"
-                  onClick={() => router.push(`/joblisting/${jobId}/edit`)}
-                >
-                  Edit Job
-                </button>
-                <button
-                  onClick={() => router.back()}
-                  className="mt-2 w-full bg-gray-300 text-gray-800 font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-gray-500 hover:border-gray-500"
-                >
-                  Back
-                </button>
-              </>
-            )}
+            <button
+              onClick={() => router.push(`/joblisting/${jobId}`)}
+              className="mt-6 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600"
+            >
+              See Job Details
+            </button>
+            <button
+              className="mt-2 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600"
+              onClick={() => setShowDeleteModal(true)}
+            >
+              Delete Job
+            </button>
+            <button
+              className="mt-2 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600"
+              onClick={() => router.push(`/joblisting/${jobId}/edit`)}
+            >
+              Edit Job
+            </button>
+            <button
+              onClick={() => router.back()}
+              className="mt-2 w-full bg-gray-300 text-gray-800 font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-gray-500 hover:border-gray-500"
+            >
+              Back
+            </button>
           </div>
         </div>
       </div>

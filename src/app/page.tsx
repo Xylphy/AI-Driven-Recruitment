@@ -1,10 +1,11 @@
 "use client";
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import AnimatedSection from "@/components/common/AnimatedSection";
 import Image from "next/image";
-import Loading from "./loading";
+import { trpc } from "@/lib/trpc/client";
+
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -32,34 +33,14 @@ const categories = [
 ];
 
 export default function Home() {
-  const [isLoading, setIsLoading] = useState(true);
   const [section1Done, setSection1Done] = useState(false);
   const [section2Done, setSection2Done] = useState(false);
   const [section3Done, setSection3Done] = useState(false);
-  const [section4Done, setSection4Done] = useState(false);
-
-  if (section2Done || section3Done || section4Done) {
-    // Prevent linting errors when building Next.js
-    // Recommended to remove this in production
-  }
-
-  useEffect(() => {
-    // As of now we don't have any thing to load so maybe this is not needed(?)
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (isLoading) {
-    return <Loading />;
-  }
 
   return (
     <>
       <AnimatedSection
-        className="pt-20 px-6 bg-gradient-to-br from-white via-red-50 to-red-100 flex justify-center items-center"
+        className="pt-20 px-6 bg-linear-to-br from-white via-red-50 to-red-100 flex justify-center items-center"
         start={true}
         onComplete={() => setSection1Done(true)}
       >
@@ -142,7 +123,7 @@ export default function Home() {
 
       <AnimatedSection
         className="py-16 px-6 bg-gray-50"
-        start={true}
+        start={section2Done}
         onComplete={() => setSection3Done(true)}
       >
         <motion.div className="max-w-6xl mx-auto text-center" variants={fadeUp}>
@@ -175,11 +156,7 @@ export default function Home() {
         </motion.div>
       </AnimatedSection>
 
-      <AnimatedSection
-        className="py-20 text-center px-6"
-        start={true}
-        onComplete={() => setSection4Done(true)}
-      >
+      <AnimatedSection className="py-20 text-center px-6" start={section3Done}>
         <motion.h2
           className="text-3xl text-[#E30022] md:text-4xl font-bold mb-4"
           variants={fadeUp}

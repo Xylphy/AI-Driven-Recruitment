@@ -1,36 +1,12 @@
 import { z } from "zod";
 import { dateRangeSchema } from "./common";
 
-const educationalDetailSchema = z.intersection(
-  z.object({
-    degree: z.string().optional().default(""),
-    institute: z.string().optional().default(""),
-    currentlyPursuing: z.boolean(),
-    major: z.string().optional().default(""),
-  }),
-  dateRangeSchema
-);
-
-const socialLinkSchema = z.object({
-  value: z.url("Invalid URL"),
-});
-
-const jobExperiences = z.intersection(
-  z.object({
-    title: z.string().optional().default(""),
-    company: z.string(),
-    summary: z.string().optional().default(""),
-    currentlyWorking: z.boolean(),
-  }),
-  dateRangeSchema
-);
-
 export const userSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
   email: z.email("Invalid email address"),
   prefix: z.string().optional().default(""),
-  mobileNumber: z.string().optional().default(""),
+  mobileNumber: z.string(),
   countryCode: z.enum(["+63", "+1", "+44", "+91"]).optional().default("+1"),
   street: z.string().optional().default(""),
   zip: z.string().optional().default(""),
@@ -40,9 +16,42 @@ export const userSchema = z.object({
     .default(""),
   city: z.string().optional().default(""),
   jobTitle: z.string().optional().default(""),
-  educationalDetails: z.array(educationalDetailSchema).optional().default([]),
-  socialLinks: z.array(socialLinkSchema).optional().default([]),
-  jobExperiences: z.array(jobExperiences).optional().default([]),
+  educationalDetails: z
+    .array(
+      z.intersection(
+        z.object({
+          degree: z.string().optional().default(""),
+          institute: z.string().optional().default(""),
+          currentlyPursuing: z.boolean(),
+          major: z.string().optional().default(""),
+        }),
+        dateRangeSchema
+      )
+    )
+    .optional()
+    .default([]),
+  socialLinks: z
+    .array(
+      z.object({
+        value: z.url("Invalid URL"),
+      })
+    )
+    .optional()
+    .default([]),
+  jobExperiences: z
+    .array(
+      z.intersection(
+        z.object({
+          title: z.string().optional().default(""),
+          company: z.string(),
+          summary: z.string().optional().default(""),
+          currentlyWorking: z.boolean(),
+        }),
+        dateRangeSchema
+      )
+    )
+    .optional()
+    .default([]),
   skillSet: z.string().optional().default(""),
   resume: z
     .instanceof(File)

@@ -11,11 +11,11 @@ import {
 } from "react-icons/md";
 import JobApplicationDetails from "@/components/profile/JobApplications";
 import Image from "next/image";
-import { useEffect, useState } from "react";
-import { JobListing } from "@/types/schema";
+import { useState } from "react";
 import useAuth from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase/client";
+import { trpc } from "@/lib/trpc/client";
 
 interface Notification {
   id: string;
@@ -25,116 +25,45 @@ interface Notification {
   read: boolean;
 }
 
+const defaultNotification: Notification[] = [
+  {
+    id: "1",
+    title: "New Application",
+    message: "John Doe applied for Software Engineer position",
+    timestamp: "2 hours ago",
+    read: false,
+  },
+  {
+    id: "2",
+    title: "Interview Scheduled",
+    message: "Interview scheduled for Frontend Developer position",
+    timestamp: "1 day ago",
+    read: false,
+  },
+  {
+    id: "3",
+    title: "Application Status Update",
+    message: "Your application for UX Designer has been reviewed",
+    timestamp: "3 days ago",
+    read: true,
+  },
+];
+
 export default function Profile() {
   const router = useRouter();
   const [showNotifications, setShowNotifications] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: "1",
-      title: "New Application",
-      message: "John Doe applied for Software Engineer position",
-      timestamp: "2 hours ago",
-      read: false,
-    },
-    {
-      id: "2",
-      title: "Interview Scheduled",
-      message: "Interview scheduled for Frontend Developer position",
-      timestamp: "1 day ago",
-      read: false,
-    },
-    {
-      id: "3",
-      title: "Application Status Update",
-      message: "Your application for UX Designer has been reviewed",
-      timestamp: "3 days ago",
-      read: true,
-    },
-  ]);
-
-  const [jobListed, setJobListed] = useState({
-    createdByThem: [] as JobListing[],
-    createdByOthers: [] as JobListing[],
-  });
-
-  const { information, isAuthLoading } = useAuth({
+  const [notifications, setNotifications] =
+    useState<Notification[]>(defaultNotification);
+  const { userInfo, isAuthenticated } = useAuth({
     fetchUser: true,
-    fetchAdmin: true,
   });
-  const [isJobLoading, setIsJobLoading] = useState(true);
-
-  useEffect(() => {
-    if (isAuthLoading) {
-      return;
-    }
-
-    const controller = new AbortController();
-
-    const fetchContent = async () => {
-      try {
-        const res = await fetch("/api/joblistings", {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          signal: controller.signal,
-        });
-
-        if (controller.signal.aborted) {
-          return;
-        }
-
-        if (!res.ok) {
-          console.log("Failed to fetch job listings");
-          return;
-        }
-
-        const body = await res.json();
-        if (!body || !body.data) {
-          return;
-        }
-
-        const formatJobDate = (
-          job: Pick<JobListing, "title" | "created_at">
-        ) => ({
-          ...job,
-          created_at: new Date(job.created_at).toLocaleDateString(),
-        });
-
-        if (information.admin) {
-          setJobListed({
-            createdByThem: body.data.createdByThem.map(formatJobDate),
-            createdByOthers: body.data.createdByAll.map(formatJobDate),
-          });
-        } else {
-          setJobListed({
-            createdByThem: [],
-            createdByOthers: body.data.map(formatJobDate),
-          });
-
-          setJobListed((prev) => ({
-            ...prev,
-            createdByOthers: prev.createdByOthers.map((job) => ({
-              ...job,
-              id: job.joblisting_id,
-            })),
-          }));
-        }
-      } catch (error: unknown) {
-        if (controller.signal.aborted) {
-          return;
-        }
-        alert("Failed to fetch job listings");
-      }
-    };
-
-    fetchContent().finally(() => {
-      setIsJobLoading(false);
-    });
-
-    return () => controller.abort(); // cancel the request on unmount
-  }, [isAuthLoading]);
+  const jwtInfo = trpc.auth.decodeJWT.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
+  const isAdmin = userInfo.isSuccess && jwtInfo.data?.user.isAdmin;
+  const joblistings = trpc.joblisting.joblistings.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
 
   const handleNotificationClick = () => {
     setShowNotifications(true);
@@ -178,15 +107,15 @@ export default function Profile() {
             </label>
 
             <h2 className="text-lg font-semibold mt-4 text-center">
-              {isAuthLoading ? (
+              {userInfo.isLoading || !userInfo.isSuccess ? (
                 <div className="animate-pulse">
                   <div className="w-24 h-4 bg-gray-300 rounded"></div>
                   <div className="w-16 h-4 bg-gray-300 rounded mt-2"></div>
                 </div>
               ) : (
                 <span>
-                  {information.user?.first_name || "No"}{" "}
-                  {information.user?.last_name || "Name"}
+                  {userInfo.data.user!.first_name || "No"}{" "}
+                  {userInfo.data.user!.last_name || "Name"}
                 </span>
               )}
             </h2>
@@ -197,7 +126,7 @@ export default function Profile() {
               <FaInstagram className="text-red-600" />
               <MdPhone className="text-red-600" />
             </div>
-            {information.admin && (
+            {isAdmin && (
               <>
                 <button
                   onClick={() => router.push("/createjob")}
@@ -249,7 +178,7 @@ export default function Profile() {
           <div className="w-full md:w-2/3 p-6  ">
             <div className="flex justify-between items-start mb-6">
               <h2 className="text-2xl font-bold">
-                {information.admin ? (
+                {isAdmin ? (
                   <>
                     <span className="text-red-600">Job</span> Listed{" "}
                   </>
@@ -276,7 +205,7 @@ export default function Profile() {
               </div>
             </div>
             <div className="space-y-5 pb-9 overflow-y-auto h-full">
-              {isJobLoading ? (
+              {joblistings.isLoading ? (
                 <div className="animate-pulse space-y-4">
                   <div className="h-6 bg-gray-300 rounded w-1/3"></div>
                   <div className="h-6 bg-gray-300 rounded w-1/2"></div>
@@ -285,11 +214,11 @@ export default function Profile() {
               ) : (
                 <JobApplicationDetails
                   jobApplications={
-                    information.admin
-                      ? jobListed.createdByThem
-                      : jobListed.createdByOthers
+                    isAdmin
+                      ? joblistings.data?.joblistings ?? []
+                      : joblistings.data?.joblistings ?? []
                   }
-                  isAdmin={information.admin!}
+                  isAdmin={!!isAdmin}
                 />
               )}
             </div>

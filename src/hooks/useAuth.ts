@@ -1,25 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   onAuthStateChanged,
   type User as FirebaseAuthUser,
 } from "firebase/auth";
 import { auth } from "@/lib/firebase/client";
-import { useEffect } from "react";
-import { checkAuthStatus } from "@/lib/library";
-import {
-  Skills,
-  User as SchemaUser,
-  EducationalDetails,
-  JobExperiences,
-} from "@/types/schema";
+import { refreshToken } from "@/lib/library";
 import { useRouter } from "next/navigation";
 import { getCsrfToken } from "@/lib/library";
+import { trpc } from "@/lib/trpc/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 type UseAuthOptions = {
   fetchUser?: boolean;
-  fetchAdmin?: boolean;
   fetchSkills?: boolean;
   fetchSocialLinks?: boolean;
   fetchEducation?: boolean;
@@ -27,68 +21,63 @@ type UseAuthOptions = {
   routerActivation?: boolean;
 };
 
-type UsersApiData = {
-  user: Omit<SchemaUser, "id"> | null;
-  admin: boolean | null;
-  skills: Pick<Skills, "skill">[];
-  socialLinks: string[];
-  education: Omit<EducationalDetails, "user_id" | "id">[];
-  experience: Omit<JobExperiences, "user_id" | "id">[];
-};
-
-type UsersApiResponse = {
-  data: UsersApiData;
-};
-
 export default function useAuth({
   fetchUser = false,
-  fetchAdmin = false,
   fetchSkills = false,
   fetchSocialLinks = false,
   fetchEducation = false,
   fetchExperience = false,
   routerActivation = true,
-}: UseAuthOptions = {}): {
-  information: {
-    user: Omit<SchemaUser, "id"> | null;
-    admin: boolean | null;
-    skills: Pick<Skills, "skill">[];
-    socialLinks: string[];
-    education: Omit<EducationalDetails, "user_id" | "id">[];
-    experience: Omit<JobExperiences, "user_id" | "id">[];
-  };
-  isAuthenticated: boolean;
-  isAuthLoading: boolean;
-  csrfToken: string | null;
-} {
+}: UseAuthOptions = {}) {
   const router = useRouter();
-  const [information, setInformation] = useState<{
-    user: Omit<SchemaUser, "id"> | null;
-    admin: boolean | null;
-    skills: Pick<Skills, "skill">[];
-    socialLinks: string[];
-    education: Omit<EducationalDetails, "user_id" | "id">[];
-    experience: Omit<JobExperiences, "user_id" | "id">[];
-  }>({
-    user: null,
-    admin: null,
-    skills: [],
-    socialLinks: [],
-    education: [],
-    experience: [],
-  });
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [csrfToken, setCsrfToken] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchCsrfToken = async () => {
-      setCsrfToken(await getCsrfToken());
-    };
+  // Use tRPC for auth status checking
+  const authStatus = trpc.auth.checkStatus.useQuery(undefined, {
+    enabled: isAuthenticated, // Relies on Firebase auth state
+    refetchInterval: 60000 * 15, // Refetch every 15 minutes (token expires in less than 15 mins)
+    retry: false, // Do not retry on failure
+    refetchOnWindowFocus: false, // Do not refetch on window focus
+  });
 
-    fetchCsrfToken();
+  // tRPC for fetching user info
+  const userInfo = trpc.user.fetchMyInformation.useQuery(
+    {
+      skills: fetchSkills,
+      socialLinks: fetchSocialLinks,
+      education: fetchEducation,
+      experience: fetchExperience,
+      personalDetails: fetchUser,
+    },
+    {
+      enabled: !authStatus.isLoading && authStatus.isEnabled, // Fetch only if auth status is known and user is enabled
+    }
+  );
+
+  const queryClient = useQueryClient();
+
+  // Handle auth status errors (token expiring or expired)
+  useEffect(() => {
+    if (!authStatus.error) return;
+
+    (async () => {
+      if (!(await refreshToken())) {
+        await auth.signOut();
+      } else {
+        await authStatus.refetch();
+      }
+    })();
+  }, [authStatus]);
+
+  // Fetch CSRF token on mount
+  useEffect(() => {
+    (async () => {
+      setCsrfToken(await getCsrfToken());
+    })();
   }, []);
 
+  // Handle Firebase auth state changes
   useEffect(() => {
     if (!csrfToken) return;
 
@@ -99,126 +88,44 @@ export default function useAuth({
       async (firebaseUser: FirebaseAuthUser | null) => {
         if (!firebaseUser) {
           try {
-            await fetch("/api/auth/jwt", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "X-CSRF-Token": csrfToken,
-              },
-              credentials: "include",
-              signal: controller.signal,
-            });
+            await Promise.all([
+              fetch("/api/auth/jwt", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "X-CSRF-Token": csrfToken,
+                },
+                credentials: "include",
+                signal: controller.signal,
+              }),
+              queryClient.cancelQueries(), // Cancel any ongoing queries
+            ]);
+            queryClient.clear(); // Clear all cached data
+          } catch (error) {
+            if (error instanceof Error && error.name !== "AbortError") {
+              console.error("Error clearing session:", error);
+            }
           } finally {
             setIsAuthenticated(false);
             if (routerActivation) {
               router.push("/login");
             }
           }
+        } else {
+          setIsAuthenticated(true);
         }
       }
     );
 
-    const checkAuth = async (): Promise<void> => {
-      const status = await checkAuthStatus();
-      if (status) {
-        setIsAuthenticated(true);
-      } else {
-        await auth.signOut();
-      }
-    };
-
-    checkAuth();
-
     return () => {
       unsubscribe();
-      controller.abort(); // cancel the request on unmount
+      controller.abort();
     };
-  }, [router, csrfToken]);
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      return;
-    }
-
-    const controller = new AbortController();
-    const params = new URLSearchParams();
-
-    Object.entries({
-      admin: fetchAdmin,
-      user: fetchUser,
-      skills: fetchSkills,
-      socialLinks: fetchSocialLinks,
-      education: fetchEducation,
-      experience: fetchExperience,
-    }).forEach(([key, value]) => {
-      if (value) {
-        params.append(key, "true");
-      }
-    });
-
-    const setInfo = async (): Promise<void> => {
-      try {
-        const res = await fetch(`/api/users?${params.toString()}`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          signal: controller.signal,
-        });
-
-        if (!res.ok) {
-          throw new Error("Failed to fetch user information");
-        }
-
-        const body = (await res.json()) as UsersApiResponse | null;
-
-        if (body?.data) {
-          const data = body.data;
-          setInformation({
-            user: data.user,
-            admin: data.admin,
-            skills: data.skills,
-            socialLinks: data.socialLinks,
-            education: data.education,
-            experience: data.experience,
-          });
-        }
-      } catch (error: unknown) {
-        if (error instanceof Error && error.name === "AbortError") return;
-
-        const message = error instanceof Error ? error.message : String(error);
-        alert(message);
-        await auth.signOut();
-        return;
-      } finally {
-        setIsAuthLoading(false);
-      }
-    };
-
-    const checkAuthInterval = setInterval(() => {
-      checkAuthStatus().then((status) => {
-        if (!status) {
-          auth.signOut();
-          clearInterval(checkAuthInterval);
-          return;
-        }
-        setIsAuthenticated(true);
-      });
-    }, 60000 * 50); // Check every 50 minutes since the expiry of the session is 60 minutes
-
-    setInfo();
-
-    return () => {
-      controller.abort(); // cancel the request on unmount
-      clearInterval(checkAuthInterval);
-    };
-  }, [isAuthenticated]);
+  }, [csrfToken, router, routerActivation]);
 
   return {
-    information,
+    userInfo,
     isAuthenticated,
-    isAuthLoading,
     csrfToken,
   };
 }

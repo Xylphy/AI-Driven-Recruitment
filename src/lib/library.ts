@@ -19,32 +19,7 @@ export async function getCsrfToken(): Promise<string | null> {
   }
 }
 
-export async function checkAuthStatus(): Promise<boolean> {
-  if (typeof document === "undefined") {
-    // This code is running on the server, so we can't access document.cookie
-    return false;
-  }
-
-  try {
-    const response = await fetch("/api/auth/status", {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "include",
-    });
-
-    if (response.ok) {
-      return true;
-    }
-
-    return await refreshToken();
-  } catch {
-    return false;
-  }
-}
-
-// Refreshes access and csrf token
+// Refreshes access and refresh token
 export async function refreshToken(): Promise<boolean> {
   if (typeof document === "undefined") {
     // This code is running on the server, so we can't access document.cookie
@@ -115,3 +90,18 @@ export function cleanArrayData<T extends Record<string, unknown>>(
     });
 }
 
+/**
+ * Converts an ISO string to a formatted date string.
+ * @param iso ISO String
+ * @returns Formatted Date
+ */
+export function formatDate(iso?: string) {
+  if (!iso) return "";
+  return new Date(iso).toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}

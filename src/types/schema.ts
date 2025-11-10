@@ -22,7 +22,7 @@ export interface User extends IdentifiableItem {
   first_name: string;
   last_name: string;
   phone_number: string | null;
-  prefix: string | null;
+  prefix: string;
   firebase_uid: string;
   country_code: string;
   resume_id: string | null;
@@ -48,7 +48,7 @@ export interface EducationalDetails
 }
 
 export interface SocialLinks extends IdentifiableItem, Pick<Admin, "user_id"> {
-  link: string | null;
+  link: string;
 }
 
 export interface Skills extends IdentifiableItem, Pick<Admin, "user_id"> {
@@ -65,34 +65,32 @@ export interface JobExperiences
   currently_working: boolean;
 }
 
-export interface JobApplicants
-  extends IdentifiableItem,
-    Pick<Admin, "user_id"> {
+export interface JobApplicant extends IdentifiableItem, Pick<Admin, "user_id"> {
   created_at: string;
   joblisting_id: string;
-  score: number;
+  score_id: string;
   status: "Initial Interview" | "For Interview" | "Hired" | "Rejected";
 }
 
 export interface JobListing
   extends IdentifiableItem,
-    Pick<JobApplicants, "created_at">,
+    Pick<JobApplicant, "created_at">,
     Title {
   joblisting_id: string;
-  location: string;
+  location: "Cebu City" | "Manila" | "Tokyo";
   created_by: string;
   is_fulltime: boolean;
 }
 
 export interface JobListingQualifications
   extends IdentifiableItem,
-    Pick<JobApplicants, "joblisting_id"> {
+    Pick<JobApplicant, "joblisting_id"> {
   qualification: string;
 }
 
 export interface JobListingRequirements
   extends IdentifiableItem,
-    Pick<JobApplicants, "joblisting_id"> {
+    Pick<JobApplicant, "joblisting_id"> {
   requirement: string;
 }
 

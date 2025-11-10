@@ -3,10 +3,17 @@
 import { FaFacebook, FaInstagram } from "react-icons/fa";
 import { MdEmail, MdPhone } from "react-icons/md";
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { startTransition, useEffect, useState } from "react";
 import useAuth from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
-import { use } from "react";
+import { useParams } from "next/navigation";
+import { trpc } from "@/lib/trpc/client";
+import { inferProcedureOutput } from "@trpc/server";
+import { AppRouter } from "@/lib/trpc/routers/app";
+
+type FetchCandidateProfileOutput = inferProcedureOutput<
+  AppRouter["candidate"]["fetchCandidateProfile"]
+>;
 
 interface WorkExperience {
   company: string;
@@ -27,76 +34,37 @@ interface Project {
   start_date: Date;
 }
 
-interface Resume {
-  city: string;
-  contact_number: string;
-  educational_background: EducationalBackground[];
-  email: string;
-  hard_skills: string[];
-  name: string;
-  projects: Project[];
-  soft_skills: string[];
-  work_experience: WorkExperience[];
-}
-
-interface ScoreData {
-  predictive_success: number;
-  raw_score: number;
-  reason: string;
-  phrases: Array<string>;
-  skill_gaps_recommendations: string;
-}
-
-interface Score {
-  score_data: ScoreData;
-}
-
-interface TranscriptionInfo {
-  transcription: string;
-  communication_style_insights: string;
-  interview_insights: string;
-  personality_traits: string;
-  sentimental_analysis: string;
-  cultural_fit_insights: string;
-}
-
-interface Transcription {
-  transcription: TranscriptionInfo;
-}
-
-interface CandidateProfile {
-  resume: {
-    raw_output: Resume | null;
-  };
-  score: Score | null;
-  transcribed: Transcription | null;
-  firstName: string;
-  lastName: string;
-}
-
-export default function Page({ params }: { params: Promise<{ id: string }> }) {
+export default function Page() {
   const router = useRouter();
-  const { id: candidateId } = use(params); // userId
+  const candidateId = useParams().id as string; // userId
   const [selectedStatus, setSelectedStatus] = useState("");
-  const { information, isAuthLoading, csrfToken } = useAuth({
-    fetchUser: true,
-    fetchAdmin: true,
+  const { isAuthenticated } = useAuth();
+
+  const userJWT = trpc.auth.decodeJWT.useQuery(undefined, {
+    enabled: isAuthenticated,
   });
-  const [candidateProfile, setCandidateProfile] =
-    useState<CandidateProfile | null>(null);
+  const candidateProfileQuery = trpc.candidate.fetchCandidateProfile.useQuery(
+    {
+      candidateId: candidateId,
+      fetchScore: true,
+      fetchTranscribed: true,
+      fetchResume: true,
+    },
+    {
+      enabled: isAuthenticated && userJWT.data?.user.isAdmin,
+    }
+  );
+  const updateCandidateStatusMutation =
+    trpc.candidate.updateCandidateStatus.useMutation();
+
   const [onResume, setOnResume] = useState(false);
-  const controllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    return () => controllerRef.current?.abort(); // cancel the request on unmount
-  }, []);
-
-  useEffect(() => {
-    if (isAuthLoading) {
+    if (userJWT.isLoading || !isAuthenticated) {
       return;
     }
 
-    if (!information.admin) {
+    if (!userJWT.data?.user.isAdmin) {
       alert("You are not authorized to view this page.");
       if (window.history.length > 0) {
         router.back();
@@ -105,73 +73,31 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
       }
     }
 
-    const candidateAPI = new URL(
-      "/api/users/candidateProfile",
-      window.location.origin
+    startTransition(() =>
+      setSelectedStatus(candidateProfileQuery.data?.status || "")
     );
-    const controller = new AbortController();
+  }, [userJWT.data]);
 
-    candidateAPI.searchParams.set("userId", candidateId);
-    candidateAPI.searchParams.set("score", "true");
-    candidateAPI.searchParams.set("transcribed", "true");
-    candidateAPI.searchParams.set("resume", "true");
-
-    fetch(candidateAPI.toString(), {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      signal: controller.signal,
-    })
-      .then((res) => {
-        if (res.ok) {
-          return res.json();
-        }
-
-        throw new Error("Failed to fetch candidate profile");
-      })
-      .then((data) => {
-        setCandidateProfile({
-          resume: data.parsedResume,
-          score: data.score,
-          transcribed: data.transcribed,
-          firstName: data.user.firstName,
-          lastName: data.user.lastName,
-        });
-
-        setSelectedStatus(data.status || "");
-      });
-
-    return () => controller.abort(); // cancel the request on unmount
-  }, [candidateId, isAuthLoading]);
-
-  const handleStatusChange = (
+  const handleStatusChange = async (
     e: React.ChangeEvent<HTMLSelectElement>
   ) => {
     const newStatus = e.target.value;
-    setSelectedStatus(newStatus);
 
-    controllerRef.current?.abort(); // Abort any ongoing request
-    controllerRef.current = new AbortController();
-
-    fetch("/api/users/candidateProfile", {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": csrfToken ?? "",
+    await updateCandidateStatusMutation.mutateAsync(
+      {
+        applicantId: candidateId,
+        newStatus: newStatus,
       },
-      signal: controllerRef.current.signal,
-      body: JSON.stringify({
-        userId: candidateId,
-        status: newStatus,
-      }),
-    }).catch((err) => {
-      if (err.name === "AbortError") {
-        // Request was aborted
-        return;
+      {
+        onSuccess: () => {
+          alert("Candidate status updated successfully.");
+          setSelectedStatus(newStatus);
+        },
+        onError: (error) => {
+          alert(error.message);
+        },
       }
-      alert("Failed to update status. Please try again.");
-    });
+    );
   };
 
   return (
@@ -193,14 +119,15 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
             </label>
 
             <h2 className="text-lg font-semibold mt-4 text-center">
-              {isAuthLoading ? (
+              {!candidateProfileQuery.data ? (
                 <div className="animate-pulse">
                   <div className="w-24 h-4 bg-gray-300 rounded"></div>
                   <div className="w-16 h-4 bg-gray-300 rounded mt-2"></div>
                 </div>
               ) : (
                 <span>
-                  {candidateProfile?.firstName} {candidateProfile?.lastName}
+                  {candidateProfileQuery.data.user.firstName}{" "}
+                  {candidateProfileQuery.data.user.lastName}
                 </span>
               )}
             </h2>
@@ -242,9 +169,9 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
             </div>
           </div>
           {onResume ? (
-            <CandidateResume candidateProfile={candidateProfile} />
+            <CandidateResume candidateProfile={candidateProfileQuery.data} />
           ) : (
-            <CandidateProfile candidateProfile={candidateProfile} />
+            <CandidateProfile candidateProfile={candidateProfileQuery.data} />
           )}
         </div>
       </div>
@@ -255,7 +182,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
 function CandidateProfile({
   candidateProfile,
 }: {
-  candidateProfile: CandidateProfile | null;
+  candidateProfile: FetchCandidateProfileOutput | null | undefined;
 }) {
   return (
     <>
@@ -320,7 +247,7 @@ function CandidateProfile({
               </span>
               <ul className="list-disc ml-6 text-sm text-gray-700">
                 {candidateProfile?.score?.score_data.phrases.map(
-                  (phrase, idx) => (
+                  (phrase: string, idx: number) => (
                     <li key={idx}>{phrase}</li>
                   )
                 )}
@@ -409,7 +336,7 @@ function CandidateProfile({
 function CandidateResume({
   candidateProfile,
 }: {
-  candidateProfile: CandidateProfile | null;
+  candidateProfile: FetchCandidateProfileOutput | null | undefined;
 }) {
   return (
     <div className="w-full md:w-2/3 p-6">
@@ -421,15 +348,16 @@ function CandidateResume({
         <div className="space-y-1">
           <p>
             <strong>Name:</strong>{" "}
-            {candidateProfile?.resume?.raw_output?.name || "N/A"}
+            {candidateProfile?.parsedResume?.raw_output?.name || "N/A"}
           </p>
           <p>
             <strong>Contact:</strong>{" "}
-            {candidateProfile?.resume?.raw_output?.contact_number || "N/A"}
+            {candidateProfile?.parsedResume?.raw_output?.contact_number ||
+              "N/A"}
           </p>
           <p>
             <strong>Email:</strong>{" "}
-            {candidateProfile?.resume?.raw_output?.email || "N/A"}
+            {candidateProfile?.parsedResume?.raw_output?.email || "N/A"}
           </p>
         </div>
         <div>
@@ -437,8 +365,8 @@ function CandidateResume({
             Education
           </h3>
           <div className="bg-white p-4 border rounded">
-            {candidateProfile?.resume?.raw_output?.educational_background.map(
-              (edu, index) => (
+            {candidateProfile?.parsedResume?.raw_output?.educational_background.map(
+              (edu: EducationalBackground, index: number) => (
                 <div key={index} className="mb-4">
                   <p>
                     <strong>Degree:</strong> {edu.degree}
@@ -461,10 +389,10 @@ function CandidateResume({
             Soft Skills
           </h3>
           <ul className="list-disc ml-6 space-y-1">
-            {candidateProfile?.resume?.raw_output?.soft_skills &&
-            candidateProfile.resume?.raw_output?.soft_skills.length > 0
-              ? candidateProfile.resume.raw_output.soft_skills.map(
-                  (skill, index) => <li key={index}>{skill}</li>
+            {candidateProfile?.parsedResume?.raw_output?.soft_skills &&
+            candidateProfile.parsedResume?.raw_output?.soft_skills.length > 0
+              ? candidateProfile.parsedResume.raw_output.soft_skills.map(
+                  (skill: string, index: number) => <li key={index}>{skill}</li>
                 )
               : null}
           </ul>
@@ -475,10 +403,10 @@ function CandidateResume({
             Hard Skills
           </h3>
           <ul className="list-disc ml-6 space-y-1 columns-2">
-            {candidateProfile?.resume?.raw_output?.hard_skills &&
-            candidateProfile.resume.raw_output.hard_skills.length > 0
-              ? candidateProfile.resume.raw_output.hard_skills.map(
-                  (skill, index) => <li key={index}>{skill}</li>
+            {candidateProfile?.parsedResume?.raw_output?.hard_skills &&
+            candidateProfile.parsedResume.raw_output.hard_skills.length > 0
+              ? candidateProfile.parsedResume.raw_output.hard_skills.map(
+                  (skill: string, index: number) => <li key={index}>{skill}</li>
                 )
               : null}
           </ul>
@@ -489,8 +417,8 @@ function CandidateResume({
             Work Experience
           </h3>
           <div className="space-y-4">
-            {candidateProfile?.resume?.raw_output?.work_experience.map(
-              (work, index) => (
+            {candidateProfile?.parsedResume?.raw_output?.work_experience.map(
+              (work: WorkExperience, index: number) => (
                 <div key={index} className="bg-white p-4 border rounded">
                   <p>
                     <strong>Title:</strong> {work.title}
@@ -518,10 +446,10 @@ function CandidateResume({
 
         <div>
           <h3 className="text-lg font-semibold text-gray-700 mb-2">Projects</h3>
-          {candidateProfile?.resume?.raw_output?.projects &&
-          candidateProfile.resume?.raw_output.projects?.length > 0 ? (
-            candidateProfile.resume?.raw_output.projects.map(
-              (project, index) => (
+          {candidateProfile?.parsedResume?.raw_output?.projects &&
+          candidateProfile.parsedResume?.raw_output.projects?.length > 0 ? (
+            candidateProfile.parsedResume?.raw_output.projects.map(
+              (project: Project, index: number) => (
                 <div key={index} className="bg-white p-4 border rounded">
                   <p>
                     <strong>Name:</strong> {project.name}

@@ -6,21 +6,17 @@ import {
   isSignInWithEmailLink,
 } from "firebase/auth";
 import { Button } from "@/components/common/Button";
-import { useRouter } from "next/navigation";
-import { useEffect, useState, use } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { auth } from "@/lib/firebase/client";
 import { getCsrfToken } from "@/lib/library";
 
-export default function Verification({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default function Verification() {
   const router = useRouter();
   const [csrfToken, setCsrfToken] = useState<string | null>(null);
   const [email, setEmail] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const { id } = use(params);
+  const id = useParams().id as string;
 
   useEffect(() => {
     getCsrfToken().then(setCsrfToken);

@@ -14,21 +14,21 @@ import { cleanArrayData } from "@/lib/library";
 
 export default function EditProfilePage() {
   const router = useRouter();
-  const { information, isAuthLoading, csrfToken } = useAuth({
+  const { userInfo: userInfoHook, csrfToken } = useAuth({
     fetchUser: true,
-    fetchAdmin: false,
     fetchSkills: true,
     fetchSocialLinks: true,
     fetchEducation: true,
     fetchExperience: true,
   });
+
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
   const [educationalDetails, setEducationalDetails] = useState<
     EducationalDetail[]
   >([]);
   const [jobExperiences, setJobExperience] = useState<JobExperience[]>([]);
   const [transcriptFile, setTranscriptFile] = useState<File | null>(null);
-  const [userInfo, setUserInfo] = useState<User>({
+  const [inputFields, setInputFields] = useState<User>({
     prefix: "",
     firstName: "",
     lastName: "",
@@ -57,19 +57,17 @@ export default function EditProfilePage() {
   }, []);
 
   useEffect(() => {
-    if (isAuthLoading) return;
+    if (!userInfoHook.isSuccess) return;
 
     setSocialLinks(
-      information.socialLinks.map((link, index) => {
-        return {
-          id: index,
-          value: link || "",
-        };
-      })
+      userInfoHook.data.socialLinks?.map((link, index) => ({
+        id: index,
+        value: link,
+      })) ?? []
     );
 
     setEducationalDetails(
-      information.education.map((edu, index) => ({
+      userInfoHook.data.education?.map((edu, index) => ({
         id: index,
         institute: edu.institute || "",
         currentlyPursuing: edu.currently_pursuing,
@@ -79,11 +77,11 @@ export default function EditProfilePage() {
         startYear: edu.start_year,
         endMonth: edu.end_month || "",
         endYear: edu.end_year || 0,
-      }))
+      })) ?? []
     );
 
     setJobExperience(
-      information.experience.map((experience, index) => ({
+      userInfoHook.data.experience?.map((experience, index) => ({
         id: index,
         title: experience.title || "",
         company: experience.company || "",
@@ -93,26 +91,28 @@ export default function EditProfilePage() {
         startYear: experience.start_year,
         endMonth: experience.end_month || "",
         endYear: experience.end_year || 0,
-      }))
+      })) ?? []
     );
 
-    setUserInfo({
-      prefix: information.user?.prefix || "",
-      firstName: information.user?.first_name || "",
-      lastName: information.user?.last_name || "",
-      countryCode: information.user?.country_code || "",
-      street: information.user?.street || "",
-      zip: information.user?.zip || "",
-      city: information.user?.city || "",
-      state_: information.user?.state || "",
-      country: information.user?.country || "",
-      jobTitle: information.user?.job_title || "",
-      email: auth.currentUser?.email || "",
-      mobileNumber: information.user?.phone_number || "",
-      resumeId: information.user?.resume_id || "",
-      skillSet: information.skills.join(", ") || "",
-    });
-  }, [isAuthLoading]);
+    const userData = userInfoHook.data.user;
+    if (userData)
+      setInputFields({
+        prefix: userData.prefix || "",
+        firstName: userData.first_name || "",
+        lastName: userData.last_name || "",
+        countryCode: userData.country_code || "",
+        street: userData.street || "",
+        zip: userData.zip || "",
+        city: userData.city || "",
+        state_: userData.state || "",
+        country: userData.country || "",
+        jobTitle: userData.job_title || "",
+        email: auth.currentUser?.email || "",
+        mobileNumber: userData.phone_number || "",
+        resumeId: userData.resume_id,
+        skillSet: (userInfoHook.data.skills || []).join(", "),
+      });
+  }, [userInfoHook.isSuccess]);
 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
@@ -223,7 +223,7 @@ export default function EditProfilePage() {
     setTranscriptFile(file);
   };
 
-  if (isAuthLoading) {
+  if (userInfoHook.isLoading || !userInfoHook.isEnabled) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="flex flex-col items-center">
@@ -258,7 +258,7 @@ export default function EditProfilePage() {
     <div className="flex justify-center">
       <div className="w-full max-w-4xl px-4 py-2">
         <UserForm
-          userInfo={{ user: userInfo, setUserInfo }}
+          userInfo={{ user: inputFields, setUserInfo: setInputFields }}
           socialLinksInfo={{ socialLinks, setSocialLinks }}
           educationalDetailsInfo={{ educationalDetails, setEducationalDetails }}
           jobExperiencesInfo={{ jobExperiences, setJobExperience }}
@@ -268,10 +268,10 @@ export default function EditProfilePage() {
           response={response}
           title="Update Profile"
           description="Update your resume and personal information"
-          fileName={information.user?.resume_id || "No file selected"}
+          fileName={userInfoHook.data?.user?.resume_id || "No file selected"}
           handleTranscriptSelect={handleTranscriptSelect}
           transcriptFileName={
-            information.user?.transcript_id || "No file selected"
+            userInfoHook.data?.user?.transcript_id || "No file selected"
           }
         />
       </div>

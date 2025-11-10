@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
-import { poppins } from "../styles/fonts";
 import "./globals.css";
-import ClientProviders from "@/components/providers/ClientProviders";
+import { poppins } from "@/styles/font";
+import Navbar from "@/components/common/Navbar";
+import Footer from "@/components/common/Footer";
+import { TRPCProvider } from "@/lib/trpc/client";
 
 export const metadata: Metadata = {
   title: "AI-Driven Recruitment",
@@ -21,9 +23,11 @@ export default function RootLayout({
       <body
         className={`${poppins.className} antialiased min-h-screen flex flex-col`}
       >
-        <ClientProviders>
-          <main className="flex-grow">{children}</main>
-        </ClientProviders>
+        <TRPCProvider>
+          <Navbar />
+          <main className="grow">{children}</main>
+          <Footer />
+        </TRPCProvider>
       </body>
     </html>
   );

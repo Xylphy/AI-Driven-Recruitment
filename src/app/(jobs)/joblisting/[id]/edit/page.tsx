@@ -1,17 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { startTransition, useEffect, useState } from "react";
 import { JobListing, Tags } from "@/types/types";
 import ListInputSection from "@/components/joblisting/Qualifications";
 import useAuth from "@/hooks/useAuth";
 import { useRouter, useParams } from "next/navigation";
 import { JOB_LOCATIONS } from "@/lib/constants";
+import { trpc } from "@/lib/trpc/client";
 
 export default function Page() {
   const router = useRouter();
-  const params = useParams();
-  const jobId = params.id as string;
+  const jobId = useParams().id as string;
   const [isSubmitting] = useState(false);
+
   const [jobListing, setJobListing] = useState<
     Omit<JobListing, "created_at"> & {
       isFullTime: boolean;
@@ -21,68 +22,56 @@ export default function Page() {
     qualifications: [],
     requirements: [],
     tags: [],
-    location: "",
+    location: "Cebu City",
     isFullTime: true,
   });
-  const { information, isAuthLoading, csrfToken } = useAuth({
-    fetchAdmin: true,
+
+  const { userInfo, isAuthenticated } = useAuth();
+  const userJWT = trpc.auth.decodeJWT.useQuery(undefined, {
+    enabled: isAuthenticated,
   });
-  const controllerRef = useRef<AbortController | null>(null);
-
-  useEffect(() => {
-    return () => controllerRef.current?.abort();
-  }, []);
-
-  useEffect(() => {
-    if (isAuthLoading) {
-      return;
+  const joblistingDetails = trpc.joblisting.getJobDetails.useQuery(
+    { jobId },
+    {
+      enabled: !!userInfo.data,
     }
+  );
+  const updateJoblisting = trpc.joblisting.updateJoblisting.useMutation();
 
-    if (!information.admin) {
-      alert("You are not authorized to create a job listing");
+  useEffect(() => {
+    if (!userJWT.data?.user.isAdmin) {
+      alert("You are not authorized to edit a job listing");
       router.push("/profile");
     }
+  }, [userJWT.data, router]);
 
-    const controller = new AbortController();
-
-    fetch(`/api/jobDetails?job=${jobId}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      signal: controller.signal,
-    })
-      .then((res) => {
-        if (!res.ok) {
-          alert("Failed to fetch job details");
-        }
-
-        return res.json();
-      })
-      .then((data) => {
+  useEffect(() => {
+    if (joblistingDetails.data) {
+      startTransition(() =>
         setJobListing({
-          ...data,
-          qualifications:
-            data.qualifications.map((qualification: string, index: number) => ({
+          title: joblistingDetails.data.title,
+          qualifications: joblistingDetails.data.qualifications.map(
+            (qualification, index) => ({
               title: qualification,
               id: index,
-            })) || [],
-          requirements:
-            data.requirements.map((requirement: string, index: number) => ({
+            })
+          ),
+          requirements: joblistingDetails.data.requirements.map(
+            (requirement, index) => ({
               title: requirement,
               id: index,
-            })) || [],
-          isFullTime: data.is_fulltime,
-          tags:
-            data.tags.map((tag: string, index: number) => ({
-              title: tag,
-              id: index,
-            })) || [],
-        });
-      });
-
-    return () => controller.abort(); // cancel the request on unmount
-  }, [information, router, isAuthLoading]);
+            })
+          ),
+          tags: joblistingDetails.data.tags.map((tags, index) => ({
+            title: tags,
+            id: index,
+          })),
+          location: "Cebu City",
+          isFullTime: true,
+        })
+      );
+    }
+  }, [joblistingDetails.data]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -126,34 +115,66 @@ export default function Page() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!information.admin) {
+    if (!userJWT.data?.user.isAdmin) {
       alert("You are not authorized to create a job listing");
       router.push("/profile");
     }
 
-    controllerRef.current?.abort(); // Abort any ongoing request
-    controllerRef.current = new AbortController();
-
-    fetch(`/api/joblistings?jobId=${jobId}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": csrfToken ?? "",
+    await updateJoblisting.mutateAsync(
+      {
+        jobId,
+        title: jobListing.title,
+        qualifications: jobListing.qualifications,
+        requirements: jobListing.requirements,
+        tags: jobListing.tags,
+        location: jobListing.location,
+        isFullTime: jobListing.isFullTime,
       },
-      signal: controllerRef.current?.signal,
-      body: JSON.stringify({ ...jobListing, jobId }),
-    })
-      .then((response) => {
-        if (response.ok) {
-          alert("Job listing updated successfully");
-        } else {
-          alert("Failed to update job listing");
-        }
-      })
-      .catch((error) => {
-        if (error.name === "AbortError") return;
-      });
+      {
+        onSuccess: (data) => {
+          alert(data.message);
+          router.refresh(); // Refresh the page to show updated data
+        },
+        onError: (error) => {
+          alert(`Failed to update job listing: ${error.message}`);
+        },
+      }
+    );
   };
+
+  if (joblistingDetails.isLoading) {
+    return (
+      <div className="w-full max-w-2xl mx-auto mt-10 animate-pulse space-y-4">
+        <div className="h-10 bg-gray-300 rounded w-3/5 mx-auto" />
+        <hr className="w-1/4 mx-auto border-t border-black-600 my-1" />
+        <div className="h-4 bg-gray-200 rounded w-2/3 mx-auto" />
+
+        <form className="w-full max-w-2xl mt-6 space-y-4">
+          <div className="mb-4">
+            <div className="h-12 bg-gray-200 rounded w-full" />
+          </div>
+
+          <div className="space-y-3">
+            <div className="h-10 bg-gray-200 rounded w-full" />
+            <div className="h-10 bg-gray-200 rounded w-full" />
+            <div className="h-10 bg-gray-200 rounded w-full" />
+          </div>
+
+          <div className="mb-4">
+            <div className="h-12 bg-gray-200 rounded w-full" />
+          </div>
+
+          <div className="flex justify-center">
+            <div className="h-10 w-40 bg-gray-300 rounded" />
+          </div>
+        </form>
+
+        <div className="flex justify-center mt-4">
+          <div className="h-10 w-24 bg-gray-300 rounded" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col justify-center items-center mt-10">
@@ -177,7 +198,7 @@ export default function Page() {
             type="text"
             id="title"
             name="title"
-            value={jobListing.title}
+            value={joblistingDetails.data?.title}
             onChange={handleInputChange}
             className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md"
             required
@@ -186,7 +207,7 @@ export default function Page() {
         </div>
 
         <ListInputSection
-          items={jobListing.qualifications}
+          items={jobListing.qualifications || []}
           title="Qualifications"
           update={(id, value) => handleUpdate("qualifications", id, value)}
           deleteItem={(id) => handleDelete("qualifications", id)}
@@ -194,7 +215,7 @@ export default function Page() {
         />
 
         <ListInputSection
-          items={jobListing.requirements}
+          items={jobListing.requirements || []}
           title="Requirements"
           update={(id, value) => handleUpdate("requirements", id, value)}
           deleteItem={(id) => handleDelete("requirements", id)}
@@ -202,7 +223,7 @@ export default function Page() {
         />
 
         <ListInputSection
-          items={jobListing.tags}
+          items={jobListing.tags || []}
           title="Tags"
           update={(id, value) => handleUpdate("tags", id, value)}
           deleteItem={(id) => handleDelete("tags", id)}
