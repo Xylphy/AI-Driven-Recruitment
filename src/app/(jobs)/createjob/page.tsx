@@ -12,11 +12,7 @@ import { trpc } from "@/lib/trpc/client";
 export default function JobListingPage() {
   const router = useRouter();
   const [isSubmitting] = useState(false);
-  const [jobListing, setJobListing] = useState<
-    Omit<JobListing, "created_at"> & {
-      isFullTime: boolean;
-    } & Tags
-  >({
+  const [jobListing, setJobListing] = useState<JobListing & Tags>({
     title: "",
     qualifications: [],
     requirements: [],

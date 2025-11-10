@@ -47,10 +47,6 @@ export interface SocialLink extends IdentifiableItem {
   value: string;
 }
 
-export interface JobApplicationDetail extends IdentifiableItem, Title {
-  date: string;
-}
-
 export interface EducationalDetail extends DateRange, IdentifiableItem {
   institute: string;
   major: string;
@@ -70,7 +66,7 @@ export interface JobListing extends Title {
   qualifications: IdentifiableTitle[];
   requirements: IdentifiableTitle[];
   location: "Cebu City" | "Manila" | "Tokyo";
-  created_at: string;
+  isFullTime: boolean;
 }
 
 export interface DbIdentification {

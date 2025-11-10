@@ -61,7 +61,7 @@ export default function Profile() {
     enabled: isAuthenticated,
   });
   const isAdmin = userInfo.isSuccess && jwtInfo.data?.user.isAdmin;
-  const joblistingStatus = trpc.joblisting.joblistings.useQuery(undefined, {
+  const joblistings = trpc.joblisting.joblistings.useQuery(undefined, {
     enabled: isAuthenticated,
   });
 
@@ -205,7 +205,7 @@ export default function Profile() {
               </div>
             </div>
             <div className="space-y-5 pb-9 overflow-y-auto h-full">
-              {joblistingStatus.isLoading ? (
+              {joblistings.isLoading ? (
                 <div className="animate-pulse space-y-4">
                   <div className="h-6 bg-gray-300 rounded w-1/3"></div>
                   <div className="h-6 bg-gray-300 rounded w-1/2"></div>
@@ -215,8 +215,8 @@ export default function Profile() {
                 <JobApplicationDetails
                   jobApplications={
                     isAdmin
-                      ? joblistingStatus.data?.joblistings ?? []
-                      : joblistingStatus.data?.joblistings ?? []
+                      ? joblistings.data?.joblistings ?? []
+                      : joblistings.data?.joblistings ?? []
                   }
                   isAdmin={!!isAdmin}
                 />

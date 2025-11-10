@@ -79,7 +79,7 @@ export interface JobListing
     Pick<JobApplicants, "created_at">,
     Title {
   joblisting_id: string;
-  location: string;
+  location: "Cebu City" | "Manila" | "Tokyo";
   created_by: string;
   is_fulltime: boolean;
 }

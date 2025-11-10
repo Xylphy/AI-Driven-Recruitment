@@ -39,15 +39,11 @@ export default function Page() {
   const updateJoblisting = trpc.joblisting.updateJoblisting.useMutation();
 
   useEffect(() => {
-    if (userJWT.isLoading || !userJWT.isEnabled) {
-      return;
-    }
-
     if (!userJWT.data?.user.isAdmin) {
       alert("You are not authorized to edit a job listing");
       router.push("/profile");
     }
-  }, [userJWT.isLoading]);
+  }, [userJWT.data, router]);
 
   useEffect(() => {
     if (joblistingDetails.data) {
