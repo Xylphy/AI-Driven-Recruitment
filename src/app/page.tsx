@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import AnimatedSection from "@/components/common/AnimatedSection";
 import Image from "next/image";
-import { trpc } from "@/lib/trpc/client";
 
 const containerVariants = {
   hidden: { opacity: 0 },

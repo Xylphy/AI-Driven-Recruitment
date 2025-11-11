@@ -66,7 +66,7 @@ export default function Page() {
             title: tags,
             id: index,
           })),
-          location: "Cebu City",
+          location: joblistingDetails.data.location,
           isFullTime: true,
         })
       );
@@ -198,7 +198,7 @@ export default function Page() {
             type="text"
             id="title"
             name="title"
-            value={joblistingDetails.data?.title}
+            value={jobListing.title}
             onChange={handleInputChange}
             className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md"
             required
