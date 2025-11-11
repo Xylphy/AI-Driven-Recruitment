@@ -78,7 +78,7 @@ export default function Page() {
 
   useEffect(() => {
     if (candidatesData.data) {
-      startTransition(() => setCandidates(candidatesData.data.data));
+      startTransition(() => setCandidates(candidatesData.data.applicants));
     }
   }, [candidatesData.data]);
 
