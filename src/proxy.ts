@@ -30,11 +30,6 @@ const publicPathToken = [
     path: "/api/csrf",
     acceptedMethods: ["GET"],
   },
-  
-  {
-    path: "/api/jobs",
-    acceptedMethods: ["GET"],
-  },
   {
     path: "/api/users/signup",
     acceptedMethods: ["POST"],

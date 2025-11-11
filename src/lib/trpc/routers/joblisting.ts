@@ -23,6 +23,7 @@ import {
   JobApplicant,
   JobTags,
   Admin,
+  IdentifiableItem,
 } from "@/types/schema";
 import { jobListingSchema } from "@/lib/schemas";
 
@@ -189,14 +190,10 @@ const jobListingRouter = createTRPCRouter({
       let applicantCheckPromise;
 
       if (userJWT) {
-        applicantCheckPromise = find<JobApplicant>(
-          supabase,
-          "job_applicants",
-          [
-            { column: "joblisting_id", value: input.jobId },
-            { column: "user_id", value: userJWT.id },
-          ]
-        ).single();
+        applicantCheckPromise = find<JobApplicant>(supabase, "job_applicants", [
+          { column: "joblisting_id", value: input.jobId },
+          { column: "user_id", value: userJWT.id },
+        ]).single();
       }
 
       const qualifications = await qualificationsPromise;
@@ -483,6 +480,38 @@ const jobListingRouter = createTRPCRouter({
 
       return { success: true, message: "Job listing created successfully" };
     }),
+  fetchJobs: rateLimitedProcedure.query(async () => {
+    const supabaseClient = await createClientServer(1, true);
+    const { data, error } = await findWithJoin<
+      JobListing & { job_applicants?: IdentifiableItem[] }
+    >(supabaseClient, "job_listings", [
+      {
+        foreignTable: "job_applicants",
+        foreignKey: "joblisting_id",
+        fields: "id",
+      },
+    ])
+      .many()
+      .execute();
+
+    if (error) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to fetch jobs",
+      });
+    }
+
+    return {
+      jobs: (data || []).map((item) => ({
+        id: item.id,
+        title: item.title,
+        created_at: item.created_at,
+        is_fulltime: item.is_fulltime,
+        location: item.location,
+        applicant_count: item.job_applicants?.length || 0,
+      })),
+    };
+  }),
 });
 
 export default jobListingRouter;
