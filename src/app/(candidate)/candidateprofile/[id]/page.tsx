@@ -45,14 +45,13 @@ export default function Page() {
   });
   const candidateProfileQuery = trpc.candidate.fetchCandidateProfile.useQuery(
     {
-      userId: candidateId,
+      candidateId: candidateId,
       fetchScore: true,
       fetchTranscribed: true,
       fetchResume: true,
     },
     {
-      enabled:
-        isAuthenticated && userJWT.isSuccess && userJWT.data?.user.isAdmin,
+      enabled: isAuthenticated && userJWT.data?.user.isAdmin,
     }
   );
   const updateCandidateStatusMutation =
@@ -86,7 +85,7 @@ export default function Page() {
 
     await updateCandidateStatusMutation.mutateAsync(
       {
-        userId: candidateId,
+        applicantId: candidateId,
         newStatus: newStatus,
       },
       {

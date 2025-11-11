@@ -9,8 +9,9 @@ import { createClientServer } from "@/lib/supabase/supabase";
 import { findWithJoin, find, updateTable } from "@/lib/supabase/action";
 import { findOne } from "@/lib/mongodb/action";
 import mongoDb_client from "@/lib/mongodb/mongodb";
-import { JobApplicants, User } from "@/types/schema";
+import { JobApplicant, User } from "@/types/schema";
 import auth from "@/lib/firebase/admin";
+import { ObjectId } from "mongodb";
 
 const candidateRouter = createTRPCRouter({
   getCandidateFromJob: authorizedProcedure
@@ -70,7 +71,7 @@ const candidateRouter = createTRPCRouter({
       const applicantWithEmail = await Promise.all(
         (
           (applicantsWithUsers || []) as Array<
-            JobApplicants & {
+            JobApplicant & {
               users: Pick<
                 User,
                 "id" | "last_name" | "first_name" | "firebase_uid"
@@ -78,13 +79,23 @@ const candidateRouter = createTRPCRouter({
               job_listings: { title: string };
             }
           >
-        ).map(async (applicant) => ({
-          ...applicant,
-          ...applicant.users,
-          email: (await auth.getUser(applicant.users.firebase_uid)).email,
-          users: undefined,
-          candidateMatch: await getCandidateMatch(applicant.users.id),
-        }))
+        )
+          // Bottleneck here: fetching email and mongodb data for each applicant instead of promise.all of them
+          .map(async (applicant) => {
+            const [firebaseUser, candidateMatch] = await Promise.all([
+              auth.getUser(applicant.users.firebase_uid),
+              getCandidateMatch(applicant.users.id),
+            ]);
+
+            return {
+              applicantId: applicant.id,
+              ...applicant,
+              ...applicant.users,
+              email: firebaseUser.email,
+              users: undefined,
+              candidateMatch,
+            };
+          })
       );
 
       await mongoDb_client.close();
@@ -92,7 +103,7 @@ const candidateRouter = createTRPCRouter({
       return {
         message: "Success",
         data: applicantWithEmail.map((applicant) => ({
-          id: applicant.id,
+          id: applicant.applicantId,
           name: applicant.first_name + " " + applicant.last_name,
           email: applicant.email,
           predictiveSuccess: applicant.candidateMatch,
@@ -107,7 +118,7 @@ const candidateRouter = createTRPCRouter({
         fetchScore: z.boolean().optional().default(false),
         fetchTranscribed: z.boolean().optional().default(false),
         fetchResume: z.boolean().optional().default(false),
-        userId: z.string(),
+        candidateId: z.string(),
       })
     )
     .query(async ({ ctx, input }) => {
@@ -117,31 +128,39 @@ const candidateRouter = createTRPCRouter({
           message: "You do not have permission to access this resource",
         });
       }
-
-      await mongoDb_client.connect();
       const supabaseClient = await createClientServer(1, true);
 
-      const [parsedResume, score, transcribed, userData, status] =
-        await Promise.all([
-          input.fetchResume &&
-            findOne("ai-driven-recruitment", "parsed_resume", {
-              user_id: input.userId,
-            }),
-          input.fetchScore &&
-            findOne("ai-driven-recruitment", "scored_candidates", {
-              user_id: input.userId,
-            }),
-          input.fetchTranscribed &&
-            findOne("ai-driven-recruitment", "transcribed", {
-              user_id: input.userId,
-            }),
-          find<User>(supabaseClient, "users", [
-            { column: "id", value: input.userId },
-          ]).single(),
-          find<JobApplicants>(supabaseClient, "job_applicants", [
-            { column: "user_id", value: input.userId },
-          ]).single(),
-        ]);
+      const { data: jobApplicant, error: jobApplicantError } =
+        await find<JobApplicant>(supabaseClient, "job_applicants", [
+          { column: "id", value: input.candidateId },
+        ]).single();
+
+      if (jobApplicantError) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch candidate profile",
+        });
+      }
+
+      await mongoDb_client.connect();
+
+      const [parsedResume, score, transcribed, userData] = await Promise.all([
+        input.fetchResume &&
+          findOne("ai-driven-recruitment", "parsed_resume", {
+            user_id: jobApplicant!.user_id,
+          }),
+        input.fetchScore &&
+          findOne("ai-driven-recruitment", "scored_candidates", {
+            _id: ObjectId.createFromHexString(jobApplicant!.score_id),
+          }),
+        input.fetchTranscribed &&
+          findOne("ai-driven-recruitment", "transcribed", {
+            user_id: jobApplicant!.user_id,
+          }),
+        find<User>(supabaseClient, "users", [
+          { column: "id", value: jobApplicant!.user_id },
+        ]).single(),
+      ]);
 
       await mongoDb_client.close();
 
@@ -153,13 +172,13 @@ const candidateRouter = createTRPCRouter({
           firstName: userData.data?.first_name || "",
           lastName: userData.data?.last_name || "",
         },
-        status: status.data?.status || "",
+        status: jobApplicant?.status || "",
       };
     }),
   updateCandidateStatus: authenticatedProcedure
     .input(
       z.object({
-        userId: z.string(),
+        applicantId: z.string(),
         newStatus: z.string(),
       })
     )
@@ -174,8 +193,8 @@ const candidateRouter = createTRPCRouter({
       const { error } = await updateTable(
         await createClientServer(1, true),
         "job_applicants",
-        "user_id",
-        input.userId,
+        "id",
+        input.applicantId,
         {
           status: input.newStatus,
         }

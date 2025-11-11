@@ -65,18 +65,16 @@ export interface JobExperiences
   currently_working: boolean;
 }
 
-export interface JobApplicants
-  extends IdentifiableItem,
-    Pick<Admin, "user_id"> {
+export interface JobApplicant extends IdentifiableItem, Pick<Admin, "user_id"> {
   created_at: string;
   joblisting_id: string;
-  score: number;
+  score_id: string;
   status: "Initial Interview" | "For Interview" | "Hired" | "Rejected";
 }
 
 export interface JobListing
   extends IdentifiableItem,
-    Pick<JobApplicants, "created_at">,
+    Pick<JobApplicant, "created_at">,
     Title {
   joblisting_id: string;
   location: "Cebu City" | "Manila" | "Tokyo";
@@ -86,13 +84,13 @@ export interface JobListing
 
 export interface JobListingQualifications
   extends IdentifiableItem,
-    Pick<JobApplicants, "joblisting_id"> {
+    Pick<JobApplicant, "joblisting_id"> {
   qualification: string;
 }
 
 export interface JobListingRequirements
   extends IdentifiableItem,
-    Pick<JobApplicants, "joblisting_id"> {
+    Pick<JobApplicant, "joblisting_id"> {
   requirement: string;
 }
 
