@@ -1,4 +1,8 @@
-import { authorizedProcedure, createTRPCRouter } from "../init";
+import {
+  authorizedProcedure,
+  createTRPCRouter,
+  rateLimitedProcedure,
+} from "../init";
 import { z } from "zod";
 import { createClientServer } from "@/lib/supabase/supabase";
 import {
@@ -11,6 +15,8 @@ import {
 import { find } from "@/lib/supabase/action";
 import { getFileInfo } from "@/lib/cloudinary/cloudinary";
 import { TRPCError } from "@trpc/server";
+import mongoDb_client from "@/lib/mongodb/mongodb";
+import { getTokenData } from "@/lib/mongodb/action";
 
 const userRouter = createTRPCRouter({
   fetchMyInformation: authorizedProcedure
@@ -127,6 +133,27 @@ const userRouter = createTRPCRouter({
             }))
           : [],
       };
+    }),
+  retrieveEmailInVerificationToken: rateLimitedProcedure
+    .input(
+      z.object({
+        id: z.string().min(1, "ID is required"),
+      })
+    )
+    .query(async ({ input }) => {
+      await mongoDb_client.connect();
+
+      const tokenData = await getTokenData(input.id);
+      if (!tokenData) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Token not found",
+        });
+      }
+
+      await mongoDb_client.close();
+
+      return tokenData.email;
     }),
 });
 
