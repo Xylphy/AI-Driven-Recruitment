@@ -1,8 +1,12 @@
 import z from "zod";
-import { authorizedProcedure, createTRPCRouter } from "../init";
+import {
+  authenticatedProcedure,
+  authorizedProcedure,
+  createTRPCRouter,
+} from "../init";
 import { TRPCError } from "@trpc/server";
 import { createClientServer } from "@/lib/supabase/supabase";
-import { findWithJoin, QueryFilter } from "@/lib/supabase/action";
+import { findWithJoin, find, updateTable } from "@/lib/supabase/action";
 import { findOne } from "@/lib/mongodb/action";
 import mongoDb_client from "@/lib/mongodb/mongodb";
 import { JobApplicants, User } from "@/types/schema";
@@ -96,6 +100,95 @@ const candidateRouter = createTRPCRouter({
           jobTitle: applicant.job_listings.title,
         })),
       };
+    }),
+  fetchCandidateProfile: authorizedProcedure
+    .input(
+      z.object({
+        fetchScore: z.boolean().optional().default(false),
+        fetchTranscribed: z.boolean().optional().default(false),
+        fetchResume: z.boolean().optional().default(false),
+        userId: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      if (!ctx.userJWT!.isAdmin) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have permission to access this resource",
+        });
+      }
+
+      await mongoDb_client.connect();
+      const supabaseClient = await createClientServer(1, true);
+
+      const [parsedResume, score, transcribed, userData, status] =
+        await Promise.all([
+          input.fetchResume &&
+            findOne("ai-driven-recruitment", "parsed_resume", {
+              user_id: input.userId,
+            }),
+          input.fetchScore &&
+            findOne("ai-driven-recruitment", "scored_candidates", {
+              user_id: input.userId,
+            }),
+          input.fetchTranscribed &&
+            findOne("ai-driven-recruitment", "transcribed", {
+              user_id: input.userId,
+            }),
+          find<User>(supabaseClient, "users", [
+            { column: "id", value: input.userId },
+          ]).single(),
+          find<JobApplicants>(supabaseClient, "job_applicants", [
+            { column: "user_id", value: input.userId },
+          ]).single(),
+        ]);
+
+      await mongoDb_client.close();
+
+      return {
+        parsedResume: parsedResume || null,
+        score: score || null,
+        transcribed: transcribed || null,
+        user: {
+          firstName: userData.data?.first_name || "",
+          lastName: userData.data?.last_name || "",
+        },
+        status: status.data?.status || "",
+      };
+    }),
+  updateCandidateStatus: authenticatedProcedure
+    .input(
+      z.object({
+        userId: z.string(),
+        newStatus: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (!ctx.userJWT!.isAdmin) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have permission to access this resource",
+        });
+      }
+
+      const { error } = await updateTable(
+        await createClientServer(1, true),
+        "job_applicants",
+        "user_id",
+        input.userId,
+        {
+          status: input.newStatus,
+        }
+      );
+
+      if (error) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update candidate status",
+        });
+      }
+
+      return { message: "Candidate status updated successfully" };
     }),
 });
 
