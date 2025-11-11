@@ -1,37 +1,57 @@
 "use client";
 
+import { trpc } from "@/lib/trpc/client";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
-import { JobListing } from "@/types/schema";
 
 export default function JobsPage() {
   const router = useRouter();
-  const [jobs, setJobs] = useState<
-    (JobListing & { applicant_count: number })[]
-  >([]);
+  const jobsQuery = trpc.joblisting.fetchJobs.useQuery();
 
-  useEffect(() => {
-    const controller = new AbortController();
-    fetch("/api/jobs", {
-      method: "GET",
-      signal: controller.signal,
-    })
-      .then((res) => {
-        if (res.ok) {
-          return res.json();
-        }
-      })
-      .then((data) => {
-        setJobs(data.data);
-      })
-      .catch((error) => {
-        if (error.name !== "AbortError") {
-          alert("Failed to fetch jobs. Please try again later.");
-        }
-      });
+  if (jobsQuery.isLoading) {
+    return (
+      <div className="p-6">
+        <div className="flex items-center space-x-3 mb-4">
+          <svg
+            className="h-6 w-6 text-gray-400 animate-spin"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            ></circle>
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+            ></path>
+          </svg>
+          <h2 className="text-lg font-medium text-gray-700">
+            Loading job listings…
+          </h2>
+        </div>
 
-    return () => controller.abort();
-  }, []);
+        <div className="animate-pulse space-y-3">
+          <div className="h-4 bg-gray-200 rounded w-1/3" />
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="flex items-center justify-between">
+              <div className="h-4 bg-gray-200 rounded w-1/3" />
+              <div className="h-4 bg-gray-200 rounded w-1/6" />
+              <div className="h-6 bg-gray-200 rounded w-20" />
+            </div>
+          ))}
+        </div>
+
+        <span className="sr-only">Loading job listings</span>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -45,7 +65,7 @@ export default function JobsPage() {
           </tr>
         </thead>
         <tbody>
-          {jobs.map((job) => (
+          {jobsQuery.data?.jobs.map((job) => (
             <tr
               key={job.id}
               className="border-t hover:bg-gray-50 transition cursor-pointer"

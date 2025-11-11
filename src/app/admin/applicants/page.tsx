@@ -1,31 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import useFetch from "@/hooks/useFetch";
-
-interface Candidate {
-  id: number;
-  name: string;
-  email: string;
-  jobTitle: string;
-  status: string;
-  predictiveSuccess: number;
-}
+import { trpc } from "@/lib/trpc/client";
 
 export default function ApplicantsPage() {
   const router = useRouter();
-  const {
-    data: candidates,
-    errorMessage,
-    loading,
-  } = useFetch<Candidate[]>({
-    url: "/api/jobs/applicants",
-    method: "GET",
-    credentials: "same-origin",
-    defaultData: [],
-  });
+  const applicantsQuery = trpc.candidate.getCandidateFromJob.useQuery({});
 
-  if (loading) {
+  if (applicantsQuery.isLoading) {
     return (
       <div className="flex flex-col items-center justify-center p-6">
         <div className="flex items-center gap-3">
@@ -81,7 +63,7 @@ export default function ApplicantsPage() {
     );
   }
 
-  if (errorMessage) {
+  if (applicantsQuery.error) {
     return (
       <div className="p-6">
         <div className="flex items-start gap-4 bg-red-50 border border-red-100 p-4 rounded">
@@ -105,7 +87,9 @@ export default function ApplicantsPage() {
             <p className="text-red-700 font-semibold">
               Failed to load candidates
             </p>
-            <p className="mt-1 text-sm text-red-600">{errorMessage}</p>
+            <p className="mt-1 text-sm text-red-600">
+              {applicantsQuery.error.message}
+            </p>
             <div className="mt-3">
               <button
                 onClick={() => router.refresh()}
@@ -139,7 +123,7 @@ export default function ApplicantsPage() {
             </tr>
           </thead>
           <tbody className="text-gray-700">
-            {candidates.map((candidate, index) => (
+            {applicantsQuery.data?.applicants.map((candidate, index) => (
               <tr key={index} className="border-t hover:bg-gray-50 transition">
                 <td className="py-3 px-4 font-medium">{candidate.name}</td>
                 <td className="py-3 px-4">{candidate.email}</td>
@@ -149,9 +133,9 @@ export default function ApplicantsPage() {
                     className={`px-3 py-1 text-sm font-semibold rounded-full ${
                       candidate.status === "Hired"
                         ? "bg-green-100 text-green-700"
-                        : candidate.status === "Shortlisted"
+                        : candidate.status === "Rejected"
                         ? "bg-yellow-100 text-yellow-700"
-                        : candidate.status === "Interviewed"
+                        : candidate.status === "For Interview"
                         ? "bg-blue-100 text-blue-700"
                         : "bg-gray-100 text-gray-700"
                     }`}

@@ -17,7 +17,7 @@ const candidateRouter = createTRPCRouter({
   getCandidateFromJob: authorizedProcedure
     .input(
       z.object({
-        jobId: z.uuid(),
+        jobId: z.uuid().optional(),
       })
     )
     .query(async ({ ctx, input }) => {
@@ -101,8 +101,7 @@ const candidateRouter = createTRPCRouter({
       await mongoDb_client.close();
 
       return {
-        message: "Success",
-        data: applicantWithEmail.map((applicant) => ({
+        applicants: applicantWithEmail.map((applicant) => ({
           id: applicant.applicantId,
           name: applicant.first_name + " " + applicant.last_name,
           email: applicant.email,
