@@ -85,3 +85,12 @@ interface Tag extends IdentifiableItem {
 export interface Tags {
   tags: Tag[];
 }
+
+export interface Notification {
+  id: string;
+  title: string;
+  body: string;
+  isRead: boolean;
+  createdAt: string;
+  link: string;
+}

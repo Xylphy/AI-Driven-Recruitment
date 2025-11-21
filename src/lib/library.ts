@@ -91,13 +91,60 @@ export function cleanArrayData<T extends Record<string, unknown>>(
 }
 
 /**
- * Converts an ISO string to a formatted date string.
- * @param iso ISO String
- * @returns Formatted Date
+ * Converts a Firestore timestamp object ({ seconds, nanoseconds }) to a Date.
  */
-export function formatDate(iso?: string) {
+function firebaseTimestampToDate(
+  ts:
+    | { seconds: number; nanoseconds?: number }
+    | { seconds: number; nanoseconds: number }
+    | { toDate?: () => Date }
+    | null
+    | undefined
+): Date | null {
+  if (!ts) return null;
+
+  // Firestore Timestamp instance often has toDate()
+  if (
+    "toDate" in ts &&
+    typeof (ts as { toDate?: () => Date }).toDate === "function"
+  ) {
+    return (ts as { toDate: () => Date }).toDate();
+  }
+
+  const s = (ts as { seconds?: number }).seconds;
+  const n = (ts as { nanoseconds?: number }).nanoseconds ?? 0;
+
+  if (typeof s === "number") {
+    return new Date(s * 1000 + Math.floor(n / 1e6));
+  }
+
+  return null;
+}
+
+/**
+ * Converts an ISO string, Date, or Firestore timestamp object to a formatted date string.
+ * Accepts:
+ *  - ISO string: "2025-11-23T12:00:00Z"
+ *  - Date instance
+ *  - Firestore timestamp object: { seconds: number, nanoseconds: number } or Firestore Timestamp with toDate()
+ */
+export function formatDate(
+  iso?: string | Date | { seconds: number; nanoseconds?: number } | null
+) {
   if (!iso) return "";
-  return new Date(iso).toLocaleDateString(undefined, {
+  let date: Date | null = null;
+
+  if (typeof iso === "string") {
+    date = new Date(iso);
+  } else if (iso instanceof Date) {
+    date = iso;
+  } else {
+    date = firebaseTimestampToDate(iso);
+  }
+
+  if (!date || Number.isNaN(date.getTime())) return "";
+
+  return date.toLocaleDateString(undefined, {
     year: "numeric",
     month: "short",
     day: "numeric",
