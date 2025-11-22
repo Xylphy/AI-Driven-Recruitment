@@ -10,4 +10,6 @@ if (!admin.apps.length) {
   });
 }
 
-export default admin.auth();
+export const auth = admin.auth();
+export const db = admin.firestore();
+export default admin;

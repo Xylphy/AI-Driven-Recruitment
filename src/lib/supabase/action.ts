@@ -88,9 +88,14 @@ export function updateTable(
   table: string,
   matchColumn: string,
   matchValue: string,
-  data: object
+  data: object,
+  selectColumns?: string
 ) {
-  return supabase.from(table).update(data).eq(matchColumn, matchValue);
+  const query = supabase.from(table).update(data).eq(matchColumn, matchValue);
+  if (selectColumns && selectColumns.trim() !== "") {
+    return query.select(selectColumns);
+  }
+  return query;
 }
 
 export function findWithJoin<T>(

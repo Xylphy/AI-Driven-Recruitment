@@ -10,8 +10,10 @@ import { findWithJoin, find, updateTable } from "@/lib/supabase/action";
 import { findOne } from "@/lib/mongodb/action";
 import mongoDb_client from "@/lib/mongodb/mongodb";
 import { JobApplicant, User } from "@/types/schema";
-import auth from "@/lib/firebase/admin";
+import { auth, db } from "@/lib/firebase/admin";
 import { ObjectId } from "mongodb";
+import admin from "@/lib/firebase/admin";
+import { Notification } from "@/types/types";
 
 const candidateRouter = createTRPCRouter({
   getCandidateFromJob: authorizedProcedure
@@ -189,14 +191,17 @@ const candidateRouter = createTRPCRouter({
         });
       }
 
-      const { error } = await updateTable(
-        await createClientServer(1, true),
+      const supabase = await createClientServer(1, true);
+
+      const { data, error } = await updateTable(
+        supabase,
         "job_applicants",
         "id",
         input.applicantId,
         {
           status: input.newStatus,
-        }
+        },
+        "user_id, joblisting_id"
       );
 
       if (error) {
@@ -205,6 +210,41 @@ const candidateRouter = createTRPCRouter({
           message: "Failed to update candidate status",
         });
       }
+
+      // Narrow the result without using `any`
+      const updatedRow = Array.isArray(data)
+        ? ((data as unknown[])[0] as Record<string, unknown>)
+        : (data as unknown as Record<string, unknown>);
+
+      const userId =
+        typeof updatedRow?.user_id === "string"
+          ? (updatedRow.user_id as string)
+          : undefined;
+      const joblistingId =
+        typeof updatedRow?.joblisting_id === "string"
+          ? (updatedRow.joblisting_id as string)
+          : undefined;
+
+      if (!userId) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Updated row missing user_id",
+        });
+      }
+
+      const notification: Omit<Notification, "id"> = {
+        title: "Application Status Updated",
+        body: `Your application status has been updated to "${input.newStatus}".`,
+        isRead: false,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        link: `/joblisting/${joblistingId || ""}`,
+      };
+
+      await db
+        .collection("users")
+        .doc(userId)
+        .collection("notifications")
+        .add(notification);
 
       return { message: "Candidate status updated successfully" };
     }),
