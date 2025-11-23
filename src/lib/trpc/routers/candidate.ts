@@ -231,13 +231,19 @@ const candidateRouter = createTRPCRouter({
           message: "Updated row missing user_id",
         });
       }
+      if (!joblistingId) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Updated row missing joblisting_id",
+        });
+      }
 
       const notification: Omit<Notification, "id"> = {
         title: "Application Status Updated",
         body: `Your application status has been updated to "${input.newStatus}".`,
         isRead: false,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        link: `/joblisting/${joblistingId || ""}`,
+        link: `/joblisting/${joblistingId}`,
       };
 
       await db
