@@ -239,14 +239,15 @@ export async function PUT(request: NextRequest) {
 
     promises.push(
       (async () => {
-        const resumeId = await uploadFile(validatedData.data!.resume!, "resumes");
+        const resumeId = await uploadFile(
+          validatedData.data!.resume!,
+          "resumes"
+        );
         const link = new URL("http://localhost:8000/parseresume/");
         link.searchParams.set("public_id", resumeId);
         link.searchParams.set("applicant_id", userId.toString());
 
-        fetch(link.toString(), { method: "POST" }).catch((e) =>
-          console.error("Error calling resume parser:", e)
-        );
+        fetch(link.toString(), { method: "POST" });
 
         return await updateTable(supabase, "users", "id", userId, {
           resume_id: resumeId,
@@ -262,14 +263,15 @@ export async function PUT(request: NextRequest) {
 
     promises.push(
       (async () => {
-        const transcriptId = await uploadFile(validatedData.data!.video!, "transcripts");
+        const transcriptId = await uploadFile(
+          validatedData.data!.video!,
+          "transcripts"
+        );
         const link = new URL("http://localhost:8000/transcribe/");
         link.searchParams.set("public_id", transcriptId);
         link.searchParams.set("applicant_id", userId.toString());
 
-        fetch(link.toString(), { method: "POST" }).catch((e) =>
-          console.error("Error calling transcribe service:", e)
-        );
+        fetch(link.toString(), { method: "POST" });
 
         return await updateTable(supabase, "users", "id", userId, {
           transcript_id: transcriptId,
