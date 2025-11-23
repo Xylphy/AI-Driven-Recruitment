@@ -245,13 +245,22 @@ const candidateRouter = createTRPCRouter({
         link: `/joblisting/${joblistingId}`,
       };
 
-      await db
-        .collection("users")
-        .doc(userId)
-        .collection("notifications")
-        .add(notification);
+      let notificationSuccess = true;
+      try {
+        await db
+          .collection("users")
+          .doc(userId)
+          .collection("notifications")
+          .add(notification);
+      } catch (err) {
+        notificationSuccess = false;
+        console.error("Failed to add notification for user", userId, err);
+      }
 
-      return { message: "Candidate status updated successfully" };
+      return {
+        message: "Candidate status updated successfully",
+        notificationSuccess,
+      };
     }),
 });
 
