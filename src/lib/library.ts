@@ -1,4 +1,4 @@
-import { FieldValue } from "firebase/firestore";
+import { FieldValue, Timestamp } from "firebase/firestore";
 
 export async function getCsrfToken(): Promise<string | null> {
   if (typeof document === "undefined") {
@@ -130,7 +130,7 @@ function firebaseTimestampToDate(
  */
 type FirestoreTimestamp = Parameters<typeof firebaseTimestampToDate>[0];
 
-export function formatDate(iso?: string | FieldValue) {
+export function formatDate(iso: string | Timestamp | FieldValue | null | undefined): string {
   if (!iso) return "";
 
   // Handle ISO strings, numbers, and Date directly; otherwise try Firestore timestamp conversion.

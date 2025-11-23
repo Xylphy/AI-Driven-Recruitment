@@ -1,7 +1,7 @@
 // Types not directly related to the database schema but used throughout the application
 // --------------- Types for common attributes | meant for extends --------------- //
 
-import { FieldValue } from "firebase/firestore";
+import { FieldValue, Timestamp } from "firebase/firestore";
 import { JwtPayload } from "jsonwebtoken";
 
 export interface IdentifiableItem {
@@ -92,6 +92,6 @@ export interface Notification {
   title: string;
   body: string;
   isRead: boolean;
-  createdAt: FieldValue;
+  createdAt: Timestamp | FieldValue;
   link: string;
 }

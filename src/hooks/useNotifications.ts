@@ -54,7 +54,7 @@ export default function useNotifications(
     );
 
     return () => unsubscribe();
-  }, [userId, limitCount]);
+  }, [userId]);
 
   const markAsRead = async (notificationId: string) => {
     if (!userId) return;
