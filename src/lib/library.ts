@@ -1,3 +1,5 @@
+import { FieldValue } from "firebase/firestore";
+
 export async function getCsrfToken(): Promise<string | null> {
   if (typeof document === "undefined") {
     // This code is running on the server, so we can't access document.cookie
@@ -122,27 +124,29 @@ function firebaseTimestampToDate(
 }
 
 /**
- * Converts an ISO string, Date, or Firestore timestamp object to a formatted date string.
+ * Converts an ISO string to a formatted date string.
  * Accepts:
  *  - ISO string: "2025-11-23T12:00:00Z"
- *  - Date instance
- *  - Firestore timestamp object: { seconds: number, nanoseconds: number } or Firestore Timestamp with toDate()
  */
-export function formatDate(
-  iso?: string | Date | { seconds: number; nanoseconds?: number } | null
-) {
-  if (!iso) return "";
-  let date: Date | null = null;
+type FirestoreTimestamp = Parameters<typeof firebaseTimestampToDate>[0];
 
-  if (typeof iso === "string") {
-    date = new Date(iso);
-  } else if (iso instanceof Date) {
-    date = iso;
+export function formatDate(iso?: string | FieldValue) {
+  if (!iso) return "";
+
+  // Handle ISO strings, numbers, and Date directly; otherwise try Firestore timestamp conversion.
+  let date: Date | null;
+  if (
+    typeof iso === "string" ||
+    typeof iso === "number" ||
+    iso instanceof Date
+  ) {
+    date = new Date(iso as string | number | Date);
   } else {
-    date = firebaseTimestampToDate(iso);
+    // FieldValue / Firestore timestamp shapes might not match TS types — cast through unknown to the expected timestamp shape.
+    date = firebaseTimestampToDate(iso as unknown as FirestoreTimestamp);
   }
 
-  if (!date || Number.isNaN(date.getTime())) return "";
+  if (!date) return "";
 
   return date.toLocaleDateString(undefined, {
     year: "numeric",

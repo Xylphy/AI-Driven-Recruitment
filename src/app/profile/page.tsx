@@ -41,6 +41,14 @@ export default function Profile() {
     deleteNotification,
   } = useNotifications(undefined, jwtInfo.data?.user.id);
 
+  const clickNotification = (notificationId: string) => {
+    markAsRead(notificationId);
+    router.push(
+      (notifications.find((n) => n.id === notificationId)?.link ??
+        "/") as unknown as Parameters<typeof router.push>[0]
+    );
+  };
+
   return (
     <main className="bg-white h-[75vh] overflow-hidden">
       <div className="container mx-auto px-4 h-full">
@@ -212,7 +220,7 @@ export default function Profile() {
                         className={`p-4 hover:bg-gray-50 cursor-pointer ${
                           !notification.isRead ? "bg-blue-50" : ""
                         }`}
-                        onClick={() => markAsRead(notification.id)}
+                        onClick={() => clickNotification(notification.id)}
                       >
                         <div className="flex justify-between items-start">
                           <div className="flex-1">

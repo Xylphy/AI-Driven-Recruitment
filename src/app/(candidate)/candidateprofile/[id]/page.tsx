@@ -82,7 +82,9 @@ export default function Page() {
     e: React.ChangeEvent<HTMLSelectElement>
   ) => {
     const newStatus = e.target.value;
+    const oldStatus = selectedStatus;
 
+    setSelectedStatus(newStatus);
     await updateCandidateStatusMutation.mutateAsync(
       {
         applicantId: candidateId,
@@ -91,10 +93,10 @@ export default function Page() {
       {
         onSuccess: () => {
           alert("Candidate status updated successfully.");
-          setSelectedStatus(newStatus);
         },
         onError: (error) => {
           alert(error.message);
+          setSelectedStatus(oldStatus);
         },
       }
     );

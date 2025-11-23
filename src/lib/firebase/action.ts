@@ -2,7 +2,7 @@ import { sendSignInLinkToEmail } from "firebase/auth";
 import { auth } from "./client";
 import { RegisterState } from "@/types/types";
 import { insertTokenData } from "../mongodb/action";
-import admin from "./admin";
+import admin, { auth as adminAuth } from "./admin";
 import mongoDb_client from "../mongodb/mongodb";
 
 export async function sendEmailVerification(data: RegisterState) {
@@ -34,7 +34,7 @@ export async function sendEmailVerification(data: RegisterState) {
 
 export async function isEmailRegistered(email: string): Promise<boolean> {
   try {
-    return !!(await admin.getUserByEmail(email));
+    return !!(await adminAuth.getUserByEmail(email));
   } catch (error) {
     if (
       error &&

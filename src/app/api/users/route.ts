@@ -238,19 +238,20 @@ export async function PUT(request: NextRequest) {
     }
 
     promises.push(
-      uploadFile(validatedData.data!.resume!, "resumes").then((resumeId) => {
+      (async () => {
+        const resumeId = await uploadFile(validatedData.data!.resume!, "resumes");
         const link = new URL("http://localhost:8000/parseresume/");
         link.searchParams.set("public_id", resumeId);
         link.searchParams.set("applicant_id", userId.toString());
 
-        fetch(link.toString(), {
-          method: "POST",
-        });
+        fetch(link.toString(), { method: "POST" }).catch((e) =>
+          console.error("Error calling resume parser:", e)
+        );
 
-        return updateTable(supabase, "users", "id", userId, {
+        return await updateTable(supabase, "users", "id", userId, {
           resume_id: resumeId,
         });
-      })
+      })()
     );
   }
 
@@ -260,21 +261,20 @@ export async function PUT(request: NextRequest) {
     }
 
     promises.push(
-      uploadFile(validatedData.data!.video!, "transcripts").then(
-        (transcriptId) => {
-          const link = new URL("http://localhost:8000/transcribe/");
-          link.searchParams.set("public_id", transcriptId);
-          link.searchParams.set("applicant_id", userId.toString());
+      (async () => {
+        const transcriptId = await uploadFile(validatedData.data!.video!, "transcripts");
+        const link = new URL("http://localhost:8000/transcribe/");
+        link.searchParams.set("public_id", transcriptId);
+        link.searchParams.set("applicant_id", userId.toString());
 
-          fetch(link.toString(), {
-            method: "POST",
-          });
+        fetch(link.toString(), { method: "POST" }).catch((e) =>
+          console.error("Error calling transcribe service:", e)
+        );
 
-          return updateTable(supabase, "users", "id", userId, {
-            transcript_id: transcriptId,
-          });
-        }
-      )
+        return await updateTable(supabase, "users", "id", userId, {
+          transcript_id: transcriptId,
+        });
+      })()
     );
   }
 
