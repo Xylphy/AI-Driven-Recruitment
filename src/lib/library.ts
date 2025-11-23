@@ -1,3 +1,5 @@
+import { FieldValue, Timestamp } from "firebase/firestore";
+
 export async function getCsrfToken(): Promise<string | null> {
   if (typeof document === "undefined") {
     // This code is running on the server, so we can't access document.cookie
@@ -91,13 +93,62 @@ export function cleanArrayData<T extends Record<string, unknown>>(
 }
 
 /**
- * Converts an ISO string to a formatted date string.
- * @param iso ISO String
- * @returns Formatted Date
+ * Converts a Firestore timestamp object ({ seconds, nanoseconds }) to a Date.
  */
-export function formatDate(iso?: string) {
+function firebaseTimestampToDate(
+  ts:
+    | { seconds: number; nanoseconds?: number }
+    | { seconds: number; nanoseconds: number }
+    | { toDate?: () => Date }
+    | null
+    | undefined
+): Date | null {
+  if (!ts) return null;
+
+  // Firestore Timestamp instance often has toDate()
+  if (
+    "toDate" in ts &&
+    typeof (ts as { toDate?: () => Date }).toDate === "function"
+  ) {
+    return (ts as { toDate: () => Date }).toDate();
+  }
+
+  const s = (ts as { seconds?: number }).seconds;
+  const n = (ts as { nanoseconds?: number }).nanoseconds ?? 0;
+
+  if (typeof s === "number") {
+    return new Date(s * 1000 + Math.floor(n / 1e6));
+  }
+
+  return null;
+}
+
+/**
+ * Converts an ISO string to a formatted date string.
+ * Accepts:
+ *  - ISO string: "2025-11-23T12:00:00Z"
+ */
+type FirestoreTimestamp = Parameters<typeof firebaseTimestampToDate>[0];
+
+export function formatDate(iso: string | Timestamp | FieldValue | null | undefined): string {
   if (!iso) return "";
-  return new Date(iso).toLocaleDateString(undefined, {
+
+  // Handle ISO strings, numbers, and Date directly; otherwise try Firestore timestamp conversion.
+  let date: Date | null;
+  if (
+    typeof iso === "string" ||
+    typeof iso === "number" ||
+    iso instanceof Date
+  ) {
+    date = new Date(iso as string | number | Date);
+  } else {
+    // FieldValue / Firestore timestamp shapes might not match TS types — cast through unknown to the expected timestamp shape.
+    date = firebaseTimestampToDate(iso as unknown as FirestoreTimestamp);
+  }
+
+  if (!date) return "";
+
+  return date.toLocaleDateString(undefined, {
     year: "numeric",
     month: "short",
     day: "numeric",

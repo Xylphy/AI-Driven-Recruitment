@@ -8,6 +8,7 @@ import {
   MdSettings,
   MdLogout,
   MdClose,
+  MdDelete,
 } from "react-icons/md";
 import JobApplicationDetails from "@/components/profile/JobApplications";
 import Image from "next/image";
@@ -16,68 +17,37 @@ import useAuth from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase/client";
 import { trpc } from "@/lib/trpc/client";
-
-interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  timestamp: string;
-  read: boolean;
-}
-
-const defaultNotification: Notification[] = [
-  {
-    id: "1",
-    title: "New Application",
-    message: "John Doe applied for Software Engineer position",
-    timestamp: "2 hours ago",
-    read: false,
-  },
-  {
-    id: "2",
-    title: "Interview Scheduled",
-    message: "Interview scheduled for Frontend Developer position",
-    timestamp: "1 day ago",
-    read: false,
-  },
-  {
-    id: "3",
-    title: "Application Status Update",
-    message: "Your application for UX Designer has been reviewed",
-    timestamp: "3 days ago",
-    read: true,
-  },
-];
+import useNotifications from "@/hooks/useNotifications";
+import { formatDate } from "@/lib/library";
 
 export default function Profile() {
   const router = useRouter();
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [notifications, setNotifications] =
-    useState<Notification[]>(defaultNotification);
   const { userInfo, isAuthenticated } = useAuth({
     fetchUser: true,
   });
   const jwtInfo = trpc.auth.decodeJWT.useQuery(undefined, {
     enabled: isAuthenticated,
   });
+  const [showNotifications, setShowNotifications] = useState(false);
   const isAdmin = userInfo.isSuccess && jwtInfo.data?.user.isAdmin;
   const joblistings = trpc.joblisting.joblistings.useQuery(undefined, {
     enabled: isAuthenticated,
   });
+  const {
+    notifications,
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification,
+  } = useNotifications(undefined, jwtInfo.data?.user.id);
 
-  const handleNotificationClick = () => {
-    setShowNotifications(true);
-  };
-
-  const markAsRead = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((notification) =>
-        notification.id === id ? { ...notification, read: true } : notification
-      )
+  const clickNotification = (notificationId: string) => {
+    markAsRead(notificationId);
+    router.push(
+      (notifications.find((n) => n.id === notificationId)?.link ??
+        "/") as unknown as Parameters<typeof router.push>[0]
     );
   };
-
-  const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
     <main className="bg-white h-[75vh] overflow-hidden">
@@ -190,7 +160,7 @@ export default function Profile() {
               </h2>
               <div className="relative w-5 h-5">
                 <button
-                  onClick={handleNotificationClick}
+                  onClick={() => setShowNotifications(true)}
                   className="relative p-2 hover:bg-gray-100 rounded-full transition-colors"
                 >
                   <MdNotifications className="w-6 h-6" />
@@ -248,9 +218,9 @@ export default function Profile() {
                       <div
                         key={notification.id}
                         className={`p-4 hover:bg-gray-50 cursor-pointer ${
-                          !notification.read ? "bg-blue-50" : ""
+                          !notification.isRead ? "bg-blue-50" : ""
                         }`}
-                        onClick={() => markAsRead(notification.id)}
+                        onClick={() => clickNotification(notification.id)}
                       >
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
@@ -258,15 +228,27 @@ export default function Profile() {
                               {notification.title}
                             </h4>
                             <p className="text-gray-600 text-xs mt-1">
-                              {notification.message}
+                              {notification.body}
                             </p>
                             <span className="text-gray-400 text-xs">
-                              {notification.timestamp}
+                              {formatDate(notification.createdAt)}
                             </span>
                           </div>
-                          {!notification.read && (
+
+                          {!notification.isRead && (
                             <div className="w-2 h-2 bg-blue-500 rounded-full ml-2 mt-1"></div>
                           )}
+
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteNotification(notification.id);
+                            }}
+                            className="text-gray-400 hover:text-red-600 p-1"
+                            aria-label="Delete notification"
+                          >
+                            <MdDelete className="w-4 h-4" />
+                          </button>
                         </div>
                       </div>
                     ))}
@@ -276,14 +258,7 @@ export default function Profile() {
 
               <div className="p-4 border-t">
                 <button
-                  onClick={() =>
-                    setNotifications((prev) =>
-                      prev.map((notification) => ({
-                        ...notification,
-                        read: true,
-                      }))
-                    )
-                  }
+                  onClick={markAllAsRead}
                   className="w-full text-red-600 hover:text-red-700 text-sm font-medium"
                 >
                   Mark all as read
