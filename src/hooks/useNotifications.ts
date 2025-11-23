@@ -34,7 +34,7 @@ export default function useNotifications(
 
     // Real-time listener
     const unsubscribe = onSnapshot(
-      query(notificationsRef, orderBy("createdAt"), limit(50)),
+      query(notificationsRef, orderBy("createdAt", "desc"), limit(limitCount)),
       (snapshot) => {
         const notifications: Notification[] = [];
         let unread = 0;

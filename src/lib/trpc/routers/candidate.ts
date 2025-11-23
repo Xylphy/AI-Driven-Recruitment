@@ -10,9 +10,8 @@ import { findWithJoin, find, updateTable } from "@/lib/supabase/action";
 import { findOne } from "@/lib/mongodb/action";
 import mongoDb_client from "@/lib/mongodb/mongodb";
 import { JobApplicant, User } from "@/types/schema";
-import { auth, db } from "@/lib/firebase/admin";
+import admin, { auth, db } from "@/lib/firebase/admin";
 import { ObjectId } from "mongodb";
-import admin from "@/lib/firebase/admin";
 import { Notification } from "@/types/types";
 
 const candidateRouter = createTRPCRouter({
