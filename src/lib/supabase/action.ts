@@ -90,7 +90,17 @@ export function updateTable(
   matchValue: string,
   data: object
 ) {
-  return supabase.from(table).update(data).eq(matchColumn, matchValue);
+  const query = supabase.from(table).update(data).eq(matchColumn, matchValue);
+  if (
+    typeof selectColumns === "string" &&
+    selectColumns
+      .split(",")
+      .map((col) => col.trim())
+      .filter((col) => col.length > 0).length > 0
+  ) {
+    return query.select(selectColumns);
+  }
+  return query;
 }
 
 export function findWithJoin<T>(

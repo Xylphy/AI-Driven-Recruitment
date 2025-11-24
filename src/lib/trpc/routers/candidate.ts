@@ -101,14 +101,19 @@ const candidateRouter = createTRPCRouter({
       await mongoDb_client.close();
 
       return {
-        applicants: applicantWithEmail.map((applicant) => ({
-          id: applicant.applicantId,
-          name: applicant.first_name + " " + applicant.last_name,
-          email: applicant.email,
-          predictiveSuccess: applicant.candidateMatch,
-          status: applicant.status,
-          jobTitle: applicant.job_listings.title,
-        })),
+        applicants: applicantWithEmail
+          .map((applicant) => ({
+            id: applicant.applicantId,
+            name: applicant.first_name + " " + applicant.last_name,
+            email: applicant.email,
+            predictiveSuccess: applicant.candidateMatch,
+            status: applicant.status,
+            jobTitle: applicant.job_listings.title,
+          }))
+          .sort(
+            (applicantA, applicantB) =>
+              applicantB.predictiveSuccess - applicantA.predictiveSuccess
+          ),
       };
     }),
   fetchCandidateProfile: authorizedProcedure

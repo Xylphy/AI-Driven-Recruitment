@@ -5,7 +5,6 @@ import Image from "next/image";
 import useAuth from "@/hooks/useAuth";
 import { startTransition, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Loading from "@/app/loading";
 import { JobListing } from "@/types/types";
 import { trpc } from "@/lib/trpc/client";
 import { formatDate } from "@/lib/library";
@@ -102,7 +101,23 @@ export default function Page() {
   };
 
   if (!candidatesData.data || !joblistingDetails.data) {
-    return <Loading />;
+    return (
+      <main className="bg-white min-h-screen py-20 px-4 md:px-20">
+        <div className="max-w-4xl mx-auto">
+          <div className="animate-pulse">
+            <div className="h-44 rounded-md bg-gray-200 mb-6" />
+            <div className="h-6 rounded bg-gray-200 w-3/4 mb-2" />
+            <div className="h-4 rounded bg-gray-200 w-1/2 mb-6" />
+            <div className="space-y-4">
+              <div className="h-20 rounded bg-gray-100" />
+              <div className="h-20 rounded bg-gray-100" />
+              <div className="h-20 rounded bg-gray-100" />
+            </div>
+          </div>
+          <p className="text-center text-sm text-gray-500 mt-6">Loading...</p>
+        </div>
+      </main>
+    );
   }
 
   return (

@@ -159,9 +159,7 @@ export default function Profile() {
               <div className="flex gap-4 justify-center">
                 <MdSettings className="cursor-pointer hover:text-red-600" />
                 <MdLogout
-                  onClick={() => {
-                    auth.signOut();
-                  }}
+                  onClick={() => auth.signOut()}
                   className="cursor-pointer hover:text-red-600"
                 />
               </div>
