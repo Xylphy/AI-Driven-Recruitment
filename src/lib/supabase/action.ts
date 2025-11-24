@@ -88,7 +88,8 @@ export function updateTable(
   table: string,
   matchColumn: string,
   matchValue: string,
-  data: object
+  data: object,
+  selectColumns?: string
 ) {
   const query = supabase.from(table).update(data).eq(matchColumn, matchValue);
   if (
