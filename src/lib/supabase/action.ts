@@ -86,12 +86,16 @@ export function find<T>(
 export function updateTable(
   supabase: SupabaseClient,
   table: string,
-  matchColumn: string,
-  matchValue: string,
   data: object,
-  selectColumns?: string
+  selectColumns?: string,
+  queryFilter?: Array<QueryFilter>
 ) {
-  const query = supabase.from(table).update(data).eq(matchColumn, matchValue);
+  const query = supabase.from(table).update(data);
+
+  if (queryFilter) {
+    queryFilter.forEach(({ column, value }) => query.eq(column, value));
+  }
+
   if (
     typeof selectColumns === "string" &&
     selectColumns

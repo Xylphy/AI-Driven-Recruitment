@@ -70,6 +70,7 @@ export interface JobApplicant extends IdentifiableItem, Pick<Admin, "user_id"> {
   joblisting_id: string;
   score_id: string;
   status: "Initial Interview" | "For Interview" | "Hired" | "Rejected";
+  notify: boolean;
 }
 
 export interface JobListing

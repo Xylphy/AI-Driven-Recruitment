@@ -2,9 +2,9 @@
 
 import { MdLocationOn, MdAccessTime, MdChevronRight } from "react-icons/md";
 import Image from "next/image";
+import { MdNotifications, MdNotificationsActive } from "react-icons/md";
 import useAuth from "@/hooks/useAuth";
 import { useParams, useRouter } from "next/navigation";
-import Loading from "@/app/loading";
 import { trpc } from "@/lib/trpc/client";
 import { useState } from "react";
 import { formatDate } from "@/lib/library";
@@ -13,6 +13,7 @@ type UIState = {
   showDeleteModal: boolean;
   isDeleting: boolean;
   isApplying: boolean;
+  isNotifying: boolean;
 };
 
 export default function Page() {
@@ -29,6 +30,7 @@ export default function Page() {
     showDeleteModal: false,
     isDeleting: false,
     isApplying: false,
+    isNotifying: false,
   });
 
   const [error, setError] = useState<string | null>(null);
@@ -37,6 +39,28 @@ export default function Page() {
     jobId,
   });
   const applyJobMutation = trpc.joblisting.applyForJob.useMutation();
+  const notifyMutation = trpc.joblisting.notify.useMutation();
+
+  const handleNotify = async () => {
+    setStates((prev) => ({ ...prev, isNotifying: true }));
+    setError(null);
+
+    await notifyMutation.mutateAsync(
+      { jobId },
+      {
+        onSuccess() {
+          alert("Notification preference updated");
+          jobDetails.refetch();
+        },
+        onError(error) {
+          setError(error.message);
+        },
+        onSettled() {
+          setStates((prev) => ({ ...prev, isNotifying: false }));
+        },
+      }
+    );
+  };
 
   const handleApply = async () => {
     setStates((prev) => ({ ...prev, isApplying: true }));
@@ -87,7 +111,33 @@ export default function Page() {
     );
   };
 
-  if (jobDetails.isLoading) return <Loading />;
+  if (jobDetails.isLoading) {
+    return (
+      <main className="bg-white min-h-screen py-5 px-4 md:px-20">
+        <div className="max-w-4xl mx-auto animate-pulse">
+          <div className="h-44 bg-gray-200 rounded mb-6" />
+          <div className="flex flex-col lg:flex-row gap-6">
+            <div className="w-full lg:w-2/3 p-8">
+              <div className="h-6 bg-gray-200 rounded mb-4 w-1/3" />
+              <div className="space-y-3">
+                <div className="h-4 bg-gray-200 rounded w-full" />
+                <div className="h-4 bg-gray-200 rounded w-full" />
+                <div className="h-4 bg-gray-200 rounded w-5/6" />
+              </div>
+            </div>
+            <div className="w-full lg:w-1/3 bg-gray-50 border-l p-6">
+              <div className="h-6 bg-gray-200 rounded mb-4 w-1/2" />
+              <div className="space-y-3">
+                <div className="h-4 bg-gray-200 rounded w-full" />
+                <div className="h-4 bg-gray-200 rounded w-3/4" />
+                <div className="h-10 bg-gray-200 rounded w-full mt-6" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="bg-white min-h-screen py-5 px-4 md:px-20">
@@ -148,6 +198,33 @@ export default function Page() {
                 {jobDetails.data?.is_fulltime ? "Full-Time" : "Part-Time"}
               </span>
             </div>
+
+            {isAuthenticated && (
+              <div className="mt-3">
+                <button
+                  onClick={handleNotify}
+                  disabled={states.isNotifying}
+                  className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                    jobDetails.data?.notify
+                      ? "bg-white/90 text-red-600 border-white/90"
+                      : "bg-transparent text-white border-white/50 hover:bg-white/10"
+                  } disabled:opacity-60`}
+                >
+                  {jobDetails.data?.notify ? (
+                    <MdNotificationsActive />
+                  ) : (
+                    <MdNotifications />
+                  )}
+                  <span>
+                    {states.isNotifying
+                      ? "..."
+                      : jobDetails.data?.notify
+                      ? "Notified"
+                      : "Notify me"}
+                  </span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
         <div className="flex flex-col lg:flex-row py-5">

@@ -26,6 +26,8 @@ import {
   IdentifiableItem,
 } from "@/types/schema";
 import { jobListingSchema } from "@/lib/schemas";
+import type { Notification } from "@/types/types";
+import admin, { db } from "@/lib/firebase/admin";
 
 const jobListingRouter = createTRPCRouter({
   joblistings: authorizedProcedure
@@ -58,6 +60,7 @@ const jobListingRouter = createTRPCRouter({
           .execute();
 
         if (joblistingsResult.error) {
+          console.error(joblistingsResult.error);
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
             message: "Failed to fetch job listings",
@@ -81,6 +84,7 @@ const jobListingRouter = createTRPCRouter({
           .execute();
 
         if (appliedError) {
+          console.error(appliedError);
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
             message: "Failed to fetch applied jobs",
@@ -121,6 +125,7 @@ const jobListingRouter = createTRPCRouter({
       );
 
       if (error) {
+        console.error(error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to delete job listing",
@@ -150,6 +155,7 @@ const jobListingRouter = createTRPCRouter({
       ]).single();
 
       if (errorJobListing || !jobListing) {
+        console.error(errorJobListing);
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Job listing not found",
@@ -201,6 +207,11 @@ const jobListingRouter = createTRPCRouter({
       const tags = await tagsPromise;
 
       if (qualifications.error || requirements.error || tags.error) {
+        console.error("Error fetching job details:", {
+          qualificationsError: qualifications.error,
+          requirementsError: requirements.error,
+          tagsError: tags.error,
+        });
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to fetch job details",
@@ -216,6 +227,7 @@ const jobListingRouter = createTRPCRouter({
           qualifications.data?.map((item) => item.qualification) || [],
         isApplicant: !!applicantCheck?.data,
         tags: (tags.data || []).map((item) => item.tags.name),
+        notify: applicantCheck?.data?.notify || false,
       };
     }),
   applyForJob: authenticatedProcedure
@@ -248,6 +260,7 @@ const jobListingRouter = createTRPCRouter({
           .execute();
 
       if (existingError) {
+        console.error("Failed to check existing applications", existingError);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to check existing applications",
@@ -271,6 +284,7 @@ const jobListingRouter = createTRPCRouter({
       );
 
       if (error) {
+        console.error("Error submitting application", error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to submit application",
@@ -329,6 +343,7 @@ const jobListingRouter = createTRPCRouter({
         .select("id, name");
 
       if (tagError) {
+        console.error("Tag upsert error:", tagError);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to create job listings",
@@ -343,6 +358,7 @@ const jobListingRouter = createTRPCRouter({
       );
 
       if (errorLink) {
+        console.error("Error inserting job tags", errorLink);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to create job listings",
@@ -401,6 +417,7 @@ const jobListingRouter = createTRPCRouter({
         .select("id, name");
 
       if (tagError) {
+        console.error("Error upserting tags", tagError);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to create job listings",
@@ -419,6 +436,7 @@ const jobListingRouter = createTRPCRouter({
       );
 
       if (insertedError) {
+        console.error("Insert error", insertedError);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to create job listings",
@@ -433,6 +451,7 @@ const jobListingRouter = createTRPCRouter({
       );
 
       if (errorLink) {
+        console.error("Error inserting tags", errorLink);
         await deleteRow(supabase, "job_listings", "id", insertedData[0].id);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
@@ -456,6 +475,10 @@ const jobListingRouter = createTRPCRouter({
       ]);
 
       if (results.some((result) => result.error)) {
+        console.error(
+          "Error inserting qualifications/requirements",
+          results.find((r) => r.error)
+        );
         await Promise.all([
           deleteRow(supabase, "job_listings", "id", insertedData[0].id),
           deleteRow(supabase, "job_tags", "joblisting_id", insertedData[0].id),
@@ -478,6 +501,35 @@ const jobListingRouter = createTRPCRouter({
         });
       }
 
+      const { data: usersToNotify, error: usersError } = await supabase.rpc(
+        "get_similar_job_applicants",
+        {
+          new_job_id: insertedData[0].id,
+        }
+      );
+
+      if (usersError) {
+        console.error("Error fetching users to notify", usersError);
+      }
+
+      const notification: Omit<Notification, "id"> = {
+        title: "New Job Listing Available",
+        body: `A new job listing "${input.title}" has been posted that's similar to your applied jobs before. Check it out!`,
+        isRead: false,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        link: `/joblisting/${insertedData[0].id}`,
+      };
+
+      await Promise.all(
+        (usersToNotify || []).map((user: { user_id: string }) =>
+          db
+            .collection("users")
+            .doc(user.user_id)
+            .collection("notifications")
+            .add(notification)
+        )
+      );
+
       return { success: true, message: "Job listing created successfully" };
     }),
   fetchJobs: rateLimitedProcedure.query(async () => {
@@ -495,6 +547,7 @@ const jobListingRouter = createTRPCRouter({
       .execute();
 
     if (error) {
+      console.error("Error fetching jobs:", error);
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message: "Failed to fetch jobs",
@@ -512,6 +565,30 @@ const jobListingRouter = createTRPCRouter({
       })),
     };
   }),
+  notify: authenticatedProcedure
+    .input(
+      z.object({
+        jobId: z.uuid(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const supabase = await createClientServer(1, true);
+
+      await updateTable(
+        supabase,
+        "job_applicants",
+        {
+          notify: true,
+        },
+        undefined,
+        [
+          { column: "user_id", value: ctx.userJWT!.id },
+          { column: "joblisting_id", value: input.jobId },
+        ]
+      );
+
+      return { success: true, message: "You will be notified for updates" };
+    }),
 });
 
 export default jobListingRouter;

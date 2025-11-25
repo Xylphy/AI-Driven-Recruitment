@@ -82,6 +82,7 @@ const userRouter = createTRPCRouter({
             data && typeof data === "object" && "error" in data && data.error
         )
       ) {
+        console.error("Failed to fetch user information");
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to fetch user information",

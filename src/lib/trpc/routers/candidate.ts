@@ -50,6 +50,7 @@ const candidateRouter = createTRPCRouter({
           .execute();
 
       if (errorApplicants) {
+        console.error("Error fetching applicants:", errorApplicants);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to fetch applicants",
@@ -141,6 +142,7 @@ const candidateRouter = createTRPCRouter({
         ]).single();
 
       if (jobApplicantError) {
+        console.error("Error fetching job applicants", jobApplicantError);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to fetch candidate profile",
@@ -209,6 +211,7 @@ const candidateRouter = createTRPCRouter({
       );
 
       if (error) {
+        console.error("Error updating candidate status ", error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to update candidate status",
@@ -230,12 +233,15 @@ const candidateRouter = createTRPCRouter({
           : undefined;
 
       if (!userId) {
+        console.error("No userId in updated row");
+
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Updated row missing user_id",
         });
       }
       if (!joblistingId) {
+        console.error("No joblistingId in updated row");
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Updated row missing joblisting_id",
