@@ -18,9 +18,7 @@ export default function JobApplicationDetails({
         <div
           key={job.id}
           className="p-4 bg-white shadow-md rounded-lg flex justify-between items-center gap-4"
-          onClick={() => {
-            router.push(`/joblisting/${job.id}`);
-          }}
+          onClick={() => router.push(`/joblisting/${job.joblisting_id}`)}
         >
           <div className="flex flex-col">
             <h3 className="text-lg font-semibold">{job.title}</h3>
