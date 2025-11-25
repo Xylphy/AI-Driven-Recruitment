@@ -366,11 +366,16 @@ const jobListingRouter = createTRPCRouter({
       }
 
       const promises = await Promise.all([
-        updateTable(supabase, "job_listings", "id", input.jobId, {
-          title: input.title,
-          location: input.location,
-          is_fulltime: input.isFullTime,
-        }),
+        updateTable(
+          supabase,
+          "job_listings",
+          {
+            title: input.title,
+            location: input.location,
+            is_fulltime: input.isFullTime,
+          },
+          [{ column: "id", value: input.jobId }]
+        ),
         ...(input.qualifications || []).map((qualification) =>
           insertTable(supabase, "jl_qualifications", {
             joblisting_id: input.jobId,
@@ -580,7 +585,6 @@ const jobListingRouter = createTRPCRouter({
         {
           notify: true,
         },
-        undefined,
         [
           { column: "user_id", value: ctx.userJWT!.id },
           { column: "joblisting_id", value: input.jobId },

@@ -87,8 +87,8 @@ export function updateTable(
   supabase: SupabaseClient,
   table: string,
   data: object,
-  selectColumns?: string,
-  queryFilter?: Array<QueryFilter>
+  queryFilter?: Array<QueryFilter>,
+  selectColumns?: string
 ) {
   const query = supabase.from(table).update(data);
 

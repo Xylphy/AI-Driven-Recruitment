@@ -249,9 +249,19 @@ export async function PUT(request: NextRequest) {
 
         fetch(link.toString(), { method: "POST" });
 
-        return await updateTable(supabase, "users", "id", userId, {
-          resume_id: resumeId,
-        });
+        return await updateTable(
+          supabase,
+          "users",
+          {
+            resume_id: resumeId,
+          },
+          [
+            {
+              column: "id",
+              value: userId,
+            },
+          ]
+        );
       })()
     );
   }
@@ -273,9 +283,14 @@ export async function PUT(request: NextRequest) {
 
         fetch(link.toString(), { method: "POST" });
 
-        return await updateTable(supabase, "users", "id", userId, {
-          transcript_id: transcriptId,
-        });
+        return await updateTable(
+          supabase,
+          "users",
+          {
+            transcript_id: transcriptId,
+          },
+          [{ column: "id", value: userId }]
+        );
       })()
     );
   }
@@ -291,19 +306,24 @@ export async function PUT(request: NextRequest) {
 
   // Warning: do not use ...object (include all data) since supabase doesn't insert if column doesn't exist
   promises.push(
-    updateTable(supabase, "users", "id", userId, {
-      first_name: validatedUserData.firstName,
-      last_name: validatedUserData.lastName,
-      phone_number: validatedUserData.mobileNumber,
-      country_code: validatedUserData.countryCode,
-      job_title: validatedUserData.jobTitle,
-      prefix: validatedUserData.prefix,
-      street: validatedUserData.street,
-      zip: validatedUserData.zip,
-      city: validatedUserData.city,
-      state: validatedUserData.state,
-      country: validatedUserData.country,
-    }),
+    updateTable(
+      supabase,
+      "users",
+      {
+        first_name: validatedUserData.firstName,
+        last_name: validatedUserData.lastName,
+        phone_number: validatedUserData.mobileNumber,
+        country_code: validatedUserData.countryCode,
+        job_title: validatedUserData.jobTitle,
+        prefix: validatedUserData.prefix,
+        street: validatedUserData.street,
+        zip: validatedUserData.zip,
+        city: validatedUserData.city,
+        state: validatedUserData.state,
+        country: validatedUserData.country,
+      },
+      [{ column: "id", value: userId }]
+    ),
     ...(validatedUserData.educationalDetails || []).map((educationalDetails) =>
       insertTable(supabase, "educational_details", {
         user_id: userId,

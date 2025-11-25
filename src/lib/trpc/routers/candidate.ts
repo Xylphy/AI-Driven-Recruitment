@@ -202,11 +202,10 @@ const candidateRouter = createTRPCRouter({
       const { data, error } = await updateTable(
         supabase,
         "job_applicants",
-        "id",
-        input.applicantId,
         {
           status: input.newStatus,
         },
+        [{ column: "id", value: input.applicantId }],
         "user_id, joblisting_id"
       );
 
