@@ -3,6 +3,43 @@ import { userSchema } from "@/lib/schemas";
 import { parseFormData } from "@/lib/library";
 import { sendEmailVerification } from "@/lib/firebase/action";
 import { uploadFile } from "@/lib/cloudinary/cloudinary";
+import mongoDb_client from "@/lib/mongodb/mongodb";
+import { getTokenData } from "@/lib/mongodb/action";
+
+export async function GET(request: NextRequest) {
+  const id = request.nextUrl.searchParams.get("id");
+
+  if (!id) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "ID is required",
+      },
+      { status: 400 }
+    );
+  }
+
+  await mongoDb_client.connect();
+
+  const tokenData = await getTokenData(id);
+  if (!tokenData) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Invalid or expired verification token",
+      },
+      { status: 400 }
+    );
+  }
+
+  await mongoDb_client.close();
+
+  return NextResponse.json({
+    success: true,
+    message: "Valid token",
+    email: tokenData.email,
+  });
+}
 
 export async function POST(request: NextRequest) {
   const formData = await request.formData();

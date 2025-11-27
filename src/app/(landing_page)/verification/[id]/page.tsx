@@ -8,29 +8,43 @@ import {
 import { Button } from "@/components/common/Button";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { auth } from "@/lib/firebase/client";
 import { getCsrfToken } from "@/lib/library";
-import { trpc } from "@/lib/trpc/client";
+import { auth } from "@/lib/firebase/client";
 
 export default function Verification() {
   const router = useRouter();
   const [csrfToken, setCsrfToken] = useState<string | null>(null);
-  const [email, setEmail] = useState<string>("");
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const id = useParams().id as string;
-  const retrieveEmailQuery =
-    trpc.user.retrieveEmailInVerificationToken.useQuery(
-      { id },
-      {
-        enabled: !!id,
-      }
-    );
+  const [email, setEmail] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!id) {
+      return;
+    }
     getCsrfToken().then(setCsrfToken);
-  }, []);
 
-  if (retrieveEmailQuery.isLoading) {
+    fetch(`/api/users/signup?id=${id}`, {
+      method: "GET",
+    })
+      .then(async (res) => {
+        if (res.ok) {
+          return res.json();
+        }
+
+        throw new Error((await res.json()).message || "Failed to get email");
+      })
+      .then((data) => setEmail(data.email))
+      .catch((error) => {
+        alert("Error: " + error.message);
+        router.push("/signup");
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, [id, router]);
+
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center h-screen">
         <svg
@@ -55,23 +69,17 @@ export default function Verification() {
         </svg>
       </div>
     );
-  } else if (retrieveEmailQuery.isError) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <p className="text-red-600">
-          Error: {retrieveEmailQuery.error.message}
-        </p>
-      </div>
-    );
-  } else if (retrieveEmailQuery.data) {
-    setEmail(retrieveEmailQuery.data);
   }
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!csrfToken) {
       alert("CSRF token not found");
+      return;
+    }
+
+    if (!email) {
+      alert("Email not found");
       return;
     }
 
@@ -93,12 +101,6 @@ export default function Verification() {
     try {
       if (password !== confirmPassword) {
         alert("Passwords do not match");
-        return;
-      }
-
-      if (!email) {
-        alert("Email not found");
-        router.push("/signup");
         return;
       }
 
@@ -165,7 +167,7 @@ export default function Verification() {
             minLength={8}
             required
           />
-          {email && !isLoading ? (
+          {!isLoading ? (
             <Button
               type="submit"
               className="flex justify-center items-center w-full bg-red-600 text-white font-bold px-4 py-3 rounded-md border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-500 hover:border-red-500"

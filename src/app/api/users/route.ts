@@ -274,7 +274,7 @@ export async function PUT(request: NextRequest) {
     promises.push(
       (async () => {
         const transcriptId = await uploadFile(
-          validatedData.data!.video!,
+          validatedData.data.video!,
           "transcripts"
         );
         const link = new URL("http://localhost:8000/transcribe/");

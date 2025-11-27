@@ -28,7 +28,7 @@ const publicPathToken = [
   },
   {
     path: "/api/users/signup",
-    acceptedMethods: ["POST"],
+    acceptedMethods: ["POST", "GET"],
   },
 ];
 
@@ -38,6 +38,7 @@ const publicPathCsrf = [
   "/api/auth/jwt",
   "/api/csrf",
   "/api/admin/stats",
+  "/api/users/signup"
 ];
 
 export async function proxy(request: NextRequest) {
