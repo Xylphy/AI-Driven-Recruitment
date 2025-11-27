@@ -14,7 +14,9 @@ const profileImageUrl = "/default-avatar.png";
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth({
+    routerActivation: false,
+  });
   const jwtInfo = trpc.auth.decodeJWT.useQuery(undefined, {
     enabled: isAuthenticated,
   });
