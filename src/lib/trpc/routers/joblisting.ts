@@ -68,7 +68,11 @@ const jobListingRouter = createTRPCRouter({
         }
 
         return {
-          joblistings: joblistingsResult.data,
+          joblistings:
+            joblistingsResult.data?.map((job) => ({
+              ...job,
+              joblisting_id: job.id,
+            })) ?? [],
         };
       } else {
         const { data: appliedData, error: appliedError } = await findWithJoin<

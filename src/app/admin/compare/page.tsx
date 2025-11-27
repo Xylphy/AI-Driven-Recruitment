@@ -1,92 +1,68 @@
 "use client";
 
-import { useState, useEffect, startTransition } from "react";
+import useAuth from "@/hooks/useAuth";
+import { trpc } from "@/lib/trpc/client";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
-interface Candidate {
-  id: number;
-  name: string;
-  jobTitle: string;
-  email: string;
-  experience: string;
-  education: string;
-  skills: string[];
-  matchScore: number;
+interface WorkExperience {
+  company: string;
+  start_date?: Date;
+  title: string;
+  end_date?: Date;
 }
-
-const mockJobs = [
-  "Frontend Developer",
-  "Backend Developer",
-  "UI/UX Designer",
-  "Marketing Specialist",
-];
-
-const mockCandidates: Candidate[] = [
-  {
-    id: 1,
-    name: "John Doe",
-    jobTitle: "Frontend Developer",
-    email: "john.doe@email.com",
-    experience: "3 years at ABC Corp",
-    education: "BS in Computer Science",
-    skills: ["React", "Tailwind", "TypeScript"],
-    matchScore: 92,
-  },
-  {
-    id: 2,
-    name: "Jane Smith",
-    jobTitle: "Frontend Developer",
-    email: "jane.smith@email.com",
-    experience: "4 years at XYZ Tech",
-    education: "BS in Information Technology",
-    skills: ["Next.js", "UI Design", "CSS"],
-    matchScore: 88,
-  },
-  {
-    id: 3,
-    name: "Michael Reyes",
-    jobTitle: "Backend Developer",
-    email: "michael.reyes@email.com",
-    experience: "5 years at Softline Solutions",
-    education: "BS in Computer Engineering",
-    skills: ["Node.js", "Express", "MongoDB"],
-    matchScore: 79,
-  },
-  {
-    id: 4,
-    name: "Anna Cruz",
-    jobTitle: "UI/UX Designer",
-    email: "anna.cruz@email.com",
-    experience: "2 years at DesignPro Studio",
-    education: "BA in Graphic Design",
-    skills: ["Figma", "Adobe XD", "Prototyping"],
-    matchScore: 90,
-  },
-];
-
 export default function ComparePage() {
-  const [jobs] = useState<string[]>(mockJobs);
-  const [selectedJob, setSelectedJob] = useState<string>("");
-  const [candidates] = useState<Candidate[]>(mockCandidates);
-  const [filteredCandidates, setFilteredCandidates] = useState<Candidate[]>([]);
-  const [selectedA, setSelectedA] = useState<number | null>(null);
-  const [selectedB, setSelectedB] = useState<number | null>(null);
+  const router = useRouter();
+  const [selectedJobId, setSelectedJobId] = useState<string>("");
+  const [candidateA, setCandidateA] = useState<string>("");
+  const [candidateB, setCandidateB] = useState<string>("");
 
-  useEffect(() => {
-    if (selectedJob) {
-      startTransition(() => {
-        setFilteredCandidates(
-          candidates.filter((c) => c.jobTitle === selectedJob)
-        );
-        setSelectedA(null);
-        setSelectedB(null);
-      });
-    } else {
-      startTransition(() => setFilteredCandidates([]));
+  const { isAuthenticated } = useAuth();
+  const jwtQuery = trpc.auth.decodeJWT.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
+
+  const fetchJobsQuery = trpc.admin.fetchAllJobs.useQuery(undefined, {
+    enabled: jwtQuery.data?.user.isAdmin,
+  });
+
+  if (!jwtQuery.data?.user.isAdmin) {
+    alert("You are not authorized to access this page.");
+    router.push("/profile");
+  }
+
+  const candidatesQuery = trpc.candidate.getCandidateFromJob.useQuery(
+    {
+      jobId: selectedJobId,
+    },
+    {
+      enabled: !!selectedJobId && jwtQuery.data?.user.isAdmin,
     }
-  }, [selectedJob, candidates]);
+  );
 
-  const candidateA = filteredCandidates.find((c) => c.id === selectedA);
-  const candidateB = filteredCandidates.find((c) => c.id === selectedB);
+  const candidateDataA = trpc.candidate.fetchCandidateProfile.useQuery(
+    {
+      candidateId: candidateA,
+      fetchResume: true,
+      fetchScore: true,
+      fetchTranscribed: true,
+    },
+    {
+      enabled: !!candidateA,
+    }
+  );
+
+  const candidateDataB = trpc.candidate.fetchCandidateProfile.useQuery(
+    {
+      candidateId: candidateB,
+      fetchResume: true,
+      fetchScore: true,
+      fetchTranscribed: true,
+    },
+    {
+      enabled: !!candidateB,
+    }
+  );
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
@@ -98,99 +74,177 @@ export default function ComparePage() {
         <label className="block text-sm font-medium text-gray-600 mb-2">
           Select Job
         </label>
-        <select
-          className="w-full p-2 border rounded-md focus:ring-2 focus:ring-[#E30022]"
-          value={selectedJob}
-          onChange={(e) => setSelectedJob(e.target.value)}
-        >
-          <option value="">-- Select Job --</option>
-          {jobs.map((job) => (
-            <option key={job} value={job}>
-              {job}
-            </option>
-          ))}
-        </select>
+        {fetchJobsQuery.isLoading || fetchJobsQuery.isFetching ? (
+          <div className="w-full p-3 border rounded-md bg-gray-50 flex items-center gap-3">
+            <div className="h-8 w-8 rounded-full bg-gray-200 animate-pulse" />
+            <div className="flex-1">
+              <div className="h-3 bg-gray-200 rounded w-3/4 animate-pulse mb-2" />
+              <div className="h-3 bg-gray-200 rounded w-1/2 animate-pulse" />
+            </div>
+            <span className="text-sm text-gray-500">Loading jobs...</span>
+          </div>
+        ) : (
+          <select
+            className="w-full p-2 border rounded-md focus:ring-2 focus:ring-[#E30022]"
+            value={selectedJobId}
+            onChange={(e) => setSelectedJobId(e.target.value)}
+          >
+            <option value="">-- Select Job --</option>
+            {fetchJobsQuery.data?.jobs?.map((job) => (
+              <option key={job.id} value={job.id}>
+                {job.title}
+              </option>
+            ))}
+          </select>
+        )}
       </div>
 
-      {selectedJob && (
+      {selectedJobId && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-          <div>
-            <label className="block text-sm font-medium text-gray-600 mb-2">
-              Select Candidate A
-            </label>
-            <select
-              className="w-full p-2 border rounded-md focus:ring-2 focus:ring-[#E30022]"
-              value={selectedA ?? ""}
-              onChange={(e) => setSelectedA(Number(e.target.value))}
-            >
-              <option value="">-- Select Candidate A --</option>
-              {filteredCandidates.map((candidate) => (
-                <option key={candidate.id} value={candidate.id}>
-                  {candidate.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          {candidatesQuery.isLoading || candidatesQuery.isFetching ? (
+            <div className="col-span-1 md:col-span-2 space-y-4">
+              <div className="w-full p-3 border rounded-md bg-gray-50 flex items-center gap-3">
+                <div className="h-8 w-8 rounded-full bg-gray-200 animate-pulse" />
+                <div className="flex-1">
+                  <div className="h-3 bg-gray-200 rounded w-3/4 animate-pulse mb-2" />
+                  <div className="h-3 bg-gray-200 rounded w-1/2 animate-pulse" />
+                </div>
+                <span className="text-sm text-gray-500">
+                  Loading candidates...
+                </span>
+              </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-600 mb-2">
-              Select Candidate B
-            </label>
-            <select
-              className="w-full p-2 border rounded-md focus:ring-2 focus:ring-[#E30022]"
-              value={selectedB ?? ""}
-              onChange={(e) => setSelectedB(Number(e.target.value))}
-            >
-              <option value="">-- Select Candidate B --</option>
-              {filteredCandidates.map((candidate) => (
-                <option key={candidate.id} value={candidate.id}>
-                  {candidate.name}
-                </option>
-              ))}
-            </select>
-          </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-2">
+                    Select Candidate A
+                  </label>
+                  <select
+                    disabled
+                    className="w-full p-2 border rounded-md bg-gray-100 cursor-not-allowed"
+                  >
+                    <option>Loading...</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-2">
+                    Select Candidate B
+                  </label>
+                  <select
+                    disabled
+                    className="w-full p-2 border rounded-md bg-gray-100 cursor-not-allowed"
+                  >
+                    <option>Loading...</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-2">
+                  Select Candidate A
+                </label>
+                <select
+                  className="w-full p-2 border rounded-md focus:ring-2 focus:ring-[#E30022]"
+                  value={candidateA}
+                  onChange={(e) => setCandidateA(e.target.value)}
+                >
+                  <option value="">-- Select Candidate A --</option>
+                  {candidatesQuery.data?.applicants.map((candidate) => (
+                    <option key={candidate.id} value={candidate.id}>
+                      {candidate.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-2">
+                  Select Candidate B
+                </label>
+                <select
+                  className="w-full p-2 border rounded-md focus:ring-2 focus:ring-[#E30022]"
+                  value={candidateB}
+                  onChange={(e) => setCandidateB(e.target.value)}
+                >
+                  <option value="">-- Select Candidate B --</option>
+                  {candidatesQuery.data?.applicants.map((candidate) => (
+                    <option key={candidate.id} value={candidate.id}>
+                      {candidate.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </>
+          )}
         </div>
       )}
 
       {candidateA && candidateB ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
-          {/* Candidate A */}
           <div className="p-5 bg-gray-50 rounded-lg border border-gray-200">
             <h3 className="text-xl font-semibold text-[#E30022] mb-2">
-              {candidateA.name}
+              {candidateDataA.data?.user.firstName}{" "}
+              {candidateDataA.data?.user.lastName}
             </h3>
-            <p className="text-gray-600 mb-1">{candidateA.jobTitle}</p>
-            <p className="text-sm text-gray-500 mb-4">{candidateA.email}</p>
+            <p className="text-gray-600 mb-1">
+              {/* 
+                No job title for parsing resume
+            */}
+              {
+                fetchJobsQuery.data?.jobs?.find(
+                  (job) => job.id === selectedJobId
+                )?.title
+              }
+            </p>
+            <p className="text-sm text-gray-500 mb-4">
+              {
+                candidatesQuery.data?.applicants.find(
+                  (c) => c.id === candidateA
+                )?.email
+              }
+            </p>
             <div className="space-y-2 text-sm">
               <p>
-                <strong>Experience:</strong> {candidateA.experience}
+                <strong>Experience:</strong>{" "}
+                {candidateDataA.data?.parsedResume?.raw_output?.work_experience
+                  .map((exp: WorkExperience) => exp.title)
+                  .join(", ") || "N/A"}
               </p>
               <p>
-                <strong>Education:</strong> {candidateA.education}
+                <strong>Education:</strong>{" "}
+                {candidateDataA.data?.parsedResume?.raw_output
+                  ?.educational_background[0].degree || "N/A"}
               </p>
               <p>
                 <strong>Skills:</strong>{" "}
-                {candidateA.skills.map((skill) => (
-                  <span
-                    key={skill}
-                    className="inline-block bg-[#E30022]/10 text-[#E30022] px-2 py-1 rounded text-xs mr-1 mb-1"
-                  >
-                    {skill}
-                  </span>
-                ))}
+                {candidateDataA.data?.parsedResume?.raw_output.soft_skills.map(
+                  (skill: string) => (
+                    <span
+                      key={skill}
+                      className="inline-block bg-[#E30022]/10 text-[#E30022] px-2 py-1 rounded text-xs mr-1 mb-1"
+                    >
+                      {skill}
+                    </span>
+                  )
+                )}
               </p>
               <p>
                 <strong>Match Score:</strong>{" "}
                 <span
                   className={`font-semibold ${
-                    candidateA.matchScore >= 85
+                    candidateDataA.data?.score?.score_data
+                      ?.predictive_success >= 85
                       ? "text-green-600"
-                      : candidateA.matchScore >= 70
+                      : candidateDataA.data?.score?.score_data
+                          ?.predictive_success >= 70
                       ? "text-yellow-600"
                       : "text-red-600"
                   }`}
                 >
-                  {candidateA.matchScore}%
+                  {candidateDataA.data?.score?.score_data?.predictive_success}%
                 </span>
               </p>
             </div>
@@ -202,46 +256,71 @@ export default function ComparePage() {
 
           <div className="p-5 bg-gray-50 rounded-lg border border-gray-200">
             <h3 className="text-xl font-semibold text-[#E30022] mb-2">
-              {candidateB.name}
+              {candidateDataB.data?.user.firstName}{" "}
+              {candidateDataB.data?.user.lastName}
             </h3>
-            <p className="text-gray-600 mb-1">{candidateB.jobTitle}</p>
-            <p className="text-sm text-gray-500 mb-4">{candidateB.email}</p>
+            <p className="text-gray-600 mb-1">
+              {/* 
+                No job title for parsing resume
+            */}
+              {
+                fetchJobsQuery.data?.jobs?.find(
+                  (job) => job.id === selectedJobId
+                )?.title
+              }
+            </p>
+            <p className="text-sm text-gray-500 mb-4">
+              {
+                candidatesQuery.data?.applicants.find(
+                  (c) => c.id === candidateB
+                )?.email
+              }
+            </p>
             <div className="space-y-2 text-sm">
               <p>
-                <strong>Experience:</strong> {candidateB.experience}
+                <strong>Experience:</strong>{" "}
+                {candidateDataB.data?.parsedResume?.raw_output?.work_experience
+                  .map((exp: WorkExperience) => exp.title)
+                  .join(", ") || "N/A"}
               </p>
               <p>
-                <strong>Education:</strong> {candidateB.education}
+                <strong>Education:</strong>{" "}
+                {candidateDataB.data?.parsedResume?.raw_output
+                  ?.educational_background[0].degree || "N/A"}
               </p>
               <p>
                 <strong>Skills:</strong>{" "}
-                {candidateB.skills.map((skill) => (
-                  <span
-                    key={skill}
-                    className="inline-block bg-[#E30022]/10 text-[#E30022] px-2 py-1 rounded text-xs mr-1 mb-1"
-                  >
-                    {skill}
-                  </span>
-                ))}
+                {candidateDataB.data?.parsedResume?.raw_output.soft_skills.map(
+                  (skill: string) => (
+                    <span
+                      key={skill}
+                      className="inline-block bg-[#E30022]/10 text-[#E30022] px-2 py-1 rounded text-xs mr-1 mb-1"
+                    >
+                      {skill}
+                    </span>
+                  )
+                )}
               </p>
               <p>
                 <strong>Match Score:</strong>{" "}
                 <span
                   className={`font-semibold ${
-                    candidateB.matchScore >= 85
+                    candidateDataB.data?.score?.score_data
+                      ?.predictive_success >= 85
                       ? "text-green-600"
-                      : candidateB.matchScore >= 70
+                      : candidateDataB.data?.score?.score_data
+                          ?.predictive_success >= 70
                       ? "text-yellow-600"
                       : "text-red-600"
                   }`}
                 >
-                  {candidateB.matchScore}%
+                  {candidateDataB.data?.score?.score_data?.predictive_success}%
                 </span>
               </p>
             </div>
           </div>
         </div>
-      ) : selectedJob ? (
+      ) : selectedJobId ? (
         <p className="text-gray-500 text-center mt-10">
           Please select two candidates to compare.
         </p>

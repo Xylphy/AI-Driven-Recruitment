@@ -2,7 +2,11 @@ import { authorizedProcedure, createTRPCRouter } from "../init";
 import { TRPCError } from "@trpc/server";
 import { createClientServer } from "@/lib/supabase/supabase";
 import { countTable, find } from "@/lib/supabase/action";
-import { ActiveJob, WeeklyCumulativeApplicants } from "@/types/schema";
+import {
+  ActiveJob,
+  JobListing,
+  WeeklyCumulativeApplicants,
+} from "@/types/schema";
 
 const adminRouter = createTRPCRouter({
   fetchStats: authorizedProcedure.query(async ({ ctx }) => {
@@ -63,6 +67,37 @@ const adminRouter = createTRPCRouter({
       candidateGrowth: weeklyApplicants,
     };
   }),
+  // Compare candidates
+  fetchAllJobs: authorizedProcedure.query(async ({ ctx }) => {
+    if (!ctx.userJWT!.isAdmin) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "You do not have permission to access this resource",
+      });
+    }
+    const supabase = await createClientServer(1, true);
+
+    const { data: jobs, error: jobsError } = await find<JobListing>(
+      supabase,
+      "job_listings"
+    )
+      .many()
+      .execute();
+
+    if (jobsError) {
+      console.error("Error fetching jobs");
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: jobsError?.message || "Failed to fetch job listings",
+      });
+    }
+
+    return {
+      jobs,
+    };
+  }),
+  
+  
 });
 
 export default adminRouter;
