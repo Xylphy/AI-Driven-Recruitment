@@ -11,6 +11,7 @@ interface WorkExperience {
   title: string;
   end_date?: Date;
 }
+
 export default function ComparePage() {
   const router = useRouter();
   const [selectedJobId, setSelectedJobId] = useState<string>("");

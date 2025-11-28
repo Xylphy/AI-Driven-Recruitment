@@ -84,7 +84,12 @@ const jobListingRouter = createTRPCRouter({
             fields: "title",
           },
         ])
-          .many()
+          .many([
+            {
+              column: "user_id",
+              value: userId,
+            },
+          ])
           .execute();
 
         if (appliedError) {
