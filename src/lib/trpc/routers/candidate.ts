@@ -1,8 +1,8 @@
 import z from "zod";
 import {
-  authenticatedProcedure,
   authorizedProcedure,
   createTRPCRouter,
+  rateLimitedProcedure,
 } from "../init";
 import { TRPCError } from "@trpc/server";
 import { createClientServer } from "@/lib/supabase/supabase";
@@ -182,7 +182,7 @@ const candidateRouter = createTRPCRouter({
         status: jobApplicant?.status || "",
       };
     }),
-  updateCandidateStatus: authenticatedProcedure
+  updateCandidateStatus: rateLimitedProcedure
     .input(
       z.object({
         applicantId: z.string(),

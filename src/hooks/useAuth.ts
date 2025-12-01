@@ -62,7 +62,7 @@ export default function useAuth({
     if (!authStatus.error) return;
 
     (async () => {
-      if (!(await refreshToken())) {
+      if (!(await refreshToken()) && routerActivation) {
         await auth.signOut();
       } else {
         await authStatus.refetch();
@@ -81,8 +81,6 @@ export default function useAuth({
   useEffect(() => {
     if (!csrfToken) return;
 
-    const controller = new AbortController();
-
     const unsubscribe = onAuthStateChanged(
       auth,
       async (firebaseUser: FirebaseAuthUser | null) => {
@@ -96,7 +94,6 @@ export default function useAuth({
                   "X-CSRF-Token": csrfToken,
                 },
                 credentials: "include",
-                signal: controller.signal,
               }),
               queryClient.cancelQueries(), // Cancel any ongoing queries
             ]);
@@ -117,11 +114,9 @@ export default function useAuth({
       }
     );
 
-    return () => {
-      unsubscribe();
-      controller.abort();
-    };
-  }, [csrfToken, router, routerActivation]);
+    return () => unsubscribe();
+    // Remove `router` from deps to avoid aborting on navigation
+  }, [csrfToken, routerActivation, queryClient]);
 
   return {
     userInfo,

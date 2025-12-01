@@ -1,5 +1,4 @@
 import {
-  authenticatedProcedure,
   authorizedProcedure,
   createTRPCRouter,
   rateLimitedProcedure,
@@ -110,7 +109,7 @@ const jobListingRouter = createTRPCRouter({
         };
       }
     }),
-  deleteJoblisting: authenticatedProcedure
+  deleteJoblisting: rateLimitedProcedure
     .input(
       z.object({
         joblistingId: z.uuid(),
@@ -239,7 +238,7 @@ const jobListingRouter = createTRPCRouter({
         notify: applicantCheck?.data?.notify || false,
       };
     }),
-  applyForJob: authenticatedProcedure
+  applyForJob: rateLimitedProcedure
     .input(
       z.object({
         jobId: z.uuid(),
@@ -317,7 +316,7 @@ const jobListingRouter = createTRPCRouter({
         message: "Application submitted successfully",
       };
     }),
-  updateJoblisting: authenticatedProcedure
+  updateJoblisting: rateLimitedProcedure
     .input(
       jobListingSchema.extend({
         jobId: z.uuid(),
@@ -408,7 +407,7 @@ const jobListingRouter = createTRPCRouter({
 
       return { success: true, message: "Job listing updated successfully" };
     }),
-  createJoblisting: authenticatedProcedure
+  createJoblisting: rateLimitedProcedure
     .input(jobListingSchema)
     .mutation(async ({ input, ctx }) => {
       if (!ctx.userJWT!.isAdmin) {
@@ -579,7 +578,7 @@ const jobListingRouter = createTRPCRouter({
       })),
     };
   }),
-  notify: authenticatedProcedure
+  notify: rateLimitedProcedure
     .input(
       z.object({
         jobId: z.uuid(),

@@ -7,7 +7,6 @@ import { createTRPCReact } from "@trpc/react-query";
 import { makeQueryClient } from "@/lib/trpc/query-client";
 import type { AppRouter } from "./routers/app";
 import superjson from "superjson";
-import { getCsrfToken } from "../library";
 
 export const trpc = createTRPCReact<AppRouter>({
   abortOnUnmount: true,
@@ -32,42 +31,6 @@ function getUrl() {
   return `${base}/api/trpc`;
 }
 
-let _cachedCsrf: { token: string | null; expiresAt?: number } = {
-  token: null,
-};
-
-// Deduplicate concurrent CSRF fetches by storing a pending promise
-let _csrfPromise: Promise<string | null> | null = null;
-
-async function getCachedCsrfToken(): Promise<string | null> {
-  if (
-    _cachedCsrf.token &&
-    _cachedCsrf.expiresAt &&
-    Date.now() < _cachedCsrf.expiresAt
-  ) {
-    return _cachedCsrf.token;
-  }
-
-  if (_csrfPromise) {
-    return _csrfPromise;
-  }
-
-  _csrfPromise = (async () => {
-    try {
-      const token = await getCsrfToken();
-      _cachedCsrf = {
-        token,
-        expiresAt: Date.now() + 5 * 60 * 1000, // cache 5 minutes
-      };
-      return token;
-    } finally {
-      _csrfPromise = null;
-    }
-  })();
-
-  return _csrfPromise;
-}
-
 export function TRPCProvider(
   props: Readonly<{
     children: React.ReactNode;
@@ -79,9 +42,6 @@ export function TRPCProvider(
       httpBatchLink({
         transformer: superjson,
         url: getUrl(),
-        async headers() {
-          return { "x-csrf-token": (await getCachedCsrfToken()) ?? undefined };
-        },
       }),
     ],
   });

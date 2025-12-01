@@ -94,8 +94,10 @@ export default function Page() {
         onSuccess: () => {
           alert("Candidate status updated successfully.");
         },
-        onError: (error) => {
-          alert(error.message);
+        onError: (error: unknown) => {
+          const message =
+            error instanceof Error ? error.message : String(error);
+          alert(message);
           setSelectedStatus(oldStatus);
         },
       }

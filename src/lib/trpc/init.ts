@@ -1,6 +1,5 @@
 import { initTRPC } from "@trpc/server";
 import { cookies, headers } from "next/headers";
-import { cache } from "react";
 import superjson from "superjson";
 import jwt from "jsonwebtoken";
 import { JWT } from "@/types/types";
@@ -13,11 +12,15 @@ const standardLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
 });
 
-export const createTRPCContext = cache(async () => {
+export const createTRPCContext = async () => {
   const [cookieStore, headersList] = await Promise.all([cookies(), headers()]);
+  const headersSafe = {
+    get: (name: string) => headersList.get(name),
+    plain: Object.fromEntries(headersList.entries()),
+  };
+
   const token = cookieStore.get("token");
   let userJWT: JWT | null = null;
-
   if (token) {
     try {
       userJWT = jwt.verify(
@@ -31,10 +34,10 @@ export const createTRPCContext = cache(async () => {
 
   return {
     userJWT,
-    headers: headersList,
+    headers: headersSafe,
     cookies: cookieStore,
   };
-});
+};
 
 // Avoid exporting the entire t-object
 // since it's not very descriptive.
@@ -83,45 +86,11 @@ export const rateLimitedProcedure = baseProcedure.use(async ({ ctx, next }) => {
   return next();
 });
 
-export const protectedProcedure = rateLimitedProcedure.use(
-  async ({ ctx, next }) => {
-    const csrfToken = ctx.headers?.get("x-csrf-token");
-    const csrfCookie = ctx.cookies.get("csrf_token");
-
-    if (!csrfToken || !csrfCookie) {
-      throw new TRPCError({
-        code: "FORBIDDEN",
-        message: "CSRF token is required",
-      });
-    }
-
-    if (csrfToken !== csrfCookie.value) {
-      throw new TRPCError({
-        code: "FORBIDDEN",
-        message: "Invalid CSRF token",
-      });
-    }
-
-    return next();
-  }
-);
-
 export const authorizedProcedure = rateLimitedProcedure.use(
   async ({ ctx, next }) => {
     if (!ctx.userJWT) {
       throw new TRPCError({ code: "UNAUTHORIZED" });
     }
-    return next();
-  }
-);
-
-// Combined procedure with both CSRF and auth checks
-export const authenticatedProcedure = protectedProcedure.use(
-  async ({ ctx, next }) => {
-    if (!ctx.userJWT) {
-      throw new TRPCError({ code: "UNAUTHORIZED" });
-    }
-
     return next();
   }
 );

@@ -38,7 +38,7 @@ const publicPathCsrf = [
   "/api/auth/jwt",
   "/api/csrf",
   "/api/admin/stats",
-  "/api/users/signup"
+  "/api/users/signup",
 ];
 
 export async function proxy(request: NextRequest) {

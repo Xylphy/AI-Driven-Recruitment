@@ -7,6 +7,7 @@ import {
   JobListing,
   WeeklyCumulativeApplicants,
 } from "@/types/schema";
+import { z } from "zod";
 
 const adminRouter = createTRPCRouter({
   fetchStats: authorizedProcedure.query(async ({ ctx }) => {
@@ -96,8 +97,29 @@ const adminRouter = createTRPCRouter({
       jobs,
     };
   }),
-  
-  
+  compareCandidates: authorizedProcedure
+    .input(
+      z.object({
+        applicantIdA: z.uuid(),
+        applicantIdB: z.uuid(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      if (!ctx.userJWT!.isAdmin) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have permission to access this resource",
+        });
+      }
+
+      const compareAPI = new URL("http://localhost:8000/score/");
+      compareAPI.searchParams.set("applicant1_id", input.applicantIdA);
+      compareAPI.searchParams.set("applicant2_id", input.applicantIdB);
+
+      return {
+        compareResult: await fetch(compareAPI).then((res) => res.json()),
+      };
+    }),
 });
 
 export default adminRouter;

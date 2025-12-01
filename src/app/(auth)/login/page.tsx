@@ -4,17 +4,12 @@ import { Button } from "@/components/common/Button";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase/client";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const router = useRouter();
   const [isAuthLoading, setIsAuthLoading] = useState(false);
-  const controllerRef = useRef<AbortController | null>(null);
-
-  useEffect(() => {
-    return () => controllerRef.current?.abort();
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -35,9 +30,6 @@ export default function LoginPage() {
       return;
     }
 
-    controllerRef.current?.abort();
-    controllerRef.current = new AbortController();
-
     try {
       const userCredential = await signInWithEmailAndPassword(
         auth,
@@ -45,22 +37,24 @@ export default function LoginPage() {
         password
       );
 
-      fetch("/api/auth/jwt", {
+      const res = await fetch("/api/auth/jwt", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${userCredential.user.uid}`,
         },
-        signal: controllerRef.current?.signal,
         credentials: "include",
-      })
-        .then((res) => {
-          if (!res.ok) {
-            throw new Error("Failed to authenticate");
-          }
-          return res.json();
-        })
-        .then(() => router.push("/profile"));
+        cache: "no-store",
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to authenticate");
+      }
+
+      await res.json().catch(() => undefined);
+
+      router.replace("/profile");
+      router.refresh();
     } catch (error) {
       const isAbort =
         typeof error === "object" && (error as Error)?.name === "AbortError";

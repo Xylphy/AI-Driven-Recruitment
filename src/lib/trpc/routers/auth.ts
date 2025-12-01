@@ -11,6 +11,7 @@ const authRouter = createTRPCRouter({
         message: "Token is about to expire",
       });
     }
+
     return { message: "Token is valid" };
   }),
   decodeJWT: authorizedProcedure.query(({ ctx }) => {
