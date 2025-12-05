@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Bell } from "lucide-react";
 import useNotifications from "@/hooks/useNotifications";
 import { useRouter } from "next/navigation";
@@ -19,7 +19,12 @@ export default function Navbar() {
   });
   const jwtInfo = trpc.auth.decodeJWT.useQuery(undefined, {
     enabled: isAuthenticated,
+
   });
+  
+  useEffect(() => {
+    void jwtInfo.refetch();
+  }, [isAuthenticated])
 
   const {
     notifications,

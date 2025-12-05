@@ -6,13 +6,14 @@ import { JWT } from "@/types/types";
 import { TRPCError } from "@trpc/server";
 import { rateLimit } from "@/lib/rate-limit";
 import { NextRequest } from "next/server";
+import { cache } from "react";
 
 const standardLimiter = rateLimit({
   max: process.env.NODE_ENV === "development" ? 1000 : 100,
   windowMs: 15 * 60 * 1000,
 });
 
-export const createTRPCContext = async () => {
+export const createTRPCContext = cache(async () => {
   const [cookieStore, headersList] = await Promise.all([cookies(), headers()]);
   const headersSafe = {
     get: (name: string) => headersList.get(name),
@@ -37,7 +38,7 @@ export const createTRPCContext = async () => {
     headers: headersSafe,
     cookies: cookieStore,
   };
-};
+});
 
 // Avoid exporting the entire t-object
 // since it's not very descriptive.
