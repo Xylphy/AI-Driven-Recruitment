@@ -44,10 +44,10 @@ export default function JobApplicationDetails({
         >
           <div className="flex flex-col">
             <h3 className="text-lg font-semibold">
-              job.title
+              {job.title}
               {!isAdmin && (
                 <>
-                  &middot;
+                  {" · "}
                   <StatusBadge status={job.status} />
                 </>
               )}
