@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { JobApplicant, JobListing } from "@/types/schema";
 import { formatDate } from "@/lib/library";
 import { inferProcedureOutput } from "@trpc/server";
 import jobListingRouter from "@/lib/trpc/routers/joblisting";
