@@ -11,6 +11,7 @@ import {
   MdPeople,
   MdCompareArrows,
   MdDashboard,
+  MdError,
 } from "react-icons/md";
 import { trpc } from "@/lib/trpc/client";
 
@@ -103,6 +104,15 @@ export default function AdminLayout({
                 }`}
               >
                 <MdCompareArrows /> Compare
+              </Link>
+
+              <Link
+                href="/admin/bottlenecks"
+                className={`flex items-center gap-3 hover:bg-white/20 px-3 py-2 rounded-md transition ${
+                  pathName === "/admin/bottlenecks" ? "bg-white/30" : ""
+                }`}
+              >
+                <MdError /> Bottlenecks
               </Link>
             </nav>
           </motion.aside>
