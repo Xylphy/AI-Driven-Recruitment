@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { JobListing } from "@/types/schema";
+import { JobApplicant, JobListing } from "@/types/schema";
 import { formatDate } from "@/lib/library";
 
 const StatusBadge = ({ status }: { status: string }) => {
@@ -27,7 +27,7 @@ export default function JobApplicationDetails({
   jobApplications,
   isAdmin,
 }: {
-  jobApplications: JobListing[];
+  jobApplications: (JobListing & JobApplicant)[];
   isAdmin: boolean;
 }) {
   const router = useRouter();
@@ -41,8 +41,13 @@ export default function JobApplicationDetails({
         >
           <div className="flex flex-col">
             <h3 className="text-lg font-semibold">
-              {job.title} · <StatusBadge status={"Hired"} />{" "}
-              {/* ari ibutang ang katong status smth */}
+              job.title
+              {!isAdmin && (
+                <>
+                  &middot;
+                  <StatusBadge status={job.status} />
+                </>
+              )}
             </h3>
 
             <p className="text-sm text-gray-500">
