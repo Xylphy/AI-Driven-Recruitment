@@ -41,7 +41,7 @@ export default function JobApplicationDetails({
         >
           <div className="flex flex-col">
             <h3 className="text-lg font-semibold">
-              {job.title} · <StatusBadge status={"Hired"} />{" "}
+              {job.title} {!isAdmin && <StatusBadge status={"Hired"} />}
               {/* ari ibutang ang katong status smth */}
             </h3>
 
