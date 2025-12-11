@@ -26,6 +26,7 @@ const candidateRouter = createTRPCRouter({
     .input(
       z.object({
         jobId: z.uuid().optional(),
+        searchQuery: z.string().optional(),
       })
     )
     .query(async ({ ctx, input }) => {
@@ -38,8 +39,10 @@ const candidateRouter = createTRPCRouter({
 
       const supabaseClient = await createClientServer(1, true);
 
-      const { data: applicantsWithUsers, error: errorApplicants } =
-        await findWithJoin(supabaseClient, "job_applicants", [
+      const baseQuery = findWithJoin<JobApplicant>(
+        supabaseClient,
+        "job_applicants",
+        [
           {
             foreignTable: "users",
             foreignKey: "user_id",
@@ -50,11 +53,39 @@ const candidateRouter = createTRPCRouter({
             foreignKey: "joblisting_id",
             fields: "title",
           },
-        ])
-          .many(
-            input.jobId ? [{ column: "joblisting_id", value: input.jobId }] : []
-          )
-          .execute();
+        ]
+      );
+
+      let queryBuilder = baseQuery.many(
+        input.jobId ? [{ column: "joblisting_id", value: input.jobId }] : []
+      );
+
+      if (input.searchQuery) {
+        const search = `%${input.searchQuery}%`;
+        queryBuilder = {
+          ...queryBuilder,
+          execute: async () => {
+            let query = supabaseClient
+              .from("job_applicants")
+              .select(
+                `*, users(id, first_name, last_name, firebase_uid, resume_id), job_listings(title)`
+              );
+            if (input.jobId) {
+              query = query.eq("joblisting_id", input.jobId);
+            }
+            query = query.or(
+              `users.first_name.ilike.${search},users.last_name.ilike.${search},job_listings.title.ilike.${search},status.ilike.${search}`
+            );
+            const result = await query;
+            return {
+              data: result.data as typeof applicantsWithUsers,
+              error: result.error,
+            };
+          },
+        };
+      }
+      const { data: applicantsWithUsers, error: errorApplicants } =
+        await queryBuilder.execute();
 
       if (errorApplicants) {
         console.error("Error fetching applicants:", errorApplicants);
@@ -88,10 +119,18 @@ const candidateRouter = createTRPCRouter({
         }
       >;
 
-      const firebaseUidToApplicant = new Map<string, typeof applicantsArr[number]>();
-      const userIdToApplicant = new Map<string, typeof applicantsArr[number]>();
+      const firebaseUidToApplicant = new Map<
+        string,
+        (typeof applicantsArr)[number]
+      >();
+      const userIdToApplicant = new Map<
+        string,
+        (typeof applicantsArr)[number]
+      >();
+
       const firebaseUids: string[] = [];
       const userIds: string[] = [];
+
       for (const applicant of applicantsArr) {
         firebaseUidToApplicant.set(applicant.users.firebase_uid, applicant);
         userIdToApplicant.set(applicant.users.id, applicant);
@@ -105,7 +144,9 @@ const candidateRouter = createTRPCRouter({
       );
       const firebaseUserByUid = new Map<string, { email: string }>();
       for (const userRecord of firebaseUsersResult.users) {
-        firebaseUserByUid.set(userRecord.uid, { email: userRecord.email || "" });
+        firebaseUserByUid.set(userRecord.uid, {
+          email: userRecord.email || "",
+        });
       }
 
       // Batch fetch candidate matches from MongoDB
@@ -121,8 +162,11 @@ const candidateRouter = createTRPCRouter({
 
       // Merge all data
       const applicantWithEmail = applicantsArr.map((applicant) => {
-        const firebaseUser = firebaseUserByUid.get(applicant.users.firebase_uid);
-        const candidateMatch = candidateMatchByUserId.get(applicant.users.id) || 0;
+        const firebaseUser = firebaseUserByUid.get(
+          applicant.users.firebase_uid
+        );
+        const candidateMatch =
+          candidateMatchByUserId.get(applicant.users.id) || 0;
         return {
           applicantId: applicant.id,
           ...applicant,
