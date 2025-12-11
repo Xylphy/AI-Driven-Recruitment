@@ -139,7 +139,9 @@ export default function Profile() {
                 </div>
               ) : (
                 <JobApplicationDetails
-                  jobApplications={joblistings.data?.joblistings ?? []}
+                  jobApplications={{
+                    joblistings: joblistings.data?.joblistings ?? [],
+                  }}
                   isAdmin={!!isAdmin}
                 />
               )}

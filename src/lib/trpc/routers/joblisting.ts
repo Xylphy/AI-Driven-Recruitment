@@ -71,6 +71,7 @@ const jobListingRouter = createTRPCRouter({
             joblistingsResult.data?.map((job) => ({
               ...job,
               joblisting_id: job.id,
+              status: "",
             })) ?? [],
         };
       } else {
