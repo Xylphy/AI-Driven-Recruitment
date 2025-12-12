@@ -382,11 +382,27 @@ export default function ComparePage() {
               <label className="block text-sm font-medium text-gray-600 mb-2">
                 AI Feedback
               </label>
+              <h1 className="text-xl mb-2">Better Candidate: <b className="text-red-600">Jeremy Brad Lee</b></h1>
+              <h3><b>Reason</b></h3>
               <textarea
                 readOnly
-                placeholder="AI generated comparison feedback will appear here..."
+                value="Jeremy demonstrated a stronger foundation in web development with his Bachelor's degree and relevant experience in Next.js, Python, and Javascript. His projects showcase practical skills in backend development, RESTful APIs, and Database Management, aligning well with the requirements of the role. While John's experience is valuable, James's browader skillset and deeper technical knowledge peosition him more effectively."
                 className="w-full p-3 border rounded-md bg-gray-100 text-gray-500"
                 rows={4}
+              ></textarea>
+              <h3><b>Highlights</b></h3>
+              <textarea
+                readOnly
+                value="Solid Foundation in Web Development, Proficient in multiple technologies (Next.js, Python, JavaScript), Experience in backend development and API design)"
+                className="w-full p-3 border rounded-md bg-gray-100 text-gray-500"
+                rows={2}
+              />
+              <h3><b>Recommendations</b></h3>
+              <textarea
+                readOnly
+                value="Focus on gaining practical experience through internships or junior developer rolse. Consider online course or certifications to deepen knowledge in web development areas. improve real-world project management abilities with agile training for better collaboration and project handling."
+                className="w-full p-3 border rounded-md bg-gray-100 text-gray-500"
+                rows={3}
               />
             </div>
 
@@ -439,7 +455,7 @@ export default function ComparePage() {
                     className="p-4 border rounded-md bg-gray-50 shadow-sm"
                   >
                     <div className="flex justify-between text-sm text-gray-500 mb-2">
-                      <span>{post.author}</span>
+                      <span>James Kenneth Acabal</span>
                       <span>{post.timestamp}</span>
                     </div>
                     <div>
