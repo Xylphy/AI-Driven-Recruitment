@@ -46,6 +46,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     };
 
+    refresh(); // Initial call
+
     const interval = setInterval(refresh, 50 * 60 * 1000); // 50 minutes
 
     setIsLoading(false); // Loading complete once authenticated
