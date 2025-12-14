@@ -6,12 +6,13 @@ import { useRouter } from "next/navigation";
 
 export default function JobsPage() {
   const router = useRouter();
-  const jobsQuery = trpc.joblisting.fetchJobs.useQuery();
+  const jobsQuery = trpc.joblisting.fetchJobs.useQuery({});
   const [searchInput, setSearchInput] = useState("");
 
   const filteredJobs = useMemo(() => {
     if (!jobsQuery.data?.jobs) return [];
     const input = searchInput.toLowerCase();
+
     return jobsQuery.data.jobs.filter((job) => {
       const titleMatch = job.title.toLowerCase().includes(input);
       const applicantMatch = job.applicant_count.toString().includes(input);
@@ -70,7 +71,7 @@ export default function JobsPage() {
 
       <input
         type="text"
-        placeholder="Search by Job Title, Applicants, or Status..."
+        placeholder="Search by Job Title"
         value={searchInput}
         onChange={(e) => setSearchInput(e.target.value)}
         className="w-full md:w-1/2 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:outline-none mb-4"

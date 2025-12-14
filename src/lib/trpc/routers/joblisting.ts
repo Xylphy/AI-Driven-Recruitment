@@ -653,39 +653,44 @@ const jobListingRouter = createTRPCRouter({
 
       return { success: true, message: "Job listing created successfully" };
     }),
-  fetchJobs: rateLimitedProcedure.query(async () => {
-    const supabaseClient = await createClientServer(1, true);
-    const { data, error } = await findWithJoin<
-      JobListing & { job_applicants?: IdentifiableItem[] }
-    >(supabaseClient, "job_listings", [
-      {
-        foreignTable: "job_applicants",
-        foreignKey: "joblisting_id",
-        fields: "id",
-      },
-    ])
-      .many()
-      .execute();
+  fetchJobs: rateLimitedProcedure
+    .input(
+      z.object({
+        searchQuery: z.string().optional(),
+      })
+    )
+    .query(async ({ input }) => {
+      const supabaseClient = await createClientServer(1, true);
 
-    if (error) {
-      console.error("Error fetching jobs:", error);
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to fetch jobs",
-      });
-    }
+      let query = supabaseClient
+        .from("job_listings")
+        .select("*, job_applicants(id)");
 
-    return {
-      jobs: (data || []).map((item) => ({
-        id: item.id,
-        title: item.title,
-        created_at: item.created_at,
-        is_fulltime: item.is_fulltime,
-        location: item.location,
-        applicant_count: item.job_applicants?.length || 0,
-      })),
-    };
-  }),
+      if (input.searchQuery) {
+        query = query.ilike("title", `%${input.searchQuery}%`);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error("Error fetching jobs:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch jobs",
+        });
+      }
+
+      return {
+        jobs: (data || []).map((item) => ({
+          id: item.id,
+          title: item.title,
+          created_at: item.created_at,
+          is_fulltime: item.is_fulltime,
+          location: item.location,
+          applicant_count: item.job_applicants?.length || 0,
+        })),
+      };
+    }),
   notify: rateLimitedProcedure
     .input(
       z.object({
