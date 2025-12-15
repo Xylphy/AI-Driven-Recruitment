@@ -14,17 +14,20 @@ const profileImageUrl = "/default-avatar.png";
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const router = useRouter();
+  const { userInfo } = useAuth({
+    fetchUser: true,
+  });
   const { isAuthenticated } = useAuth({
     routerActivation: false,
   });
   const jwtInfo = trpc.auth.decodeJWT.useQuery(undefined, {
     enabled: isAuthenticated,
-
   });
-  
+  const isAdmin = userInfo.isSuccess && jwtInfo.data?.user.isAdmin;
+
   useEffect(() => {
     void jwtInfo.refetch();
-  }, [isAuthenticated])
+  }, [isAuthenticated]);
 
   const {
     notifications,
@@ -48,29 +51,6 @@ export default function Navbar() {
         <div className="text-lg font-bold">
           <Image src="/logo.png" alt="Alliance Logo" width={130} height={50} />
         </div>
-
-        <ul className="flex-1 flex justify-center space-x-6">
-          <Link href="/">
-            <li className="relative inline-block pb-1 after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:h-0.5 after:w-0 after:bg-red-500 after:transition-all after:duration-300 hover:after:w-full hover:after:left-0 transform after:-translate-x-1/2 hover:after:translate-x-0">
-              Home
-            </li>
-          </Link>
-          <Link href="/aboutus">
-            <li className="relative inline-block pb-1 after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:h-0.5 after:w-0 after:bg-red-500 after:transition-all after:duration-300 hover:after:w-full hover:after:left-0 transform after:-translate-x-1/2 hover:after:translate-x-0">
-              About Us
-            </li>
-          </Link>
-          <Link href="/jobs">
-            <li className="relative inline-block pb-1 after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:h-0.5 after:w-0 after:bg-red-500 after:transition-all after:duration-300 hover:after:w-full hover:after:left-0 transform after:-translate-x-1/2 hover:after:translate-x-0">
-              Jobs
-            </li>
-          </Link>
-          <Link href="/contactus">
-            <li className="relative inline-block pb-1 after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:h-0.5 after:w-0 after:bg-red-500 after:transition-all after:duration-300 hover:after:w-full hover:after:left-0 transform after:-translate-x-1/2 hover:after:translate-x-0">
-              Contact Us
-            </li>
-          </Link>
-        </ul>
         <div className="flex items-center gap-4 relative">
           {isAuthenticated ? (
             <>
@@ -133,7 +113,7 @@ export default function Navbar() {
                   )}
                 </div>
               )}
-              <Link href="/profile">
+              <Link href={isAdmin ? "/admin" : "/profile"}>
                 <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-red-500 hover:border-black transition-all duration-300">
                   <Image
                     src={profileImageUrl}
