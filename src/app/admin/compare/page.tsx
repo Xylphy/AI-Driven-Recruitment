@@ -1,6 +1,7 @@
 "use client";
 
 import useAuth from "@/hooks/useAuth";
+import { formatDate } from "@/lib/library";
 import { trpc } from "@/lib/trpc/client";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -536,7 +537,7 @@ export default function ComparePage() {
                       <span>
                         {post.admin.first_name} {post.admin.last_name}
                       </span>
-                      <span>{post.created_at}</span>
+                      <span>{formatDate(post.created_at)}</span>
                     </div>
                     <div>
                       <strong>

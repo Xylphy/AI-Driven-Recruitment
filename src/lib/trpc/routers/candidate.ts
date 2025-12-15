@@ -43,7 +43,7 @@ const candidateRouter = createTRPCRouter({
           {
             foreignTable: "users",
             foreignKey: "user_id",
-            fields: "id, first_name, last_name, firebase_uid",
+            fields: "id, first_name, last_name, firebase_uid, resume_id",
           },
           {
             foreignTable: "job_listings",
@@ -83,7 +83,7 @@ const candidateRouter = createTRPCRouter({
             JobApplicant & {
               users: Pick<
                 User,
-                "id" | "last_name" | "first_name" | "firebase_uid"
+                "id" | "last_name" | "first_name" | "firebase_uid" | "resume_id"
               >;
               job_listings: { title: string };
             }
@@ -119,6 +119,7 @@ const candidateRouter = createTRPCRouter({
             predictiveSuccess: applicant.candidateMatch,
             status: applicant.status,
             jobTitle: applicant.job_listings.title,
+            resumeId: applicant.resume_id,
           }))
           .sort(
             (applicantA, applicantB) =>

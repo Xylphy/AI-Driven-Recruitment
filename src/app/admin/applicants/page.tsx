@@ -178,16 +178,14 @@ export default function ApplicantsPage() {
                         Compare
                       </button>
 
-                      {/* {candidate.resumeUrl && (
-                        <a
-                          href={candidate.resumeUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="px-3 py-1 text-sm border border-[#E30022] text-[#E30022] rounded hover:bg-red-50 transition"
-                        >
-                          Download Resume
-                        </a>
-                      )} */}
+                      <a
+                        href={`https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/raw/upload/${candidate.resumeId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-1 text-sm border border-[#E30022] text-[#E30022] rounded hover:bg-red-50 transition"
+                      >
+                        Download Resume
+                      </a>
                     </div>
                   </td>
                 </tr>

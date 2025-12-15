@@ -21,6 +21,7 @@ export const createTRPCContext = cache(async () => {
   };
 
   const token = cookieStore.get("token");
+
   let userJWT: JWT | null = null;
   if (token) {
     try {
