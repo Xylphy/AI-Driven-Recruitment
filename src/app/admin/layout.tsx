@@ -23,6 +23,7 @@ import {
   MdError,
 } from "react-icons/md";
 import { trpc } from "@/lib/trpc/client";
+import useAuth from "@/hooks/useAuth";
 
 export default function AdminLayout({
   children,
@@ -33,11 +34,12 @@ export default function AdminLayout({
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const pathName = usePathname();
   const jwtDecoded = trpc.auth.decodeJWT.useQuery();
+  const {} = useAuth(); // For logout functionality
 
   if (
     jwtDecoded.isLoading ||
     !jwtDecoded.isSuccess ||
-    !jwtDecoded.data.user.isAdmin
+    !jwtDecoded.data.user.role
   ) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-100">
