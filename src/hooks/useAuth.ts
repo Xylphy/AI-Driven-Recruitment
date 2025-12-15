@@ -61,13 +61,15 @@ export default function useAuth({
   useEffect(() => {
     if (!authStatus.error) return;
 
-    (async () => {
+    const interval = setInterval(async () => {
       if (!(await refreshToken()) && routerActivation) {
         await auth.signOut();
       } else {
         await authStatus.refetch();
       }
-    })();
+    }, 50 * 60 * 1000); // 50 minutes
+
+    return () => clearInterval(interval);
   }, [authStatus]);
 
   // Fetch CSRF token on mount
