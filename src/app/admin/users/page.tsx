@@ -83,7 +83,7 @@ export default function UsersPage() {
               <th className="py-3 px-4 text-left">Name</th>
               <th className="py-3 px-4 text-left">Email</th>
               <th className="py-3 px-4 text-left">Role</th>
-              <th className="py-3 px-4 text-center">Actions</th>
+              <th className="py-3 px-4 text-center">User Roles</th>
             </tr>
           </thead>
           <tbody className="text-gray-700">
