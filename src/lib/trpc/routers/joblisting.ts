@@ -21,7 +21,6 @@ import {
   JobListingRequirements,
   JobApplicant,
   JobTags,
-  Admin,
   IdentifiableItem,
 } from "@/types/schema";
 import { jobListingSchema } from "@/lib/schemas";
@@ -44,11 +43,7 @@ const jobListingRouter = createTRPCRouter({
       const userId = ctx.userJWT!.id;
       const supabase = await createClientServer(1, true);
 
-      const { data: adminData } = await find<Admin>(supabase, "admins", [
-        { column: "user_id", value: userId },
-      ]).single();
-
-      if (adminData) {
+      if (ctx.userJWT!.role !== "User") {
         const joblistingsResult = await find<JobListing>(
           supabase,
           "job_listings"
@@ -117,8 +112,7 @@ const jobListingRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      const { isAdmin } = ctx.userJWT!;
-      if (!isAdmin) {
+      if (ctx.userJWT!.role === "User") {
         throw new TRPCError({
           code: "UNAUTHORIZED",
           message: "Insufficient permissions",
@@ -246,7 +240,7 @@ const jobListingRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      if (ctx.userJWT!.isAdmin) {
+      if (ctx.userJWT!.role !== "User") {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Admins cannot apply for jobs",
@@ -324,7 +318,7 @@ const jobListingRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      if (!ctx.userJWT!.isAdmin) {
+      if (ctx.userJWT!.role === "User") {
         throw new TRPCError({
           code: "UNAUTHORIZED",
           message: "Insufficient permissions",
@@ -411,7 +405,7 @@ const jobListingRouter = createTRPCRouter({
   createJoblisting: rateLimitedProcedure
     .input(jobListingSchema)
     .mutation(async ({ input, ctx }) => {
-      if (!ctx.userJWT!.isAdmin) {
+      if (ctx.userJWT!.role === "User") {
         throw new TRPCError({
           code: "UNAUTHORIZED",
           message: "Insufficient permissions",

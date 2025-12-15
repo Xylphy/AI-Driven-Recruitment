@@ -3,7 +3,7 @@
 import useAuth from "@/hooks/useAuth";
 import { trpc } from "@/lib/trpc/client";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Select from "react-select";
 
 interface WorkExperience {
@@ -23,12 +23,13 @@ interface AdminFeedbackPost {
 export default function ComparePage() {
   const router = useRouter();
   const [selectedJobId, setSelectedJobId] = useState<string>("");
-  const [candidateA, setCandidateA] = useState<string>("");
-  const [candidateB, setCandidateB] = useState<string>("");
+  const [candidateA_ID, setCandidateA] = useState<string>("");
+  const [candidateB_ID, setCandidateB] = useState<string>("");
 
   // placeholder lang
   const [adminFeedbackA, setAdminFeedbackA] = useState<string>("");
   const [adminFeedbackB, setAdminFeedbackB] = useState<string>("");
+
   const [submittedFeedbackA, setSubmittedFeedbackA] = useState<string | null>(
     null
   );
@@ -44,46 +45,58 @@ export default function ComparePage() {
   const jwtQuery = trpc.auth.decodeJWT.useQuery(undefined, {
     enabled: isAuthenticated,
   });
-
   const fetchJobsQuery = trpc.admin.fetchAllJobs.useQuery(undefined, {
-    enabled: jwtQuery.data?.user.isAdmin,
+    enabled: jwtQuery.data?.user.role !== "User",
   });
 
-  if (!jwtQuery.data?.user.isAdmin) {
-    alert("You are not authorized to access this page.");
-    router.push("/profile");
-  }
+  const AIQuery = trpc.candidate.fetchAICompare.useQuery(
+    {
+      userId_A: candidateA_ID,
+      userId_B: candidateB_ID,
+      jobId: selectedJobId,
+    },
+    {
+      enabled: !!candidateA_ID && !!candidateB_ID,
+    }
+  );
+
+  useEffect(() => {
+    if (jwtQuery.isFetched && !jwtQuery.data?.user.role) {
+      alert("You are not authorized to access this page.");
+      router.push("/profile");
+    }
+  }, [jwtQuery.isFetched, jwtQuery.data?.user.role, router]);
 
   const candidatesQuery = trpc.candidate.getCandidateFromJob.useQuery(
     {
       jobId: selectedJobId,
     },
     {
-      enabled: !!selectedJobId && jwtQuery.data?.user.isAdmin,
+      enabled: !!selectedJobId && jwtQuery.data?.user.role !== "User",
     }
   );
 
   const candidateDataA = trpc.candidate.fetchCandidateProfile.useQuery(
     {
-      candidateId: candidateA,
+      candidateId: candidateA_ID,
       fetchResume: true,
       fetchScore: true,
       fetchTranscribed: true,
     },
     {
-      enabled: !!candidateA,
+      enabled: !!candidateA_ID,
     }
   );
 
   const candidateDataB = trpc.candidate.fetchCandidateProfile.useQuery(
     {
-      candidateId: candidateB,
+      candidateId: candidateB_ID,
       fetchResume: true,
       fetchScore: true,
       fetchTranscribed: true,
     },
     {
-      enabled: !!candidateB,
+      enabled: !!candidateB_ID,
     }
   );
 
@@ -227,11 +240,11 @@ export default function ComparePage() {
                     })
                   )}
                   value={
-                    candidateA
+                    candidateA_ID
                       ? {
-                          value: candidateA,
+                          value: candidateA_ID,
                           label: candidatesQuery.data?.applicants.find(
-                            (c) => c.id === candidateA
+                            (c) => c.id === candidateA_ID
                           )?.name,
                         }
                       : null
@@ -254,11 +267,11 @@ export default function ComparePage() {
                     })
                   )}
                   value={
-                    candidateB
+                    candidateB_ID
                       ? {
-                          value: candidateB,
+                          value: candidateB_ID,
                           label: candidatesQuery.data?.applicants.find(
-                            (c) => c.id === candidateB
+                            (c) => c.id === candidateB_ID
                           )?.name,
                         }
                       : null
@@ -273,7 +286,7 @@ export default function ComparePage() {
         </div>
       ) : null}
 
-      {candidateA && candidateB ? (
+      {candidateA_ID && candidateB_ID ? (
         <>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
             <div className="p-5 bg-gray-50 rounded-lg border border-gray-200">
@@ -291,7 +304,7 @@ export default function ComparePage() {
               <p className="text-sm text-gray-500 mb-4">
                 {
                   candidatesQuery.data?.applicants.find(
-                    (c) => c.id === candidateA
+                    (c) => c.id === candidateA_ID
                   )?.email
                 }
               </p>
@@ -359,7 +372,7 @@ export default function ComparePage() {
               <p className="text-sm text-gray-500 mb-4">
                 {
                   candidatesQuery.data?.applicants.find(
-                    (c) => c.id === candidateB
+                    (c) => c.id === candidateB_ID
                   )?.email
                 }
               </p>
@@ -416,37 +429,56 @@ export default function ComparePage() {
               <label className="block text-sm font-medium text-gray-600 mb-2">
                 AI Feedback
               </label>
-              <h1 className="text-xl mb-2">
-                Better Candidate:{" "}
-                <b className="text-red-600">Jeremy Brad Lee</b>
-              </h1>
-              <h3>
-                <b>Reason</b>
-              </h3>
-              <textarea
-                readOnly
-                value="Jeremy demonstrated a stronger foundation in web development with his Bachelor's degree and relevant experience in Next.js, Python, and Javascript. His projects showcase practical skills in backend development, RESTful APIs, and Database Management, aligning well with the requirements of the role. While John's experience is valuable, James's browader skillset and deeper technical knowledge peosition him more effectively."
-                className="w-full p-3 border rounded-md bg-gray-100 text-gray-500"
-                rows={4}
-              ></textarea>
-              <h3>
-                <b>Highlights</b>
-              </h3>
-              <textarea
-                readOnly
-                value="Solid Foundation in Web Development, Proficient in multiple technologies (Next.js, Python, JavaScript), Experience in backend development and API design)"
-                className="w-full p-3 border rounded-md bg-gray-100 text-gray-500"
-                rows={2}
-              />
-              <h3>
-                <b>Recommendations</b>
-              </h3>
-              <textarea
-                readOnly
-                value="Focus on gaining practical experience through internships or junior developer rolse. Consider online course or certifications to deepen knowledge in web development areas. improve real-world project management abilities with agile training for better collaboration and project handling."
-                className="w-full p-3 border rounded-md bg-gray-100 text-gray-500"
-                rows={3}
-              />
+              {AIQuery.isLoading || AIQuery.isFetching ? (
+                // Loading skeleton animation
+                <div className="animate-pulse space-y-3">
+                  <div className="h-6 bg-gray-200 rounded w-1/2 mb-2" />
+                  <div className="h-4 bg-gray-200 rounded w-1/3 mb-2" />
+                  <div className="h-20 bg-gray-200 rounded mb-2" />
+                  <div className="h-4 bg-gray-200 rounded w-1/4 mb-2" />
+                  <div className="h-10 bg-gray-200 rounded mb-2" />
+                  <div className="h-4 bg-gray-200 rounded w-1/4 mb-2" />
+                  <div className="h-12 bg-gray-200 rounded" />
+                </div>
+              ) : AIQuery.data ? (
+                <>
+                  <h1 className="text-xl mb-2">
+                    Better Candidate:{" "}
+                    <b className="text-red-600">
+                      {AIQuery.data.better_candidate}
+                    </b>
+                  </h1>
+                  <h3>
+                    <b>Reason</b>
+                  </h3>
+                  <textarea
+                    readOnly
+                    value={AIQuery.data.reason}
+                    className="w-full p-3 border rounded-md bg-gray-100 text-gray-500"
+                    rows={4}
+                  ></textarea>
+                  <h3>
+                    <b>Highlights</b>
+                  </h3>
+                  <textarea
+                    readOnly
+                    value={AIQuery.data.highlights}
+                    className="w-full p-3 border rounded-md bg-gray-100 text-gray-500"
+                    rows={2}
+                  />
+                  <h3>
+                    <b>Recommendations</b>
+                  </h3>
+                  <textarea
+                    readOnly
+                    value={AIQuery.data.recommendations}
+                    className="w-full p-3 border rounded-md bg-gray-100 text-gray-500"
+                    rows={3}
+                  />
+                </>
+              ) : (
+                <div className="text-gray-400">No AI feedback available.</div>
+              )}
             </div>
 
             {/* Admin Feedback */}

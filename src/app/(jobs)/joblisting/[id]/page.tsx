@@ -309,7 +309,7 @@ export default function Page() {
               </p>
             </section>
 
-            {jwtDecoded.data?.user.isAdmin && (
+            {jwtDecoded.data?.user.role && (
               <>
                 <button
                   onClick={() => router.push(`/candidates/${jobId}`)}
@@ -334,7 +334,7 @@ export default function Page() {
               </>
             )}
 
-            {!jwtDecoded.data?.user.isAdmin && isAuthenticated && (
+            {!jwtDecoded.data?.user.role && isAuthenticated && (
               <>
                 <button
                   className={`mt-2 w-full font-bold py-2 rounded border border-transparent transition-all duration-300 ease-in-out ${

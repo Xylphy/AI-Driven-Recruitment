@@ -17,10 +17,30 @@ export default function Profile() {
   const jwtInfo = trpc.auth.decodeJWT.useQuery(undefined, {
     enabled: isAuthenticated,
   });
-  const isAdmin = userInfo.isSuccess && jwtInfo.data?.user.isAdmin;
+  const isAdmin = userInfo.isSuccess && jwtInfo.data?.user.role !== "User";
+
   const joblistings = trpc.joblisting.joblistings.useQuery(undefined, {
     enabled: isAuthenticated,
   });
+
+  if (isAdmin) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[75vh]">
+        <h2 className="text-2xl font-bold text-red-600 mb-4">
+          Admins do not have a profile page.
+        </h2>
+        <p className="text-gray-700 mb-6">
+          Please go to the admin panel to manage the platform.
+        </p>
+        <button
+          onClick={() => router.push("/admin")}
+          className="bg-red-600 text-white font-bold px-6 py-3 rounded transition-all duration-300 hover:bg-transparent hover:text-red-600 hover:border hover:border-red-600"
+        >
+          Go to Admin Panel
+        </button>
+      </div>
+    );
+  }
 
   return (
     <main className="bg-white h-[75vh] overflow-hidden">
@@ -142,7 +162,6 @@ export default function Profile() {
                   jobApplications={{
                     joblistings: joblistings.data?.joblistings ?? [],
                   }}
-                  isAdmin={!!isAdmin}
                 />
               )}
             </div>

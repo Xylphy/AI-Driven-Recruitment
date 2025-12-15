@@ -26,12 +26,10 @@ const StatusBadge = ({ status }: { status: string }) => {
 
 export default function JobApplicationDetails({
   jobApplications,
-  isAdmin,
 }: {
   jobApplications: inferProcedureOutput<
     (typeof jobListingRouter)["joblistings"]
   >;
-  isAdmin: boolean;
 }) {
   const router = useRouter();
   return (
@@ -45,21 +43,17 @@ export default function JobApplicationDetails({
           <div className="flex flex-col">
             <h3 className="text-lg font-semibold">
               {job.title}
-              {!isAdmin && (
-                <>
-                  {" · "}
-                  <StatusBadge status={job.status} />
-                </>
-              )}
+              {" · "}
+              <StatusBadge status={job.status} />
             </h3>
 
             <p className="text-sm text-gray-500">
-              {isAdmin ? "Created at" : "Applied at"}:{" "}
+              Applied at:{" "}
               <span className="font-medium">{formatDate(job.created_at)}</span>
             </p>
           </div>
           <button className="border-2 border-red-600 text-red-600 px-4 py-1 text-sm font-semibold rounded hover:bg-red-600 hover:text-white transition whitespace-nowrap">
-            TRACK {isAdmin ? "JOB" : "APPLICATION"}
+            TRACK APPLICATION
           </button>
         </div>
       ))}

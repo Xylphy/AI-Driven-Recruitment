@@ -178,7 +178,7 @@ export default function ApplicantsPage() {
                         Compare
                       </button>
 
-                      {candidate.resumeUrl && (
+                      {/* {candidate.resumeUrl && (
                         <a
                           href={candidate.resumeUrl}
                           target="_blank"
@@ -187,7 +187,7 @@ export default function ApplicantsPage() {
                         >
                           Download Resume
                         </a>
-                      )}
+                      )} */}
                     </div>
                   </td>
                 </tr>

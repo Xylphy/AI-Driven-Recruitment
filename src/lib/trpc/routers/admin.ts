@@ -11,7 +11,7 @@ import { z } from "zod";
 
 const adminRouter = createTRPCRouter({
   fetchStats: authorizedProcedure.query(async ({ ctx }) => {
-    if (!ctx.userJWT!.isAdmin) {
+    if (ctx.userJWT!.role === "User") {
       throw new TRPCError({
         code: "FORBIDDEN",
         message: "You do not have permission to access this resource",
@@ -70,7 +70,7 @@ const adminRouter = createTRPCRouter({
   }),
   // Compare candidates
   fetchAllJobs: authorizedProcedure.query(async ({ ctx }) => {
-    if (!ctx.userJWT!.isAdmin) {
+    if (ctx.userJWT!.role === "User") {
       throw new TRPCError({
         code: "FORBIDDEN",
         message: "You do not have permission to access this resource",
@@ -105,7 +105,7 @@ const adminRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
-      if (!ctx.userJWT!.isAdmin) {
+      if (ctx.userJWT!.role === "User") {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "You do not have permission to access this resource",

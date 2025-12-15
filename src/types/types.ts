@@ -76,7 +76,7 @@ export interface DbIdentification {
 
 export interface JWT extends JwtPayload {
   id: string;
-  isAdmin: boolean;
+  role: "SuperAdmin" | "Admin" | "User";
 }
 
 interface Tag extends IdentifiableItem {

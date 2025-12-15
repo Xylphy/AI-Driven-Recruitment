@@ -35,6 +35,7 @@ export interface User extends IdentifiableItem {
   parsed_resume_id: string | null;
   transcript_id: string | null;
   transcribed_id: string | null;
+  role: "Admin" | "User" | "SuperAdmin";
 }
 
 export interface EducationalDetails
@@ -115,4 +116,11 @@ export interface WeeklyCumulativeApplicants {
   week_end: string;
   iso_week: string;
   applicants: number;
+}
+
+export interface AdminFeedback extends IdentifiableItem {
+  admin_id: string;
+  applicant_id: string;
+  feedback: string;
+  created_at: string;
 }

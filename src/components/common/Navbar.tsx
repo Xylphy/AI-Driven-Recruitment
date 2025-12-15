@@ -23,7 +23,7 @@ export default function Navbar() {
   const jwtInfo = trpc.auth.decodeJWT.useQuery(undefined, {
     enabled: isAuthenticated,
   });
-  const isAdmin = userInfo.isSuccess && jwtInfo.data?.user.isAdmin;
+  const isAdmin = userInfo.isSuccess && jwtInfo.data?.user.role !== "User";
 
   useEffect(() => {
     void jwtInfo.refetch();

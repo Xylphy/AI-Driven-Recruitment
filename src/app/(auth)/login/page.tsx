@@ -20,7 +20,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (isAuthenticated && jwtInfo.data) {
-      if (jwtInfo.data.user.isAdmin) {
+      if (jwtInfo.data.user.role !== "User") {
         router.push("/admin");
       } else {
         router.push("/profile");

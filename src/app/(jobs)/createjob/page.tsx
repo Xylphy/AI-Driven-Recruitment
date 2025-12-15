@@ -66,7 +66,7 @@ export default function JobListingPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!userJWT.data?.user.isAdmin) {
+    if (!userJWT.data?.user.role) {
       alert("You are not authorized to create a job listing");
       router.push("/profile");
     }
