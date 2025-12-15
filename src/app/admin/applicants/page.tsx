@@ -9,7 +9,6 @@ export default function ApplicantsPage() {
   const applicantsQuery = trpc.candidate.getCandidateFromJob.useQuery({});
   const [searchInput, setSearchInput] = useState("");
 
-  // Filter applicants based on the single search input
   const filteredApplicants = useMemo(() => {
     if (!applicantsQuery.data?.applicants) return [];
 
@@ -113,7 +112,6 @@ export default function ApplicantsPage() {
         className="w-full md:w-1/2 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:outline-none mb-4"
       />
 
-      {/* Table */}
       <div className="overflow-x-auto max-h-[600px]">
         <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
           <thead className="bg-gray-100 text-gray-600 text-sm uppercase sticky top-0">
@@ -166,6 +164,7 @@ export default function ApplicantsPage() {
                   </td>
                   <td className="py-3 px-4 text-center">
                     <div className="flex justify-center gap-2">
+                      {/* View Profile */}
                       <button
                         className="px-3 py-1 text-sm bg-[#E30022] text-white rounded hover:bg-red-700 transition"
                         onClick={() =>
@@ -174,9 +173,21 @@ export default function ApplicantsPage() {
                       >
                         View
                       </button>
+
                       <button className="px-3 py-1 text-sm border border-[#E30022] text-[#E30022] rounded hover:bg-red-50 transition">
                         Compare
                       </button>
+
+                      {candidate.resumeUrl && (
+                        <a
+                          href={candidate.resumeUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-3 py-1 text-sm border border-[#E30022] text-[#E30022] rounded hover:bg-red-50 transition"
+                        >
+                          Download Resume
+                        </a>
+                      )}
                     </div>
                   </td>
                 </tr>
