@@ -3,8 +3,8 @@ import jwt from "jsonwebtoken";
 import { serialize } from "cookie";
 import { createClientServer } from "@/lib/supabase/supabase";
 import { find } from "@/lib/supabase/action";
-import { IdentifiableItem } from "@/types/types";
 import { generateCsrfToken } from "@/lib/csrf";
+import type { User } from "@/types/schema";
 
 interface RefreshTokenPayload {
   userId: string;
@@ -37,18 +37,13 @@ export async function GET(request: NextRequest) {
     }
     const supabase = await createClientServer(1, true);
 
-    const { data, error } = await find<
-      IdentifiableItem & {
-        admins: IdentifiableItem | null;
-      }
-    >(
+    const { data: userData, error: usersError } = await find<User>(
       supabase,
       "users",
-      [{ column: "id", value: decoded.userId }],
-      "id, admins!left(id)"
+      [{ column: "id", value: decoded.userId }]
     ).single();
 
-    if (!data || error) {
+    if (!userData || usersError) {
       const response = NextResponse.json(
         { error: "Invalid refresh token or user not found." },
         { status: 401 }
@@ -87,8 +82,8 @@ export async function GET(request: NextRequest) {
         "token",
         jwt.sign(
           {
-            id: data.id,
-            isAdmin: !!data.admins,
+            id: userData.id,
+            role: userData.role,
             type: "access",
           },
           process.env.JWT_SECRET as string,
@@ -109,7 +104,7 @@ export async function GET(request: NextRequest) {
       serialize(
         "refreshToken",
         jwt.sign(
-          { userId: data.id, type: "refresh" },
+          { userId: userData.id, type: "refresh" },
           process.env.REFRESH_TOKEN_SECRET as string,
           { expiresIn: "7d" }
         ),
