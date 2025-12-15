@@ -134,6 +134,15 @@ export default function AdminLayout({
                 <MdNotifications /> Audit Logs
               </Link>
 
+              <Link
+                href="/admin/users"
+                className={`flex items-center gap-3 hover:bg-white/20 px-3 py-2 rounded-md transition ${
+                  pathName === "/admin/users" ? "bg-white/30" : ""
+                }`}
+              >
+                <MdPeople /> Users
+              </Link>
+
               {/* Bottom section */}
               <div className="flex flex-col gap-4 my-6 mt-auto">
                 <div className="flex gap-4 justify-center">
