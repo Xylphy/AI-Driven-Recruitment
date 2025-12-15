@@ -1,6 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import {
+  MdSettings,
+  MdLogout,
+  MdArrowBack,
+  MdNotifications,
+} from "react-icons/md";
+import { Bell } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { auth } from "@/lib/firebase/client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -20,6 +29,7 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const pathName = usePathname();
   const jwtDecoded = trpc.auth.decodeJWT.useQuery();
@@ -59,7 +69,7 @@ export default function AdminLayout({
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -250, opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="w-64 bg-[#E30022] text-white flex flex-col p-6"
+            className="w-64 bg-[#E30022] text-white flex flex-col p-6 h-screen overflow-y-auto sticky top-0"
           >
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-xl font-bold">Admin Panel</h2>
@@ -69,7 +79,7 @@ export default function AdminLayout({
               />
             </div>
 
-            <nav className="flex flex-col gap-4">
+            <nav className="flex flex-col gap-4 h-full">
               <Link
                 href="/admin"
                 className={`flex items-center gap-3 hover:bg-white/20 px-3 py-2 rounded-md transition ${
@@ -114,27 +124,71 @@ export default function AdminLayout({
               >
                 <MdError /> Bottlenecks
               </Link>
+
+              <Link
+                href="/admin/auditlogs"
+                className={`flex items-center gap-3 hover:bg-white/20 px-3 py-2 rounded-md transition ${
+                  pathName === "/admin/auditlogs" ? "bg-white/30" : ""
+                }`}
+              >
+                <MdNotifications /> Audit Logs
+              </Link>
+
+              {/* Bottom section */}
+              <div className="flex flex-col gap-4 my-6 mt-auto">
+                <div className="flex gap-4 justify-center">
+                  <MdSettings className="cursor-pointer hover:text-red-300" />
+                  <MdLogout
+                    onClick={() => auth.signOut()}
+                    className="cursor-pointer hover:text-red-300"
+                  />
+                </div>
+
+                <button
+                  onClick={() => router.push("/profile/edit")}
+                  className="text-white font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-300"
+                >
+                  EDIT PROFILE
+                </button>
+              </div>
             </nav>
           </motion.aside>
         )}
+        <div className="flex-1 flex flex-col">
+          <header className="bg-white shadow p-4 flex justify-between items-center">
+            <button
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="flex items-center gap-2 text-[#E30022] font-bold"
+            >
+              {!isSidebarOpen && (
+                <>
+                  <MdMenu className="text-2xl" />
+                  <span>Show Menu</span>
+                </>
+              )}
+            </button>
+            <div className="flex items-center gap-4">
+              <Link
+                href="/"
+                className="flex items-center gap-2 text-gray-600 hover:text-red-600 cursor-pointer"
+              >
+                <MdArrowBack className="text-xl" />
+                <span>Visit Site</span>
+              </Link>
+
+              <Bell className="w-6 h-6 text-gray-600 hover:text-red-600 cursor-pointer" />
+
+              <Link href="/profile">
+                <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-red-500 hover:border-black transition-all duration-300 cursor-pointer">
+                  {/* Profile Image */}
+                </div>
+              </Link>
+            </div>
+          </header>
+
+          <main className="flex-1 p-6 overflow-y-auto">{children}</main>
+        </div>
       </AnimatePresence>
-
-      <div className="flex-1 flex flex-col">
-        <header className="bg-white shadow p-4 flex justify-between items-center">
-          <button
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="flex items-center gap-2 text-[#E30022] font-bold"
-          >
-            <MdMenu className="text-2xl" />
-            {isSidebarOpen ? "Hide Menu" : "Show Menu"}
-          </button>
-          <h1 className="text-lg font-semibold text-gray-700">
-            Admin Dashboard
-          </h1>
-        </header>
-
-        <main className="flex-1 p-6 overflow-y-auto">{children}</main>
-      </div>
     </div>
   );
 }

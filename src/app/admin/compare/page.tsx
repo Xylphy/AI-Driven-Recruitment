@@ -4,6 +4,7 @@ import useAuth from "@/hooks/useAuth";
 import { trpc } from "@/lib/trpc/client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import Select from "react-select";
 
 interface WorkExperience {
   company: string;
@@ -127,10 +128,12 @@ export default function ComparePage() {
       <h2 className="text-2xl font-bold text-red-600 mb-6">
         Compare Candidates
       </h2>
+
       <div className="mb-8">
         <label className="block text-sm font-medium text-gray-600 mb-2">
           Select Job
         </label>
+
         {fetchJobsQuery.isLoading || fetchJobsQuery.isFetching ? (
           <div className="w-full p-3 border rounded-md bg-gray-50 flex items-center gap-3">
             <div className="h-8 w-8 rounded-full bg-gray-200 animate-pulse" />
@@ -141,22 +144,35 @@ export default function ComparePage() {
             <span className="text-sm text-gray-500">Loading jobs...</span>
           </div>
         ) : (
-          <select
-            className="w-full p-2 border rounded-md focus:ring-2 focus:ring-[#E30022]"
-            value={selectedJobId}
-            onChange={(e) => setSelectedJobId(e.target.value)}
-          >
-            <option value="">-- Select Job --</option>
-            {fetchJobsQuery.data?.jobs?.map((job) => (
-              <option key={job.id} value={job.id}>
-                {job.title}
-              </option>
-            ))}
-          </select>
+          <Select
+            options={fetchJobsQuery.data?.jobs?.map((job) => ({
+              value: job.id,
+              label: job.title,
+            }))}
+            value={
+              selectedJobId
+                ? {
+                    value: selectedJobId,
+                    label: fetchJobsQuery.data?.jobs?.find(
+                      (j) => j.id === selectedJobId
+                    )?.title,
+                  }
+                : null
+            }
+            onChange={(option) => setSelectedJobId(option?.value || "")}
+            placeholder="-- Select Job --"
+            isClearable
+            className="w-full"
+            styles={{
+              control: (provided) => ({
+                ...provided,
+                borderColor: "#E30022",
+              }),
+            }}
+          />
         )}
       </div>
-
-      {selectedJobId && (
+      {selectedJobId ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           {candidatesQuery.isLoading || candidatesQuery.isFetching ? (
             <div className="col-span-1 md:col-span-2 space-y-4">
@@ -203,41 +219,59 @@ export default function ComparePage() {
                 <label className="block text-sm font-medium text-gray-600 mb-2">
                   Select Candidate A
                 </label>
-                <select
-                  className="w-full p-2 border rounded-md focus:ring-2 focus:ring-[#E30022]"
-                  value={candidateA}
-                  onChange={(e) => setCandidateA(e.target.value)}
-                >
-                  <option value="">-- Select Candidate A --</option>
-                  {candidatesQuery.data?.applicants.map((candidate) => (
-                    <option key={candidate.id} value={candidate.id}>
-                      {candidate.name}
-                    </option>
-                  ))}
-                </select>
+                <Select
+                  options={candidatesQuery.data?.applicants.map(
+                    (candidate) => ({
+                      value: candidate.id,
+                      label: candidate.name,
+                    })
+                  )}
+                  value={
+                    candidateA
+                      ? {
+                          value: candidateA,
+                          label: candidatesQuery.data?.applicants.find(
+                            (c) => c.id === candidateA
+                          )?.name,
+                        }
+                      : null
+                  }
+                  onChange={(option) => setCandidateA(option?.value || "")}
+                  placeholder="-- Select Candidate A --"
+                  isClearable
+                />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-600 mb-2">
                   Select Candidate B
                 </label>
-                <select
-                  className="w-full p-2 border rounded-md focus:ring-2 focus:ring-[#E30022]"
-                  value={candidateB}
-                  onChange={(e) => setCandidateB(e.target.value)}
-                >
-                  <option value="">-- Select Candidate B --</option>
-                  {candidatesQuery.data?.applicants.map((candidate) => (
-                    <option key={candidate.id} value={candidate.id}>
-                      {candidate.name}
-                    </option>
-                  ))}
-                </select>
+                <Select
+                  options={candidatesQuery.data?.applicants.map(
+                    (candidate) => ({
+                      value: candidate.id,
+                      label: candidate.name,
+                    })
+                  )}
+                  value={
+                    candidateB
+                      ? {
+                          value: candidateB,
+                          label: candidatesQuery.data?.applicants.find(
+                            (c) => c.id === candidateB
+                          )?.name,
+                        }
+                      : null
+                  }
+                  onChange={(option) => setCandidateB(option?.value || "")}
+                  placeholder="-- Select Candidate B --"
+                  isClearable
+                />
               </div>
             </>
           )}
         </div>
-      )}
+      ) : null}
 
       {candidateA && candidateB ? (
         <>
@@ -382,22 +416,31 @@ export default function ComparePage() {
               <label className="block text-sm font-medium text-gray-600 mb-2">
                 AI Feedback
               </label>
-              <h1 className="text-xl mb-2">Better Candidate: <b className="text-red-600">Jeremy Brad Lee</b></h1>
-              <h3><b>Reason</b></h3>
+              <h1 className="text-xl mb-2">
+                Better Candidate:{" "}
+                <b className="text-red-600">Jeremy Brad Lee</b>
+              </h1>
+              <h3>
+                <b>Reason</b>
+              </h3>
               <textarea
                 readOnly
                 value="Jeremy demonstrated a stronger foundation in web development with his Bachelor's degree and relevant experience in Next.js, Python, and Javascript. His projects showcase practical skills in backend development, RESTful APIs, and Database Management, aligning well with the requirements of the role. While John's experience is valuable, James's browader skillset and deeper technical knowledge peosition him more effectively."
                 className="w-full p-3 border rounded-md bg-gray-100 text-gray-500"
                 rows={4}
               ></textarea>
-              <h3><b>Highlights</b></h3>
+              <h3>
+                <b>Highlights</b>
+              </h3>
               <textarea
                 readOnly
                 value="Solid Foundation in Web Development, Proficient in multiple technologies (Next.js, Python, JavaScript), Experience in backend development and API design)"
                 className="w-full p-3 border rounded-md bg-gray-100 text-gray-500"
                 rows={2}
               />
-              <h3><b>Recommendations</b></h3>
+              <h3>
+                <b>Recommendations</b>
+              </h3>
               <textarea
                 readOnly
                 value="Focus on gaining practical experience through internships or junior developer rolse. Consider online course or certifications to deepen knowledge in web development areas. improve real-world project management abilities with agile training for better collaboration and project handling."
