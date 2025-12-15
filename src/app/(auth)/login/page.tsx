@@ -4,7 +4,7 @@ import { Button } from "@/components/common/Button";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase/client";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import useAuth from "@/hooks/useAuth";
 import { trpc } from "@/lib/trpc/client";
@@ -12,20 +12,28 @@ import { trpc } from "@/lib/trpc/client";
 export default function LoginPage() {
   const router = useRouter();
   const [isAuthLoading, setIsAuthLoading] = useState(false);
+  const [jwtSuccess, setJwtSuccess] = useState(false);
+  const { isAuthenticated } = useAuth();
+  const jwtInfo = trpc.auth.decodeJWT.useQuery(undefined, {
+    enabled: isAuthenticated && jwtSuccess,
+  });
+
+  useEffect(() => {
+    if (isAuthenticated && jwtInfo.data) {
+      if (jwtInfo.data.user.isAdmin) {
+        router.push("/admin");
+      } else {
+        router.push("/profile");
+      }
+    }
+  }, [jwtInfo.data, router, isAuthenticated]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsAuthLoading(true);
-    const { userInfo, isAuthenticated } = useAuth({
-      fetchUser: true,
-    });
-    const jwtInfo = trpc.auth.decodeJWT.useQuery(undefined, {
-      enabled: isAuthenticated,
-    });
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email")?.toString().trim();
     const password = formData.get("password")?.toString().trim();
-    const isAdmin = userInfo.isSuccess && jwtInfo.data?.user.isAdmin;
     if (!email || !password) {
       alert("Please enter valid credentials");
       return;
@@ -50,13 +58,8 @@ export default function LoginPage() {
 
       if (!res.ok) throw new Error("Failed to authenticate");
 
-      if (isAdmin) {
-        router.replace("/admin");
-      } else {
-        router.replace("/");
-      }
-      router.refresh();
-    } catch (error) {
+      setJwtSuccess(true);
+    } catch {
       alert("Authentication failed");
       auth.signOut();
     } finally {
@@ -118,7 +121,7 @@ export default function LoginPage() {
           </form>
 
           <p className="text-l text-gray-500 mb-2">
-            Don't have an account yet?{" "}
+            Don&apos;t have an account yet?{" "}
             <span className="text-red-600">
               <Link href="/signup" className="text-red-500 hover:underline">
                 Signup Here!
