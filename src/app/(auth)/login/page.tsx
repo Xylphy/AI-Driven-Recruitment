@@ -86,7 +86,7 @@ export default function LoginPage() {
                 type="email"
                 name="email"
                 required
-                className="w-full mt-1 px-4 py-3 rounded-md bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-600"
+                className="w-full mt-1 px-4 py-3 text-gray-600 rounded-md bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-600"
               />
             </div>
 
@@ -96,12 +96,12 @@ export default function LoginPage() {
                 type="password"
                 name="password"
                 required
-                className="w-full mt-1 px-4 py-3 rounded-md bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-600"
+                className="w-full mt-1 px-4 py-3 text-gray-600 rounded-md bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-600"
               />
             </div>
 
             <div className="flex items-center justify-between text-sm">
-              <label className="flex items-center gap-2 text-gray-300">
+              <label className="flex items-center gap-2 text-gray-600">
                 <input type="checkbox" className="accent-red-600" />
                 Remember me
               </label>

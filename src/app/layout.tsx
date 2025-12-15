@@ -31,7 +31,6 @@ export default function RootLayout({
 
           <main className="grow">{children}</main>
 
-          {/* Hide Footer on /admin */}
           <LayoutVisibility>
             <Footer />
           </LayoutVisibility>
