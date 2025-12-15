@@ -1,179 +1,169 @@
 "use client";
-import { motion } from "framer-motion";
-import { useState } from "react";
-import Link from "next/link";
-import AnimatedSection from "@/components/common/AnimatedSection";
-import Image from "next/image";
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.3, // delay between each child animation
-    },
-  },
-};
+import { useRouter } from "next/navigation";
+import { trpc } from "@/lib/trpc/client";
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0 },
-};
+export default function Careers() {
+  const router = useRouter();
+  const jobsQuery = trpc.joblisting.fetchJobs.useQuery();
 
-const hoverGrow = {
-  hover: { scale: 1.05 },
-};
+  if (jobsQuery.isLoading) {
+    return (
+      <div className="text-gray-800" aria-busy="true">
+        {/* Hero skeleton */}
+        <section className="relative w-full h-[300px] bg-gray-200 flex items-center justify-center">
+          <div className="absolute inset-0 bg-linear-to-r from-gray-200 via-gray-100 to-gray-200 animate-pulse" />
+          <div className="relative z-10 w-3/4 max-w-4xl text-center">
+            <div className="h-8 bg-gray-300 rounded w-1/3 mx-auto mb-4"></div>
+            <div className="h-3 bg-gray-300 rounded w-2/3 mx-auto"></div>
+          </div>
+        </section>
 
-const categories = [
-  { name: "IT & Software", img: "/it-software.jpg" },
-  { name: "Marketing", img: "/marketing.jpg" },
-  { name: "Finance", img: "/finance.jpg" },
-  { name: "Healthcare", img: "/healthcare.jpg" },
-];
-
-export default function Home() {
-  const [section1Done, setSection1Done] = useState(false);
-  const [section2Done, setSection2Done] = useState(false);
-  const [section3Done, setSection3Done] = useState(false);
-
-  return (
-    <>
-      <AnimatedSection
-        className="pt-20 px-6 bg-linear-to-br from-white via-red-50 to-red-100 flex justify-center items-center"
-        start={true}
-        onComplete={() => setSection1Done(true)}
-      >
-        <motion.div
-          className="max-w-6xl mx-auto grid md:grid-cols-2 gap-10 items-center"
-          variants={fadeUp}
-        >
-          <div className="text-left">
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-              Find Your Dream Job with{" "}
-              <span className="text-red-600">Alliance</span>
-            </h1>
-            <p className="text-lg text-gray-700 mb-8">
-              Explore thousands of job opportunities from top companies. Whether
-              you&apos;re starting out or looking for a career change,
-              we&apos;ve got you covered.
-            </p>
-            <motion.div variants={fadeUp} whileHover={hoverGrow.hover}>
-              <Link
-                href="/login"
-                className="bg-[#E30022] inline-block text-white font-bold py-3 px-6 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-500 hover:border-red-500"
-              >
-                BROWSE JOBS
-              </Link>
-            </motion.div>
+        {/* Main layout skeleton */}
+        <section className="max-w-6xl mx-auto px-6 py-10 grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Filters skeleton */}
+          <div className="space-y-4 px-5 border-r">
+            <div className="h-10 bg-gray-200 rounded w-full"></div>
+            <div className="h-10 bg-gray-200 rounded w-full"></div>
+            <div className="h-10 bg-gray-200 rounded w-1/2"></div>
           </div>
 
-          <div className="relative flex justify-center items-center w-full h-full">
-            <Image
-              src="/professionals.png"
-              alt="Professional team"
-              width={500}
-              height={500}
-              className="w-full h-full object-cover max-w-md"
-            />
-          </div>
-        </motion.div>
-      </AnimatedSection>
-
-      <AnimatedSection
-        className="relative py-16 px-6 bg-[url('/workspace.jpg')] bg-cover bg-center bg-no-repeat"
-        start={section1Done}
-        onComplete={() => setSection2Done(true)}
-      >
-        <div className="absolute inset-0 bg-black/40 z-0"></div>
-        <motion.div
-          className="max-w-6xl mx-auto grid md:grid-cols-3 gap-10 text-center"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-        >
-          {[
-            {
-              title: "Curated Listings",
-              desc: "We hand-pick jobs from reputable companies to ensure quality and relevance.",
-            },
-            {
-              title: "Smart Search",
-              desc: "Filter by location, salary, and role type to quickly find what fits you best.",
-            },
-            {
-              title: "Career Resources",
-              desc: "Get tips on resumes, interviews, and more to stay ahead of the competition.",
-            },
-          ].map((item, idx) => (
-            <motion.div
-              key={idx}
-              className="p-6 rounded-lg shadow-lg hover:shadow-2xl backdrop-blur-sm bg-white/20 border border-white/30"
-              variants={fadeUp}
-              whileHover={{ scale: 1.03 }}
-            >
-              <h3 className="text-xl font-semibold text-white mb-2">
-                {item.title}
-              </h3>
-              <p className="text-white">{item.desc}</p>
-            </motion.div>
-          ))}
-        </motion.div>
-      </AnimatedSection>
-
-      <AnimatedSection
-        className="py-16 px-6 bg-gray-50"
-        start={section2Done}
-        onComplete={() => setSection3Done(true)}
-      >
-        <motion.div className="max-w-6xl mx-auto text-center" variants={fadeUp}>
-          <h2 className="text-3xl font-bold text-gray-800 mb-8">
-            Popular Job Categories
-          </h2>
-          <div className="grid md:grid-cols-4 gap-6">
-            {categories.map((category, i) => (
-              <motion.div
-                key={i}
-                className="bg-red-600 p-6 rounded-lg shadow hover:shadow-lg flex flex-col items-center"
-                variants={fadeUp}
-                initial={{ y: 0 }}
-                whileHover={{ y: -5 }}
-                transition={{ duration: 0.3 }}
+          {/* Job list skeleton */}
+          <div className="md:col-span-2 space-y-4 overflow-hidden max-h-[500px] pr-2">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <div
+                key={index}
+                className="flex items-center justify-between p-4 border border-gray-200 rounded-md bg-white"
               >
-                <Image
-                  src={category.img}
-                  alt={category.name}
-                  width={80}
-                  height={80}
-                  className="w-20 h-20 object-cover rounded-full mb-4"
-                />
-                <h4 className="text-lg font-semibold text-white">
-                  {category.name}
-                </h4>
-              </motion.div>
+                <div className="flex-1 space-y-3">
+                  <div className="h-4 bg-gray-200 rounded w-3/5"></div>
+                  <div className="flex items-center space-x-2">
+                    <div className="h-3 bg-gray-200 rounded w-24"></div>
+                    <div className="h-3 bg-gray-200 rounded w-16"></div>
+                  </div>
+                </div>
+                <div className="ml-4 h-8 w-20 bg-gray-200 rounded"></div>
+              </div>
             ))}
           </div>
-        </motion.div>
-      </AnimatedSection>
+        </section>
 
-      <AnimatedSection className="py-20 text-center px-6" start={section3Done}>
-        <motion.h2
-          className="text-3xl text-[#E30022] md:text-4xl font-bold mb-4"
-          variants={fadeUp}
-        >
-          Ready to take the next step?
-        </motion.h2>
-        <motion.p className="text-lg mb-8" variants={fadeUp}>
-          Sign up and get matched with the best opportunities.
-        </motion.p>
-        <motion.div variants={fadeUp} whileHover={hoverGrow.hover}>
-          <Link
-            href="/signup"
-            className="bg-[#E30022] inline-block text-white font-bold py-3 px-6 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-500 hover:border-red-500"
-          >
-            APPLY NOW
-          </Link>
-        </motion.div>
-      </AnimatedSection>
-    </>
+        {/* Activities/Benefits placeholders */}
+        <section className="bg-gray-50 py-10">
+          <div className="max-w-6xl mx-auto px-6">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="bg-white rounded-md shadow p-4 text-center"
+                >
+                  <div className="h-24 bg-gray-200 rounded mb-2 animate-pulse"></div>
+                  <div className="h-3 bg-gray-200 rounded w-3/4 mx-auto"></div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  return (
+    <div className="text-gray-800">
+      <section
+        className="relative w-full h-[300px] bg-cover bg-center"
+        style={{ backgroundImage: "url('/workspace.jpg')" }}
+      >
+        <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center">
+          <h1 className="text-white text-4xl sm:text-5xl font-bold">CAREERS</h1>
+          <hr className="w-1/4 mx-auto border-t border-red-600 my-1" />
+          <p className="text-white max-w-3xl text-center">
+            Alliance Software, Inc. is the Philippines’ largest independent
+            Filipino software development and business solutions company.
+          </p>
+        </div>
+      </section>
+
+      <section className="max-w-6xl mx-auto px-6 py-10 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="space-y-4 px-5 border-r">
+          <input
+            type="text"
+            placeholder="Job Title"
+            className="w-full px-4 py-2 border border-gray-300 rounded-md"
+          />
+          <input
+            type="text"
+            placeholder="Location"
+            className="w-full px-4 py-2 border border-gray-300 rounded-md"
+          />
+          <button className="bg-[#E30022] text-white font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-500 hover:border-red-500">
+            Search
+          </button>
+        </div>
+
+        <div className="md:col-span-2 space-y-4 overflow-y-auto max-h-[500px] pr-2">
+          {jobsQuery.data?.jobs.map((job, index) => (
+            <div
+              key={index}
+              className="flex items-center justify-between p-4 border border-gray-200 rounded-md hover:shadow"
+              onClick={() => router.push(`/joblisting/${job.id}`)}
+            >
+              <div>
+                <h3 className="text-lg font-bold">{job.title}</h3>
+                <div className="text-sm text-gray-600 flex items-center space-x-2">
+                  <span>📍 {job.location}</span>
+                  <span>•</span>
+                  <span>{job.is_fulltime ? "Full-time" : "Part-time"}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Company Activities */}
+      <section className="bg-gray-50 py-10">
+        <div className="max-w-6xl mx-auto px-6">
+          <h2 className="text-2xl font-bold mb-6 text-red-600 text-center">
+            Company <span className="text-black">Activities</span>
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            {Array(5)
+              .fill(0)
+              .map((_, index) => (
+                <div
+                  key={index}
+                  className="bg-white rounded-md shadow p-4 text-center"
+                >
+                  <div className="h-24 bg-gray-200 rounded mb-2"></div>
+                  <p className="text-sm font-medium">Activity Name</p>
+                </div>
+              ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Company Benefits */}
+      <section className="bg-white py-10">
+        <div className="max-w-6xl mx-auto px-6">
+          <h2 className="text-2xl font-bold mb-6 text-red-600 text-center">
+            Company <span className="text-black">Benefits</span>
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            {Array(5)
+              .fill(0)
+              .map((_, index) => (
+                <div
+                  key={index}
+                  className="bg-white rounded-md shadow p-4 text-center"
+                >
+                  <div className="h-24 bg-gray-200 rounded mb-2"></div>
+                  <p className="text-sm font-medium">Benefit Name</p>
+                </div>
+              ))}
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }
