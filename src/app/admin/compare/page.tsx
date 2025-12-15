@@ -13,52 +13,28 @@ interface WorkExperience {
   end_date?: Date;
 }
 
-interface AdminFeedbackPost {
-  author: string;
-  content: string;
-  timestamp: string;
-  candidate: "A" | "B";
+interface CandidateID {
+  userId?: string;
+  applicantId?: string;
 }
 
 export default function ComparePage() {
   const router = useRouter();
   const [selectedJobId, setSelectedJobId] = useState<string>("");
-  const [candidateA_ID, setCandidateA] = useState<string>("");
-  const [candidateB_ID, setCandidateB] = useState<string>("");
+  const [candidateA, setCandidateA] = useState<CandidateID>({});
+  const [candidateB, setCandidateB] = useState<CandidateID>({});
 
   // placeholder lang
   const [adminFeedbackA, setAdminFeedbackA] = useState<string>("");
   const [adminFeedbackB, setAdminFeedbackB] = useState<string>("");
 
-  const [submittedFeedbackA, setSubmittedFeedbackA] = useState<string | null>(
-    null
-  );
-  const [submittedFeedbackB, setSubmittedFeedbackB] = useState<string | null>(
-    null
-  );
-
   // New state for collapsible feedback and posts
   const [showAdminFeedbackFields, setShowAdminFeedbackFields] = useState(false);
-  const [feedbackPosts, setFeedbackPosts] = useState<AdminFeedbackPost[]>([]);
 
   const { isAuthenticated } = useAuth();
   const jwtQuery = trpc.auth.decodeJWT.useQuery(undefined, {
     enabled: isAuthenticated,
   });
-  const fetchJobsQuery = trpc.admin.fetchAllJobs.useQuery(undefined, {
-    enabled: jwtQuery.data?.user.role !== "User",
-  });
-
-  const AIQuery = trpc.candidate.fetchAICompare.useQuery(
-    {
-      userId_A: candidateA_ID,
-      userId_B: candidateB_ID,
-      jobId: selectedJobId,
-    },
-    {
-      enabled: !!candidateA_ID && !!candidateB_ID,
-    }
-  );
 
   useEffect(() => {
     if (jwtQuery.isFetched && !jwtQuery.data?.user.role) {
@@ -66,6 +42,21 @@ export default function ComparePage() {
       router.push("/profile");
     }
   }, [jwtQuery.isFetched, jwtQuery.data?.user.role, router]);
+
+  const fetchJobsQuery = trpc.admin.fetchAllJobs.useQuery(undefined, {
+    enabled: jwtQuery.data?.user.role !== "User",
+  });
+
+  const AIQuery = trpc.candidate.fetchAICompare.useQuery(
+    {
+      userId_A: candidateA.userId!,
+      userId_B: candidateB.userId!,
+      jobId: selectedJobId,
+    },
+    {
+      enabled: !!candidateA.userId && !!candidateB.userId,
+    }
+  );
 
   const candidatesQuery = trpc.candidate.getCandidateFromJob.useQuery(
     {
@@ -78,58 +69,63 @@ export default function ComparePage() {
 
   const candidateDataA = trpc.candidate.fetchCandidateProfile.useQuery(
     {
-      candidateId: candidateA_ID,
+      candidateId: candidateA.applicantId!,
       fetchResume: true,
       fetchScore: true,
       fetchTranscribed: true,
     },
     {
-      enabled: !!candidateA_ID,
+      enabled: !!candidateA.applicantId,
     }
   );
 
   const candidateDataB = trpc.candidate.fetchCandidateProfile.useQuery(
     {
-      candidateId: candidateB_ID,
+      candidateId: candidateB.applicantId!,
       fetchResume: true,
       fetchScore: true,
       fetchTranscribed: true,
     },
     {
-      enabled: !!candidateB_ID,
+      enabled: !!candidateB.applicantId,
     }
   );
+
+  const adminFeedbacksQuery = trpc.candidate.fetchAdminFeedbacks.useQuery(
+    {
+      candidateAId: candidateA.applicantId!,
+      candidateBId: candidateB.applicantId!,
+    },
+    {
+      enabled: !!candidateA.applicantId && !!candidateB.applicantId,
+    }
+  );
+
+  const postAdminFeedbackMutation =
+    trpc.candidate.postAdminFeedback.useMutation();
 
   // placeholder lang
   const handleSubmitFeedback = () => {
     if (!jwtQuery.data?.user) return;
 
-    const adminName = `${jwtQuery.data.user.firstName} ${jwtQuery.data.user.lastName}`;
-    const timestamp = new Date().toLocaleString();
+    const adminFeedbackATrimmed = adminFeedbackA.trim();
 
-    if (adminFeedbackA.trim()) {
-      setFeedbackPosts((prev) => [
-        ...prev,
-        {
-          author: adminName,
-          content: adminFeedbackA,
-          timestamp,
-          candidate: "A",
-        },
-      ]);
+    if (adminFeedbackATrimmed) {
+      postAdminFeedbackMutation.mutate({
+        candidateId: candidateA.applicantId!,
+        feedback: adminFeedbackATrimmed,
+      });
+
       setAdminFeedbackA("");
     }
 
-    if (adminFeedbackB.trim()) {
-      setFeedbackPosts((prev) => [
-        ...prev,
-        {
-          author: adminName,
-          content: adminFeedbackB,
-          timestamp,
-          candidate: "B",
-        },
-      ]);
+    const adminFeedbackBTrimmed = adminFeedbackB.trim();
+
+    if (adminFeedbackBTrimmed) {
+      postAdminFeedbackMutation.mutate({
+        candidateId: candidateB.applicantId!,
+        feedback: adminFeedbackBTrimmed,
+      });
       setAdminFeedbackB("");
     }
 
@@ -235,21 +231,24 @@ export default function ComparePage() {
                 <Select
                   options={candidatesQuery.data?.applicants.map(
                     (candidate) => ({
-                      value: candidate.id,
+                      value: {
+                        userId: candidate.user_id,
+                        applicantId: candidate.id,
+                      },
                       label: candidate.name,
                     })
                   )}
                   value={
-                    candidateA_ID
+                    candidateA.userId
                       ? {
-                          value: candidateA_ID,
+                          value: candidateA,
                           label: candidatesQuery.data?.applicants.find(
-                            (c) => c.id === candidateA_ID
+                            (c) => c.user_id === candidateA.userId
                           )?.name,
                         }
                       : null
                   }
-                  onChange={(option) => setCandidateA(option?.value || "")}
+                  onChange={(option) => setCandidateA(option?.value ?? {})}
                   placeholder="-- Select Candidate A --"
                   isClearable
                 />
@@ -262,21 +261,24 @@ export default function ComparePage() {
                 <Select
                   options={candidatesQuery.data?.applicants.map(
                     (candidate) => ({
-                      value: candidate.id,
+                      value: {
+                        userId: candidate.user_id,
+                        applicantId: candidate.id,
+                      },
                       label: candidate.name,
                     })
                   )}
                   value={
-                    candidateB_ID
+                    candidateB.userId
                       ? {
-                          value: candidateB_ID,
+                          value: candidateB,
                           label: candidatesQuery.data?.applicants.find(
-                            (c) => c.id === candidateB_ID
+                            (c) => c.user_id === candidateB.userId
                           )?.name,
                         }
                       : null
                   }
-                  onChange={(option) => setCandidateB(option?.value || "")}
+                  onChange={(option) => setCandidateB(option?.value ?? {})}
                   placeholder="-- Select Candidate B --"
                   isClearable
                 />
@@ -286,7 +288,7 @@ export default function ComparePage() {
         </div>
       ) : null}
 
-      {candidateA_ID && candidateB_ID ? (
+      {candidateA.applicantId && candidateB.applicantId ? (
         <>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
             <div className="p-5 bg-gray-50 rounded-lg border border-gray-200">
@@ -304,7 +306,7 @@ export default function ComparePage() {
               <p className="text-sm text-gray-500 mb-4">
                 {
                   candidatesQuery.data?.applicants.find(
-                    (c) => c.id === candidateA_ID
+                    (c) => c.id === candidateA.applicantId
                   )?.email
                 }
               </p>
@@ -372,7 +374,7 @@ export default function ComparePage() {
               <p className="text-sm text-gray-500 mb-4">
                 {
                   candidatesQuery.data?.applicants.find(
-                    (c) => c.id === candidateB_ID
+                    (c) => c.id === candidateB
                   )?.email
                 }
               </p>
@@ -483,15 +485,16 @@ export default function ComparePage() {
 
             {/* Admin Feedback */}
             <div className="mt-6">
-              <button
-                onClick={() => setShowAdminFeedbackFields((prev) => !prev)}
-                className="px-6 py-2 bg-[#E30022] text-white font-semibold rounded-md hover:bg-red-700"
-              >
-                {showAdminFeedbackFields
-                  ? "Hide Admin Feedback"
-                  : "Add Admin Feedback"}
-              </button>
-
+              {candidateA.userId && candidateB.userId && (
+                <button
+                  onClick={() => setShowAdminFeedbackFields((prev) => !prev)}
+                  className="px-6 py-2 bg-[#E30022] text-white font-semibold rounded-md hover:bg-red-700"
+                >
+                  {showAdminFeedbackFields
+                    ? "Hide Admin Feedback"
+                    : "Add Admin Feedback"}
+                </button>
+              )}
               {showAdminFeedbackFields && (
                 <div className="mt-4 space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -524,18 +527,23 @@ export default function ComparePage() {
 
               {/* Display Submitted Feedback as Posts */}
               <div className="mt-6 space-y-4">
-                {feedbackPosts.map((post, index) => (
+                {adminFeedbacksQuery.data?.adminFeedbacks.map((post, index) => (
                   <div
                     key={index}
                     className="p-4 border rounded-md bg-gray-50 shadow-sm"
                   >
                     <div className="flex justify-between text-sm text-gray-500 mb-2">
-                      <span>James Kenneth Acabal</span>
-                      <span>{post.timestamp}</span>
+                      <span>
+                        {post.admin.first_name} {post.admin.last_name}
+                      </span>
+                      <span>{post.created_at}</span>
                     </div>
                     <div>
-                      <strong>Candidate {post.candidate}:</strong>{" "}
-                      {post.content}
+                      <strong>
+                        Candidate {post.applicant.user.first_name}{" "}
+                        {post.applicant.user.last_name}:
+                      </strong>{" "}
+                      {post.feedback}
                     </div>
                   </div>
                 ))}

@@ -59,7 +59,7 @@ export default function useAuth({
 
   // Handle auth status errors (token expiring or expired)
   useEffect(() => {
-    if (!authStatus.error) return;
+    if (!authStatus.error || !isAuthenticated) return;
 
     const interval = setInterval(async () => {
       if (!(await refreshToken()) && routerActivation) {
@@ -70,7 +70,7 @@ export default function useAuth({
     }, 50 * 60 * 1000); // 50 minutes
 
     return () => clearInterval(interval);
-  }, [authStatus]);
+  }, [authStatus, isAuthenticated]);
 
   // Fetch CSRF token on mount
   useEffect(() => {
