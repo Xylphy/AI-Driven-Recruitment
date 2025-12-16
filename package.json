@@ -29,7 +29,7 @@
     "lru-cache": "^11.2.4",
     "lucide-react": "^0.560.0",
     "mongodb": "^7.0.0",
-    "next": "^16.0.8",
+    "next": "16.0.10",
     "next-cloudinary": "^6.17.5",
     "rate-limiter-flexible": "^9.0.0",
     "react": "^19.2.1",
