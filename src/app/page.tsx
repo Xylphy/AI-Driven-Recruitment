@@ -5,7 +5,7 @@ import { trpc } from "@/lib/trpc/client";
 
 export default function Careers() {
   const router = useRouter();
-  const jobsQuery = trpc.joblisting.fetchJobs.useQuery();
+  const jobsQuery = trpc.joblisting.fetchJobs.useQuery({});
 
   if (jobsQuery.isLoading) {
     return (
