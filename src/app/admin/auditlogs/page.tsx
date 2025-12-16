@@ -1,93 +1,49 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-
-const bottlenecksData = [
-  {
-    id: 1,
-    bottleneck: "Slow resume screening",
-    category: "Screening",
-    date: "2025-12-10",
-    time: "09:30 AM",
-  },
-  {
-    id: 2,
-    bottleneck: "Low qualified applicants",
-    category: "Pipeline",
-    date: "2025-12-10",
-    time: "10:15 AM",
-  },
-  {
-    id: 3,
-    bottleneck: "Delayed HR feedback",
-    category: "Interview",
-    date: "2025-12-11",
-    time: "02:00 PM",
-  },
-  {
-    id: 4,
-    bottleneck: "High candidate drop-off",
-    category: "Pipeline",
-    date: "2025-12-11",
-    time: "11:45 AM",
-  },
-  {
-    id: 5,
-    bottleneck: "Ghosting during scheduling",
-    category: "Interview",
-    date: "2025-12-12",
-    time: "01:20 PM",
-  },
-  {
-    id: 6,
-    bottleneck: "Low match scores",
-    category: "Screening",
-    date: "2025-12-12",
-    time: "03:10 PM",
-  },
-];
+import { trpc } from "@/lib/trpc/client";
+import { formatDate } from "@/lib/library";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 export default function JobsPage() {
-  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
-  const [fromTime, setFromTime] = useState("");
-  const [toTime, setToTime] = useState("");
 
-  const filteredData = bottlenecksData.filter((item) => {
-    const matchesSearch = item.bottleneck
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    const matchesCategory =
-      categoryFilter === "All" || item.category === categoryFilter;
-
-    const itemDate = new Date(item.date);
-    const from = fromDate ? new Date(fromDate) : null;
-    const to = toDate ? new Date(toDate) : null;
-    const matchesDate = (!from || itemDate >= from) && (!to || itemDate <= to);
-
-    const [hours, minutes] = item.time.split(":").map(Number);
-    const itemTimeMinutes = hours * 60 + minutes;
-
-    const parseTimeToMinutes = (time: string) => {
-      if (!time) return null;
-      const [h, m] = time.split(":").map(Number);
-      return h * 60 + m;
-    };
-
-    const fromTimeMinutes = parseTimeToMinutes(fromTime);
-    const toTimeMinutes = parseTimeToMinutes(toTime);
-
-    const matchesTime =
-      (!fromTimeMinutes || itemTimeMinutes >= fromTimeMinutes) &&
-      (!toTimeMinutes || itemTimeMinutes <= toTimeMinutes);
-
-    return matchesSearch && matchesCategory && matchesDate && matchesTime;
+  const auditLogsQuery = trpc.admin.auditLogs.useQuery({
+    query: searchQuery,
+    category: categoryFilter,
+    fromDate: fromDate,
+    toDate: toDate,
   });
 
+  const handleDownloadReport = () => {
+    const doc = new jsPDF();
+    doc.text("Audit Logs Report", 14, 16);
+
+    const tableColumn = ["Description", "Category", "Timestamp"];
+    const tableRows: string[][] = [];
+
+    if (Array.isArray(auditLogsQuery.data?.auditLogs)) {
+      auditLogsQuery.data.auditLogs.forEach((row) => {
+        tableRows.push([
+          row.details,
+          row.event_type,
+          formatDate(row.created_at),
+        ]);
+      });
+    }
+
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 22,
+    });
+
+    doc.save("audit_logs_report.pdf");
+  };
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-red-600">Audit Logs</h2>
@@ -107,9 +63,13 @@ export default function JobsPage() {
           className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:outline-none"
         >
           <option value="All">All Categories</option>
-          <option value="Screening">Screening</option>
-          <option value="Pipeline">Pipeline</option>
-          <option value="Interview">Interview</option>
+          <option value="Status Changed">Status Changed</option>
+          <option value="Profile Updated">Profile Updated</option>
+          <option value="Joblisting modified">Joblisting modified</option>
+          <option value="Joblisting deleted">Joblisting deleted</option>
+          <option value="Applied for job">Applied for job</option>
+          <option value="Changed job alerts">Changed job alerts</option>
+          <option value="Created joblisting">Created joblisting</option>
         </select>
 
         <div className="flex gap-2">
@@ -128,23 +88,8 @@ export default function JobsPage() {
           />
         </div>
 
-        <div className="flex gap-2">
-          <input
-            type="time"
-            value={fromTime}
-            onChange={(e) => setFromTime(e.target.value)}
-            className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:outline-none"
-          />
-          <span className="self-center">to</span>
-          <input
-            type="time"
-            value={toTime}
-            onChange={(e) => setToTime(e.target.value)}
-            className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:outline-none"
-          />
-        </div>
         <button
-          onClick={() => router.push("/profile/edit")}
+          onClick={handleDownloadReport}
           className="text-white bg-red-600 font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:border-red-600 hover:text-red-600"
         >
           DOWNLOAD REPORT
@@ -157,19 +102,19 @@ export default function JobsPage() {
             <tr>
               <th className="p-4 font-semibold border-b">Description</th>
               <th className="p-4 font-semibold border-b">Category</th>
-              <th className="p-4 font-semibold border-b">Date</th>
-              <th className="p-4 font-semibold border-b">Time</th>
+              <th className="p-4 font-semibold border-b">Timestamp</th>
             </tr>
           </thead>
 
           <tbody>
-            {filteredData.length > 0 ? (
-              filteredData.map((row) => (
+            {Array.isArray(auditLogsQuery.data?.auditLogs) &&
+            auditLogsQuery.data.auditLogs.length > 0 ? (
+              auditLogsQuery.data.auditLogs.map((row) => (
                 <tr
                   key={row.id}
                   className="border-t hover:bg-gray-50 transition"
                 >
-                  <td className="p-4">{row.bottleneck}</td>
+                  <td className="p-4">{row.details}</td>
                   <td className="p-4">
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-semibold
@@ -182,11 +127,10 @@ export default function JobsPage() {
                         }
                       `}
                     >
-                      {row.category}
+                      {row.event_type}
                     </span>
                   </td>
-                  <td className="p-4">{row.date}</td>
-                  <td className="p-4">{row.time}</td>
+                  <td className="p-4">{formatDate(row.created_at)}</td>
                 </tr>
               ))
             ) : (

@@ -125,8 +125,8 @@ export interface AdminFeedback extends IdentifiableItem {
   created_at: string;
 }
 
-interface AuditLog extends IdentifiableItem {
-  created_at: string;
+export interface AuditLog extends IdentifiableItem {
+  created_at: string; //timestamp
 
   // actor (who)
   actor_type: "Admin" | "User" | "SuperAdmin";
@@ -134,12 +134,25 @@ interface AuditLog extends IdentifiableItem {
 
   // action (what)
   action: "create" | "update" | "delete";
-  event_type: "Status changed" | "Profile updated";
+  event_type:
+    | "Status changed"
+    | "Profile updated"
+    | "Joblisting modified"
+    | "Joblisting deleted"
+    | "Created joblisting"
+    | "Applied for job"
+    | "Changed job alerts";
 
   // target (to what)
   entity_type: "Job Applicant" | "User" | "Job Listing";
   entity_id: string;
 
   // details (additional info)
-  changes: Record<string, string>;
+  changes: Record<string, Changes>;
+  details: string;
+}
+
+export interface Changes {
+  before: string;
+  after: string;
 }

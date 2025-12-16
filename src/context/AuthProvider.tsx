@@ -1,6 +1,12 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useRef, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { getCsrfToken, refreshToken } from "@/lib/library";
 import { auth } from "@/lib/firebase/client";
 import { useRouter } from "next/navigation";
@@ -22,8 +28,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const router = useRouter();
   const [csrfToken, setCsrfToken] = useState<string | null>(null);
-  const hasSeenInitialAuthState = useRef(false);
-  const wasAuthenticated = useRef(false);
+  // Fixes auto cancel flight requests on guest mode
+  const wasAuthenticated = useRef(false); // To track previous auth state
 
   // Global interval for refreshing token
   useEffect(() => {
@@ -58,17 +64,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const unsubscribe = onAuthStateChanged(
       auth,
       async (firebaseUser: FirebaseAuthUser | null) => {
-        // The first auth callback often fires with `null` while Firebase is initializing.
-        // Cancelling all queries at that moment aborts in-flight public data requests
-        // (shown in Firefox as `NS_BINDING_ABORTED`). Only clear/cancel on a real
-        // transition from authenticated -> unauthenticated.
-        if (!hasSeenInitialAuthState.current) {
-          hasSeenInitialAuthState.current = true;
-          wasAuthenticated.current = Boolean(firebaseUser);
-          setIsAuthenticated(Boolean(firebaseUser));
-          return;
-        }
-
         if (!firebaseUser) {
           try {
             if (wasAuthenticated.current) {

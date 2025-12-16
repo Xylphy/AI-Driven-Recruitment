@@ -4,6 +4,7 @@ import { createClientServer } from "@/lib/supabase/supabase";
 import { countTable, find } from "@/lib/supabase/action";
 import {
   ActiveJob,
+  AuditLog,
   JobListing,
   WeeklyCumulativeApplicants,
 } from "@/types/schema";
@@ -118,6 +119,53 @@ const adminRouter = createTRPCRouter({
 
       return {
         compareResult: await fetch(compareAPI).then((res) => res.json()),
+      };
+    }),
+  auditLogs: authorizedProcedure
+    .input(
+      z.object({
+        query: z.string().optional(),
+        category: z.string().optional(),
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      if (ctx.userJWT!.role === "User") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have permission to access this resource",
+        });
+      }
+
+      const supabase = await createClientServer(1, true);
+      let query = supabase.from("audit_logs").select("*");
+
+      if (input.query) {
+        query = query.ilike("details", `%${input.query}%`);
+      }
+      if (input.category && input.category !== "All") {
+        query = query.eq("event_type", input.category);
+      }
+      if (input.fromDate) {
+        query = query.gte("created_at", input.fromDate);
+      }
+      if (input.toDate) {
+        query = query.lte("created_at", input.toDate);
+      }
+
+      const { data: auditLogs, error: auditLogsError } = await query;
+
+      if (auditLogsError) {
+        console.error("Error fetching audit logs");
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: auditLogsError?.message || "Failed to fetch audit logs",
+        });
+      }
+
+      return {
+        auditLogs,
       };
     }),
 });

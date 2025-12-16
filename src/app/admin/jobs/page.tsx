@@ -76,7 +76,7 @@ export default function JobsPage() {
         className="w-full md:w-1/2 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:outline-none mb-4"
       />
 
-      <div className="overflow-x-auto max-h-[600px]">
+      <div className="overflow-x-auto max-h-150">
         <table className="w-full bg-white shadow-sm rounded-lg overflow-hidden">
           <thead className="bg-gray-100 text-left sticky top-0">
             <tr>

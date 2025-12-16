@@ -46,7 +46,7 @@ export default function Page() {
     setError(null);
 
     await notifyMutation.mutateAsync(
-      { jobId },
+      { jobId, notify: !(jobDetails.data?.notify ?? false) },
       {
         onSuccess() {
           alert("Notification preference updated");
@@ -199,32 +199,34 @@ export default function Page() {
               </span>
             </div>
 
-            {isAuthenticated && (
-              <div className="mt-3">
-                <button
-                  onClick={handleNotify}
-                  disabled={states.isNotifying}
-                  className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm border transition-colors ${
-                    jobDetails.data?.notify
-                      ? "bg-white/90 text-red-600 border-white/90"
-                      : "bg-transparent text-white border-white/50 hover:bg-white/10"
-                  } disabled:opacity-60`}
-                >
-                  {jobDetails.data?.notify ? (
-                    <MdNotificationsActive />
-                  ) : (
-                    <MdNotifications />
-                  )}
-                  <span>
-                    {states.isNotifying
-                      ? "..."
-                      : jobDetails.data?.notify
-                      ? "Notified"
-                      : "Notify me"}
-                  </span>
-                </button>
-              </div>
-            )}
+            {isAuthenticated &&
+              jwtDecoded.data?.user.role === "User" &&
+              jobDetails.data?.isApplicant && (
+                <div className="mt-3">
+                  <button
+                    onClick={handleNotify}
+                    disabled={states.isNotifying}
+                    className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                      jobDetails.data?.notify
+                        ? "bg-white/90 text-red-600 border-white/90"
+                        : "bg-transparent text-white border-white/50 hover:bg-white/10"
+                    } disabled:opacity-60`}
+                  >
+                    {jobDetails.data?.notify ? (
+                      <MdNotificationsActive />
+                    ) : (
+                      <MdNotifications />
+                    )}
+                    <span>
+                      {states.isNotifying
+                        ? "..."
+                        : jobDetails.data?.notify
+                        ? "Notified"
+                        : "Notify me"}
+                    </span>
+                  </button>
+                </div>
+              )}
           </div>
         </div>
         <div className="flex flex-col lg:flex-row py-5">
@@ -309,7 +311,7 @@ export default function Page() {
               </p>
             </section>
 
-            {jwtDecoded.data?.user.role && (
+            {jwtDecoded.data?.user.role !== "User" && (
               <>
                 <button
                   onClick={() => router.push(`/candidates/${jobId}`)}
@@ -334,7 +336,7 @@ export default function Page() {
               </>
             )}
 
-            {!jwtDecoded.data?.user.role && isAuthenticated && (
+            {jwtDecoded.data?.user.role === "User" && isAuthenticated && (
               <>
                 <button
                   className={`mt-2 w-full font-bold py-2 rounded border border-transparent transition-all duration-300 ease-in-out ${
