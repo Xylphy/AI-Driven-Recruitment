@@ -23,7 +23,7 @@ export default function useAuth({
   routerActivation = true,
 }: UseAuthOptions = {}) {
   const router = useRouter();
-  const { isAuthenticated, csrfToken } = useAuthContext();
+  const { isAuthenticated, csrfToken, isLoading } = useAuthContext();
 
   // Use tRPC for auth status checking
   // tRPC for fetching user info
@@ -41,10 +41,10 @@ export default function useAuth({
   );
 
   useEffect(() => {
-    if (routerActivation && !isAuthenticated) {
+    if (routerActivation && !isAuthenticated && !isLoading) {
       router.push("/login");
     }
-  }, [routerActivation, isAuthenticated, router]);
+  }, [routerActivation, isAuthenticated, router, isLoading]);
 
   return {
     userInfo,

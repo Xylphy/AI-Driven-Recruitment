@@ -77,35 +77,61 @@ const candidateRouter = createTRPCRouter({
 
       await mongoDb_client.connect();
 
-      const applicantWithEmail = await Promise.all(
-        (
-          (applicantsWithUsers || []) as Array<
-            JobApplicant & {
-              users: Pick<
-                User,
-                "id" | "last_name" | "first_name" | "firebase_uid" | "resume_id"
-              >;
-              job_listings: { title: string };
-            }
-          >
-        )
-          // Bottleneck here: fetching email and mongodb data for each applicant instead of promise.all of them
-          .map(async (applicant) => {
-            const [firebaseUser, candidateMatch] = await Promise.all([
-              auth.getUser(applicant.users.firebase_uid),
-              getCandidateMatch(applicant.users.id),
-            ]);
+      // Batch fetch Firebase users
+      const applicantsArr = (applicantsWithUsers || []) as Array<
+        JobApplicant & {
+          users: Pick<
+            User,
+            "id" | "last_name" | "first_name" | "firebase_uid" | "resume_id"
+          >;
+          job_listings: { title: string };
+        }
+      >;
 
-            return {
-              applicantId: applicant.id,
-              ...applicant,
-              ...applicant.users,
-              email: firebaseUser.email,
-              users: undefined,
-              candidateMatch,
-            };
-          })
+      const firebaseUidToApplicant = new Map<string, typeof applicantsArr[number]>();
+      const userIdToApplicant = new Map<string, typeof applicantsArr[number]>();
+      const firebaseUids: string[] = [];
+      const userIds: string[] = [];
+      for (const applicant of applicantsArr) {
+        firebaseUidToApplicant.set(applicant.users.firebase_uid, applicant);
+        userIdToApplicant.set(applicant.users.id, applicant);
+        firebaseUids.push(applicant.users.firebase_uid);
+        userIds.push(applicant.users.id);
+      }
+
+      // Batch fetch Firebase users
+      const firebaseUsersResult = await auth.getUsers(
+        firebaseUids.map((uid) => ({ uid }))
       );
+      const firebaseUserByUid = new Map<string, { email: string }>();
+      for (const userRecord of firebaseUsersResult.users) {
+        firebaseUserByUid.set(userRecord.uid, { email: userRecord.email || "" });
+      }
+
+      // Batch fetch candidate matches from MongoDB
+      const candidateMatchPromises = userIds.map(async (userId) => {
+        const candidateMatch = await getCandidateMatch(userId);
+        return { userId, candidateMatch };
+      });
+      const candidateMatches = await Promise.all(candidateMatchPromises);
+      const candidateMatchByUserId = new Map<string, number>();
+      for (const { userId, candidateMatch } of candidateMatches) {
+        candidateMatchByUserId.set(userId, candidateMatch);
+      }
+
+      // Merge all data
+      const applicantWithEmail = applicantsArr.map((applicant) => {
+        const firebaseUser = firebaseUserByUid.get(applicant.users.firebase_uid);
+        const candidateMatch = candidateMatchByUserId.get(applicant.users.id) || 0;
+        return {
+          applicantId: applicant.id,
+          ...applicant,
+          ...applicant.users,
+          email: firebaseUser?.email || "",
+          users: undefined,
+          candidateMatch,
+        };
+      });
 
       await mongoDb_client.close();
 

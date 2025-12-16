@@ -1,14 +1,15 @@
 import { authorizedProcedure, createTRPCRouter } from "../init";
 import { TRPCError } from "@trpc/server";
 import { createClientServer } from "@/lib/supabase/supabase";
-import { countTable, find } from "@/lib/supabase/action";
+import { countTable, find, insertTable } from "@/lib/supabase/action";
 import {
   ActiveJob,
-  AuditLog,
   JobListing,
+  User,
   WeeklyCumulativeApplicants,
 } from "@/types/schema";
 import { z } from "zod";
+import { auth } from "@/lib/firebase/admin";
 
 const adminRouter = createTRPCRouter({
   fetchStats: authorizedProcedure.query(async ({ ctx }) => {
@@ -166,6 +167,147 @@ const adminRouter = createTRPCRouter({
 
       return {
         auditLogs,
+      };
+    }),
+  users: authorizedProcedure
+    .input(
+      z.object({
+        searchQuery: z.string().optional(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      if (ctx.userJWT!.role !== "SuperAdmin") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have permission to access this resource",
+        });
+      }
+      const supabase = await createClientServer(1, true);
+
+      let query = supabase.from("users").select("*").neq("role", "SuperAdmin");
+
+      // No results when search query is empty or undefined
+      if (input.searchQuery && input.searchQuery.trim() !== "") {
+        query = query.or(
+          `first_name.ilike.%${input.searchQuery}%,last_name.ilike.%${input.searchQuery}%,role.ilike.%${input.searchQuery}%`
+        );
+      }
+
+      const { data: users, error: usersError } = await query;
+
+      if (usersError) {
+        console.error("Error fetching users");
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: usersError?.message || "Failed to fetch users",
+        });
+      }
+
+      // Batch fetch Firebase emails
+      const firebaseUids = (users || [])
+        .map((user) => user.firebase_uid)
+        .filter(Boolean);
+
+      let firebaseUserByUid = new Map<string, { email: string }>();
+
+      if (firebaseUids.length > 0) {
+        const firebaseUsersResult = await auth.getUsers(
+          firebaseUids.map((uid) => ({ uid }))
+        );
+        firebaseUserByUid = new Map(
+          firebaseUsersResult.users.map((userRecord) => [
+            userRecord.uid,
+            { email: userRecord.email || "" },
+          ])
+        );
+      }
+
+      // Merge Firebase email into users
+      const usersWithEmail = (users || []).map((user) => ({
+        ...user,
+        email: firebaseUserByUid.get(user.firebase_uid)?.email || "",
+      }));
+
+      return {
+        users: usersWithEmail as (User & { email: string })[],
+      };
+    }),
+  changeUserRole: authorizedProcedure
+    .input(
+      z.object({
+        userId: z.string(),
+        newRole: z.enum(["Admin", "User"]),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.userJWT!.role !== "SuperAdmin") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have permission to access this resource",
+        });
+      }
+
+      const supabase = await createClientServer(1, true);
+
+      const { data: user, error: userError } = await find<User>(
+        supabase,
+        "users",
+        [
+          {
+            column: "id",
+            value: input.userId,
+          },
+        ]
+      ).single();
+
+      if (userError || !user) {
+        console.error("Error fetching user for role change");
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: userError?.message || "Failed to fetch user",
+        });
+      }
+
+      const { error: updateError } = await supabase
+        .from("users")
+        .update({ role: input.newRole })
+        .eq("id", input.userId);
+
+      if (updateError) {
+        console.error("Error updating user role");
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: updateError?.message || "Failed to update user role",
+        });
+      }
+
+      const changes = {
+        role: { from: user.role, to: input.newRole },
+      };
+      const details = `Changed role of user ${user.first_name} ${user.last_name} (ID: ${user.id}) from ${user.role} to ${input.newRole}.`;
+
+      const { error: insertLogError } = await insertTable(
+        supabase,
+        "audit_logs",
+        {
+          actor_type: ctx.userJWT!.role,
+          actor_id: ctx.userJWT!.id,
+          action: "update",
+          event_type: "Changed user role",
+          entity_type: "User",
+          entity_id: input.userId,
+          changes,
+          details,
+        }
+      );
+
+      if (insertLogError) {
+        console.error("Error inserting audit log for role change");
+      }
+
+      return {
+        success: true,
+        message: "User role updated successfully",
       };
     }),
 });

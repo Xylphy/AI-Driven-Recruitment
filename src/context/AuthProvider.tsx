@@ -19,13 +19,16 @@ import {
 const AuthContext = createContext<{
   isAuthenticated: boolean;
   csrfToken?: string | null;
+  isLoading?: boolean;
 }>({
   isAuthenticated: false,
   csrfToken: null,
+  isLoading: true,
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   const [csrfToken, setCsrfToken] = useState<string | null>(null);
   // Fixes auto cancel flight requests on guest mode
@@ -44,6 +47,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     const interval = setInterval(refresh, 50 * 60 * 1000); // 50 minutes
+
+    setIsLoading(false); // Loading complete once authenticated
 
     return () => clearInterval(interval);
   }, [isAuthenticated, router]);
@@ -101,7 +106,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [csrfToken]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, csrfToken }}>
+    <AuthContext.Provider value={{ isAuthenticated, csrfToken, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

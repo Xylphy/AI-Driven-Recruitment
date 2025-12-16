@@ -1,66 +1,27 @@
 "use client";
 
-import { useState, useMemo } from "react";
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: "Admin" | "Interviewer" | "Applicant";
-}
+import { trpc } from "@/lib/trpc/client";
+import { useState } from "react";
 
 export default function UsersPage() {
   const [searchInput, setSearchInput] = useState("");
-  const [users, setUsers] = useState<User[]>([
-    {
-      id: "1",
-      name: "Alice Johnson",
-      email: "alice@example.com",
-      role: "Admin",
-    },
-    {
-      id: "2",
-      name: "Bob Smith",
-      email: "bob@example.com",
-      role: "Interviewer",
-    },
-    {
-      id: "3",
-      name: "Charlie Brown",
-      email: "charlie@example.com",
-      role: "Applicant",
-    },
-    {
-      id: "4",
-      name: "Dana White",
-      email: "dana@example.com",
-      role: "Applicant",
-    },
-    {
-      id: "5",
-      name: "Eve Black",
-      email: "eve@example.com",
-      role: "Interviewer",
-    },
-  ]);
+  const usersQuery = trpc.admin.users.useQuery({
+    searchQuery: searchInput || undefined,
+  });
+  const changeRoleMutation = trpc.admin.changeUserRole.useMutation();
 
-  const filteredUsers = useMemo(() => {
-    return users.filter((user) => {
-      const input = searchInput.toLowerCase();
-      return (
-        user.name.toLowerCase().includes(input) ||
-        user.role.toLowerCase().includes(input)
-      );
-    });
-  }, [searchInput, users]);
-
-  const handleRoleChange = (userId: string, newRole: User["role"]) => {
-    setUsers((prev) =>
-      prev.map((user) =>
-        user.id === userId ? { ...user, role: newRole } : user
-      )
+  const handleRoleChange = async (userId: string, newRole: "Admin" | "User") =>
+    await changeRoleMutation.mutateAsync(
+      { userId, newRole },
+      {
+        onSuccess: () => {
+          usersQuery.refetch();
+        },
+        onError: (error) => {
+          alert("Failed to change user role: " + error.message);
+        },
+      }
     );
-  };
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md space-y-6">
@@ -76,7 +37,7 @@ export default function UsersPage() {
       />
 
       {/* Table */}
-      <div className="overflow-x-auto max-h-[600px]">
+      <div className="overflow-x-auto max-h-150">
         <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
           <thead className="bg-gray-100 text-gray-600 text-sm uppercase sticky top-0">
             <tr>
@@ -87,20 +48,23 @@ export default function UsersPage() {
             </tr>
           </thead>
           <tbody className="text-gray-700">
-            {filteredUsers.length > 0 ? (
-              filteredUsers.map((user) => (
+            {Array.isArray(usersQuery.data?.users) &&
+            usersQuery.data.users.length > 0 ? (
+              usersQuery.data.users.map((user) => (
                 <tr
                   key={user.id}
                   className="border-t hover:bg-gray-50 transition"
                 >
-                  <td className="py-3 px-4 font-medium">{user.name}</td>
+                  <td className="py-3 px-4 font-medium">
+                    {user.first_name} {user.last_name}
+                  </td>
                   <td className="py-3 px-4">{user.email}</td>
                   <td className="py-3 px-4">
                     <span
                       className={`px-3 py-1 text-sm font-semibold rounded-full ${
                         user.role === "Admin"
                           ? "bg-green-100 text-green-700"
-                          : user.role === "Interviewer"
+                          : user.role === "User"
                           ? "bg-blue-100 text-blue-700"
                           : "bg-gray-100 text-gray-700"
                       }`}
@@ -114,14 +78,13 @@ export default function UsersPage() {
                       onChange={(e) =>
                         handleRoleChange(
                           user.id,
-                          e.target.value as User["role"]
+                          e.target.value as "Admin" | "User"
                         )
                       }
                       className="border rounded px-2 py-1 text-sm focus:ring-1 focus:ring-red-500 focus:outline-none"
                     >
                       <option value="Admin">Admin</option>
-                      <option value="Interviewer">Interviewer</option>
-                      <option value="Applicant">Applicant</option>
+                      <option value="User">User</option>
                     </select>
                   </td>
                 </tr>

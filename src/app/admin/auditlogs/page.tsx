@@ -70,6 +70,7 @@ export default function JobsPage() {
           <option value="Applied for job">Applied for job</option>
           <option value="Changed job alerts">Changed job alerts</option>
           <option value="Created joblisting">Created joblisting</option>
+          <option value="Changed user role">Changed user role</option>
         </select>
 
         <div className="flex gap-2">
