@@ -53,7 +53,6 @@ export default function LoginPage() {
           Authorization: `Bearer ${userCredential.user.uid}`,
         },
         credentials: "include",
-        cache: "no-store",
       });
 
       if (!res.ok) throw new Error("Failed to authenticate");

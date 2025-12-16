@@ -11,7 +11,7 @@ export default function Careers() {
     return (
       <div className="text-gray-800" aria-busy="true">
         {/* Hero skeleton */}
-        <section className="relative w-full h-[300px] bg-gray-200 flex items-center justify-center">
+        <section className="relative w-full h-75 bg-gray-200 flex items-center justify-center">
           <div className="absolute inset-0 bg-linear-to-r from-gray-200 via-gray-100 to-gray-200 animate-pulse" />
           <div className="relative z-10 w-3/4 max-w-4xl text-center">
             <div className="h-8 bg-gray-300 rounded w-1/3 mx-auto mb-4"></div>
@@ -29,7 +29,7 @@ export default function Careers() {
           </div>
 
           {/* Job list skeleton */}
-          <div className="md:col-span-2 space-y-4 overflow-hidden max-h-[500px] pr-2">
+          <div className="md:col-span-2 space-y-4 overflow-hidden max-h-125 pr-2">
             {Array.from({ length: 6 }).map((_, index) => (
               <div
                 key={index}
@@ -71,7 +71,7 @@ export default function Careers() {
   return (
     <div className="text-gray-800">
       <section
-        className="relative w-full h-[300px] bg-cover bg-center"
+        className="relative w-full h-75 bg-cover bg-center"
         style={{ backgroundImage: "url('/workspace.jpg')" }}
       >
         <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center">
@@ -101,7 +101,7 @@ export default function Careers() {
           </button>
         </div>
 
-        <div className="md:col-span-2 space-y-4 overflow-y-auto max-h-[500px] pr-2">
+        <div className="md:col-span-2 space-y-4 overflow-y-auto max-h-125 pr-2">
           {jobsQuery.data?.jobs.map((job, index) => (
             <div
               key={index}

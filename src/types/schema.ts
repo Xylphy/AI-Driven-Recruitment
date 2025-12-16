@@ -124,3 +124,22 @@ export interface AdminFeedback extends IdentifiableItem {
   feedback: string;
   created_at: string;
 }
+
+interface AuditLog extends IdentifiableItem {
+  created_at: string;
+
+  // actor (who)
+  actor_type: "Admin" | "User" | "SuperAdmin";
+  actor_id: string; // user_id
+
+  // action (what)
+  action: "create" | "update" | "delete";
+  event_type: "Status changed" | "Profile updated";
+
+  // target (to what)
+  entity_type: "Job Applicant" | "User" | "Job Listing";
+  entity_id: string;
+
+  // details (additional info)
+  changes: Record<string, string>;
+}

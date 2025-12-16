@@ -113,7 +113,7 @@ export async function GET(request: NextRequest) {
           secure: process.env.NODE_ENV === "production",
           sameSite: "strict",
           maxAge: 60 * 60 * 24 * 7, // 7 days
-          path: "/api/auth/refresh",
+          path: "/api/auth/refresh", // Scoped to refresh endpoint
         }
       )
     );

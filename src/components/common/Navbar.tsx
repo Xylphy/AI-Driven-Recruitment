@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Bell } from "lucide-react";
 import useNotifications from "@/hooks/useNotifications";
 import { useRouter } from "next/navigation";
@@ -14,20 +14,17 @@ const profileImageUrl = "/default-avatar.png";
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const router = useRouter();
-  const { userInfo } = useAuth({
-    fetchUser: true,
-  });
+
   const { isAuthenticated } = useAuth({
     routerActivation: false,
+    fetchUser: false,
   });
+
   const jwtInfo = trpc.auth.decodeJWT.useQuery(undefined, {
     enabled: isAuthenticated,
   });
-  const isAdmin = userInfo.isSuccess && jwtInfo.data?.user.role !== "User";
 
-  useEffect(() => {
-    void jwtInfo.refetch();
-  }, [isAuthenticated]);
+  const isAdmin = jwtInfo.data?.user.role !== "User";
 
   const {
     notifications,
@@ -57,7 +54,7 @@ export default function Navbar() {
               <button onClick={() => setOpen(!open)} className="relative">
                 <Bell className="w-6 h-6 text-gray-600 hover:text-red-600" />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-[18px] h-4 bg-red-600 text-white text-xs flex items-center justify-center rounded-full px-1">
+                  <span className="absolute -top-1 -right-1 min-w-4.5 h-4 bg-red-600 text-white text-xs flex items-center justify-center rounded-full px-1">
                     {unreadCount > 99 ? "99+" : unreadCount}
                   </span>
                 )}

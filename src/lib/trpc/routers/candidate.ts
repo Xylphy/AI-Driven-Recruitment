@@ -11,7 +11,7 @@ import { findOne } from "@/lib/mongodb/action";
 import mongoDb_client from "@/lib/mongodb/mongodb";
 import { AdminFeedback, JobApplicant, User } from "@/types/schema";
 import admin, { auth, db } from "@/lib/firebase/admin";
-import { Admin, ObjectId } from "mongodb";
+import { ObjectId } from "mongodb";
 import { Notification } from "@/types/types";
 
 type AICompareRes = {
