@@ -21,8 +21,8 @@ import {
   JobListingRequirements,
   JobApplicant,
   JobTags,
-  Admin,
   IdentifiableItem,
+  Changes,
 } from "@/types/schema";
 import { jobListingSchema } from "@/lib/schemas";
 import type { Notification } from "@/types/types";
@@ -44,11 +44,7 @@ const jobListingRouter = createTRPCRouter({
       const userId = ctx.userJWT!.id;
       const supabase = await createClientServer(1, true);
 
-      const { data: adminData } = await find<Admin>(supabase, "admins", [
-        { column: "user_id", value: userId },
-      ]).single();
-
-      if (adminData) {
+      if (ctx.userJWT!.role !== "User") {
         const joblistingsResult = await find<JobListing>(
           supabase,
           "job_listings"
@@ -117,8 +113,7 @@ const jobListingRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      const { isAdmin } = ctx.userJWT!;
-      if (!isAdmin) {
+      if (ctx.userJWT!.role === "User") {
         throw new TRPCError({
           code: "UNAUTHORIZED",
           message: "Insufficient permissions",
@@ -146,6 +141,25 @@ const jobListingRouter = createTRPCRouter({
         job_id: input.joblistingId,
       }).many();
       await mongoDb_client.close();
+
+      const { error: insertLogError } = await insertTable(
+        supabase,
+        "audit_logs",
+        {
+          actor_type: ctx.userJWT!.role,
+          actor_id: ctx.userJWT!.id,
+          action: "delete",
+          event_type: "Joblisting deleted",
+          entity_type: "Job Listing",
+          entity_id: input.joblistingId,
+          changes: {},
+          details: `Job listing with ID ${input.joblistingId} was deleted.`,
+        }
+      );
+
+      if (insertLogError) {
+        console.error("Error inserting audit log:", insertLogError);
+      }
 
       return { success: true, message: "Job listing deleted successfully" };
     }),
@@ -246,7 +260,7 @@ const jobListingRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      if (ctx.userJWT!.isAdmin) {
+      if (ctx.userJWT!.role !== "User") {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Admins cannot apply for jobs",
@@ -312,6 +326,27 @@ const jobListingRouter = createTRPCRouter({
         },
       });
 
+      const { error: insertLogError } = await insertTable(
+        supabaseClient,
+        "audit_logs",
+        {
+          actor_type: ctx.userJWT!.role,
+          actor_id: ctx.userJWT!.id,
+          action: "create",
+          event_type: "Applied for job",
+          entity_type: "Job Applicant",
+          entity_id: applicantsID[0].id,
+          changes: {},
+          details: `User with ID ${
+            ctx.userJWT!.id
+          } applied for job listing with ID ${input.jobId}.`,
+        }
+      );
+
+      if (insertLogError) {
+        console.error("Error inserting audit log:", insertLogError);
+      }
+
       return {
         success: true,
         message: "Application submitted successfully",
@@ -324,7 +359,7 @@ const jobListingRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      if (!ctx.userJWT!.isAdmin) {
+      if (ctx.userJWT!.role === "User") {
         throw new TRPCError({
           code: "UNAUTHORIZED",
           message: "Insufficient permissions",
@@ -332,6 +367,19 @@ const jobListingRouter = createTRPCRouter({
       }
 
       const supabase = await createClientServer(1, true);
+
+      const { data: oldJoblisting, error: oldJoblistingError } =
+        await find<JobListing>(supabase, "job_listings", [
+          { column: "id", value: input.jobId },
+        ]).single();
+
+      if (oldJoblistingError || !oldJoblisting) {
+        console.error("Error fetching old job listing:", oldJoblistingError);
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Job listing not found",
+        });
+      }
 
       await Promise.all([
         deleteRow(supabase, "jl_qualifications", "joblisting_id", input.jobId),
@@ -406,12 +454,52 @@ const jobListingRouter = createTRPCRouter({
         });
       }
 
+      const changes: Record<string, Changes> = {};
+
+      if (oldJoblisting.title !== input.title) {
+        changes.title = {
+          before: oldJoblisting.title,
+          after: input.title,
+        };
+      }
+      if (oldJoblisting.location !== input.location) {
+        changes.location = {
+          before: oldJoblisting.location,
+          after: input.location,
+        };
+      }
+      if (oldJoblisting.is_fulltime !== input.isFullTime) {
+        changes.is_fulltime = {
+          before: oldJoblisting.is_fulltime.toString(),
+          after: input.isFullTime.toString(),
+        };
+      }
+
+      const { error: insertLogError } = await insertTable(
+        supabase,
+        "audit_logs",
+        {
+          actor_type: ctx.userJWT!.role,
+          actor_id: ctx.userJWT!.id,
+          action: "update",
+          event_type: "Joblisting modified",
+          entity_type: "Job Listing",
+          entity_id: input.jobId,
+          changes,
+          details: `Job listing with ID ${input.jobId} was updated.`,
+        }
+      );
+
+      if (insertLogError) {
+        console.error("Error inserting audit log:", insertLogError);
+      }
+
       return { success: true, message: "Job listing updated successfully" };
     }),
   createJoblisting: rateLimitedProcedure
     .input(jobListingSchema)
     .mutation(async ({ input, ctx }) => {
-      if (!ctx.userJWT!.isAdmin) {
+      if (ctx.userJWT!.role === "User") {
         throw new TRPCError({
           code: "UNAUTHORIZED",
           message: "Insufficient permissions",
@@ -544,6 +632,25 @@ const jobListingRouter = createTRPCRouter({
         )
       );
 
+      const { error: insertLogError } = await insertTable(
+        supabase,
+        "audit_logs",
+        {
+          actor_type: ctx.userJWT!.role,
+          actor_id: ctx.userJWT!.id,
+          action: "create",
+          event_type: "Created joblisting",
+          entity_type: "Job Listing",
+          entity_id: insertedData[0].id,
+          changes: {},
+          details: `Job listing with ID ${insertedData[0].id} was created.`,
+        }
+      );
+
+      if (insertLogError) {
+        console.error("Error inserting audit log:", insertLogError);
+      }
+
       return { success: true, message: "Job listing created successfully" };
     }),
   fetchJobs: rateLimitedProcedure.query(async () => {
@@ -583,22 +690,66 @@ const jobListingRouter = createTRPCRouter({
     .input(
       z.object({
         jobId: z.uuid(),
+        notify: z.boolean(),
       })
     )
     .mutation(async ({ input, ctx }) => {
+      if (ctx.userJWT!.role !== "User") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Only users can set notifications",
+        });
+      }
+
       const supabase = await createClientServer(1, true);
 
       await updateTable(
         supabase,
         "job_applicants",
         {
-          notify: true,
+          notify: input.notify,
         },
         [
           { column: "user_id", value: ctx.userJWT!.id },
           { column: "joblisting_id", value: input.jobId },
         ]
       );
+
+      const changes: Record<string, Changes> = {
+        notify: {
+          before: (!input.notify).toString(),
+          after: input.notify.toString(),
+        },
+      };
+
+      const details = input.notify
+        ? `User with ID ${
+            ctx.userJWT!.id
+          } subscribed to job alerts for job listing with ID ${input.jobId}.`
+        : `User with ID ${
+            ctx.userJWT!.id
+          } unsubscribed from job alerts for job listing with ID ${
+            input.jobId
+          }.`;
+
+      const { error: insertLogError } = await insertTable(
+        supabase,
+        "audit_logs",
+        {
+          actor_type: ctx.userJWT!.role,
+          actor_id: ctx.userJWT!.id,
+          action: "update",
+          event_type: "Changed job alerts",
+          entity_type: "Job Applicant",
+          entity_id: input.jobId,
+          changes,
+          details,
+        }
+      );
+
+      if (insertLogError) {
+        console.error("Error inserting audit log:", insertLogError);
+      }
 
       return { success: true, message: "You will be notified for updates" };
     }),

@@ -4,8 +4,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { serialize } from "cookie";
 import jwt from "jsonwebtoken";
 import { find } from "@/lib/supabase/action";
-import { IdentifiableItem } from "@/types/types";
 import { generateCsrfToken } from "@/lib/csrf";
+import { User } from "@/types/schema";
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,18 +18,11 @@ export async function GET(request: NextRequest) {
     }
     const supabase = await createClientServer(1, true);
 
-    const { data, error } = await find<
-      IdentifiableItem & {
-        admins: IdentifiableItem | null;
-      }
-    >(
-      supabase,
-      "users",
-      [{ column: "firebase_uid", value: authHeader.split(" ")[1] }],
-      "id, admins!left(id)"
-    ).single();
+    const { data: userData, error } = await find<User>(supabase, "users", [
+      { column: "firebase_uid", value: authHeader.split(" ")[1] },
+    ]).single();
 
-    if (error || !data) {
+    if (error || !userData) {
       return NextResponse.json(
         { error: "Invalid token or user not found" },
         { status: 401 }
@@ -48,8 +41,8 @@ export async function GET(request: NextRequest) {
         "token",
         jwt.sign(
           {
-            id: data.id,
-            isAdmin: !!data.admins,
+            id: userData.id,
+            role: userData.role,
             type: "access",
           },
           process.env.JWT_SECRET as string,
@@ -71,7 +64,7 @@ export async function GET(request: NextRequest) {
         "refreshToken",
         jwt.sign(
           {
-            userId: data.id,
+            userId: userData.id,
             type: "refresh",
           },
           process.env.REFRESH_TOKEN_SECRET as string,

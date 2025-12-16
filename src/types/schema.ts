@@ -35,6 +35,7 @@ export interface User extends IdentifiableItem {
   parsed_resume_id: string | null;
   transcript_id: string | null;
   transcribed_id: string | null;
+  role: "Admin" | "User" | "SuperAdmin";
 }
 
 export interface EducationalDetails
@@ -115,4 +116,43 @@ export interface WeeklyCumulativeApplicants {
   week_end: string;
   iso_week: string;
   applicants: number;
+}
+
+export interface AdminFeedback extends IdentifiableItem {
+  admin_id: string;
+  applicant_id: string;
+  feedback: string;
+  created_at: string;
+}
+
+export interface AuditLog extends IdentifiableItem {
+  created_at: string; //timestamp
+
+  // actor (who)
+  actor_type: "Admin" | "User" | "SuperAdmin";
+  actor_id: string; // user_id
+
+  // action (what)
+  action: "create" | "update" | "delete";
+  event_type:
+    | "Status changed"
+    | "Profile updated"
+    | "Joblisting modified"
+    | "Joblisting deleted"
+    | "Created joblisting"
+    | "Applied for job"
+    | "Changed job alerts";
+
+  // target (to what)
+  entity_type: "Job Applicant" | "User" | "Job Listing";
+  entity_id: string;
+
+  // details (additional info)
+  changes: Record<string, Changes>;
+  details: string;
+}
+
+export interface Changes {
+  before: string;
+  after: string;
 }

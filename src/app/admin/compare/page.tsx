@@ -1,9 +1,11 @@
 "use client";
 
 import useAuth from "@/hooks/useAuth";
+import { formatDate } from "@/lib/library";
 import { trpc } from "@/lib/trpc/client";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import Select from "react-select";
 
 interface WorkExperience {
   company: string;
@@ -12,110 +14,119 @@ interface WorkExperience {
   end_date?: Date;
 }
 
-interface AdminFeedbackPost {
-  author: string;
-  content: string;
-  timestamp: string;
-  candidate: "A" | "B";
+interface CandidateID {
+  userId?: string;
+  applicantId?: string;
 }
 
 export default function ComparePage() {
   const router = useRouter();
   const [selectedJobId, setSelectedJobId] = useState<string>("");
-  const [candidateA, setCandidateA] = useState<string>("");
-  const [candidateB, setCandidateB] = useState<string>("");
+  const [candidateA, setCandidateA] = useState<CandidateID>({});
+  const [candidateB, setCandidateB] = useState<CandidateID>({});
 
   // placeholder lang
   const [adminFeedbackA, setAdminFeedbackA] = useState<string>("");
   const [adminFeedbackB, setAdminFeedbackB] = useState<string>("");
-  const [submittedFeedbackA, setSubmittedFeedbackA] = useState<string | null>(
-    null
-  );
-  const [submittedFeedbackB, setSubmittedFeedbackB] = useState<string | null>(
-    null
-  );
 
   // New state for collapsible feedback and posts
   const [showAdminFeedbackFields, setShowAdminFeedbackFields] = useState(false);
-  const [feedbackPosts, setFeedbackPosts] = useState<AdminFeedbackPost[]>([]);
 
   const { isAuthenticated } = useAuth();
   const jwtQuery = trpc.auth.decodeJWT.useQuery(undefined, {
     enabled: isAuthenticated,
   });
 
+  useEffect(() => {
+    if (jwtQuery.isFetched && !jwtQuery.data?.user.role) {
+      alert("You are not authorized to access this page.");
+      router.push("/profile");
+    }
+  }, [jwtQuery.isFetched, jwtQuery.data?.user.role, router]);
+
   const fetchJobsQuery = trpc.admin.fetchAllJobs.useQuery(undefined, {
-    enabled: jwtQuery.data?.user.isAdmin,
+    enabled: jwtQuery.data?.user.role !== "User",
   });
 
-  if (!jwtQuery.data?.user.isAdmin) {
-    alert("You are not authorized to access this page.");
-    router.push("/profile");
-  }
+  const AIQuery = trpc.candidate.fetchAICompare.useQuery(
+    {
+      userId_A: candidateA.userId!,
+      userId_B: candidateB.userId!,
+      jobId: selectedJobId,
+    },
+    {
+      enabled: !!candidateA.userId && !!candidateB.userId,
+    }
+  );
 
   const candidatesQuery = trpc.candidate.getCandidateFromJob.useQuery(
     {
       jobId: selectedJobId,
     },
     {
-      enabled: !!selectedJobId && jwtQuery.data?.user.isAdmin,
+      enabled: !!selectedJobId && jwtQuery.data?.user.role !== "User",
     }
   );
 
   const candidateDataA = trpc.candidate.fetchCandidateProfile.useQuery(
     {
-      candidateId: candidateA,
+      candidateId: candidateA.applicantId!,
       fetchResume: true,
       fetchScore: true,
       fetchTranscribed: true,
     },
     {
-      enabled: !!candidateA,
+      enabled: !!candidateA.applicantId,
     }
   );
 
   const candidateDataB = trpc.candidate.fetchCandidateProfile.useQuery(
     {
-      candidateId: candidateB,
+      candidateId: candidateB.applicantId!,
       fetchResume: true,
       fetchScore: true,
       fetchTranscribed: true,
     },
     {
-      enabled: !!candidateB,
+      enabled: !!candidateB.applicantId,
     }
   );
+
+  const adminFeedbacksQuery = trpc.candidate.fetchAdminFeedbacks.useQuery(
+    {
+      candidateAId: candidateA.applicantId!,
+      candidateBId: candidateB.applicantId!,
+    },
+    {
+      enabled: !!candidateA.applicantId && !!candidateB.applicantId,
+    }
+  );
+
+  const postAdminFeedbackMutation =
+    trpc.candidate.postAdminFeedback.useMutation();
 
   // placeholder lang
   const handleSubmitFeedback = () => {
     if (!jwtQuery.data?.user) return;
 
-    const adminName = `${jwtQuery.data.user.firstName} ${jwtQuery.data.user.lastName}`;
-    const timestamp = new Date().toLocaleString();
+    const adminFeedbackATrimmed = adminFeedbackA.trim();
 
-    if (adminFeedbackA.trim()) {
-      setFeedbackPosts((prev) => [
-        ...prev,
-        {
-          author: adminName,
-          content: adminFeedbackA,
-          timestamp,
-          candidate: "A",
-        },
-      ]);
+    if (adminFeedbackATrimmed) {
+      postAdminFeedbackMutation.mutate({
+        candidateId: candidateA.applicantId!,
+        feedback: adminFeedbackATrimmed,
+      });
+
       setAdminFeedbackA("");
     }
 
-    if (adminFeedbackB.trim()) {
-      setFeedbackPosts((prev) => [
-        ...prev,
-        {
-          author: adminName,
-          content: adminFeedbackB,
-          timestamp,
-          candidate: "B",
-        },
-      ]);
+    const adminFeedbackBTrimmed = adminFeedbackB.trim();
+
+    if (adminFeedbackBTrimmed) {
+      postAdminFeedbackMutation.mutate({
+        candidateId: candidateB.applicantId!,
+        feedback: adminFeedbackBTrimmed,
+      });
       setAdminFeedbackB("");
     }
 
@@ -127,10 +138,12 @@ export default function ComparePage() {
       <h2 className="text-2xl font-bold text-red-600 mb-6">
         Compare Candidates
       </h2>
+
       <div className="mb-8">
         <label className="block text-sm font-medium text-gray-600 mb-2">
           Select Job
         </label>
+
         {fetchJobsQuery.isLoading || fetchJobsQuery.isFetching ? (
           <div className="w-full p-3 border rounded-md bg-gray-50 flex items-center gap-3">
             <div className="h-8 w-8 rounded-full bg-gray-200 animate-pulse" />
@@ -141,22 +154,35 @@ export default function ComparePage() {
             <span className="text-sm text-gray-500">Loading jobs...</span>
           </div>
         ) : (
-          <select
-            className="w-full p-2 border rounded-md focus:ring-2 focus:ring-[#E30022]"
-            value={selectedJobId}
-            onChange={(e) => setSelectedJobId(e.target.value)}
-          >
-            <option value="">-- Select Job --</option>
-            {fetchJobsQuery.data?.jobs?.map((job) => (
-              <option key={job.id} value={job.id}>
-                {job.title}
-              </option>
-            ))}
-          </select>
+          <Select
+            options={fetchJobsQuery.data?.jobs?.map((job) => ({
+              value: job.id,
+              label: job.title,
+            }))}
+            value={
+              selectedJobId
+                ? {
+                    value: selectedJobId,
+                    label: fetchJobsQuery.data?.jobs?.find(
+                      (j) => j.id === selectedJobId
+                    )?.title,
+                  }
+                : null
+            }
+            onChange={(option) => setSelectedJobId(option?.value || "")}
+            placeholder="-- Select Job --"
+            isClearable
+            className="w-full"
+            styles={{
+              control: (provided) => ({
+                ...provided,
+                borderColor: "#E30022",
+              }),
+            }}
+          />
         )}
       </div>
-
-      {selectedJobId && (
+      {selectedJobId ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           {candidatesQuery.isLoading || candidatesQuery.isFetching ? (
             <div className="col-span-1 md:col-span-2 space-y-4">
@@ -203,43 +229,67 @@ export default function ComparePage() {
                 <label className="block text-sm font-medium text-gray-600 mb-2">
                   Select Candidate A
                 </label>
-                <select
-                  className="w-full p-2 border rounded-md focus:ring-2 focus:ring-[#E30022]"
-                  value={candidateA}
-                  onChange={(e) => setCandidateA(e.target.value)}
-                >
-                  <option value="">-- Select Candidate A --</option>
-                  {candidatesQuery.data?.applicants.map((candidate) => (
-                    <option key={candidate.id} value={candidate.id}>
-                      {candidate.name}
-                    </option>
-                  ))}
-                </select>
+                <Select
+                  options={candidatesQuery.data?.applicants.map(
+                    (candidate) => ({
+                      value: {
+                        userId: candidate.user_id,
+                        applicantId: candidate.id,
+                      },
+                      label: candidate.name,
+                    })
+                  )}
+                  value={
+                    candidateA.userId
+                      ? {
+                          value: candidateA,
+                          label: candidatesQuery.data?.applicants.find(
+                            (c) => c.user_id === candidateA.userId
+                          )?.name,
+                        }
+                      : null
+                  }
+                  onChange={(option) => setCandidateA(option?.value ?? {})}
+                  placeholder="-- Select Candidate A --"
+                  isClearable
+                />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-600 mb-2">
                   Select Candidate B
                 </label>
-                <select
-                  className="w-full p-2 border rounded-md focus:ring-2 focus:ring-[#E30022]"
-                  value={candidateB}
-                  onChange={(e) => setCandidateB(e.target.value)}
-                >
-                  <option value="">-- Select Candidate B --</option>
-                  {candidatesQuery.data?.applicants.map((candidate) => (
-                    <option key={candidate.id} value={candidate.id}>
-                      {candidate.name}
-                    </option>
-                  ))}
-                </select>
+                <Select
+                  options={candidatesQuery.data?.applicants.map(
+                    (candidate) => ({
+                      value: {
+                        userId: candidate.user_id,
+                        applicantId: candidate.id,
+                      },
+                      label: candidate.name,
+                    })
+                  )}
+                  value={
+                    candidateB.userId
+                      ? {
+                          value: candidateB,
+                          label: candidatesQuery.data?.applicants.find(
+                            (c) => c.user_id === candidateB.userId
+                          )?.name,
+                        }
+                      : null
+                  }
+                  onChange={(option) => setCandidateB(option?.value ?? {})}
+                  placeholder="-- Select Candidate B --"
+                  isClearable
+                />
               </div>
             </>
           )}
         </div>
-      )}
+      ) : null}
 
-      {candidateA && candidateB ? (
+      {candidateA.applicantId && candidateB.applicantId ? (
         <>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
             <div className="p-5 bg-gray-50 rounded-lg border border-gray-200">
@@ -257,7 +307,7 @@ export default function ComparePage() {
               <p className="text-sm text-gray-500 mb-4">
                 {
                   candidatesQuery.data?.applicants.find(
-                    (c) => c.id === candidateA
+                    (c) => c.id === candidateA.applicantId
                   )?.email
                 }
               </p>
@@ -382,25 +432,70 @@ export default function ComparePage() {
               <label className="block text-sm font-medium text-gray-600 mb-2">
                 AI Feedback
               </label>
-              <textarea
-                readOnly
-                placeholder="AI generated comparison feedback will appear here..."
-                className="w-full p-3 border rounded-md bg-gray-100 text-gray-500"
-                rows={4}
-              />
+              {AIQuery.isLoading || AIQuery.isFetching ? (
+                // Loading skeleton animation
+                <div className="animate-pulse space-y-3">
+                  <div className="h-6 bg-gray-200 rounded w-1/2 mb-2" />
+                  <div className="h-4 bg-gray-200 rounded w-1/3 mb-2" />
+                  <div className="h-20 bg-gray-200 rounded mb-2" />
+                  <div className="h-4 bg-gray-200 rounded w-1/4 mb-2" />
+                  <div className="h-10 bg-gray-200 rounded mb-2" />
+                  <div className="h-4 bg-gray-200 rounded w-1/4 mb-2" />
+                  <div className="h-12 bg-gray-200 rounded" />
+                </div>
+              ) : AIQuery.data ? (
+                <>
+                  <h1 className="text-xl mb-2">
+                    Better Candidate:{" "}
+                    <b className="text-red-600">
+                      {AIQuery.data.better_candidate}
+                    </b>
+                  </h1>
+                  <h3>
+                    <b>Reason</b>
+                  </h3>
+                  <textarea
+                    readOnly
+                    value={AIQuery.data.reason}
+                    className="w-full p-3 border rounded-md bg-gray-100 text-gray-500"
+                    rows={4}
+                  ></textarea>
+                  <h3>
+                    <b>Highlights</b>
+                  </h3>
+                  <textarea
+                    readOnly
+                    value={AIQuery.data.highlights}
+                    className="w-full p-3 border rounded-md bg-gray-100 text-gray-500"
+                    rows={2}
+                  />
+                  <h3>
+                    <b>Recommendations</b>
+                  </h3>
+                  <textarea
+                    readOnly
+                    value={AIQuery.data.recommendations}
+                    className="w-full p-3 border rounded-md bg-gray-100 text-gray-500"
+                    rows={3}
+                  />
+                </>
+              ) : (
+                <div className="text-gray-400">No AI feedback available.</div>
+              )}
             </div>
 
             {/* Admin Feedback */}
             <div className="mt-6">
-              <button
-                onClick={() => setShowAdminFeedbackFields((prev) => !prev)}
-                className="px-6 py-2 bg-[#E30022] text-white font-semibold rounded-md hover:bg-red-700"
-              >
-                {showAdminFeedbackFields
-                  ? "Hide Admin Feedback"
-                  : "Add Admin Feedback"}
-              </button>
-
+              {candidateA.userId && candidateB.userId && (
+                <button
+                  onClick={() => setShowAdminFeedbackFields((prev) => !prev)}
+                  className="px-6 py-2 bg-[#E30022] text-white font-semibold rounded-md hover:bg-red-700"
+                >
+                  {showAdminFeedbackFields
+                    ? "Hide Admin Feedback"
+                    : "Add Admin Feedback"}
+                </button>
+              )}
               {showAdminFeedbackFields && (
                 <div className="mt-4 space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -433,18 +528,23 @@ export default function ComparePage() {
 
               {/* Display Submitted Feedback as Posts */}
               <div className="mt-6 space-y-4">
-                {feedbackPosts.map((post, index) => (
+                {adminFeedbacksQuery.data?.adminFeedbacks.map((post, index) => (
                   <div
                     key={index}
                     className="p-4 border rounded-md bg-gray-50 shadow-sm"
                   >
                     <div className="flex justify-between text-sm text-gray-500 mb-2">
-                      <span>{post.author}</span>
-                      <span>{post.timestamp}</span>
+                      <span>
+                        {post.admin.first_name} {post.admin.last_name}
+                      </span>
+                      <span>{formatDate(post.created_at)}</span>
                     </div>
                     <div>
-                      <strong>Candidate {post.candidate}:</strong>{" "}
-                      {post.content}
+                      <strong>
+                        Candidate {post.applicant.user.first_name}{" "}
+                        {post.applicant.user.last_name}:
+                      </strong>{" "}
+                      {post.feedback}
                     </div>
                   </div>
                 ))}

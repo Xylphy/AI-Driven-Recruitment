@@ -51,7 +51,7 @@ export default function Page() {
       fetchResume: true,
     },
     {
-      enabled: isAuthenticated && userJWT.data?.user.isAdmin,
+      enabled: isAuthenticated && userJWT.data?.user.role !== "User",
     }
   );
   const updateCandidateStatusMutation =
@@ -64,7 +64,7 @@ export default function Page() {
       return;
     }
 
-    if (!userJWT.data?.user.isAdmin) {
+    if (!userJWT.data?.user.role) {
       alert("You are not authorized to view this page.");
       if (window.history.length > 0) {
         router.back();

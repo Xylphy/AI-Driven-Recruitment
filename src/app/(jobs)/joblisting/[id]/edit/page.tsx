@@ -39,7 +39,7 @@ export default function Page() {
   const updateJoblisting = trpc.joblisting.updateJoblisting.useMutation();
 
   useEffect(() => {
-    if (!userJWT.data?.user.isAdmin) {
+    if (!userJWT.data?.user.role) {
       alert("You are not authorized to edit a job listing");
       router.push("/profile");
     }
@@ -115,7 +115,7 @@ export default function Page() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!userJWT.data?.user.isAdmin) {
+    if (!userJWT.data?.user.role) {
       alert("You are not authorized to create a job listing");
       router.push("/profile");
     }

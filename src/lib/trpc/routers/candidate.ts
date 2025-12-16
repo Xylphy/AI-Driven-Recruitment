@@ -9,10 +9,17 @@ import { createClientServer } from "@/lib/supabase/supabase";
 import { findWithJoin, find, updateTable } from "@/lib/supabase/action";
 import { findOne } from "@/lib/mongodb/action";
 import mongoDb_client from "@/lib/mongodb/mongodb";
-import { JobApplicant, User } from "@/types/schema";
+import { AdminFeedback, JobApplicant, User } from "@/types/schema";
 import admin, { auth, db } from "@/lib/firebase/admin";
 import { ObjectId } from "mongodb";
 import { Notification } from "@/types/types";
+
+type AICompareRes = {
+  better_candidate: string;
+  reason: string;
+  highlights: string[];
+  recommendations: string;
+};
 
 const candidateRouter = createTRPCRouter({
   getCandidateFromJob: authorizedProcedure
@@ -22,7 +29,7 @@ const candidateRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
-      if (!ctx.userJWT!.isAdmin) {
+      if (ctx.userJWT!.role === "User") {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "You do not have permission to access this resource",
@@ -36,7 +43,7 @@ const candidateRouter = createTRPCRouter({
           {
             foreignTable: "users",
             foreignKey: "user_id",
-            fields: "id, first_name, last_name, firebase_uid",
+            fields: "id, first_name, last_name, firebase_uid, resume_id",
           },
           {
             foreignTable: "job_listings",
@@ -76,7 +83,7 @@ const candidateRouter = createTRPCRouter({
             JobApplicant & {
               users: Pick<
                 User,
-                "id" | "last_name" | "first_name" | "firebase_uid"
+                "id" | "last_name" | "first_name" | "firebase_uid" | "resume_id"
               >;
               job_listings: { title: string };
             }
@@ -106,11 +113,13 @@ const candidateRouter = createTRPCRouter({
         applicants: applicantWithEmail
           .map((applicant) => ({
             id: applicant.applicantId,
+            user_id: applicant.user_id,
             name: applicant.first_name + " " + applicant.last_name,
             email: applicant.email,
             predictiveSuccess: applicant.candidateMatch,
             status: applicant.status,
             jobTitle: applicant.job_listings.title,
+            resumeId: applicant.resume_id,
           }))
           .sort(
             (applicantA, applicantB) =>
@@ -128,7 +137,7 @@ const candidateRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
-      if (!ctx.userJWT!.isAdmin) {
+      if (ctx.userJWT!.role === "User") {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "You do not have permission to access this resource",
@@ -190,7 +199,7 @@ const candidateRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      if (!ctx.userJWT!.isAdmin) {
+      if (ctx.userJWT!.role === "User") {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "You do not have permission to access this resource",
@@ -272,6 +281,261 @@ const candidateRouter = createTRPCRouter({
         notificationSuccess,
       };
     }),
-});
+  addAdminFeedback: authorizedProcedure
+    .input(
+      z.object({
+        candidateId: z.uuid(),
+        feedback: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.userJWT!.role === "User") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have permission to access this resource",
+        });
+      }
 
+      const { error } = await updateTable(
+        await createClientServer(1, true),
+        "job_applicants",
+        {
+          admin_feedback: input.feedback,
+        },
+        [{ column: "id", value: input.candidateId }]
+      );
+
+      if (error) {
+        console.error("Error adding admin feedback ", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to add admin feedback",
+        });
+      }
+
+      return {
+        message: "Admin feedback added successfully",
+      };
+    }),
+  getAdminFeedback: authorizedProcedure
+    .input(
+      z.object({
+        candidateId: z.uuid(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      if (ctx.userJWT!.role === "User") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have permission to access this resource",
+        });
+      }
+
+      const { data: adminFeedback, error: jobApplicantError } =
+        await find<AdminFeedback>(
+          await createClientServer(1, true),
+          "admin_feedback",
+          [{ column: "applicant_id", value: input.candidateId }]
+        )
+          .many()
+          .execute();
+
+      if (jobApplicantError) {
+        console.error("Error fetching job applicants", jobApplicantError);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch admin feedback",
+        });
+      }
+
+      return {
+        adminFeedback,
+      };
+    }),
+  fetchAICompare: authorizedProcedure
+    .input(
+      z.object({
+        userId_A: z.uuid(),
+        userId_B: z.uuid(),
+        jobId: z.uuid(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      if (ctx.userJWT!.role === "User") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have permission to access this resource",
+        });
+      }
+
+      const compareAPI = new URL("http://localhost:8000/compare_candidate/");
+      compareAPI.searchParams.set("applicant1_id", input.userId_A);
+      compareAPI.searchParams.set("applicant2_id", input.userId_B);
+      compareAPI.searchParams.set("job_id", input.jobId);
+
+      const response = await fetch(compareAPI.toString());
+
+      if (!response.ok) {
+        console.error("Error fetching AI compare data", await response.text());
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch AI compare data",
+        });
+      }
+
+      return {
+        ...((await response.json()) as AICompareRes),
+      };
+    }),
+  postAdminFeedback: authorizedProcedure
+    .input(
+      z.object({
+        candidateId: z.uuid(),
+        feedback: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.userJWT!.role === "User") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have permission to access this resource",
+        });
+      }
+
+      const supabase = await createClientServer(1, true);
+
+      const { error } = await supabase.from("admin_feedback").upsert({
+        applicant_id: input.candidateId,
+        feedback: input.feedback,
+        created_at: new Date().toISOString(),
+        admin_id: ctx.userJWT!.id,
+      });
+
+      if (error) {
+        console.error("Error posting admin feedback ", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to post admin feedback",
+        });
+      }
+
+      return {
+        message: "Admin feedback posted successfully",
+      };
+    }),
+  fetchAdminFeedbacks: authorizedProcedure
+    .input(
+      z.object({
+        candidateAId: z.uuid(), // Applicant ID, not the user ID
+        candidateBId: z.uuid(), // Applicant ID, not the user ID
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      if (ctx.userJWT!.role === "User") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have permission to access this resource",
+        });
+      }
+
+      const supabase = await createClientServer(1, true);
+
+      const { data, error } = await supabase
+        .from("admin_feedback")
+        .select(
+          "*, admin:users!admin_id(first_name, last_name), applicant:job_applicants!applicant_id(user:users!user_id(first_name, last_name)))"
+        )
+        .in("applicant_id", [input.candidateAId, input.candidateBId]);
+
+      if (error) {
+        console.error("Error fetching admin feedbacks ", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch admin feedbacks",
+        });
+      }
+
+      return {
+        adminFeedbacks: (data || []) as unknown as (AdminFeedback & {
+          admin: {
+            last_name: string;
+            first_name: string;
+          };
+          applicant: {
+            user: {
+              last_name: string;
+              first_name: string;
+            };
+          };
+        })[],
+      };
+    }),
+  updateAdminFeedback: authorizedProcedure
+    .input(
+      z.object({
+        feedbackId: z.uuid(),
+        newFeedback: z.uuid(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.userJWT!.role === "User") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have permission to access this resource",
+        });
+      }
+
+      const supabase = await createClientServer(1, true);
+
+      const { error } = await supabase
+        .from("admin_feedback")
+        .update({ feedback: input.newFeedback })
+        .eq("id", input.feedbackId);
+
+      if (error) {
+        console.error("Error updating admin feedback ", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update admin feedback",
+        });
+      }
+
+      return {
+        message: "Admin feedback updated successfully",
+      };
+    }),
+  deleteAdminFeedback: authorizedProcedure
+    .input(
+      z.object({
+        feedbackId: z.uuid(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.userJWT!.role === "User") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have permission to access this resource",
+        });
+      }
+
+      const supabase = await createClientServer(1, true);
+
+      const { error } = await supabase
+        .from("admin_feedback")
+        .delete()
+        .eq("id", input.feedbackId);
+
+      if (error) {
+        console.error("Error deleting admin feedback ", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to delete admin feedback",
+        });
+      }
+
+      return {
+        message: "Admin feedback deleted successfully",
+      };
+    }),
+});
 export default candidateRouter;

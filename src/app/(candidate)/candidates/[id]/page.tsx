@@ -43,7 +43,7 @@ export default function Page() {
   const candidatesData = trpc.candidate.getCandidateFromJob.useQuery(
     { jobId },
     {
-      enabled: isAuthenticated && !!userJWT.data?.user.isAdmin,
+      enabled: isAuthenticated && !!userJWT.data?.user.role,
     }
   );
   const deleteJobMutation = trpc.joblisting.deleteJoblisting.useMutation();
@@ -55,7 +55,7 @@ export default function Page() {
       return;
     }
 
-    if (!userJWT.data?.user.isAdmin) {
+    if (!userJWT.data?.user.role) {
       alert("You are not authorized to view this page.");
       router.push("/profile");
     }

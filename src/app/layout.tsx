@@ -5,6 +5,7 @@ import Navbar from "@/components/common/Navbar";
 import Footer from "@/components/common/Footer";
 import { TRPCProvider } from "@/lib/trpc/client";
 import LayoutVisibility from "@/components/common/LayoutVisibility";
+import { AuthProvider } from "@/context/AuthProvider";
 
 export const metadata: Metadata = {
   title: "AI-Driven Recruitment",
@@ -25,16 +26,17 @@ export default function RootLayout({
         className={`${poppins.className} antialiased min-h-screen flex flex-col`}
       >
         <TRPCProvider>
-          <LayoutVisibility>
-            <Navbar />
-          </LayoutVisibility>
+          <AuthProvider>
+            <LayoutVisibility>
+              <Navbar />
+            </LayoutVisibility>
 
-          <main className="grow">{children}</main>
+            <main className="grow">{children}</main>
 
-          {/* Hide Footer on /admin */}
-          <LayoutVisibility>
-            <Footer />
-          </LayoutVisibility>
+            <LayoutVisibility>
+              <Footer />
+            </LayoutVisibility>
+          </AuthProvider>
         </TRPCProvider>
       </body>
     </html>

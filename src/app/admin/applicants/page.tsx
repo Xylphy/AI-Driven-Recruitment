@@ -1,11 +1,28 @@
 "use client";
 
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 
 export default function ApplicantsPage() {
   const router = useRouter();
   const applicantsQuery = trpc.candidate.getCandidateFromJob.useQuery({});
+  const [searchInput, setSearchInput] = useState("");
+
+  const filteredApplicants = useMemo(() => {
+    if (!applicantsQuery.data?.applicants) return [];
+
+    return applicantsQuery.data.applicants.filter((candidate) => {
+      const input = searchInput.toLowerCase();
+      const nameMatch = candidate.name.toLowerCase().includes(input);
+      const jobMatch = candidate.jobTitle.toLowerCase().includes(input);
+      const statusMatch = (candidate.status || "Pending")
+        .toLowerCase()
+        .includes(input);
+
+      return nameMatch || jobMatch || statusMatch;
+    });
+  }, [searchInput, applicantsQuery.data]);
 
   if (applicantsQuery.isLoading) {
     return (
@@ -25,39 +42,16 @@ export default function ApplicantsPage() {
               r="10"
               stroke="currentColor"
               strokeWidth="4"
-            ></circle>
+            />
             <path
               className="opacity-75"
               fill="currentColor"
               d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-            ></path>
+            />
           </svg>
           <span className="text-gray-700 font-medium">
             Loading candidates...
           </span>
-        </div>
-
-        <div className="w-full mt-6">
-          <div className="bg-white p-4 rounded-lg shadow-sm">
-            <div className="animate-pulse">
-              <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
-
-              {[...Array(4)].map((_, i) => (
-                <div
-                  key={i}
-                  className="flex items-center gap-4 py-3 border-b last:border-b-0"
-                >
-                  <div className="h-5 bg-gray-200 rounded w-48"></div>
-                  <div className="h-5 bg-gray-200 rounded w-56"></div>
-                  <div className="h-5 bg-gray-200 rounded w-40"></div>
-                  <div className="ml-auto flex items-center gap-3">
-                    <div className="h-6 bg-gray-200 rounded w-20"></div>
-                    <div className="h-6 bg-gray-200 rounded w-20"></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
     );
@@ -82,7 +76,6 @@ export default function ApplicantsPage() {
               d="M10 14l2-2m0 0l2-2m-2 2l2 2m-2-2l-2 2M12 6v6"
             />
           </svg>
-
           <div>
             <p className="text-red-700 font-semibold">
               Failed to load candidates
@@ -105,14 +98,23 @@ export default function ApplicantsPage() {
   }
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold text-red-600 mb-6">
+    <div className="bg-white p-6 rounded-lg shadow-md space-y-6">
+      <h2 className="text-2xl font-bold text-red-600 mb-4">
         Candidate Management
       </h2>
 
-      <div className="overflow-x-auto">
+      {/* Single Search Input */}
+      <input
+        type="text"
+        placeholder="Search by Name, Job, or Status..."
+        value={searchInput}
+        onChange={(e) => setSearchInput(e.target.value)}
+        className="w-full md:w-1/2 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:outline-none mb-4"
+      />
+
+      <div className="overflow-x-auto max-h-150">
         <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
-          <thead className="bg-gray-100 text-gray-600 text-sm uppercase">
+          <thead className="bg-gray-100 text-gray-600 text-sm uppercase sticky top-0">
             <tr>
               <th className="py-3 px-4 text-left">Name</th>
               <th className="py-3 px-4 text-left">Email</th>
@@ -123,28 +125,31 @@ export default function ApplicantsPage() {
             </tr>
           </thead>
           <tbody className="text-gray-700">
-            {applicantsQuery.data?.applicants.map((candidate, index) => (
-              <tr key={index} className="border-t hover:bg-gray-50 transition">
-                <td className="py-3 px-4 font-medium">{candidate.name}</td>
-                <td className="py-3 px-4">{candidate.email}</td>
-                <td className="py-3 px-4">{candidate.jobTitle}</td>
-                <td className="py-3 px-4 text-center">
-                  <span
-                    className={`px-3 py-1 text-sm font-semibold rounded-full ${
-                      candidate.status === "Hired"
-                        ? "bg-green-100 text-green-700"
-                        : candidate.status === "Rejected"
-                        ? "bg-yellow-100 text-yellow-700"
-                        : candidate.status === "For Interview"
-                        ? "bg-blue-100 text-blue-700"
-                        : "bg-gray-100 text-gray-700"
-                    }`}
-                  >
-                    {candidate.status || "Pending"}
-                  </span>
-                </td>
-                <td className="py-3 px-4 text-center font-semibold">
-                  <div className="flex items-center justify-center gap-2">
+            {filteredApplicants.length > 0 ? (
+              filteredApplicants.map((candidate, index) => (
+                <tr
+                  key={index}
+                  className="border-t hover:bg-gray-50 transition"
+                >
+                  <td className="py-3 px-4 font-medium">{candidate.name}</td>
+                  <td className="py-3 px-4">{candidate.email}</td>
+                  <td className="py-3 px-4">{candidate.jobTitle}</td>
+                  <td className="py-3 px-4 text-center">
+                    <span
+                      className={`px-3 py-1 text-sm font-semibold rounded-full ${
+                        candidate.status === "Hired"
+                          ? "bg-green-100 text-green-700"
+                          : candidate.status === "Rejected"
+                          ? "bg-yellow-100 text-yellow-700"
+                          : candidate.status === "For Interview"
+                          ? "bg-blue-100 text-blue-700"
+                          : "bg-gray-100 text-gray-700"
+                      }`}
+                    >
+                      {candidate.status || "Pending"}
+                    </span>
+                  </td>
+                  <td className="py-3 px-4 text-center font-semibold">
                     <span
                       className={`${
                         candidate.predictiveSuccess >= 85
@@ -156,25 +161,45 @@ export default function ApplicantsPage() {
                     >
                       {candidate.predictiveSuccess}%
                     </span>
-                  </div>
-                </td>
-                <td className="py-3 px-4 text-center">
-                  <div className="flex justify-center gap-2">
-                    <button
-                      className="px-3 py-1 text-sm bg-[#E30022] text-white rounded hover:bg-red-700 transition"
-                      onClick={() =>
-                        router.push(`/candidateprofile/${candidate.id}`)
-                      }
-                    >
-                      View
-                    </button>
-                    <button className="px-3 py-1 text-sm border border-[#E30022] text-[#E30022] rounded hover:bg-red-50 transition">
-                      Compare
-                    </button>
-                  </div>
+                  </td>
+                  <td className="py-3 px-4 text-center">
+                    <div className="flex justify-center gap-2">
+                      {/* View Profile */}
+                      <button
+                        className="px-3 py-1 text-sm bg-[#E30022] text-white rounded hover:bg-red-700 transition"
+                        onClick={() =>
+                          router.push(`/candidateprofile/${candidate.id}`)
+                        }
+                      >
+                        View
+                      </button>
+
+                      <button className="px-3 py-1 text-sm border border-[#E30022] text-[#E30022] rounded hover:bg-red-50 transition">
+                        Compare
+                      </button>
+
+                      <a
+                        href={`https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/raw/upload/${candidate.resumeId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-1 text-sm border border-[#E30022] text-[#E30022] rounded hover:bg-red-50 transition"
+                      >
+                        Download Resume
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td
+                  colSpan={6}
+                  className="text-center p-6 text-gray-500 italic"
+                >
+                  No candidates found.
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>

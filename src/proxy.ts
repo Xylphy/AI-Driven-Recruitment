@@ -41,6 +41,15 @@ const publicPathCsrf = [
   "/api/users/signup",
 ];
 
+const allowedOrigins =
+  process.env.NODE_ENV === "development"
+    ? ["http://localhost:3000", "null"]
+    : [
+        process.env.NEXT_PUBLIC_SITE_URL,
+        "http://localhost:3000",
+        "null",
+      ].filter(Boolean);
+
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
@@ -58,10 +67,6 @@ export async function proxy(request: NextRequest) {
     }
 
     const origin = request.headers.get("origin");
-    const allowedOrigins =
-      process.env.NODE_ENV === "development"
-        ? ["http://localhost:3000", "null"]
-        : [process.env.NEXT_PUBLIC_SITE_URL].filter(Boolean);
     const isSameOrigin = !origin || origin === process.env.NEXT_PUBLIC_SITE_URL;
 
     if (!isSameOrigin && !(origin && allowedOrigins.includes(origin))) {
