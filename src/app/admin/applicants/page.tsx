@@ -137,11 +137,11 @@ export default function ApplicantsPage() {
                   <td className="py-3 px-4 text-center">
                     <span
                       className={`px-3 py-1 text-sm font-semibold rounded-full ${
-                        candidate.status === "Hired"
+                        candidate.status === "Paper Screening"
                           ? "bg-green-100 text-green-700"
-                          : candidate.status === "Rejected"
+                          : candidate.status === "Close Status"
                           ? "bg-yellow-100 text-yellow-700"
-                          : candidate.status === "For Interview"
+                          : candidate.status === "Exam"
                           ? "bg-blue-100 text-blue-700"
                           : "bg-gray-100 text-gray-700"
                       }`}

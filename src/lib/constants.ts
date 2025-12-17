@@ -40,4 +40,15 @@ export const COUNTRY = {
   AU: "Australia",
 } as const;
 
+export const CANDIDATE_STATUSES = [
+  "Paper Screening",
+  "Exam",
+  "HR Interview",
+  "Technical Interview",
+  "Final Interview",
+  "Job Offer",
+  "Accepted Job Offer",
+  "Close Status",
+] as const;
+
 export const JOB_LOCATIONS = ["Cebu City", "Manila", "Tokyo"] as const;

@@ -21,7 +21,6 @@ import {
   JobListingRequirements,
   JobApplicant,
   JobTags,
-  IdentifiableItem,
   Changes,
 } from "@/types/schema";
 import { jobListingSchema } from "@/lib/schemas";
@@ -38,73 +37,45 @@ const jobListingRouter = createTRPCRouter({
         })
         .optional()
     )
-    .query(async ({ input, ctx }) => {
-      const limit = input?.limit ?? 100;
-      const offset = ((input?.page ?? 1) - 1) * limit;
+    .query(async ({ ctx }) => {
+      // const limit = input?.limit ?? 100;
+      // const offset = ((input?.page ?? 1) - 1) * limit;
       const userId = ctx.userJWT!.id;
       const supabase = await createClientServer(1, true);
 
-      if (ctx.userJWT!.role !== "User") {
-        const joblistingsResult = await find<JobListing>(
-          supabase,
-          "job_listings"
-        )
-          .many()
-          .range(offset, offset + limit - 1)
-          .order("created_at", { ascending: false })
-          .execute();
-
-        if (joblistingsResult.error) {
-          console.error(joblistingsResult.error);
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Failed to fetch job listings",
-          });
-        }
-
-        return {
-          joblistings:
-            joblistingsResult.data?.map((job) => ({
-              ...job,
-              joblisting_id: job.id,
-              status: "",
-            })) ?? [],
-        };
-      } else {
-        const { data: appliedData, error: appliedError } = await findWithJoin<
-          JobApplicant & { job_listings: JobListing }
-        >(supabase, "job_applicants", [
+      const { data: appliedData, error: appliedError } = await findWithJoin<
+        JobApplicant & { job_listings: JobListing }
+      >(supabase, "job_applicants", [
+        {
+          foreignTable: "job_listings",
+          foreignKey: "joblisting_id",
+          fields: "title",
+        },
+      ])
+        .many([
           {
-            foreignTable: "job_listings",
-            foreignKey: "joblisting_id",
-            fields: "title",
+            column: "user_id",
+            value: userId,
           },
         ])
-          .many([
-            {
-              column: "user_id",
-              value: userId,
-            },
-          ])
-          .execute();
+        .execute();
 
-        if (appliedError) {
-          console.error(appliedError);
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Failed to fetch applied jobs",
-          });
-        }
-
-        return {
-          joblistings:
-            appliedData?.map((item) => ({
-              ...item,
-              ...item.job_listings,
-              job_listings: undefined,
-            })) ?? [],
-        };
+      if (appliedError) {
+        console.error(appliedError);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch applied jobs",
+        });
       }
+
+      return {
+        joblistings:
+          appliedData?.map((item) => ({
+            ...item,
+            ...item.job_listings,
+            job_listings: undefined,
+          })) ?? [],
+      };
     }),
   deleteJoblisting: rateLimitedProcedure
     .input(

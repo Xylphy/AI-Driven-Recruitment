@@ -1,4 +1,5 @@
 import { Title } from "./types";
+import { CANDIDATE_STATUSES } from "@/lib/constants";
 
 // -------------------------------- Database Schema -------------------------------- //
 // For Database Schema, we use snake_case for field names
@@ -70,7 +71,7 @@ export interface JobApplicant extends IdentifiableItem, Pick<Admin, "user_id"> {
   created_at: string;
   joblisting_id: string;
   score_id: string;
-  status: "Initial Interview" | "For Interview" | "Hired" | "Rejected";
+  status: (typeof CANDIDATE_STATUSES)[number] | null;
   notify: boolean;
 }
 

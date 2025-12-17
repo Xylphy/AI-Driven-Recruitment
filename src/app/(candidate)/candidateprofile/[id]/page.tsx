@@ -10,6 +10,7 @@ import { useParams } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { inferProcedureOutput } from "@trpc/server";
 import { AppRouter } from "@/lib/trpc/routers/app";
+import { CANDIDATE_STATUSES } from "@/lib/constants";
 
 type FetchCandidateProfileOutput = inferProcedureOutput<
   AppRouter["candidate"]["fetchCandidateProfile"]
@@ -34,10 +35,14 @@ interface Project {
   start_date: Date;
 }
 
+type CandidateStatus = (typeof CANDIDATE_STATUSES)[number];
+
 export default function Page() {
   const router = useRouter();
   const candidateId = useParams().id as string; // userId
-  const [selectedStatus, setSelectedStatus] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState<CandidateStatus | null>(
+    null
+  );
   const { isAuthenticated } = useAuth();
 
   const userJWT = trpc.auth.decodeJWT.useQuery(undefined, {
@@ -72,16 +77,18 @@ export default function Page() {
         router.push("/profile");
       }
     }
-
-    startTransition(() =>
-      setSelectedStatus(candidateProfileQuery.data?.status || "")
-    );
   }, [userJWT.data]);
+
+  useEffect(() => {
+    startTransition(() =>
+      setSelectedStatus(candidateProfileQuery.data?.status ?? null)
+    );
+  }, [candidateProfileQuery.data?.status]);
 
   const handleStatusChange = async (
     e: React.ChangeEvent<HTMLSelectElement>
   ) => {
-    const newStatus = e.target.value;
+    const newStatus = e.target.value as CandidateStatus | null;
     const oldStatus = selectedStatus;
 
     setSelectedStatus(newStatus);
@@ -151,15 +158,16 @@ export default function Page() {
               </label>
               <select
                 id="status"
-                value={selectedStatus}
+                value={selectedStatus || ""}
                 onChange={handleStatusChange}
                 className="bg-red-600 text-white font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-600 hover:border-red-600 focus:outline-none"
               >
                 <option value="">Select Status</option>
-                <option value="Initial Interview">Initial Interview</option>
-                <option value="For Interview">For Interview</option>
-                <option value="Hired">Hired</option>
-                <option value="Rejected">Rejected</option>
+                {CANDIDATE_STATUSES.map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
               </select>
             </div>
 

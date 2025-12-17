@@ -44,7 +44,7 @@ export default function JobApplicationDetails({
             <h3 className="text-lg font-semibold">
               {job.title}
               {" · "}
-              <StatusBadge status={job.status} />
+              <StatusBadge status={job.status ?? "To be reviewed"} />
             </h3>
 
             <p className="text-sm text-gray-500">

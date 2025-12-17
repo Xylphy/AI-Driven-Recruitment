@@ -13,6 +13,7 @@ import { AdminFeedback, JobApplicant, User } from "@/types/schema";
 import admin, { auth, db } from "@/lib/firebase/admin";
 import { ObjectId } from "mongodb";
 import { Notification } from "@/types/types";
+import { CANDIDATE_STATUSES } from "@/lib/constants";
 
 type AICompareRes = {
   better_candidate: string;
@@ -258,14 +259,14 @@ const candidateRouter = createTRPCRouter({
           firstName: userData.data?.first_name || "",
           lastName: userData.data?.last_name || "",
         },
-        status: jobApplicant?.status || "",
+        status: jobApplicant?.status ?? null,
       };
     }),
   updateCandidateStatus: rateLimitedProcedure
     .input(
       z.object({
         applicantId: z.string(),
-        newStatus: z.string(),
+        newStatus: z.enum(CANDIDATE_STATUSES).nullable(),
       })
     )
     .mutation(async ({ ctx, input }) => {

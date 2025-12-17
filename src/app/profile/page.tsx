@@ -18,7 +18,6 @@ export default function Profile() {
     enabled: isAuthenticated,
   });
   const isAdmin = userInfo.isSuccess && jwtInfo.data?.user.role !== "User";
-
   const joblistings = trpc.joblisting.joblistings.useQuery(undefined, {
     enabled: isAuthenticated,
   });
@@ -139,15 +138,7 @@ export default function Profile() {
           <div className="w-full md:w-2/3 p-6  ">
             <div className="flex justify-between items-start mb-6">
               <h2 className="text-2xl font-bold">
-                {isAdmin ? (
-                  <>
-                    <span className="text-red-600">Job</span> Listed{" "}
-                  </>
-                ) : (
-                  <>
-                    <span className="text-red-600">Applied</span> Jobs
-                  </>
-                )}
+                <span className="text-red-600">Applied</span> Jobs
               </h2>
             </div>
             <div className="space-y-5 pb-9 overflow-y-auto h-full">
