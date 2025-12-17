@@ -1,4 +1,5 @@
 import {
+  adminProcedure,
   authorizedProcedure,
   createTRPCRouter,
   rateLimitedProcedure,
@@ -77,20 +78,13 @@ const jobListingRouter = createTRPCRouter({
           })) ?? [],
       };
     }),
-  deleteJoblisting: rateLimitedProcedure
+  deleteJoblisting: adminProcedure
     .input(
       z.object({
         joblistingId: z.uuid(),
       })
     )
-    .mutation(async ({ input, ctx }) => {
-      if (ctx.userJWT!.role === "User") {
-        throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "Insufficient permissions",
-        });
-      }
-
+    .mutation(async ({ ctx, input }) => {
       const supabase = await createClientServer(1, true);
       const { error } = await deleteRow(
         supabase,
@@ -323,20 +317,13 @@ const jobListingRouter = createTRPCRouter({
         message: "Application submitted successfully",
       };
     }),
-  updateJoblisting: rateLimitedProcedure
+  updateJoblisting: adminProcedure
     .input(
       jobListingSchema.extend({
         jobId: z.uuid(),
       })
     )
     .mutation(async ({ input, ctx }) => {
-      if (ctx.userJWT!.role === "User") {
-        throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "Insufficient permissions",
-        });
-      }
-
       const supabase = await createClientServer(1, true);
 
       const { data: oldJoblisting, error: oldJoblistingError } =
@@ -467,16 +454,9 @@ const jobListingRouter = createTRPCRouter({
 
       return { success: true, message: "Job listing updated successfully" };
     }),
-  createJoblisting: rateLimitedProcedure
+  createJoblisting: adminProcedure
     .input(jobListingSchema)
     .mutation(async ({ input, ctx }) => {
-      if (ctx.userJWT!.role === "User") {
-        throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "Insufficient permissions",
-        });
-      }
-
       const supabase = await createClientServer(1, true);
 
       const { data: tagRows, error: tagError } = await supabase

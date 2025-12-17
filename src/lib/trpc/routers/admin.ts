@@ -1,4 +1,4 @@
-import { authorizedProcedure, createTRPCRouter } from "../init";
+import { adminProcedure, createTRPCRouter } from "../init";
 import { TRPCError } from "@trpc/server";
 import { createClientServer } from "@/lib/supabase/supabase";
 import { countTable, find, insertTable } from "@/lib/supabase/action";
@@ -10,9 +10,10 @@ import {
 } from "@/types/schema";
 import { z } from "zod";
 import { auth } from "@/lib/firebase/admin";
+import { BottleneckPercentileRow } from "@/types/types";
 
 const adminRouter = createTRPCRouter({
-  fetchStats: authorizedProcedure.query(async ({ ctx }) => {
+  fetchStats: adminProcedure.query(async ({ ctx }) => {
     if (ctx.userJWT!.role === "User") {
       throw new TRPCError({
         code: "FORBIDDEN",
@@ -71,7 +72,7 @@ const adminRouter = createTRPCRouter({
     };
   }),
   // Compare candidates
-  fetchAllJobs: authorizedProcedure.query(async ({ ctx }) => {
+  fetchAllJobs: adminProcedure.query(async ({ ctx }) => {
     if (ctx.userJWT!.role === "User") {
       throw new TRPCError({
         code: "FORBIDDEN",
@@ -99,7 +100,7 @@ const adminRouter = createTRPCRouter({
       jobs,
     };
   }),
-  compareCandidates: authorizedProcedure
+  compareCandidates: adminProcedure
     .input(
       z.object({
         applicantIdA: z.uuid(),
@@ -122,7 +123,7 @@ const adminRouter = createTRPCRouter({
         compareResult: await fetch(compareAPI).then((res) => res.json()),
       };
     }),
-  auditLogs: authorizedProcedure
+  auditLogs: adminProcedure
     .input(
       z.object({
         query: z.string().optional(),
@@ -169,7 +170,7 @@ const adminRouter = createTRPCRouter({
         auditLogs,
       };
     }),
-  users: authorizedProcedure
+  users: adminProcedure
     .input(
       z.object({
         searchQuery: z.string().optional(),
@@ -232,7 +233,7 @@ const adminRouter = createTRPCRouter({
         users: usersWithEmail as (User & { email: string })[],
       };
     }),
-  changeUserRole: authorizedProcedure
+  changeUserRole: adminProcedure
     .input(
       z.object({
         userId: z.string(),
@@ -308,6 +309,36 @@ const adminRouter = createTRPCRouter({
       return {
         success: true,
         message: "User role updated successfully",
+      };
+    }),
+  getBottlenecks: adminProcedure
+    .input(
+      z.object({
+        fromDate: z.string(), // string not date since Date objects are not serializable to JSON
+        toDate: z.string(),
+      })
+    )
+    .query(async ({ input }) => {
+      const supabase = await createClientServer(1, true);
+
+      const { data: BottleneckPercentileRow, error: bottleneckError } =
+        await supabase.rpc("get_bottleneck_percentiles", {
+          from_ts: input.fromDate,
+          to_ts: input.toDate,
+        });
+
+      if (bottleneckError) {
+        console.error("Error fetching bottleneck percentiles");
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message:
+            bottleneckError?.message ||
+            "Failed to fetch bottleneck percentiles",
+        });
+      }
+
+      return {
+        bottlenecks: BottleneckPercentileRow as BottleneckPercentileRow[],
       };
     }),
 });

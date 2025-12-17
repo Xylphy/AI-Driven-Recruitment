@@ -143,7 +143,8 @@ export interface AuditLog extends IdentifiableItem {
     | "Created joblisting"
     | "Applied for job"
     | "Changed job alerts"
-    | "Changed user role";
+    | "Changed user role"
+    | "Changed candidate status";
 
   // target (to what)
   entity_type: "Job Applicant" | "User" | "Job Listing";

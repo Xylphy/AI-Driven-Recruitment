@@ -96,3 +96,11 @@ export const authorizedProcedure = rateLimitedProcedure.use(
     return next();
   }
 );
+
+export const adminProcedure = authorizedProcedure.use(async ({ ctx, next }) => {
+  if (ctx.userJWT!.role !== "Admin" && ctx.userJWT!.role !== "SuperAdmin") {
+    throw new TRPCError({ code: "FORBIDDEN" });
+  }
+
+  return next();
+});

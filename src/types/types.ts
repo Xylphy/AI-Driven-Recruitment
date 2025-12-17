@@ -95,3 +95,14 @@ export interface Notification {
   createdAt: Timestamp | FieldValue;
   link: string;
 }
+
+export interface BottleneckPercentileRow {
+  status: string;
+  samples: number;
+  p50_seconds: number;
+  p75_seconds: number;
+  p90_seconds: number;
+  p50_interval: string; // "5 days 03:12:10"
+  p75_interval: string;
+  p90_interval: string;
+}

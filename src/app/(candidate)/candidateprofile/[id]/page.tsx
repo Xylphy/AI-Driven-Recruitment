@@ -77,7 +77,7 @@ export default function Page() {
         router.push("/profile");
       }
     }
-  }, [userJWT.data]);
+  }, [userJWT.data?.user.role, router]);
 
   useEffect(() => {
     startTransition(() =>
@@ -102,9 +102,7 @@ export default function Page() {
           alert("Candidate status updated successfully.");
         },
         onError: (error: unknown) => {
-          const message =
-            error instanceof Error ? error.message : String(error);
-          alert(message);
+          alert(error instanceof Error ? error.message : String(error));
           setSelectedStatus(oldStatus);
         },
       }
@@ -176,7 +174,7 @@ export default function Page() {
                 onClick={() => setOnResume(!onResume)}
                 className="bg-[#E30022] text-white font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-500 hover:border-red-500"
               >
-                VIEW CANDIDATE PROFILE
+                {onResume ? "VIEW EVALUATION" : "VIEW RESUME"}
               </button>
             </div>
           </div>

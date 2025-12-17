@@ -1,15 +1,22 @@
 import z from "zod";
-import {
-  authorizedProcedure,
-  createTRPCRouter,
-  rateLimitedProcedure,
-} from "../init";
+import { adminProcedure, createTRPCRouter } from "../init";
 import { TRPCError } from "@trpc/server";
 import { createClientServer } from "@/lib/supabase/supabase";
-import { findWithJoin, find, updateTable } from "@/lib/supabase/action";
+import {
+  findWithJoin,
+  find,
+  updateTable,
+  insertTable,
+} from "@/lib/supabase/action";
 import { findOne } from "@/lib/mongodb/action";
 import mongoDb_client from "@/lib/mongodb/mongodb";
-import { AdminFeedback, JobApplicant, User } from "@/types/schema";
+import {
+  AdminFeedback,
+  AuditLog,
+  Changes,
+  JobApplicant,
+  User,
+} from "@/types/schema";
 import admin, { auth, db } from "@/lib/firebase/admin";
 import { ObjectId } from "mongodb";
 import { Notification } from "@/types/types";
@@ -23,21 +30,14 @@ type AICompareRes = {
 };
 
 const candidateRouter = createTRPCRouter({
-  getCandidateFromJob: authorizedProcedure
+  getCandidateFromJob: adminProcedure
     .input(
       z.object({
         jobId: z.uuid().optional(),
         searchQuery: z.string().optional(),
       })
     )
-    .query(async ({ ctx, input }) => {
-      if (ctx.userJWT!.role === "User") {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You do not have permission to access this resource",
-        });
-      }
-
+    .query(async ({ input }) => {
       const supabaseClient = await createClientServer(1, true);
 
       const baseQuery = findWithJoin<JobApplicant>(
@@ -198,7 +198,7 @@ const candidateRouter = createTRPCRouter({
           ),
       };
     }),
-  fetchCandidateProfile: authorizedProcedure
+  fetchCandidateProfile: adminProcedure
     .input(
       z.object({
         fetchScore: z.boolean().optional().default(false),
@@ -207,13 +207,7 @@ const candidateRouter = createTRPCRouter({
         candidateId: z.string(),
       })
     )
-    .query(async ({ ctx, input }) => {
-      if (ctx.userJWT!.role === "User") {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You do not have permission to access this resource",
-        });
-      }
+    .query(async ({ input }) => {
       const supabaseClient = await createClientServer(1, true);
 
       const { data: jobApplicant, error: jobApplicantError } =
@@ -262,7 +256,7 @@ const candidateRouter = createTRPCRouter({
         status: jobApplicant?.status ?? null,
       };
     }),
-  updateCandidateStatus: rateLimitedProcedure
+  updateCandidateStatus: adminProcedure
     .input(
       z.object({
         applicantId: z.string(),
@@ -270,14 +264,21 @@ const candidateRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      if (ctx.userJWT!.role === "User") {
+      const supabase = await createClientServer(1, true);
+
+      const { data: oldData, error: oldDataError } = await find<JobApplicant>(
+        supabase,
+        "job_applicants",
+        [{ column: "id", value: input.applicantId }]
+      ).single();
+
+      if (oldDataError) {
+        console.error("Error fetching old job applicant data ", oldDataError);
         throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You do not have permission to access this resource",
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch old job applicant data",
         });
       }
-
-      const supabase = await createClientServer(1, true);
 
       const { data, error } = await updateTable(
         supabase,
@@ -297,7 +298,6 @@ const candidateRouter = createTRPCRouter({
         });
       }
 
-      // Narrow the result without using `any`
       const updatedRow = Array.isArray(data)
         ? ((data as unknown[])[0] as Record<string, unknown>)
         : (data as unknown as Record<string, unknown>);
@@ -347,26 +347,49 @@ const candidateRouter = createTRPCRouter({
         console.error("Failed to add notification for user", userId, err);
       }
 
+      const changes: Record<string, Changes> = {};
+
+      if (oldData!.status !== input.newStatus) {
+        changes["status"] = {
+          before: oldData!.status || "null",
+          after: input.newStatus || "null",
+        };
+      }
+
+      const details = `Changed status to "${input.newStatus}" for applicant ID ${input.applicantId}`;
+
+      const { error: insertLogError } = await insertTable(
+        supabase,
+        "audit_logs",
+        {
+          actor_type: ctx.userJWT!.role,
+          actor_id: ctx.userJWT!.id,
+          action: "update",
+          event_type: "Changed candidate status",
+          entity_type: "Job Applicant",
+          entity_id: input.applicantId,
+          changes,
+          details,
+        } as AuditLog
+      );
+
+      if (insertLogError) {
+        console.error("Error inserting audit log for role change");
+      }
+
       return {
         message: "Candidate status updated successfully",
         notificationSuccess,
       };
     }),
-  addAdminFeedback: authorizedProcedure
+  addAdminFeedback: adminProcedure
     .input(
       z.object({
         candidateId: z.uuid(),
         feedback: z.string(),
       })
     )
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.userJWT!.role === "User") {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You do not have permission to access this resource",
-        });
-      }
-
+    .mutation(async ({ input }) => {
       const { error } = await updateTable(
         await createClientServer(1, true),
         "job_applicants",
@@ -388,20 +411,13 @@ const candidateRouter = createTRPCRouter({
         message: "Admin feedback added successfully",
       };
     }),
-  getAdminFeedback: authorizedProcedure
+  getAdminFeedback: adminProcedure
     .input(
       z.object({
         candidateId: z.uuid(),
       })
     )
-    .query(async ({ ctx, input }) => {
-      if (ctx.userJWT!.role === "User") {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You do not have permission to access this resource",
-        });
-      }
-
+    .query(async ({ input }) => {
       const { data: adminFeedback, error: jobApplicantError } =
         await find<AdminFeedback>(
           await createClientServer(1, true),
@@ -423,7 +439,7 @@ const candidateRouter = createTRPCRouter({
         adminFeedback,
       };
     }),
-  fetchAICompare: authorizedProcedure
+  fetchAICompare: adminProcedure
     .input(
       z.object({
         userId_A: z.uuid(),
@@ -431,14 +447,7 @@ const candidateRouter = createTRPCRouter({
         jobId: z.uuid(),
       })
     )
-    .query(async ({ ctx, input }) => {
-      if (ctx.userJWT!.role === "User") {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You do not have permission to access this resource",
-        });
-      }
-
+    .query(async ({ input }) => {
       const compareAPI = new URL("http://localhost:8000/compare_candidate/");
       compareAPI.searchParams.set("applicant1_id", input.userId_A);
       compareAPI.searchParams.set("applicant2_id", input.userId_B);
@@ -458,7 +467,7 @@ const candidateRouter = createTRPCRouter({
         ...((await response.json()) as AICompareRes),
       };
     }),
-  postAdminFeedback: authorizedProcedure
+  postAdminFeedback: adminProcedure
     .input(
       z.object({
         candidateId: z.uuid(),
@@ -466,13 +475,6 @@ const candidateRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      if (ctx.userJWT!.role === "User") {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You do not have permission to access this resource",
-        });
-      }
-
       const supabase = await createClientServer(1, true);
 
       const { error } = await supabase.from("admin_feedback").upsert({
@@ -494,21 +496,14 @@ const candidateRouter = createTRPCRouter({
         message: "Admin feedback posted successfully",
       };
     }),
-  fetchAdminFeedbacks: authorizedProcedure
+  fetchAdminFeedbacks: adminProcedure
     .input(
       z.object({
         candidateAId: z.uuid(), // Applicant ID, not the user ID
         candidateBId: z.uuid(), // Applicant ID, not the user ID
       })
     )
-    .query(async ({ ctx, input }) => {
-      if (ctx.userJWT!.role === "User") {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You do not have permission to access this resource",
-        });
-      }
-
+    .query(async ({ input }) => {
       const supabase = await createClientServer(1, true);
 
       const { data, error } = await supabase
@@ -541,21 +536,14 @@ const candidateRouter = createTRPCRouter({
         })[],
       };
     }),
-  updateAdminFeedback: authorizedProcedure
+  updateAdminFeedback: adminProcedure
     .input(
       z.object({
         feedbackId: z.uuid(),
         newFeedback: z.uuid(),
       })
     )
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.userJWT!.role === "User") {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You do not have permission to access this resource",
-        });
-      }
-
+    .mutation(async ({ input }) => {
       const supabase = await createClientServer(1, true);
 
       const { error } = await supabase
@@ -575,20 +563,13 @@ const candidateRouter = createTRPCRouter({
         message: "Admin feedback updated successfully",
       };
     }),
-  deleteAdminFeedback: authorizedProcedure
+  deleteAdminFeedback: adminProcedure
     .input(
       z.object({
         feedbackId: z.uuid(),
       })
     )
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.userJWT!.role === "User") {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You do not have permission to access this resource",
-        });
-      }
-
+    .mutation(async ({ input }) => {
       const supabase = await createClientServer(1, true);
 
       const { error } = await supabase
