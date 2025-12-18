@@ -15,6 +15,7 @@ import {
   onAuthStateChanged,
   type User as FirebaseAuthUser,
 } from "firebase/auth";
+import { trpc } from "@/lib/trpc/client";
 
 const AuthContext = createContext<{
   isAuthenticated: boolean;
@@ -48,7 +49,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setCsrfToken(await getCsrfToken());
     };
 
-    refresh(); // Initial call
+    if (wasAuthenticated.current) {
+      refresh();
+    }
 
     const interval = setInterval(refresh, 50 * 60 * 1000); // 50 minutes
 
@@ -98,6 +101,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             wasAuthenticated.current = false;
           }
         } else {
+          await fetch("/api/auth/jwt", {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${auth.currentUser?.uid}`,
+            },
+            credentials: "include",
+          });
+
           setIsAuthenticated(true);
           wasAuthenticated.current = true;
         }
