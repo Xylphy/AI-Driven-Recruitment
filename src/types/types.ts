@@ -1,6 +1,7 @@
 // Types not directly related to the database schema but used throughout the application
 // --------------- Types for common attributes | meant for extends --------------- //
 
+import { USER_ROLES } from "@/lib/constants";
 import { FieldValue, Timestamp } from "firebase/firestore";
 import { JwtPayload } from "jsonwebtoken";
 
@@ -76,7 +77,7 @@ export interface DbIdentification {
 
 export interface JWT extends JwtPayload {
   id: string;
-  role: "SuperAdmin" | "Admin" | "User";
+  role: (typeof USER_ROLES)[number];
 }
 
 interface Tag extends IdentifiableItem {
