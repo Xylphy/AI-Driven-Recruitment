@@ -14,6 +14,7 @@ import {
 import { Bar, Pie } from "react-chartjs-2";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
+import type { BottleneckPercentileRow } from "@/types/types";
 
 ChartJS.register(
   CategoryScale,
@@ -24,7 +25,6 @@ ChartJS.register(
   Tooltip,
   Legend
 );
-import type { BottleneckPercentileRow } from "@/types/types";
 
 export default function JobsPage() {
   const router = useRouter();
@@ -39,8 +39,8 @@ export default function JobsPage() {
   );
 
   const bottleNecksQuery = trpc.admin.getBottlenecks.useQuery({
-    fromDate: fromDate,
-    toDate: toDate,
+    fromDate,
+    toDate,
   });
 
   const bottlenecks: BottleneckPercentileRow[] = Array.isArray(
@@ -49,14 +49,61 @@ export default function JobsPage() {
     ? bottleNecksQuery.data
     : bottleNecksQuery.data?.bottlenecks ?? [];
 
+  const formatSeconds = (seconds: number) => {
+    if (seconds === null || seconds === undefined) return "—";
+
+    const days = Math.floor(seconds / 86400);
+    const hours = Math.floor((seconds % 86400) / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = (seconds % 60).toFixed(2);
+
+    const pad = (n: number) => String(n).padStart(2, "0");
+
+    return `${pad(days)}:${pad(hours)}:${pad(minutes)}:${pad(Number(secs))}`;
+  };
+
   const barData = {
     labels: bottlenecks.map((b) => b.status),
     datasets: [
       {
-        label: "Median Time (p50 seconds)",
+        label: "p50 (Median)",
         data: bottlenecks.map((b) => b.p50_seconds),
+        backgroundColor: "rgba(220, 38, 38, 0.8)", // red
+      },
+      {
+        label: "p75",
+        data: bottlenecks.map((b) => b.p75_seconds),
+        backgroundColor: "rgba(245, 158, 11, 0.8)", // amber
+      },
+      {
+        label: "p90",
+        data: bottlenecks.map((b) => b.p90_seconds),
+        backgroundColor: "rgba(37, 99, 235, 0.8)", // blue
       },
     ],
+  };
+
+  const barOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: "top" as const,
+      },
+      tooltip: {
+        callbacks: {
+          label: (context: any) =>
+            `${context.dataset.label}: ${formatSeconds(context.raw)}`,
+        },
+      },
+    },
+    scales: {
+      y: {
+        title: {
+          display: true,
+          text: "Time (seconds)",
+        },
+      },
+    },
   };
 
   const pieData = {
@@ -64,6 +111,13 @@ export default function JobsPage() {
     datasets: [
       {
         data: bottlenecks.map((b) => b.samples),
+        backgroundColor: [
+          "#DC2626",
+          "#F59E0B",
+          "#2563EB",
+          "#16A34A",
+          "#7C3AED",
+        ],
       },
     ],
   };
@@ -80,20 +134,20 @@ export default function JobsPage() {
             onChange={(e) =>
               setFromDate(new Date(e.target.value).toISOString())
             }
-            className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:outline-none"
+            className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
           />
           <span className="self-center">to</span>
           <input
             type="date"
             value={toDate.slice(0, 10)}
             onChange={(e) => setToDate(new Date(e.target.value).toISOString())}
-            className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:outline-none"
+            className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
           />
         </div>
 
         <button
           onClick={() => router.push("/profile/edit")}
-          className="text-white bg-red-600 font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:border-red-600 hover:text-red-600"
+          className="text-white bg-red-600 font-bold px-4 py-2 rounded transition hover:bg-transparent hover:text-red-600 hover:border hover:border-red-600"
         >
           DOWNLOAD REPORT
         </button>
@@ -106,9 +160,9 @@ export default function JobsPage() {
               <tr>
                 <th className="p-4 border-b text-left">Status</th>
                 <th className="p-4 border-b text-center">Samples</th>
-                <th className="p-4 border-b text-center">p50 (sec)</th>
-                <th className="p-4 border-b text-center">p75 (sec)</th>
-                <th className="p-4 border-b text-center">p90 (sec)</th>
+                <th className="p-4 border-b text-center">p50 (dd:hh:mm:ss)</th>
+                <th className="p-4 border-b text-center">p75 (dd:hh:mm:ss)</th>
+                <th className="p-4 border-b text-center">p90 (dd:hh:mm:ss)</th>
                 <th className="p-4 border-b text-center">p50 Interval</th>
                 <th className="p-4 border-b text-center">p75 Interval</th>
                 <th className="p-4 border-b text-center">p90 Interval</th>
@@ -124,30 +178,26 @@ export default function JobsPage() {
                 </tr>
               ) : bottlenecks.length > 0 ? (
                 bottlenecks.map((row) => (
-                  <tr
-                    key={row.status}
-                    className="border-t hover:bg-gray-50 transition"
-                  >
+                  <tr key={row.status} className="border-t hover:bg-gray-50">
                     <td className="p-4 font-medium">{row.status}</td>
-
                     <td className="p-4 text-center font-semibold">
                       {row.samples}
                     </td>
-
-                    <td className="p-4 text-center">{row.p50_seconds}</td>
-
-                    <td className="p-4 text-center">{row.p75_seconds}</td>
-
-                    <td className="p-4 text-center">{row.p90_seconds}</td>
-
+                    <td className="p-4 text-center font-mono">
+                      {formatSeconds(row.p50_seconds)}
+                    </td>
+                    <td className="p-4 text-center font-mono">
+                      {formatSeconds(row.p75_seconds)}
+                    </td>
+                    <td className="p-4 text-center font-mono">
+                      {formatSeconds(row.p90_seconds)}
+                    </td>
                     <td className="p-4 text-center font-mono text-gray-600">
                       {row.p50_interval}
                     </td>
-
                     <td className="p-4 text-center font-mono text-gray-600">
                       {row.p75_interval}
                     </td>
-
                     <td className="p-4 text-center font-mono text-gray-600">
                       {row.p90_interval}
                     </td>
@@ -168,8 +218,8 @@ export default function JobsPage() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
           <div className="bg-white p-4 shadow rounded-lg">
-            <h3 className="font-semibold mb-2">Median Time by Status (p50)</h3>
-            <Bar data={barData} />
+            <h3 className="font-semibold mb-2">Time Distribution by Status</h3>
+            <Bar data={barData} options={barOptions} />
           </div>
 
           <div className="bg-white p-4 shadow rounded-lg">

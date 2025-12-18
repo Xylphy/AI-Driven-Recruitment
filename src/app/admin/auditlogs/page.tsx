@@ -102,7 +102,8 @@ export default function JobsPage() {
           <thead className="bg-gray-100 text-gray-700 text-left">
             <tr>
               <th className="p-4 font-semibold border-b">Description</th>
-              <th className="p-4 font-semibold border-b">Category</th>
+              <th className="p-4 font-semibold border-b">Event</th>
+              <th className="p-4 font-semibold border-b">Entity</th>
               <th className="p-4 font-semibold border-b">Timestamp</th>
             </tr>
           </thead>
@@ -115,23 +116,35 @@ export default function JobsPage() {
                   key={row.id}
                   className="border-t hover:bg-gray-50 transition"
                 >
-                  <td className="p-4">{row.details}</td>
+                  {/* Description */}
+                  <td className="p-4 text-sm text-gray-800">{row.details}</td>
+
+                  {/* Event Type */}
                   <td className="p-4">
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-semibold
-                        ${
-                          row.category === "Screening"
-                            ? "bg-blue-100 text-blue-700"
-                            : row.category === "Pipeline"
-                            ? "bg-yellow-100 text-yellow-700"
-                            : "bg-green-100 text-green-700"
-                        }
-                      `}
+                  ${
+                    row.action === "create"
+                      ? "bg-green-100 text-green-700"
+                      : row.action === "update"
+                      ? "bg-yellow-100 text-yellow-700"
+                      : "bg-red-100 text-red-700"
+                  }
+                `}
                     >
                       {row.event_type}
                     </span>
                   </td>
-                  <td className="p-4">{formatDate(row.created_at)}</td>
+
+                  {/* Entity Type */}
+                  <td className="p-4 text-sm text-gray-600">
+                    {row.entity_type}
+                  </td>
+
+                  {/* Timestamp */}
+                  <td className="p-4 text-sm text-gray-500">
+                    {formatDate(row.created_at)}
+                  </td>
                 </tr>
               ))
             ) : (
@@ -140,7 +153,7 @@ export default function JobsPage() {
                   colSpan={4}
                   className="text-center p-6 text-gray-500 italic"
                 >
-                  No bottlenecks found.
+                  No audit logs found.
                 </td>
               </tr>
             )}
