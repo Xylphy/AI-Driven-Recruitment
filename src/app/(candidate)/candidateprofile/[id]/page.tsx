@@ -201,6 +201,7 @@ function CandidateProfile({
           <span className="text-red-600">Candidate</span> Evaluation
         </h2>
         <div className="h-[65vh] overflow-y-auto space-y-10 pr-2">
+          {/* Score & Predictive Success */}
           <div className="bg-gray-50 border border-gray-200 p-6 rounded-lg shadow-sm space-y-6">
             <div>
               <span className="block text-sm font-medium text-gray-700 mb-1">
@@ -269,7 +270,7 @@ function CandidateProfile({
                 Evaluation Summary:
               </span>
               <p className="text-sm text-gray-700 leading-relaxed">
-                {candidateProfile?.score?.score_data.reason},
+                {candidateProfile?.score?.score_data.reason}
               </p>
             </div>
           </div>
@@ -283,16 +284,67 @@ function CandidateProfile({
                 {candidateProfile?.transcribed?.transcription
                   ?.sentimental_analysis || "No sentiment analysis available."}
               </p>
+              <h3 className="font-semibold text-gray-700 mb-2 mt-2">
+                Sentiment Analysis Highlights
+              </h3>
+              {candidateProfile?.transcribed?.transcription
+                ?.sentimental_analysis_phrases && (
+                <ul className="list-disc ml-6 mt-1">
+                  {candidateProfile.transcribed.transcription.sentimental_analysis_phrases.map(
+                    (phrase: string, idx: number) => (
+                      <li key={idx}>{phrase}</li>
+                    )
+                  )}
+                </ul>
+              )}
             </div>
+
+            <div>
+              <h3 className="font-semibold text-gray-700">
+                Personality Traits
+              </h3>
+              <p>
+                {candidateProfile?.transcribed?.transcription
+                  ?.personality_traits ||
+                  "No personality traits insights available."}
+              </p>
+              <h3 className="font-semibold text-gray-700 mb-2 mt-2">
+                Personality Traits Highlights
+              </h3>
+              {candidateProfile?.transcribed?.transcription
+                ?.personality_traits_phrases && (
+                <ul className="list-disc ml-6 mt-1">
+                  {candidateProfile.transcribed.transcription.personality_traits_phrases.map(
+                    (trait: string, idx: number) => (
+                      <li key={idx}>{trait}</li>
+                    )
+                  )}
+                </ul>
+              )}
+            </div>
+
             <div>
               <h3 className="font-semibold text-gray-700">
                 Communication Style
               </h3>
               <p>
                 {candidateProfile?.transcribed?.transcription
-                  .communication_style_insights ||
+                  ?.communication_style_insights ||
                   "No communication style insights available."}
               </p>
+              <h3 className="font-semibold text-gray-700 mb-2 mt-2">
+                Communication Style Highlights
+              </h3>
+              {candidateProfile?.transcribed?.transcription
+                ?.communication_style_insights_phrases && (
+                <ul className="list-disc ml-6 mt-1">
+                  {candidateProfile.transcribed.transcription.communication_style_insights_phrases.map(
+                    (insight: string, idx: number) => (
+                      <li key={idx}>{insight}</li>
+                    )
+                  )}
+                </ul>
+              )}
             </div>
 
             <div>
@@ -301,8 +353,21 @@ function CandidateProfile({
               </h3>
               <p>
                 {candidateProfile?.transcribed?.transcription
-                  .interview_insights || "No interview insights available."}
+                  ?.interview_insights || "No interview insights available."}
               </p>
+              <h3 className="font-semibold text-gray-700 mb-2 mt-2">
+                Interview Highlights
+              </h3>
+              {candidateProfile?.transcribed?.transcription
+                ?.interview_insights_phrases && (
+                <ul className="list-disc ml-6 mt-1">
+                  {candidateProfile.transcribed.transcription.interview_insights_phrases.map(
+                    (insight: string, idx: number) => (
+                      <li key={idx}>{insight}</li>
+                    )
+                  )}
+                </ul>
+              )}
             </div>
 
             <div>
@@ -311,9 +376,22 @@ function CandidateProfile({
               </h3>
               <p>
                 {candidateProfile?.transcribed?.transcription
-                  .cultural_fit_insights ||
+                  ?.cultural_fit_insights ||
                   "No cultural fit insights available."}
               </p>
+              <h3 className="font-semibold text-gray-700 mb-2 mt-2">
+                Cultural Fit Highlights
+              </h3>
+              {candidateProfile?.transcribed?.transcription
+                ?.cultural_fit_insights_phrases && (
+                <ul className="list-disc ml-6 mt-1">
+                  {candidateProfile.transcribed.transcription.cultural_fit_insights_phrases.map(
+                    (insight: string, idx: number) => (
+                      <li key={idx}>{insight}</li>
+                    )
+                  )}
+                </ul>
+              )}
             </div>
 
             <div>
@@ -322,7 +400,7 @@ function CandidateProfile({
               </h3>
               <p>
                 {candidateProfile?.score?.score_data
-                  .skill_gaps_recommendations ||
+                  ?.skill_gaps_recommendations ||
                   "No skill gaps recommendations available."}
               </p>
             </div>
@@ -332,7 +410,7 @@ function CandidateProfile({
                 View Full Transcription
               </summary>
               <p className="mt-2 text-gray-700">
-                {candidateProfile?.transcribed?.transcription.transcription ||
+                {candidateProfile?.transcribed?.transcription?.transcription ||
                   "No transcription available."}
               </p>
             </details>
