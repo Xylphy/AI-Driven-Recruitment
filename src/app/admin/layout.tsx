@@ -148,7 +148,17 @@ export default function AdminLayout({
                 </Link>
               )}
 
-              {/* Bottom section */}
+              {jwtDecoded.data.user.role === "SuperAdmin" && (
+                <Link
+                  href="/admin/hrofficers"
+                  className={`flex items-center gap-3 hover:bg-white/20 px-3 py-2 rounded-md transition ${
+                    pathName === "/admin/hrofficers" ? "bg-white/30" : ""
+                  }`}
+                >
+                  <MdPeople /> HR Officers
+                </Link>
+              )}
+
               <div className="flex flex-col gap-4 my-6 mt-auto">
                 <div className="flex gap-4 justify-center">
                   <MdSettings className="cursor-pointer hover:text-red-300" />
