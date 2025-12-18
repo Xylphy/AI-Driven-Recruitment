@@ -1,13 +1,20 @@
 "use client";
 
 import { FaFacebook, FaInstagram } from "react-icons/fa";
-import { MdEmail, MdPhone, MdSettings, MdLogout } from "react-icons/md";
+import {
+  MdEmail,
+  MdPhone,
+  MdSettings,
+  MdLogout,
+  MdArrowBack,
+} from "react-icons/md";
 import JobApplicationDetails from "@/components/profile/JobApplications";
 import Image from "next/image";
 import useAuth from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase/client";
 import { trpc } from "@/lib/trpc/client";
+import Link from "next/link";
 
 export default function Profile() {
   const router = useRouter();
@@ -140,6 +147,13 @@ export default function Profile() {
               <h2 className="text-2xl font-bold">
                 <span className="text-red-600">Applied</span> Jobs
               </h2>
+              <Link
+                href="/"
+                className="flex items-center gap-2 text-gray-600 hover:text-red-600 cursor-pointer"
+              >
+                <MdArrowBack className="text-xl" />
+                <span>Find Jobs</span>
+              </Link>
             </div>
             <div className="space-y-5 pb-9 overflow-y-auto h-full">
               {joblistings.isLoading ? (

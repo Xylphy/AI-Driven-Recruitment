@@ -274,6 +274,12 @@ export default function EditProfilePage() {
             userInfoHook.data?.user?.transcript_id || "No file selected"
           }
         />
+        <button
+          onClick={() => router.back()}
+          className="w-full bg-gray-300 text-gray-800 font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-gray-500 hover:border-gray-500"
+        >
+          Back
+        </button>
       </div>
     </div>
   );
