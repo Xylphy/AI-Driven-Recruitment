@@ -6,6 +6,7 @@ import { trpc } from "@/lib/trpc/client";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import Select from "react-select";
+import { Pencil, Trash2 } from "lucide-react";
 
 interface WorkExperience {
   company: string;
@@ -425,15 +426,12 @@ export default function ComparePage() {
             </div>
           </div>
 
-          {/* --- Feedback Section --- */}
           <div className="mt-6 space-y-6">
-            {/* AI Feedback */}
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-2">
                 AI Feedback
               </label>
               {AIQuery.isLoading || AIQuery.isFetching ? (
-                // Loading skeleton animation
                 <div className="animate-pulse space-y-3">
                   <div className="h-6 bg-gray-200 rounded w-1/2 mb-2" />
                   <div className="h-4 bg-gray-200 rounded w-1/3 mb-2" />
@@ -484,7 +482,6 @@ export default function ComparePage() {
               )}
             </div>
 
-            {/* Admin Feedback */}
             <div className="mt-6">
               {candidateA.userId && candidateB.userId && (
                 <button
@@ -526,25 +523,43 @@ export default function ComparePage() {
                 </div>
               )}
 
-              {/* Display Submitted Feedback as Posts */}
               <div className="mt-6 space-y-4">
                 {adminFeedbacksQuery.data?.adminFeedbacks.map((post, index) => (
                   <div
                     key={index}
                     className="p-4 border rounded-md bg-gray-50 shadow-sm"
                   >
-                    <div className="flex justify-between text-sm text-gray-500 mb-2">
+                    <div className="flex justify-between items-center text-sm text-gray-500 mb-2">
                       <span>
                         {post.admin.first_name} {post.admin.last_name}
                       </span>
                       <span>{formatDate(post.created_at)}</span>
                     </div>
-                    <div>
-                      <strong>
-                        Candidate {post.applicant.user.first_name}{" "}
-                        {post.applicant.user.last_name}:
-                      </strong>{" "}
-                      {post.feedback}
+
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="text-sm text-gray-800 leading-relaxed">
+                        <strong>
+                          Candidate {post.applicant.user.first_name}{" "}
+                          {post.applicant.user.last_name}:
+                        </strong>{" "}
+                        {post.feedback}
+                      </p>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          title="Edit feedback"
+                          className="p-1 rounded hover:bg-red-50 transition"
+                        >
+                          <Pencil className="w-4 h-4 text-red-600" />
+                        </button>
+
+                        <button
+                          title="Delete feedback"
+                          className="p-1 rounded hover:bg-red-100 transition"
+                        >
+                          <Trash2 className="w-4 h-4 text-red-600" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
