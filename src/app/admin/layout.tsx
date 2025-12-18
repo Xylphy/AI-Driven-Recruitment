@@ -39,7 +39,8 @@ export default function AdminLayout({
   if (
     jwtDecoded.isLoading ||
     !jwtDecoded.isSuccess ||
-    !jwtDecoded.data.user.role
+    jwtDecoded.data.user.role === "User" ||
+    jwtDecoded.data.user.role === "HR Officer"
   ) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-100">

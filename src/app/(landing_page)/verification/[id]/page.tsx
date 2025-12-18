@@ -7,44 +7,99 @@ import {
 } from "firebase/auth";
 import { Button } from "@/components/common/Button";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { getCsrfToken } from "@/lib/library";
+import { startTransition, useEffect, useState } from "react";
 import { auth } from "@/lib/firebase/client";
+import { trpc } from "@/lib/trpc/client";
 
 export default function Verification() {
   const router = useRouter();
-  const [csrfToken, setCsrfToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const id = useParams().id as string;
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const id = useParams().id as string; // MongoDB ObjectId
   const [email, setEmail] = useState<string | null>(null);
+  const verificationMutation = trpc.user.verifyUser.useMutation();
+
+  const {
+    data,
+    isLoading: isEmailLoading,
+    error,
+  } = trpc.user.fetchEmail.useQuery({ uid: id }, { enabled: !!id });
 
   useEffect(() => {
-    if (!id) {
+    if (data?.email) {
+      startTransition(() => setEmail(data.email));
+    }
+
+    if (error) {
+      alert("Error: " + error.message);
+      router.push("/signup");
+    }
+  }, [data, error, router]);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (!email) {
+      alert("Email not found");
       return;
     }
-    getCsrfToken().then(setCsrfToken);
 
-    fetch(`/api/users/signup?id=${id}`, {
-      method: "GET",
-    })
-      .then(async (res) => {
-        if (res.ok) {
-          return res.json();
+    const formData = new FormData(e.currentTarget);
+    const password = formData.get("password");
+    const confirmPassword = formData.get("confirmPassword");
+
+    if (!isSignInWithEmailLink(auth, window.location.href)) {
+      alert("Invalid link");
+      return;
+    }
+
+    try {
+      if (password !== confirmPassword) {
+        alert("Passwords do not match");
+        return;
+      }
+
+      setIsLoading(true);
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        (password as string).trim()
+      );
+
+      await verificationMutation.mutateAsync(
+        {
+          password: password as string,
+          confirmPassword: confirmPassword as string,
+          token: id,
+          uid: userCredential.user.uid,
+        },
+        {
+          onSuccess: () => {
+            alert("User verified successfully");
+            router.push("/login");
+          },
+          onError: async (mutationError) => {
+            alert("Error: " + mutationError.message);
+            // Delete the created user if verification fails
+            const currentUser = auth.currentUser;
+            if (currentUser) {
+              await deleteUser(currentUser);
+            }
+          },
+          onSettled: () => {
+            setIsLoading(false);
+          },
         }
-
-        throw new Error((await res.json()).message || "Failed to get email");
-      })
-      .then((data) => setEmail(data.email))
-      .catch((error) => {
-        alert("Error: " + error.message);
-        router.push("/signup");
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
-  }, [id, router]);
-
-  if (isLoading) {
+      );
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        alert("Error signing in with email link: " + error.message);
+      } else {
+        alert("An unknown error occurred");
+      }
+      setIsLoading(false);
+    }
+  };
+  if (isEmailLoading) {
     return (
       <div className="flex justify-center items-center h-screen">
         <svg
@@ -70,73 +125,6 @@ export default function Verification() {
       </div>
     );
   }
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    if (!csrfToken) {
-      alert("CSRF token not found");
-      return;
-    }
-
-    if (!email) {
-      alert("Email not found");
-      return;
-    }
-
-    const formData = new FormData(e.currentTarget);
-    const password = formData.get("password");
-    const confirmPassword = formData.get("confirmPassword");
-
-    const data = {
-      password: formData.get("password"),
-      confirmPassword: formData.get("confirmPassword"),
-      token: id,
-    };
-
-    if (!isSignInWithEmailLink(auth, window.location.href)) {
-      alert("Invalid link");
-      return;
-    }
-
-    try {
-      if (password !== confirmPassword) {
-        alert("Passwords do not match");
-        return;
-      }
-
-      setIsLoading(true);
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        (data.password as string).trim()
-      );
-
-      const response = await fetch("/api/users", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": csrfToken,
-        },
-        body: JSON.stringify({ ...data, uid: userCredential.user.uid }),
-      });
-
-      if (response.ok) {
-        alert("Password set successfully");
-        router.push("/login");
-      } else {
-        await deleteUser(userCredential.user);
-        response.json().then((errorData) => alert("Error: " + errorData.error));
-      }
-      setIsLoading(false);
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        alert("Error signing in with email link: " + error.message);
-      } else {
-        alert("An unknown error occurred");
-      }
-      setIsLoading(false);
-    }
-  };
 
   return (
     <div className="flex justify-center pt-43">

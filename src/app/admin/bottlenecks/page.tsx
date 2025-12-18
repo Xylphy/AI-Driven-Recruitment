@@ -100,7 +100,7 @@ export default function JobsPage() {
       </div>
 
       <div className="overflow-x-auto bg-white shadow-md rounded-lg">
-        <div className="overflow-auto max-h-[500px]">
+        <div className="overflow-auto max-h-125">
           <table className="w-full border-collapse text-sm">
             <thead className="bg-gray-100 sticky top-0 z-10">
               <tr>

@@ -1,5 +1,6 @@
 "use client";
 
+import { USER_ROLES } from "@/lib/constants";
 import { trpc } from "@/lib/trpc/client";
 import { useState } from "react";
 
@@ -10,7 +11,10 @@ export default function UsersPage() {
   });
   const changeRoleMutation = trpc.admin.changeUserRole.useMutation();
 
-  const handleRoleChange = async (userId: string, newRole: "Admin" | "User") =>
+  const handleRoleChange = async (
+    userId: string,
+    newRole: "Admin" | "User" | "HR Officer"
+  ) =>
     await changeRoleMutation.mutateAsync(
       { userId, newRole },
       {
@@ -78,13 +82,18 @@ export default function UsersPage() {
                       onChange={(e) =>
                         handleRoleChange(
                           user.id,
-                          e.target.value as "Admin" | "User"
+                          e.target.value as "Admin" | "User" | "HR Officer"
                         )
                       }
                       className="border rounded px-2 py-1 text-sm focus:ring-1 focus:ring-red-500 focus:outline-none"
                     >
-                      <option value="Admin">Admin</option>
-                      <option value="User">User</option>
+                      {USER_ROLES.filter((role) => role !== "SuperAdmin").map(
+                        (role) => (
+                          <option key={role} value={role}>
+                            {role}
+                          </option>
+                        )
+                      )}
                     </select>
                   </td>
                 </tr>
