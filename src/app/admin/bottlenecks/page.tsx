@@ -24,13 +24,16 @@ ChartJS.register(
   Tooltip,
   Legend
 );
+import type { BottleneckPercentileRow } from "@/types/types";
 
 export default function JobsPage() {
   const router = useRouter();
   const today = new Date();
+
   const [fromDate, setFromDate] = useState(
     new Date(today.getFullYear(), today.getMonth(), 1).toISOString()
   );
+
   const [toDate, setToDate] = useState(
     new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString()
   );
@@ -39,6 +42,31 @@ export default function JobsPage() {
     fromDate: fromDate,
     toDate: toDate,
   });
+
+  const bottlenecks: BottleneckPercentileRow[] = Array.isArray(
+    bottleNecksQuery.data
+  )
+    ? bottleNecksQuery.data
+    : bottleNecksQuery.data?.bottlenecks ?? [];
+
+  const barData = {
+    labels: bottlenecks.map((b) => b.status),
+    datasets: [
+      {
+        label: "Median Time (p50 seconds)",
+        data: bottlenecks.map((b) => b.p50_seconds),
+      },
+    ],
+  };
+
+  const pieData = {
+    labels: bottlenecks.map((b) => b.status),
+    datasets: [
+      {
+        data: bottlenecks.map((b) => b.samples),
+      },
+    ],
+  };
 
   return (
     <div className="space-y-6">
@@ -72,77 +100,83 @@ export default function JobsPage() {
       </div>
 
       <div className="overflow-x-auto bg-white shadow-md rounded-lg">
-        <div className="overflow-auto max-h-125 bg-white shadow-md rounded-lg">
-          {/* <table className="w-full border-collapse">
-            <thead className="bg-gray-100 text-gray-700 text-left">
+        <div className="overflow-auto max-h-[500px]">
+          <table className="w-full border-collapse text-sm">
+            <thead className="bg-gray-100 sticky top-0 z-10">
               <tr>
-                <th className="p-4 font-semibold border-b">Description</th>
-                <th className="p-4 font-semibold border-b">Category</th>
-                <th className="p-4 font-semibold border-b">Date</th>
-                <th className="p-4 font-semibold border-b">Time</th>
+                <th className="p-4 border-b text-left">Status</th>
+                <th className="p-4 border-b text-center">Samples</th>
+                <th className="p-4 border-b text-center">p50 (sec)</th>
+                <th className="p-4 border-b text-center">p75 (sec)</th>
+                <th className="p-4 border-b text-center">p90 (sec)</th>
+                <th className="p-4 border-b text-center">p50 Interval</th>
+                <th className="p-4 border-b text-center">p75 Interval</th>
+                <th className="p-4 border-b text-center">p90 Interval</th>
               </tr>
             </thead>
-            <tbody> */}
-          {/* {bottleNecksQuery.data &&
-              bottleNecksQuery.data.bottlenecks.length > 0 ? (
-                bottleNecksQuery.data.bottlenecks.map((row) => (
+
+            <tbody>
+              {bottleNecksQuery.isLoading ? (
+                <tr>
+                  <td colSpan={8} className="p-6 text-center text-gray-500">
+                    Loading bottlenecks…
+                  </td>
+                </tr>
+              ) : bottlenecks.length > 0 ? (
+                bottlenecks.map((row) => (
                   <tr
-                    key={row.id}
+                    key={row.status}
                     className="border-t hover:bg-gray-50 transition"
                   >
-                    <td className="p-4">{row}</td>
-                    <td className="p-4">
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                          row.category === "Screening"
-                            ? "bg-blue-100 text-blue-700"
-                            : row.category === "Pipeline"
-                            ? "bg-yellow-100 text-yellow-700"
-                            : "bg-green-100 text-green-700"
-                        }`}
-                      >
-                        {row.category}
-                      </span>
+                    <td className="p-4 font-medium">{row.status}</td>
+
+                    <td className="p-4 text-center font-semibold">
+                      {row.samples}
                     </td>
-                    <td className="p-4">{row.date}</td>
-                    <td className="p-4">{row.time}</td>
+
+                    <td className="p-4 text-center">{row.p50_seconds}</td>
+
+                    <td className="p-4 text-center">{row.p75_seconds}</td>
+
+                    <td className="p-4 text-center">{row.p90_seconds}</td>
+
+                    <td className="p-4 text-center font-mono text-gray-600">
+                      {row.p50_interval}
+                    </td>
+
+                    <td className="p-4 text-center font-mono text-gray-600">
+                      {row.p75_interval}
+                    </td>
+
+                    <td className="p-4 text-center font-mono text-gray-600">
+                      {row.p90_interval}
+                    </td>
                   </tr>
                 ))
               ) : (
                 <tr>
                   <td
-                    colSpan={4}
-                    className="text-center p-6 text-gray-500 italic"
+                    colSpan={8}
+                    className="p-6 text-center text-gray-500 italic"
                   >
-                    No bottlenecks found.
+                    No bottleneck data found.
                   </td>
                 </tr>
               )}
             </tbody>
-          </table> */}
+          </table>
         </div>
-
-        {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
           <div className="bg-white p-4 shadow rounded-lg">
-            <h3 className="font-semibold mb-2">Bottlenecks by Category</h3>
+            <h3 className="font-semibold mb-2">Median Time by Status (p50)</h3>
             <Bar data={barData} />
           </div>
 
           <div className="bg-white p-4 shadow rounded-lg">
-            <h3 className="font-semibold mb-2">Category Distribution</h3>
-            <Pie
-              data={{
-                labels: Object.keys(categoryCounts),
-                datasets: [
-                  {
-                    data: Object.values(categoryCounts),
-                    backgroundColor: ["#3b82f6", "#facc15", "#22c55e"],
-                  },
-                ],
-              }}
-            />
+            <h3 className="font-semibold mb-2">Samples Distribution</h3>
+            <Pie data={pieData} />
           </div>
-        </div> */}
+        </div>
       </div>
     </div>
   );
