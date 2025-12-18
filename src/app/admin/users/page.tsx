@@ -13,7 +13,8 @@ export default function UsersPage() {
 
   const handleRoleChange = async (
     userId: string,
-    newRole: "Admin" | "User" | "HR Officer"
+    // newRole: "Admin" | "User" | "HR Officer"
+    newRole: "Admin" | "User"
   ) =>
     await changeRoleMutation.mutateAsync(
       { userId, newRole },
@@ -80,7 +81,8 @@ export default function UsersPage() {
                       onChange={(e) =>
                         handleRoleChange(
                           user.id,
-                          e.target.value as "Admin" | "User" | "HR Officer"
+                          // e.target.value as "Admin" | "User" | "HR Officer"
+                          e.target.value as "Admin" | "User"
                         )
                       }
                       className="border rounded px-2 py-1 text-sm focus:ring-1 focus:ring-red-500 focus:outline-none"

@@ -25,12 +25,6 @@ export default function JobListingPage() {
     enabled: isAuthenticated,
   });
   const createJoblisting = trpc.joblisting.createJoblisting.useMutation();
-  const [hrSearch, setHrSearch] = useState("");
-  const [showDropdown, setShowDropdown] = useState(false);
-
-  const filteredHROfficers = JOB_LOCATIONS.filter((officer) =>
-    officer.toLowerCase().includes(hrSearch.toLowerCase())
-  );
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -183,49 +177,6 @@ export default function JobListingPage() {
               </option>
             ))}
           </select>
-          {/* change here names of hrr officer */}
-          <label
-            htmlFor="hrofficer"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Assigned HR Officer
-          </label>
-
-          <div className="relative mt-1">
-            <input
-              type="text"
-              id="hrofficer"
-              value={hrSearch}
-              onChange={(e) => {
-                setHrSearch(e.target.value);
-                setShowDropdown(true);
-              }}
-              onFocus={() => setShowDropdown(true)}
-              placeholder="Type to search HR Officer"
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:outline-none"
-              required
-            />
-
-            {showDropdown && filteredHROfficers.length > 0 && (
-              <ul className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow max-h-48 overflow-y-auto">
-                {filteredHROfficers.map((officer) => (
-                  <li
-                    key={officer}
-                    onClick={() => {
-                      setHrSearch(officer);
-                      setShowDropdown(false);
-                      handleInputChange({
-                        target: { name: "hrofficer", value: officer },
-                      } as any);
-                    }}
-                    className="px-4 py-2 cursor-pointer hover:bg-red-50"
-                  >
-                    {officer}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
 
           <div className="mt-4">
             <div className="flex items-center">

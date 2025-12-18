@@ -5,6 +5,7 @@ import { trpc } from "@/lib/trpc/client";
 import { formatDate } from "@/lib/library";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { USER_ACTION_EVENT_TYPES } from "@/lib/constants";
 
 export default function JobsPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -63,14 +64,11 @@ export default function JobsPage() {
           className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:outline-none"
         >
           <option value="All">All Categories</option>
-          <option value="Status Changed">Status Changed</option>
-          <option value="Profile Updated">Profile Updated</option>
-          <option value="Joblisting modified">Joblisting modified</option>
-          <option value="Joblisting deleted">Joblisting deleted</option>
-          <option value="Applied for job">Applied for job</option>
-          <option value="Changed job alerts">Changed job alerts</option>
-          <option value="Created joblisting">Created joblisting</option>
-          <option value="Changed user role">Changed user role</option>
+          {USER_ACTION_EVENT_TYPES.map((eventType) => (
+            <option key={eventType} value={eventType}>
+              {eventType}
+            </option>
+          ))}
         </select>
 
         <div className="flex gap-2">

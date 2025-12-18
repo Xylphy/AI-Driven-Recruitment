@@ -1,7 +1,7 @@
 // Types not directly related to the database schema but used throughout the application
 // --------------- Types for common attributes | meant for extends --------------- //
 
-import { USER_ROLES } from "@/lib/constants";
+import { ENTITIES, USER_ACTION_EVENT_TYPES, USER_ROLES } from "@/lib/constants";
 import { FieldValue, Timestamp } from "firebase/firestore";
 import { JwtPayload } from "jsonwebtoken";
 
@@ -107,3 +107,9 @@ export interface BottleneckPercentileRow {
   p75_interval: string;
   p90_interval: string;
 }
+
+export type UserActionEventType = (typeof USER_ACTION_EVENT_TYPES)[number];
+
+export type EntityTypes = (typeof ENTITIES)[number];
+
+export type UserRoles = (typeof USER_ROLES)[number];
