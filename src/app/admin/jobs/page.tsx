@@ -68,14 +68,34 @@ export default function JobsPage() {
   return (
     <div className="space-y-4">
       <h2 className="text-2xl font-bold mb-4 text-red-600">Job Listings</h2>
+      <div className="flex items-center gap-[20px] mb-4">
+        <input
+          type="text"
+          placeholder="Search by Job Title"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          className="w-full md:w-1/2 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:outline-none"
+        />
 
-      <input
-        type="text"
-        placeholder="Search by Job Title"
-        value={searchInput}
-        onChange={(e) => setSearchInput(e.target.value)}
-        className="w-full md:w-1/2 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:outline-none mb-4"
-      />
+        <button
+          onClick={() => router.push("/createjob")}
+          className="bg-red-600 text-white font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-600 hover:border-red-600 flex items-center justify-center gap-2 whitespace-nowrap"
+        >
+          <span>Add Job Listing</span>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fillRule="evenodd"
+              d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+              clipRule="evenodd"
+            />
+          </svg>
+        </button>
+      </div>
 
       <div className="overflow-x-auto max-h-150">
         <table className="w-full bg-white shadow-sm rounded-lg overflow-hidden">
