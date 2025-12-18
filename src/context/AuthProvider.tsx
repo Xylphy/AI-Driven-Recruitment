@@ -43,7 +43,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         await auth.signOut();
         setIsAuthenticated(false);
         router.push("/login");
+        return;
       }
+      setCsrfToken(await getCsrfToken());
     };
 
     refresh(); // Initial call
