@@ -11,6 +11,7 @@ import {
 import { z } from "zod";
 import { auth } from "@/lib/firebase/admin";
 import { BottleneckPercentileRow } from "@/types/types";
+import { USER_ROLES } from "@/lib/constants";
 
 const adminRouter = createTRPCRouter({
   fetchStats: adminProcedure.query(async ({ ctx }) => {
@@ -237,7 +238,7 @@ const adminRouter = createTRPCRouter({
     .input(
       z.object({
         userId: z.string(),
-        newRole: z.enum(["Admin", "User"]),
+        newRole: z.enum(USER_ROLES.filter((role) => role !== "SuperAdmin")),
       })
     )
     .mutation(async ({ ctx, input }) => {

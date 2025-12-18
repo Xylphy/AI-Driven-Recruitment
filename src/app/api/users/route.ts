@@ -1,184 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClientServer } from "@/lib/supabase/supabase";
-import { ObjectId } from "mongodb";
 import {
   deleteRow,
   insertTable,
   updateTable,
   find,
 } from "@/lib/supabase/action";
-import {
-  EducationalDetail,
-  JobExperience,
-  SocialLink,
-  JWT,
-} from "@/types/types";
-import { deleteDocument, findOne } from "@/lib/mongodb/action";
-import { ErrorResponse } from "@/types/classes";
+import { JWT } from "@/types/types";
 import jwt from "jsonwebtoken";
 import { User } from "@/types/schema";
 import { deleteFile, uploadFile } from "@/lib/cloudinary/cloudinary";
-import { userSchema, verificationSchema } from "@/lib/schemas";
+import { userSchema } from "@/lib/schemas";
 import { parseFormData } from "@/lib/library";
-import mongoDb_client from "@/lib/mongodb/mongodb";
 import { z } from "zod";
-
-// This function handles the POST request to set the password
-export async function POST(request: NextRequest) {
-  try {
-    const validatedData = verificationSchema.safeParse(await request.json());
-    if (!validatedData.success) {
-      return NextResponse.json(
-        { error: z.treeifyError(validatedData.error) },
-        { status: 400 }
-      );
-    }
-
-    if (validatedData.data.password !== validatedData.data.confirmPassword) {
-      return NextResponse.json(
-        { error: "Passwords do not match" },
-        { status: 400 }
-      );
-    }
-
-    await mongoDb_client.connect();
-
-    const data = await findOne("ai-driven-recruitment", "verification_tokens", {
-      _id: ObjectId.createFromHexString(validatedData.data.token),
-    });
-
-    if (!data) {
-      return NextResponse.json({ error: "Token not found" }, { status: 404 });
-    }
-
-    const supabase = await createClientServer(1, true);
-
-    const { data: insertedData, error } = await insertTable(supabase, "users", {
-      first_name: data.firstName,
-      last_name: data.lastName,
-      phone_number: data.mobileNumber,
-      prefix: data.prefix,
-      firebase_uid: validatedData.data.uid,
-      resume_id: data.resumeId,
-      transcript_id: data.transcriptId,
-      country_code: data.countryCode,
-      street: data.street,
-      zip: data.zip,
-      city: data.city,
-      state: data.state_,
-      country: data.country,
-      job_title: data.jobTitle,
-    } as User);
-
-    if (error || !insertedData || !insertedData[0] || !insertedData[0].id) {
-      console.error("Error inserting user into Supabase:", error);
-      return NextResponse.json(
-        { error: "Failed to insert user into Supabase" },
-        { status: 500 }
-      );
-    }
-
-    const resumeParserURL = new URL("http://localhost:8000/parseresume/");
-    resumeParserURL.searchParams.set("public_id", data.resumeId);
-    resumeParserURL.searchParams.set(
-      "applicant_id",
-      insertedData[0].id.toString()
-    );
-
-    const transcribeURL = new URL("http://localhost:8000/transcribe/");
-    transcribeURL.searchParams.set("public_id", data.transcriptId);
-    transcribeURL.searchParams.set(
-      "applicant_id",
-      insertedData[0].id.toString()
-    );
-
-    fetch(resumeParserURL.toString(), {
-      method: "POST",
-    }).catch((err) => {
-      console.error("Error calling resume parser:", err);
-    });
-
-    fetch(transcribeURL.toString(), {
-      method: "POST",
-    }).catch((err) => {
-      console.error("Error calling transcribe service:", err);
-    });
-
-    const userId = insertedData[0].id;
-    const skills = data.skillSet?.split(",") || [];
-
-    const results = await Promise.all([
-      ...data.educationalDetails.map((detail: Omit<EducationalDetail, "id">) =>
-        insertTable(supabase, "educational_details", {
-          user_id: userId,
-          degree: detail.degree,
-          institute: detail.institute,
-          start_month: detail.startMonth,
-          start_year: detail.startYear,
-          end_month: detail.endMonth,
-          end_year: detail.endYear,
-          currently_pursuing: detail.currentlyPursuing,
-          major: detail.major,
-        })
-      ),
-      ...data.socialLinks.map((link: Omit<SocialLink, "id">) =>
-        insertTable(supabase, "social_links", {
-          user_id: userId,
-          link: link.value,
-        })
-      ),
-      ...data.jobExperiences.map((experience: Omit<JobExperience, "id">) =>
-        insertTable(supabase, "job_experiences", {
-          user_id: userId,
-          title: experience.title,
-          company: experience.company,
-          start_month: experience.startMonth,
-          start_year: experience.startYear,
-          end_month: experience.endMonth,
-          end_year: experience.endYear,
-          currently_working: experience.currentlyWorking,
-          summary: experience.summary,
-        })
-      ),
-      ...skills.map((skill: string) =>
-        insertTable(supabase, "skills", {
-          user_id: userId,
-          skill: skill.trim(),
-        })
-      ),
-    ]);
-
-    if (results.some((result) => result.error)) {
-      deleteRow(supabase, "users", "id", userId.toString());
-      return NextResponse.json(
-        { error: "Something wrong saving data" },
-        { status: 500 }
-      );
-    }
-
-    await deleteDocument("ai-driven-recruitment", "verification_tokens", {
-      _id: ObjectId.createFromHexString(validatedData.data.token),
-    }).single();
-
-    await mongoDb_client.close();
-
-    return NextResponse.json(
-      { message: "Password set successfully" },
-      { status: 200 }
-    );
-  } catch (error) {
-    if (error instanceof ErrorResponse) {
-      return NextResponse.json(
-        { error: error.errorMessage },
-        { status: error.status }
-      );
-    }
-    return NextResponse.json(
-      { error: "An error occurred while processing your request" },
-      { status: 500 }
-    );
-  }
-}
 
 export async function PUT(request: NextRequest) {
   const formData = await request.formData();

@@ -13,7 +13,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [isAuthLoading, setIsAuthLoading] = useState(false);
   const [jwtSuccess, setJwtSuccess] = useState(false);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth({ routerActivation: false });
   const jwtInfo = trpc.auth.decodeJWT.useQuery(undefined, {
     enabled: isAuthenticated && jwtSuccess,
   });
@@ -40,24 +40,10 @@ export default function LoginPage() {
     }
 
     try {
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-
-      const res = await fetch("/api/auth/jwt", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${userCredential.user.uid}`,
-        },
-        credentials: "include",
-      });
-
-      if (!res.ok) throw new Error("Failed to authenticate");
+      await signInWithEmailAndPassword(auth, email, password);
 
       setJwtSuccess(true);
+      void jwtInfo.refetch();
     } catch {
       alert("Authentication failed");
       auth.signOut();

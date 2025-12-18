@@ -1,5 +1,6 @@
 "use client";
 
+import { USER_ROLES } from "@/lib/constants";
 import { trpc } from "@/lib/trpc/client";
 import { useState } from "react";
 
@@ -10,7 +11,11 @@ export default function UsersPage() {
   });
   const changeRoleMutation = trpc.admin.changeUserRole.useMutation();
 
-  const handleRoleChange = async (userId: string, newRole: "Admin" | "User") =>
+  const handleRoleChange = async (
+    userId: string,
+    // newRole: "Admin" | "User" | "HR Officer"
+    newRole: "Admin" | "User"
+  ) =>
     await changeRoleMutation.mutateAsync(
       { userId, newRole },
       {
@@ -27,7 +32,6 @@ export default function UsersPage() {
     <div className="bg-white p-6 rounded-lg shadow-md space-y-6">
       <h2 className="text-2xl font-bold text-red-600 mb-4">User Management</h2>
 
-      {/* Search Input */}
       <input
         type="text"
         placeholder="Search by Name or Role..."
@@ -36,7 +40,6 @@ export default function UsersPage() {
         className="w-full md:w-1/2 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:outline-none mb-4"
       />
 
-      {/* Table */}
       <div className="overflow-x-auto max-h-150">
         <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
           <thead className="bg-gray-100 text-gray-600 text-sm uppercase sticky top-0">
@@ -78,13 +81,19 @@ export default function UsersPage() {
                       onChange={(e) =>
                         handleRoleChange(
                           user.id,
+                          // e.target.value as "Admin" | "User" | "HR Officer"
                           e.target.value as "Admin" | "User"
                         )
                       }
                       className="border rounded px-2 py-1 text-sm focus:ring-1 focus:ring-red-500 focus:outline-none"
                     >
-                      <option value="Admin">Admin</option>
-                      <option value="User">User</option>
+                      {USER_ROLES.filter((role) => role !== "SuperAdmin").map(
+                        (role) => (
+                          <option key={role} value={role}>
+                            {role}
+                          </option>
+                        )
+                      )}
                     </select>
                   </td>
                 </tr>

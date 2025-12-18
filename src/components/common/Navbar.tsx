@@ -46,7 +46,14 @@ export default function Navbar() {
     <nav className="bg-white text-black shadow-md">
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
         <div className="text-lg font-bold">
-          <Image src="/logo.png" alt="Alliance Logo" width={130} height={50} />
+          <Link href={"/"}>
+            <Image
+              src="/logo.png"
+              alt="Alliance Logo"
+              width={130}
+              height={50}
+            />
+          </Link>
         </div>
         <div className="flex items-center gap-4 relative">
           {isAuthenticated ? (

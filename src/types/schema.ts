@@ -1,5 +1,5 @@
-import { Title } from "./types";
-import { CANDIDATE_STATUSES } from "@/lib/constants";
+import { EntityTypes, Title, UserActionEventType, UserRoles } from "./types";
+import { CANDIDATE_STATUSES, USER_ROLES } from "@/lib/constants";
 
 // -------------------------------- Database Schema -------------------------------- //
 // For Database Schema, we use snake_case for field names
@@ -36,7 +36,7 @@ export interface User extends IdentifiableItem {
   parsed_resume_id: string | null;
   transcript_id: string | null;
   transcribed_id: string | null;
-  role: "Admin" | "User" | "SuperAdmin";
+  role: (typeof USER_ROLES)[number];
 }
 
 export interface EducationalDetails
@@ -130,24 +130,15 @@ export interface AuditLog extends IdentifiableItem {
   created_at: string; //timestamp
 
   // actor (who)
-  actor_type: "Admin" | "User" | "SuperAdmin";
+  actor_type: UserRoles;
   actor_id: string; // user_id
 
   // action (what)
   action: "create" | "update" | "delete";
-  event_type:
-    | "Status changed"
-    | "Profile updated"
-    | "Joblisting modified"
-    | "Joblisting deleted"
-    | "Created joblisting"
-    | "Applied for job"
-    | "Changed job alerts"
-    | "Changed user role"
-    | "Changed candidate status";
+  event_type: UserActionEventType;
 
   // target (to what)
-  entity_type: "Job Applicant" | "User" | "Job Listing";
+  entity_type: EntityTypes;
   entity_id: string;
 
   // details (additional info)
