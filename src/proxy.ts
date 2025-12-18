@@ -26,10 +26,6 @@ const publicPathToken = [
     path: "/api/csrf",
     acceptedMethods: ["GET"],
   },
-  {
-    path: "/api/users/signup",
-    acceptedMethods: ["POST", "GET"],
-  },
 ];
 
 // Paths that do not require CSRF token
@@ -38,7 +34,6 @@ const publicPathCsrf = [
   "/api/auth/jwt",
   "/api/csrf",
   "/api/admin/stats",
-  "/api/users/signup",
 ];
 
 const allowedOrigins =
@@ -54,7 +49,7 @@ export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   if (pathname.startsWith("/api")) {
-    // Bypass tRPC requests
+    // Let trpc and other api routes handle their own rate limiting and endpoint protection
     if (pathname.startsWith("/api/trpc")) {
       return NextResponse.next();
     }

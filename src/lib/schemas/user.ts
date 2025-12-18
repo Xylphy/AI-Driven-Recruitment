@@ -92,13 +92,3 @@ export const userSchema = z.object({
       "Video must be in MP4, WebM, OGG, AVI, or MOV format"
     ),
 });
-
-// Schema for after the user clicks the verification link
-export const verificationSchema = z.object({
-  password: z.string().min(8, "Password must be at least 8 characters long"),
-  confirmPassword: z
-    .string()
-    .min(8, "Password must be at least 8 characters long"),
-  token: z.string().min(1, "Token is required"),
-  uid: z.string().min(1, "User ID is required"),
-});

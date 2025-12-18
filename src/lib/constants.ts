@@ -51,4 +51,6 @@ export const CANDIDATE_STATUSES = [
   "Close Status",
 ] as const;
 
+export const USER_ROLES = ["Admin", "User", "SuperAdmin", "HR Officer"] as const;
+
 export const JOB_LOCATIONS = ["Cebu City", "Manila", "Tokyo"] as const;
