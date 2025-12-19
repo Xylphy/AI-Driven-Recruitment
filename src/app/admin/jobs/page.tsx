@@ -1,69 +1,24 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { trpc } from "@/lib/trpc/client";
 import { useRouter } from "next/navigation";
 
+type Job = {
+  id: string;
+  title: string;
+  created_at: string;
+  is_fulltime: boolean;
+  location: string;
+  applicant_count: number;
+};
+
 export default function JobsPage() {
   const router = useRouter();
-  const jobsQuery = trpc.joblisting.fetchJobs.useQuery({});
   const [searchInput, setSearchInput] = useState("");
-
-  const filteredJobs = useMemo(() => {
-    if (!jobsQuery.data?.jobs) return [];
-    const input = searchInput.toLowerCase();
-
-    return jobsQuery.data.jobs.filter((job) => {
-      const titleMatch = job.title.toLowerCase().includes(input);
-      const applicantMatch = job.applicant_count.toString().includes(input);
-      const statusMatch = "open".includes(input);
-
-      return titleMatch || applicantMatch || statusMatch;
-    });
-  }, [searchInput, jobsQuery.data]);
-
-  if (jobsQuery.isLoading) {
-    return (
-      <div className="p-6">
-        <div className="flex items-center space-x-3 mb-4">
-          <svg
-            className="h-6 w-6 text-gray-400 animate-spin"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-            />
-          </svg>
-          <h2 className="text-lg font-medium text-gray-700">
-            Loading job listings…
-          </h2>
-        </div>
-
-        <div className="animate-pulse space-y-3">
-          <div className="h-4 bg-gray-200 rounded w-1/3" />
-          {[0, 1, 2].map((i) => (
-            <div key={i} className="flex items-center justify-between">
-              <div className="h-4 bg-gray-200 rounded w-1/3" />
-              <div className="h-4 bg-gray-200 rounded w-1/6" />
-              <div className="h-6 bg-gray-200 rounded w-20" />
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
+  const jobsQuery = trpc.joblisting.fetchJobs.useQuery({
+    searchQuery: searchInput,
+  });
 
   return (
     <div className="space-y-4">
@@ -82,7 +37,6 @@ export default function JobsPage() {
         className="bg-red-600 text-white font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-600 hover:border-red-600 flex items-center justify-center gap-2 whitespace-nowrap"
       >
         <span>Add Job Listing</span>
-
         <svg
           xmlns="http://www.w3.org/2000/svg"
           className="h-5 w-5"
@@ -107,8 +61,24 @@ export default function JobsPage() {
             </tr>
           </thead>
           <tbody>
-            {filteredJobs.length > 0 ? (
-              filteredJobs.map((job) => (
+            {jobsQuery.isLoading ? (
+              <>
+                {[0, 1, 2].map((i) => (
+                  <tr key={i}>
+                    <td className="p-4">
+                      <div className="h-4 bg-gray-200 rounded w-2/3 animate-pulse" />
+                    </td>
+                    <td className="p-4">
+                      <div className="h-4 bg-gray-200 rounded w-1/4 animate-pulse" />
+                    </td>
+                    <td className="p-4">
+                      <div className="h-6 bg-gray-200 rounded w-16 animate-pulse" />
+                    </td>
+                  </tr>
+                ))}
+              </>
+            ) : jobsQuery.data?.jobs.length > 0 ? (
+              jobsQuery.data.jobs.map((job: Job) => (
                 <tr
                   key={job.id}
                   className="border-t hover:bg-gray-50 transition cursor-pointer"
