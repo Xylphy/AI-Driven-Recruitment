@@ -4,6 +4,8 @@
 import { ENTITIES, USER_ACTION_EVENT_TYPES, USER_ROLES } from "@/lib/constants";
 import { FieldValue, Timestamp } from "firebase/firestore";
 import { JwtPayload } from "jsonwebtoken";
+import { AppRouter } from "@/lib/trpc/routers/app";
+import { inferProcedureOutput } from "@trpc/server";
 
 export interface IdentifiableItem {
   id: number;
@@ -113,3 +115,8 @@ export type UserActionEventType = (typeof USER_ACTION_EVENT_TYPES)[number];
 export type EntityTypes = (typeof ENTITIES)[number];
 
 export type UserRoles = (typeof USER_ROLES)[number];
+
+export type FetchCandidateProfileOutput = inferProcedureOutput<
+  AppRouter["candidate"]["fetchCandidateProfile"]
+>;
+

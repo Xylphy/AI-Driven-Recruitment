@@ -77,7 +77,8 @@ export default function JobsPage() {
                   </tr>
                 ))}
               </>
-            ) : jobsQuery.data?.jobs.length > 0 ? (
+            ) : Array.isArray(jobsQuery.data?.jobs) &&
+              jobsQuery.data.jobs.length > 0 ? (
               jobsQuery.data.jobs.map((job: Job) => (
                 <tr
                   key={job.id}

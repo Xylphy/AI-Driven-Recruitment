@@ -7,7 +7,8 @@
     "dev:trace": "NODE_OPTIONS='--trace-deprecation' next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "analyze": "next experimental-analyze"
   },
   "dependencies": {
     "@supabase/ssr": "^0.8.0",
