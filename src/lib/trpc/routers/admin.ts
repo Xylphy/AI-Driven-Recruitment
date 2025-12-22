@@ -11,7 +11,7 @@ import {
 import { z } from "zod";
 import { auth } from "@/lib/firebase/admin";
 import { BottleneckPercentileRow } from "@/types/types";
-import { USER_ROLES } from "@/lib/constants";
+import { USER_ACTION_EVENT_TYPES, USER_ROLES } from "@/lib/constants";
 
 const adminRouter = createTRPCRouter({
   fetchStats: adminProcedure.query(async ({ ctx }) => {
@@ -128,7 +128,7 @@ const adminRouter = createTRPCRouter({
     .input(
       z.object({
         query: z.string().optional(),
-        category: z.string().optional(),
+        category: z.enum([...USER_ACTION_EVENT_TYPES, "All"]),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       })
@@ -160,7 +160,7 @@ const adminRouter = createTRPCRouter({
       const { data: auditLogs, error: auditLogsError } = await query;
 
       if (auditLogsError) {
-        console.error("Error fetching audit logs");
+        console.error("Error fetching audit logs", auditLogsError);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: auditLogsError?.message || "Failed to fetch audit logs",

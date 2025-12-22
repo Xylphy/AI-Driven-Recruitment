@@ -6,10 +6,13 @@ import { formatDate } from "@/lib/library";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { USER_ACTION_EVENT_TYPES } from "@/lib/constants";
+import { UserActionEventType } from "@/types/types";
 
 export default function JobsPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("All");
+  const [categoryFilter, setCategoryFilter] = useState<
+    "All" | UserActionEventType
+  >("All");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
 
@@ -60,7 +63,9 @@ export default function JobsPage() {
 
         <select
           value={categoryFilter}
-          onChange={(e) => setCategoryFilter(e.target.value)}
+          onChange={(e) =>
+            setCategoryFilter(e.target.value as "All" | UserActionEventType)
+          }
           className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:outline-none"
         >
           <option value="All">All Categories</option>

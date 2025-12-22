@@ -467,7 +467,7 @@ const candidateRouter = createTRPCRouter({
         ...((await response.json()) as AICompareRes),
       };
     }),
-  postAdminFeedback: adminProcedure
+  createAdminFeedback: adminProcedure
     .input(
       z.object({
         candidateId: z.uuid(),
@@ -477,12 +477,12 @@ const candidateRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const supabase = await createClientServer(1, true);
 
-      const { error } = await supabase.from("admin_feedback").upsert({
+      const { error } = await insertTable(supabase, "admin_feedback", {
         applicant_id: input.candidateId,
         feedback: input.feedback,
         created_at: new Date().toISOString(),
         admin_id: ctx.userJWT!.id,
-      });
+      } as Omit<AdminFeedback, "id">);
 
       if (error) {
         console.error("Error posting admin feedback ", error);
@@ -490,6 +490,25 @@ const candidateRouter = createTRPCRouter({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to post admin feedback",
         });
+      }
+
+      const { error: insertLogError } = await insertTable(
+        supabase,
+        "audit_logs",
+        {
+          actor_type: ctx.userJWT!.role,
+          actor_id: ctx.userJWT!.id,
+          action: "create",
+          event_type: "Admin feedback created",
+          entity_type: "Admin Feedback",
+          entity_id: input.candidateId,
+          changes: {},
+          details: `Created admin feedback for candidate ID ${input.candidateId}`,
+        } as AuditLog
+      );
+
+      if (insertLogError) {
+        console.error("Error inserting audit log for creating admin feedback");
       }
 
       return {
@@ -540,16 +559,34 @@ const candidateRouter = createTRPCRouter({
     .input(
       z.object({
         feedbackId: z.uuid(),
-        newFeedback: z.uuid(),
+        newFeedback: z.string(),
       })
     )
     .mutation(async ({ input }) => {
       const supabase = await createClientServer(1, true);
 
-      const { error } = await supabase
-        .from("admin_feedback")
-        .update({ feedback: input.newFeedback })
-        .eq("id", input.feedbackId);
+      const { data: oldData, error: oldDataError } = await find<AdminFeedback>(
+        supabase,
+        "admin_feedback",
+        [{ column: "id", value: input.feedbackId }]
+      ).single();
+
+      if (oldDataError) {
+        console.error("Error fetching old admin feedback data ", oldDataError);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch old admin feedback data",
+        });
+      }
+
+      const { error } = await updateTable(
+        supabase,
+        "admin_feedback",
+        {
+          feedback: input.newFeedback,
+        },
+        [{ column: "id", value: input.feedbackId }]
+      );
 
       if (error) {
         console.error("Error updating admin feedback ", error);
@@ -557,6 +594,34 @@ const candidateRouter = createTRPCRouter({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to update admin feedback",
         });
+      }
+
+      const changes: Record<string, Changes> = {};
+
+      if (oldData!.feedback !== input.newFeedback) {
+        changes["feedback"] = {
+          before: oldData!.feedback,
+          after: input.newFeedback,
+        };
+      }
+
+      const { error: insertLogError } = await insertTable(
+        supabase,
+        "audit_logs",
+        {
+          actor_type: "Admin",
+          actor_id: "system", // You might want to pass the admin ID here
+          action: "update",
+          event_type: "Admin feedback updated",
+          entity_type: "Admin Feedback",
+          entity_id: input.feedbackId,
+          changes,
+          details: `Admin feedback updated with ID ${input.feedbackId}`,
+        } as AuditLog
+      );
+
+      if (insertLogError) {
+        console.error("Error inserting audit log for updating admin feedback");
       }
 
       return {
@@ -569,7 +634,7 @@ const candidateRouter = createTRPCRouter({
         feedbackId: z.uuid(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const supabase = await createClientServer(1, true);
 
       const { error } = await supabase
@@ -583,6 +648,28 @@ const candidateRouter = createTRPCRouter({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to delete admin feedback",
         });
+      }
+
+      const { error: insertLogError } = await insertTable(
+        supabase,
+        "audit_logs",
+        {
+          actor_type: ctx.userJWT!.role,
+          actor_id: ctx.userJWT!.id,
+          action: "delete",
+          event_type: "Admin feedback deleted",
+          entity_type: "Admin Feedback",
+          entity_id: input.feedbackId,
+          changes: {},
+          details: `Deleted admin feedback with ID ${input.feedbackId}`,
+        } as AuditLog
+      );
+
+      if (insertLogError) {
+        console.error(
+          "Error inserting audit log for deleting admin feedback",
+          insertLogError
+        );
       }
 
       return {

@@ -104,9 +104,10 @@ export default function ComparePage() {
   );
 
   const postAdminFeedbackMutation =
-    trpc.candidate.postAdminFeedback.useMutation();
+    trpc.candidate.createAdminFeedback.useMutation();
+  const deleteAdminFeedbackMutation =
+    trpc.candidate.deleteAdminFeedback.useMutation();
 
-  // placeholder lang
   const handleSubmitFeedback = () => {
     if (!jwtQuery.data?.user) return;
 
@@ -132,6 +133,28 @@ export default function ComparePage() {
     }
 
     setShowAdminFeedbackFields(false);
+  };
+
+  const handleDeleteFeedback = (feedbackId: string) => {
+    if (
+      confirm(
+        "Are you sure you want to delete this admin feedback? This action cannot be undone."
+      )
+    ) {
+      deleteAdminFeedbackMutation.mutate(
+        { feedbackId },
+        {
+          onSuccess: () => {
+            adminFeedbacksQuery.refetch();
+          },
+          onError: (error) => {
+            alert(
+              `Failed to delete admin feedback. Please try again.\nError: ${error.message}`
+            );
+          },
+        }
+      );
+    }
   };
 
   return (
@@ -556,6 +579,7 @@ export default function ComparePage() {
                         <button
                           title="Delete feedback"
                           className="p-1 rounded hover:bg-red-100 transition"
+                          onClick={() => handleDeleteFeedback(post.id)}
                         >
                           <Trash2 className="w-4 h-4 text-red-600" />
                         </button>
