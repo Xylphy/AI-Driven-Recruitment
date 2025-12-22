@@ -29,6 +29,10 @@ export default function ComparePage() {
   // placeholder lang
   const [adminFeedbackA, setAdminFeedbackA] = useState<string>("");
   const [adminFeedbackB, setAdminFeedbackB] = useState<string>("");
+  const [editingFeedbackId, setEditingFeedbackId] = useState<string | null>(
+    null
+  );
+  const [editedFeedback, setEditedFeedback] = useState("");
 
   // New state for collapsible feedback and posts
   const [showAdminFeedbackFields, setShowAdminFeedbackFields] = useState(false);
@@ -107,6 +111,14 @@ export default function ComparePage() {
     trpc.candidate.createAdminFeedback.useMutation();
   const deleteAdminFeedbackMutation =
     trpc.candidate.deleteAdminFeedback.useMutation();
+  const updateAdminFeedbackMutation =
+    trpc.candidate.updateAdminFeedback.useMutation({
+      onSuccess: () => {
+        setEditingFeedbackId(null);
+        setEditedFeedback("");
+        adminFeedbacksQuery.refetch();
+      },
+    });
 
   const handleSubmitFeedback = () => {
     if (!jwtQuery.data?.user) return;
@@ -155,6 +167,14 @@ export default function ComparePage() {
         }
       );
     }
+  };
+  const handleEditClick = (post: any) => {
+    setEditingFeedbackId(post.id);
+    setEditedFeedback(post.feedback);
+  };
+
+  const handleSaveEdit = () => {
+    if (!editedFeedback.trim() || !editingFeedbackId) return;
   };
 
   return (
@@ -560,18 +580,54 @@ export default function ComparePage() {
                     </div>
 
                     <div className="flex items-start justify-between gap-3">
-                      <p className="text-sm text-gray-800 leading-relaxed">
-                        <strong>
+                      <div className="flex-1">
+                        <strong className="text-sm">
                           Candidate {post.applicant.user.first_name}{" "}
                           {post.applicant.user.last_name}:
-                        </strong>{" "}
-                        {post.feedback}
-                      </p>
+                        </strong>
+
+                        {editingFeedbackId === post.id ? (
+                          <div className="mt-2 space-y-2">
+                            <textarea
+                              value={editedFeedback}
+                              onChange={(e) =>
+                                setEditedFeedback(e.target.value)
+                              }
+                              className="w-full p-2 border rounded-md text-sm"
+                              rows={3}
+                            />
+
+                            <div className="flex gap-2">
+                              <button
+                                onClick={handleSaveEdit}
+                                className="px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700"
+                              >
+                                Save
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  setEditingFeedbackId(null);
+                                  setEditedFeedback("");
+                                }}
+                                className="px-3 py-1 bg-gray-200 text-xs rounded hover:bg-gray-300"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-800 leading-relaxed mt-1">
+                            {post.feedback}
+                          </p>
+                        )}
+                      </div>
 
                       <div className="flex items-center gap-2 shrink-0">
                         <button
                           title="Edit feedback"
                           className="p-1 rounded hover:bg-red-50 transition"
+                          onClick={() => handleEditClick(post)}
                         >
                           <Pencil className="w-4 h-4 text-red-600" />
                         </button>
