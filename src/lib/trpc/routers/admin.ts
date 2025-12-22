@@ -131,9 +131,13 @@ const adminRouter = createTRPCRouter({
         category: z.enum([...USER_ACTION_EVENT_TYPES, "All"]),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
+        limit: z.number().optional().default(20),
+        cursor: z.string().optional(),
       })
     )
     .query(async ({ ctx, input }) => {
+      console.log("Cursor ", input.cursor);
+
       if (ctx.userJWT!.role === "User") {
         throw new TRPCError({
           code: "FORBIDDEN",
@@ -142,7 +146,9 @@ const adminRouter = createTRPCRouter({
       }
 
       const supabase = await createClientServer(1, true);
-      let query = supabase.from("audit_logs").select("*");
+      let query = supabase.from("audit_logs").select("*").order("created_at", {
+        ascending: false,
+      });
 
       if (input.query) {
         query = query.ilike("details", `%${input.query}%`);
@@ -156,6 +162,11 @@ const adminRouter = createTRPCRouter({
       if (input.toDate) {
         query = query.lte("created_at", input.toDate);
       }
+      if (input.cursor) {
+        query = query.lt("created_at", input.cursor);
+      }
+
+      query = query.limit(input.limit);
 
       const { data: auditLogs, error: auditLogsError } = await query;
 
@@ -167,8 +178,14 @@ const adminRouter = createTRPCRouter({
         });
       }
 
+      const nextCursor =
+        (auditLogs && auditLogs.length === input.limit
+          ? auditLogs[auditLogs.length - 1].created_at
+          : null) || null;
+
       return {
         auditLogs,
+        nextCursor,
       };
     }),
   users: adminProcedure

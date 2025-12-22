@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { trpc } from "@/lib/trpc/client";
 import { formatDate } from "@/lib/library";
 import jsPDF from "jspdf";
@@ -8,20 +8,57 @@ import autoTable from "jspdf-autotable";
 import { USER_ACTION_EVENT_TYPES } from "@/lib/constants";
 import { UserActionEventType } from "@/types/types";
 
+const PAGE_SIZE = 15;
+
 export default function JobsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<
     "All" | UserActionEventType
   >("All");
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
+  const [fromDate, setFromDate] = useState<string | undefined>(undefined);
+  const [toDate, setToDate] = useState<string | undefined>(undefined);
 
-  const auditLogsQuery = trpc.admin.auditLogs.useQuery({
-    query: searchQuery,
-    category: categoryFilter,
-    fromDate: fromDate,
-    toDate: toDate,
-  });
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+
+  const auditLogsInfinite = trpc.admin.auditLogs.useInfiniteQuery(
+    {
+      query: searchQuery,
+      category: categoryFilter,
+      fromDate: fromDate,
+      toDate: toDate,
+      limit: PAGE_SIZE,
+    },
+    {
+      getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    }
+  );
+
+  const rows = (auditLogsInfinite.data?.pages ?? []).flatMap(
+    (p) => p.auditLogs ?? []
+  );
+
+  useEffect(() => {
+    const el = loadMoreRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (
+          entry.isIntersecting &&
+          auditLogsInfinite.hasNextPage &&
+          !auditLogsInfinite.isFetchingNextPage
+        ) {
+          auditLogsInfinite.fetchNextPage();
+        }
+      });
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [
+    auditLogsInfinite.hasNextPage,
+    auditLogsInfinite.isFetchingNextPage,
+    auditLogsInfinite.fetchNextPage,
+  ]);
 
   const handleDownloadReport = () => {
     const doc = new jsPDF();
@@ -30,8 +67,8 @@ export default function JobsPage() {
     const tableColumn = ["Description", "Category", "Timestamp"];
     const tableRows: string[][] = [];
 
-    if (Array.isArray(auditLogsQuery.data?.auditLogs)) {
-      auditLogsQuery.data.auditLogs.forEach((row) => {
+    if (Array.isArray(rows)) {
+      rows.forEach((row) => {
         tableRows.push([
           row.details,
           row.event_type,
@@ -112,9 +149,8 @@ export default function JobsPage() {
           </thead>
 
           <tbody>
-            {Array.isArray(auditLogsQuery.data?.auditLogs) &&
-            auditLogsQuery.data.auditLogs.length > 0 ? (
-              auditLogsQuery.data.auditLogs.map((row) => (
+            {Array.isArray(rows) && rows.length > 0 ? (
+              rows.map((row) => (
                 <tr
                   key={row.id}
                   className="border-t hover:bg-gray-50 transition"
@@ -162,6 +198,22 @@ export default function JobsPage() {
             )}
           </tbody>
         </table>
+      </div>
+
+      <div className="flex justify-center items-center gap-4 mt-4">
+        <div ref={loadMoreRef} aria-hidden className="h-2" />
+        {auditLogsInfinite.isFetchingNextPage ? (
+          <span className="text-sm text-gray-500">Loading more...</span>
+        ) : auditLogsInfinite.hasNextPage ? (
+          <button
+            onClick={() => auditLogsInfinite.fetchNextPage()}
+            className="px-4 py-2 bg-gray-100 rounded"
+          >
+            Load more
+          </button>
+        ) : (
+          <span className="text-sm text-gray-400">No more logs</span>
+        )}
       </div>
     </div>
   );
