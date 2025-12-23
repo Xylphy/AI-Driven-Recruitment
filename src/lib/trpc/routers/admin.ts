@@ -40,6 +40,7 @@ const adminRouter = createTRPCRouter({
       await countTable(supabase, "job_applicants");
 
     if (totalCandidatesError) {
+      console.error("Error fetching total candidates", totalCandidatesError);
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message:
@@ -56,6 +57,7 @@ const adminRouter = createTRPCRouter({
         .execute();
 
     if (weeklyApplicantsError) {
+      console.error("Error fetching weekly applicants", weeklyApplicantsError);
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message:
@@ -90,7 +92,7 @@ const adminRouter = createTRPCRouter({
       .execute();
 
     if (jobsError) {
-      console.error("Error fetching jobs");
+      console.error("Error fetching jobs", jobsError);
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message: jobsError?.message || "Failed to fetch job listings",
@@ -215,7 +217,7 @@ const adminRouter = createTRPCRouter({
       const { data: users, error: usersError } = await query;
 
       if (usersError) {
-        console.error("Error fetching users");
+        console.error("Error fetching users", usersError);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: usersError?.message || "Failed to fetch users",
@@ -280,7 +282,7 @@ const adminRouter = createTRPCRouter({
       ).single();
 
       if (userError || !user) {
-        console.error("Error fetching user for role change");
+        console.error("Error fetching user for role change", userError);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: userError?.message || "Failed to fetch user",
@@ -293,7 +295,7 @@ const adminRouter = createTRPCRouter({
         .eq("id", input.userId);
 
       if (updateError) {
-        console.error("Error updating user role");
+        console.error("Error updating user role", updateError);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: updateError?.message || "Failed to update user role",
@@ -321,7 +323,10 @@ const adminRouter = createTRPCRouter({
       );
 
       if (insertLogError) {
-        console.error("Error inserting audit log for role change");
+        console.error(
+          "Error inserting audit log for role change",
+          insertLogError
+        );
       }
 
       return {
@@ -346,7 +351,7 @@ const adminRouter = createTRPCRouter({
         });
 
       if (bottleneckError) {
-        console.error("Error fetching bottleneck percentiles");
+        console.error("Error fetching bottleneck percentiles", bottleneckError);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message:
@@ -357,6 +362,72 @@ const adminRouter = createTRPCRouter({
 
       return {
         bottlenecks: BottleneckPercentileRow as BottleneckPercentileRow[],
+      };
+    }),
+  fetchHrOfficers: adminProcedure
+    .input(
+      z.object({
+        query: z.string().optional(),
+      })
+    )
+    .query(async ({ input }) => {
+      const supabase = await createClientServer(1, true);
+
+      let query = supabase.from("users").select("*").eq("role", "HR Officer");
+
+      if (input.query && input.query.trim() !== "") {
+        const q = input.query.trim();
+        query = query
+          .or(`first_name.ilike.%${q}%,last_name.ilike.%${q}%`)
+          .limit(10);
+      }
+
+      const { data: hrOfficers, error: hrOfficersError } = await query;
+
+      if (hrOfficersError) {
+        console.error("Error fetching HR Officers", hrOfficersError);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: hrOfficersError?.message || "Failed to fetch HR Officers",
+        });
+      }
+
+      const userMap = new Map<string, { email: string }>();
+
+      const firebaseUids = (hrOfficers || [])
+        .map((user) => user.firebase_uid)
+        .filter(Boolean);
+
+      let firebaseUsersResult:
+        | Awaited<ReturnType<typeof auth.getUsers>>
+        | undefined;
+
+      if (firebaseUids.length > 0) {
+        firebaseUsersResult = await auth.getUsers(
+          firebaseUids.map((uid) => ({ uid }))
+        );
+      }
+
+      const jobsAssignedPromises = hrOfficers!.map((officer: User) =>
+        supabase
+          .from("job_listings")
+          .select("title")
+          .eq("officer_id", officer.id)
+      );
+
+      firebaseUsersResult?.users?.forEach((userRecord) => {
+        userMap.set(userRecord.uid, { email: userRecord.email || "" });
+      });
+
+      const jobsAssignedResults = await Promise.all(jobsAssignedPromises);
+
+      return {
+        hrOfficers: hrOfficers!.map((officer: User, index: number) => ({
+          ...officer,
+          email: userMap.get(officer.firebase_uid)?.email || "",
+          jobsAssigned:
+            jobsAssignedResults[index].data?.map((job) => job.title) || [],
+        })),
       };
     }),
 });

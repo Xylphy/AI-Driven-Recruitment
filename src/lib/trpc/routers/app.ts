@@ -3,6 +3,7 @@ import authRouter from "./auth";
 import jobListingRouter from "./joblisting";
 import userRouter from "./user";
 import candidateRouter from "./candidate";
+import hrOfficer from "./hrOfficer";
 import adminRouter from "./admin";
 
 export const appRouter = createTRPCRouter({
@@ -11,6 +12,7 @@ export const appRouter = createTRPCRouter({
   user: userRouter,
   candidate: candidateRouter,
   admin: adminRouter,
+  hrOfficer: hrOfficer
 });
 
 // export type definition of API

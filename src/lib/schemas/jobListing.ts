@@ -19,4 +19,5 @@ export const jobListingSchema = z.object({
   tags: z.array(tagSchema).optional(),
   location: z.enum(JOB_LOCATIONS),
   isFullTime: z.boolean(),
+  hrOfficerId: z.string().optional(),
 });

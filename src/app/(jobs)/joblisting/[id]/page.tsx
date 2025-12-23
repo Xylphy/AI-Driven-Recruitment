@@ -95,7 +95,7 @@ export default function Page() {
       {
         onSuccess() {
           alert("Job deleted successfully");
-          router.push("/profile");
+          router.push("/admin");
         },
         onError(error) {
           setError(error.message);

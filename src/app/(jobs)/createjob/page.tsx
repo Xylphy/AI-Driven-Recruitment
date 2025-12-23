@@ -25,6 +25,20 @@ export default function JobListingPage() {
     enabled: isAuthenticated,
   });
   const createJoblisting = trpc.joblisting.createJoblisting.useMutation();
+  const [hrSearch, setHrSearch] = useState("");
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [hrOfficerId, setHrOfficerId] = useState<string | null>(null);
+
+  const hrOfficersQuery = trpc.admin.fetchHrOfficers.useQuery(
+    {
+      query: hrSearch,
+    },
+    {
+      enabled: isAuthenticated,
+    }
+  );
+
+  const filteredHROfficers = hrOfficersQuery.data?.hrOfficers || [];
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -79,6 +93,7 @@ export default function JobListingPage() {
         tags: jobListing.tags,
         location: jobListing.location,
         isFullTime: jobListing.isFullTime,
+        hrOfficerId: hrOfficerId ?? undefined,
       },
       {
         onSuccess: (data) => {
@@ -91,6 +106,8 @@ export default function JobListingPage() {
             location: "Cebu City",
             isFullTime: true,
           });
+          setHrSearch("");
+          setHrOfficerId(null);
         },
         onError: (error) => {
           alert(error.message);
@@ -178,6 +195,47 @@ export default function JobListingPage() {
             ))}
           </select>
 
+          {/* change here names of hr officer */}
+          <label
+            htmlFor="hr_officer"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Assigned HR Officer
+          </label>
+
+          <div className="relative mt-1">
+            <input
+              type="text"
+              id="hr_officer"
+              value={hrSearch}
+              onChange={(e) => {
+                setHrSearch(e.target.value);
+                setShowDropdown(true);
+              }}
+              onFocus={() => setShowDropdown(true)}
+              placeholder="Type to search HR Officer"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:outline-none"
+              required
+            />
+
+            {showDropdown && filteredHROfficers.length > 0 && (
+              <ul className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow max-h-48 overflow-y-auto">
+                {filteredHROfficers.map((officer) => (
+                  <li
+                    key={officer.id}
+                    onClick={() => {
+                      setHrOfficerId(officer.id);
+                      setHrSearch(`${officer.first_name} ${officer.last_name}`);
+                      setShowDropdown(false);
+                    }}
+                    className="px-4 py-2 cursor-pointer hover:bg-red-50"
+                  >
+                    {officer.first_name} {officer.last_name}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
           <div className="mt-4">
             <div className="flex items-center">
               <input

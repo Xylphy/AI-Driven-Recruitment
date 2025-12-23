@@ -1,5 +1,5 @@
 import z from "zod";
-import { adminProcedure, createTRPCRouter } from "../init";
+import { adminProcedure, authorizedProcedure, createTRPCRouter } from "../init";
 import { TRPCError } from "@trpc/server";
 import { createClientServer } from "@/lib/supabase/supabase";
 import {
@@ -7,6 +7,7 @@ import {
   find,
   updateTable,
   insertTable,
+  QueryFilter,
 } from "@/lib/supabase/action";
 import { findOne } from "@/lib/mongodb/action";
 import mongoDb_client from "@/lib/mongodb/mongodb";
@@ -21,7 +22,6 @@ import admin, { auth, db } from "@/lib/firebase/admin";
 import { ObjectId } from "mongodb";
 import { Notification } from "@/types/types";
 import { CANDIDATE_STATUSES } from "@/lib/constants";
-import { CarTaxiFront } from "lucide-react";
 
 type AICompareRes = {
   better_candidate: string;
@@ -31,15 +31,49 @@ type AICompareRes = {
 };
 
 const candidateRouter = createTRPCRouter({
-  getCandidateFromJob: adminProcedure
+  getCandidateFromJob: authorizedProcedure
     .input(
       z.object({
         jobId: z.uuid().optional(),
         searchQuery: z.string().optional(),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      if (ctx.userJWT!.role === "User") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You are not authorized to access this resource.",
+        });
+      }
+
       const supabaseClient = await createClientServer(1, true);
+
+      let jobListingIds: string[] | undefined = undefined;
+      if (ctx.userJWT!.role === "HR Officer") {
+        // Fetch job listings for this officer
+        const { data: listings, error: listingsError } = await supabaseClient
+          .from("job_listings")
+          .select("id")
+          .eq("officer_id", ctx.userJWT!.id);
+
+        if (listingsError) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to fetch job listings for officer",
+          });
+        }
+        jobListingIds = (listings || []).map((l: { id: string }) => l.id);
+      }
+
+      const filters: QueryFilter[] = [];
+      if (input.jobId) {
+        filters.push({ column: "joblisting_id", value: input.jobId });
+      }
+      if (jobListingIds) {
+        jobListingIds.forEach((id) => {
+          filters.push({ column: "joblisting_id", value: id });
+        });
+      }
 
       const baseQuery = findWithJoin<JobApplicant>(
         supabaseClient,
@@ -58,9 +92,7 @@ const candidateRouter = createTRPCRouter({
         ]
       );
 
-      let queryBuilder = baseQuery.many(
-        input.jobId ? [{ column: "joblisting_id", value: input.jobId }] : []
-      );
+      let queryBuilder = baseQuery.many(filters);
 
       if (input.searchQuery) {
         const search = `%${input.searchQuery}%`;
@@ -190,7 +222,7 @@ const candidateRouter = createTRPCRouter({
             email: applicant.email,
             predictiveSuccess: applicant.candidateMatch,
             status: applicant.status,
-            jobTitle: applicant.job_listings.title,
+            jobTitle: applicant.job_listings?.title ?? "",
             resumeId: applicant.resume_id,
           }))
           .sort(

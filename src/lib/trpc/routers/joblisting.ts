@@ -485,6 +485,7 @@ const jobListingRouter = createTRPCRouter({
           location: input.location,
           created_by: ctx.userJWT!.id,
           is_fulltime: input.isFullTime,
+          officer_id: input.hrOfficerId || null,
         }
       );
 

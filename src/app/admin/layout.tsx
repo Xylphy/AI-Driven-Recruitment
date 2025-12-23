@@ -7,10 +7,11 @@ import {
   MdArrowBack,
   MdNotifications,
 } from "react-icons/md";
+import Link from "next/link";
 import { Bell } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase/client";
-import Link from "next/link";
+
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -82,14 +83,16 @@ export default function AdminLayout({
             </div>
 
             <nav className="flex flex-col gap-4 h-full">
-              <Link
-                href="/admin"
-                className={`flex items-center gap-3 hover:bg-white/20 px-3 py-2 rounded-md transition ${
-                  pathName === "/admin" ? "bg-white/30" : ""
-                }`}
-              >
-                <MdDashboard /> Dashboard
-              </Link>
+              {jwtDecoded.data.user.role === "SuperAdmin" && (
+                <Link
+                  href="/admin"
+                  className={`flex items-center gap-3 hover:bg-white/20 px-3 py-2 rounded-md transition ${
+                    pathName === "/admin" ? "bg-white/30" : ""
+                  }`}
+                >
+                  <MdDashboard /> Dashboard
+                </Link>
+              )}
 
               <Link
                 href="/admin/jobs"
@@ -109,71 +112,70 @@ export default function AdminLayout({
                 <MdPeople /> Candidates
               </Link>
 
-              <Link
-                href="/admin/compare"
-                className={`flex items-center gap-3 hover:bg-white/20 px-3 py-2 rounded-md transition ${
-                  pathName === "/admin/compare" ? "bg-white/30" : ""
-                }`}
-              >
-                <MdCompareArrows /> Compare
-              </Link>
-
-              <Link
-                href="/admin/bottlenecks"
-                className={`flex items-center gap-3 hover:bg-white/20 px-3 py-2 rounded-md transition ${
-                  pathName === "/admin/bottlenecks" ? "bg-white/30" : ""
-                }`}
-              >
-                <MdError /> Bottlenecks
-              </Link>
-
-              <Link
-                href="/admin/auditlogs"
-                className={`flex items-center gap-3 hover:bg-white/20 px-3 py-2 rounded-md transition ${
-                  pathName === "/admin/auditlogs" ? "bg-white/30" : ""
-                }`}
-              >
-                <MdNotifications /> Audit Logs
-              </Link>
-
               {jwtDecoded.data.user.role === "SuperAdmin" && (
                 <Link
-                  href="/admin/users"
+                  href="/admin/compare"
                   className={`flex items-center gap-3 hover:bg-white/20 px-3 py-2 rounded-md transition ${
-                    pathName === "/admin/users" ? "bg-white/30" : ""
+                    pathName === "/admin/compare" ? "bg-white/30" : ""
                   }`}
                 >
-                  <MdPeople /> Users
+                  <MdCompareArrows /> Compare
                 </Link>
               )}
+              {jwtDecoded.data.user.role === "SuperAdmin" && (
+                <>
+                  <Link
+                    href="/admin/bottlenecks"
+                    className={`flex items-center gap-3 hover:bg-white/20 px-3 py-2 rounded-md transition ${
+                      pathName === "/admin/bottlenecks" ? "bg-white/30" : ""
+                    }`}
+                  >
+                    <MdError /> Bottlenecks
+                  </Link>
 
-              {/* {jwtDecoded.data.user.role === "SuperAdmin" && (
-                <Link
-                  href="/admin/hrofficers"
-                  className={`flex items-center gap-3 hover:bg-white/20 px-3 py-2 rounded-md transition ${
-                    pathName === "/admin/hrofficers" ? "bg-white/30" : ""
-                  }`}
-                >
-                  <MdPeople /> HR Officers
-                </Link>
-              )} */}
+                  <Link
+                    href={{ pathname: "/admin/audit_logs" }}
+                    className={`flex items-center gap-3 hover:bg-white/20 px-3 py-2 rounded-md transition ${
+                      pathName === "/admin/audit_logs" ? "bg-white/30" : ""
+                    }`}
+                  >
+                    <MdNotifications /> Audit Logs
+                  </Link>
 
-              <div className="flex flex-col gap-4 my-6 mt-auto">
-                <div className="flex gap-4 justify-center">
-                  <MdSettings className="cursor-pointer hover:text-red-300" />
-                  <MdLogout
-                    onClick={() => auth.signOut()}
-                    className="cursor-pointer hover:text-red-300"
-                  />
-                </div>
+                  <Link
+                    href="/admin/users"
+                    className={`flex items-center gap-3 hover:bg-white/20 px-3 py-2 rounded-md transition ${
+                      pathName === "/admin/users" ? "bg-white/30" : ""
+                    }`}
+                  >
+                    <MdPeople /> Users
+                  </Link>
 
-                <button
-                  onClick={() => router.push("/profile/edit")}
-                  className="text-white font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-300"
-                >
-                  EDIT PROFILE
-                </button>
+                  <Link
+                    href={{ pathname: "/admin/hr_officers" }}
+                    className={`flex items-center gap-3 hover:bg-white/20 px-3 py-2 rounded-md transition ${
+                      pathName === "/admin/hr_officers" ? "bg-white/30" : ""
+                    }`}
+                  >
+                    <MdPeople /> HR Officers
+                  </Link>
+                </>
+              )}
+
+              <div className="flex gap-4 justify-center">
+                <MdSettings className="cursor-pointer hover:text-red-300" />
+                <MdLogout
+                  onClick={() => auth.signOut()}
+                  className="cursor-pointer hover:text-red-300"
+                />
               </div>
+
+              <button
+                onClick={() => router.push("/profile/edit")}
+                className="text-white font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-300"
+              >
+                EDIT PROFILE
+              </button>
             </nav>
           </motion.aside>
         )}
