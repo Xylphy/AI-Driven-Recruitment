@@ -21,6 +21,7 @@ import admin, { auth, db } from "@/lib/firebase/admin";
 import { ObjectId } from "mongodb";
 import { Notification } from "@/types/types";
 import { CANDIDATE_STATUSES } from "@/lib/constants";
+import { CarTaxiFront } from "lucide-react";
 
 type AICompareRes = {
   better_candidate: string;
@@ -562,7 +563,7 @@ const candidateRouter = createTRPCRouter({
         newFeedback: z.string(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const supabase = await createClientServer(1, true);
 
       const { data: oldData, error: oldDataError } = await find<AdminFeedback>(
@@ -609,8 +610,8 @@ const candidateRouter = createTRPCRouter({
         supabase,
         "audit_logs",
         {
-          actor_type: "Admin",
-          actor_id: "system", // You might want to pass the admin ID here
+          actor_type: ctx.userJWT!.role,
+          actor_id: ctx.userJWT!.id,
           action: "update",
           event_type: "Admin feedback updated",
           entity_type: "Admin Feedback",

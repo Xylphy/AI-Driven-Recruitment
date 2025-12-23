@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import Select from "react-select";
 import { Pencil, Trash2 } from "lucide-react";
+import { AdminFeedback } from "@/types/schema";
 
 interface WorkExperience {
   company: string;
@@ -115,7 +116,6 @@ export default function ComparePage() {
     trpc.candidate.updateAdminFeedback.useMutation({
       onSuccess: () => {
         setEditingFeedbackId(null);
-        setEditedFeedback("");
         adminFeedbacksQuery.refetch();
       },
     });
@@ -168,13 +168,47 @@ export default function ComparePage() {
       );
     }
   };
-  const handleEditClick = (post: any) => {
+  const handleEditClick = (
+    post: AdminFeedback & {
+      admin: {
+        last_name: string;
+        first_name: string;
+      };
+      applicant: {
+        user: {
+          last_name: string;
+          first_name: string;
+        };
+      };
+    }
+  ) => {
     setEditingFeedbackId(post.id);
     setEditedFeedback(post.feedback);
   };
 
-  const handleSaveEdit = () => {
-    if (!editedFeedback.trim() || !editingFeedbackId) return;
+  const handleSaveEdit = (id: string) => {
+    if (editedFeedback.trim() === "") {
+      alert("Feedback cannot be empty.");
+      return;
+    }
+
+    updateAdminFeedbackMutation.mutate(
+      {
+        feedbackId: id,
+        newFeedback: editedFeedback.trim(),
+      },
+      {
+        onSuccess: () => {
+          setEditingFeedbackId(null);
+          setEditedFeedback("");
+        },
+        onError: (error) => {
+          alert(
+            `Failed to update admin feedback. Please try again.\nError: ${error.message}`
+          );
+        },
+      }
+    );
   };
 
   return (
@@ -567,82 +601,92 @@ export default function ComparePage() {
               )}
 
               <div className="mt-6 space-y-4">
-                {adminFeedbacksQuery.data?.adminFeedbacks.map((post, index) => (
-                  <div
-                    key={index}
-                    className="p-4 border rounded-md bg-gray-50 shadow-sm"
-                  >
-                    <div className="flex justify-between items-center text-sm text-gray-500 mb-2">
-                      <span>
-                        {post.admin.first_name} {post.admin.last_name}
-                      </span>
-                      <span>{formatDate(post.created_at)}</span>
-                    </div>
+                {adminFeedbacksQuery.data?.adminFeedbacks.map(
+                  (
+                    post: AdminFeedback & {
+                      admin: { last_name: string; first_name: string };
+                      applicant: {
+                        user: { last_name: string; first_name: string };
+                      };
+                    },
+                    index
+                  ) => (
+                    <div
+                      key={index}
+                      className="p-4 border rounded-md bg-gray-50 shadow-sm"
+                    >
+                      <div className="flex justify-between items-center text-sm text-gray-500 mb-2">
+                        <span>
+                          {post.admin.first_name} {post.admin.last_name}
+                        </span>
+                        <span>{formatDate(post.created_at)}</span>
+                      </div>
 
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1">
-                        <strong className="text-sm">
-                          Candidate {post.applicant.user.first_name}{" "}
-                          {post.applicant.user.last_name}:
-                        </strong>
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1">
+                          <strong className="text-sm">
+                            Candidate {post.applicant.user.first_name}{" "}
+                            {post.applicant.user.last_name}:
+                          </strong>
 
-                        {editingFeedbackId === post.id ? (
-                          <div className="mt-2 space-y-2">
-                            <textarea
-                              value={editedFeedback}
-                              onChange={(e) =>
-                                setEditedFeedback(e.target.value)
-                              }
-                              className="w-full p-2 border rounded-md text-sm"
-                              rows={3}
-                            />
+                          {editingFeedbackId === post.id ? (
+                            <div className="mt-2 space-y-2">
+                              <textarea
+                                value={editedFeedback}
+                                onChange={(e) =>
+                                  setEditedFeedback(e.target.value)
+                                }
+                                className="w-full p-2 border rounded-md text-sm"
+                                rows={3}
+                              />
 
-                            <div className="flex gap-2">
-                              <button
-                                onClick={handleSaveEdit}
-                                className="px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700"
-                              >
-                                Save
-                              </button>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleSaveEdit(post.id)}
+                                  className="px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700"
+                                >
+                                  Save
+                                </button>
 
-                              <button
-                                onClick={() => {
-                                  setEditingFeedbackId(null);
-                                  setEditedFeedback("");
-                                }}
-                                className="px-3 py-1 bg-gray-200 text-xs rounded hover:bg-gray-300"
-                              >
-                                Cancel
-                              </button>
+                                <button
+                                  onClick={() => {
+                                    setEditingFeedbackId(null);
+                                    setEditedFeedback("");
+                                  }}
+                                  className="px-3 py-1 bg-gray-200 text-xs rounded hover:bg-gray-300"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
                             </div>
-                          </div>
-                        ) : (
-                          <p className="text-sm text-gray-800 leading-relaxed mt-1">
-                            {post.feedback}
-                          </p>
-                        )}
-                      </div>
+                          ) : (
+                            <p className="text-sm text-gray-800 leading-relaxed mt-1">
+                              {post.feedback}
+                            </p>
+                          )}
+                        </div>
 
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button
-                          title="Edit feedback"
-                          className="p-1 rounded hover:bg-red-50 transition"
-                          onClick={() => handleEditClick(post)}
-                        >
-                          <Pencil className="w-4 h-4 text-red-600" />
-                        </button>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            title="Edit feedback"
+                            className="p-1 rounded hover:bg-red-50 transition"
+                            onClick={() => handleEditClick(post)}
+                          >
+                            <Pencil className="w-4 h-4 text-red-600" />
+                          </button>
 
-                        <button
-                          title="Delete feedback"
-                          className="p-1 rounded hover:bg-red-100 transition"
-                          onClick={() => handleDeleteFeedback(post.id)}
-                        >
-                          <Trash2 className="w-4 h-4 text-red-600" />
-                        </button>
+                          <button
+                            title="Delete feedback"
+                            className="p-1 rounded hover:bg-red-100 transition"
+                            onClick={() => handleDeleteFeedback(post.id)}
+                          >
+                            <Trash2 className="w-4 h-4 text-red-600" />
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                )}
               </div>
             </div>
           </div>
