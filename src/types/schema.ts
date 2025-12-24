@@ -83,6 +83,7 @@ export interface JobListing
   location: "Cebu City" | "Manila" | "Tokyo";
   created_by: string;
   is_fulltime: boolean;
+  officer_id: string;
 }
 
 export interface JobListingQualifications

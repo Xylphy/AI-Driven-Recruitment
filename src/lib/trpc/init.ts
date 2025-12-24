@@ -9,7 +9,7 @@ import { NextRequest } from "next/server";
 import { cache } from "react";
 
 const standardLimiter = rateLimit({
-  max: process.env.NODE_ENV === "development" ? 1000 : 100,
+  max: process.env.NODE_ENV === "development" ? 1000 : 200,
   windowMs: 15 * 60 * 1000,
 });
 

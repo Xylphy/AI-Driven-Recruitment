@@ -13,7 +13,7 @@ import dynamic from "next/dynamic";
 type CandidateStatus = (typeof CANDIDATE_STATUSES)[number];
 
 // Dynamic imports for CandidateProfile and CandidateResume components
-// Has a separate chunk instead of being included in the main bundle
+// Has a separate chunk instead of being included in the main bundle to improve startup performance
 const CandidateProfile = dynamic(
   () => import("@/components/admin/candidateProfile/CandidateProfile"),
   {

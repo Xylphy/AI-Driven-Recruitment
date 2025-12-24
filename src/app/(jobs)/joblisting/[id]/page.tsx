@@ -91,7 +91,7 @@ export default function Page() {
     setError(null);
 
     await deleteJobMutation.mutateAsync(
-      { joblistingId: jobId },
+      { joblistingId: jobId, officer_id: jobDetails.data?.officer_id || "" },
       {
         onSuccess() {
           alert("Job deleted successfully");
@@ -311,30 +311,31 @@ export default function Page() {
               </p>
             </section>
 
-            {jwtDecoded.data?.user.role !== "User" && (
-              <>
-                <button
-                  onClick={() => router.push(`/candidates/${jobId}`)}
-                  className="mt-6 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600"
-                >
-                  See Applicants
-                </button>
-                <button
-                  onClick={() =>
-                    setStates((prev) => ({ ...prev, showDeleteModal: true }))
-                  }
-                  className="mt-2 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600"
-                >
-                  Delete Job
-                </button>
-                <button
-                  className="mt-2 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600"
-                  onClick={() => router.push(`/joblisting/${jobId}/edit`)}
-                >
-                  Edit Job
-                </button>
-              </>
-            )}
+            {jwtDecoded.data?.user.role !== "User" &&
+              jwtDecoded.data?.user.id === jobDetails.data?.officer_id && (
+                <>
+                  <button
+                    onClick={() => router.push(`/candidates/${jobId}`)}
+                    className="mt-6 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600"
+                  >
+                    See Applicants
+                  </button>
+                  <button
+                    onClick={() =>
+                      setStates((prev) => ({ ...prev, showDeleteModal: true }))
+                    }
+                    className="mt-2 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600"
+                  >
+                    Delete Job
+                  </button>
+                  <button
+                    className="mt-2 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600"
+                    onClick={() => router.push(`/joblisting/${jobId}/edit`)}
+                  >
+                    Edit Job
+                  </button>
+                </>
+              )}
 
             {jwtDecoded.data?.user.role === "User" && isAuthenticated && (
               <>

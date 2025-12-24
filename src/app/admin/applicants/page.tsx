@@ -1,61 +1,17 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 
 export default function ApplicantsPage() {
   const router = useRouter();
-  const applicantsQuery = trpc.candidate.getCandidateFromJob.useQuery({});
   const [searchInput, setSearchInput] = useState("");
+  const applicantsQuery = trpc.candidate.getCandidateFromJob.useQuery({
+    searchQuery: searchInput,
+  });
 
-  const filteredApplicants = useMemo(() => {
-    if (!applicantsQuery.data?.applicants) return [];
-
-    return applicantsQuery.data.applicants.filter((candidate) => {
-      const input = searchInput.toLowerCase();
-      const nameMatch = candidate.name.toLowerCase().includes(input);
-      const jobMatch = candidate.jobTitle.toLowerCase().includes(input);
-      const statusMatch = (candidate.status || "Pending")
-        .toLowerCase()
-        .includes(input);
-
-      return nameMatch || jobMatch || statusMatch;
-    });
-  }, [searchInput, applicantsQuery.data]);
-
-  if (applicantsQuery.isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center p-6">
-        <div className="flex items-center gap-3">
-          <svg
-            className="animate-spin h-8 w-8 text-red-600"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-            />
-          </svg>
-          <span className="text-gray-700 font-medium">
-            Loading candidates...
-          </span>
-        </div>
-      </div>
-    );
-  }
+  const filteredApplicants = applicantsQuery.data?.applicants || [];
 
   if (applicantsQuery.error) {
     return (
@@ -125,7 +81,23 @@ export default function ApplicantsPage() {
             </tr>
           </thead>
           <tbody className="text-gray-700">
-            {filteredApplicants.length > 0 ? (
+            {applicantsQuery.isLoading ? (
+              <>
+                {[0, 1, 2].map((i) => (
+                  <tr key={i}>
+                    <td className="p-4">
+                      <div className="h-4 bg-gray-200 rounded w-2/3 animate-pulse" />
+                    </td>
+                    <td className="p-4">
+                      <div className="h-4 bg-gray-200 rounded w-1/4 animate-pulse" />
+                    </td>
+                    <td className="p-4">
+                      <div className="h-6 bg-gray-200 rounded w-16 animate-pulse" />
+                    </td>
+                  </tr>
+                ))}
+              </>
+            ) : filteredApplicants.length > 0 ? (
               filteredApplicants.map((candidate, index) => (
                 <tr
                   key={index}

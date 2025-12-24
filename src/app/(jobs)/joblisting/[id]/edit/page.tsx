@@ -129,6 +129,7 @@ export default function Page() {
         tags: jobListing.tags,
         location: jobListing.location,
         isFullTime: jobListing.isFullTime,
+        hrOfficerId: joblistingDetails.data?.officer_id || "",
       },
       {
         onSuccess: (data) => {

@@ -2,7 +2,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 
 export interface QueryFilter {
   column: string;
-  value: string;
+  value: string | string[];
 }
 
 interface QueryForeignKey {
@@ -44,7 +44,11 @@ export function find<T>(
       let query = supabase.from(table).select(select);
       if (filters) {
         filters.forEach(({ column, value }) => {
-          query = query.eq(column, value);
+          if (Array.isArray(value)) {
+            query = query.in(column, value);
+          } else {
+            query = query.eq(column, value);
+          }
         });
       }
       const result = await query.single();
@@ -123,7 +127,11 @@ export function findWithJoin<T>(
 
       if (filters) {
         filters.forEach(({ column, value }) => {
-          query = query.eq(column, value);
+          if (Array.isArray(value)) {
+            query = query.in(column, value);
+          } else {
+            query = query.eq(column, value);
+          }
         });
       }
 
@@ -149,7 +157,11 @@ export async function countTable(
 
   if (filters) {
     filters.forEach(({ column, value }) => {
-      query = query.eq(column, value);
+      if (Array.isArray(value)) {
+        query = query.in(column, value);
+      } else {
+        query = query.eq(column, value);
+      }
     });
   }
 

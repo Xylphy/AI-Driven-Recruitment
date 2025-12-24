@@ -15,7 +15,7 @@ import {
 } from "@/lib/supabase/action";
 import { TRPCError } from "@trpc/server";
 import mongoDb_client from "@/lib/mongodb/mongodb";
-import { deleteDocument } from "@/lib/mongodb/action";
+import { deleteDocument, findOne } from "@/lib/mongodb/action";
 import {
   JobListing,
   JobListingQualifications,
@@ -23,10 +23,11 @@ import {
   JobApplicant,
   JobTags,
   Changes,
+  User,
 } from "@/types/schema";
 import { jobListingSchema } from "@/lib/schemas";
 import type { Notification } from "@/types/types";
-import admin, { db } from "@/lib/firebase/admin";
+import admin, { db, auth } from "@/lib/firebase/admin";
 
 const jobListingRouter = createTRPCRouter({
   joblistings: authorizedProcedure
@@ -78,13 +79,31 @@ const jobListingRouter = createTRPCRouter({
           })) ?? [],
       };
     }),
-  deleteJoblisting: adminProcedure
+  deleteJoblisting: authorizedProcedure
     .input(
       z.object({
         joblistingId: z.uuid(),
+        officer_id: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
+      if (ctx.userJWT!.role === "User") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You are not authorized to access this resource.",
+        });
+      }
+
+      if (
+        input.officer_id !== ctx.userJWT!.id &&
+        ctx.userJWT!.role !== "Admin"
+      ) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You are not authorized to delete this job listing.",
+        });
+      }
+
       const supabase = await createClientServer(1, true);
       const { error } = await deleteRow(
         supabase,
@@ -317,13 +336,29 @@ const jobListingRouter = createTRPCRouter({
         message: "Application submitted successfully",
       };
     }),
-  updateJoblisting: adminProcedure
+  updateJoblisting: authorizedProcedure
     .input(
       jobListingSchema.extend({
         jobId: z.uuid(),
       })
     )
     .mutation(async ({ input, ctx }) => {
+      if (ctx.userJWT!.role === "User") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You are not authorized to access this resource.",
+        });
+      }
+      if (
+        input.hrOfficerId !== ctx.userJWT!.id &&
+        ctx.userJWT!.role !== "Admin"
+      ) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You are not authorized to update this job listing.",
+        });
+      }
+
       const supabase = await createClientServer(1, true);
 
       const { data: oldJoblisting, error: oldJoblistingError } =
@@ -413,6 +448,13 @@ const jobListingRouter = createTRPCRouter({
       }
 
       const changes: Record<string, Changes> = {};
+
+      if (input.hrOfficerId && oldJoblisting.officer_id !== input.hrOfficerId) {
+        changes.officer_id = {
+          before: oldJoblisting.officer_id || "null",
+          after: input.hrOfficerId,
+        };
+      }
 
       if (oldJoblisting.title !== input.title) {
         changes.title = {

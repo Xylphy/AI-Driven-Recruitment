@@ -3,7 +3,6 @@ import { adminProcedure, authorizedProcedure, createTRPCRouter } from "../init";
 import { TRPCError } from "@trpc/server";
 import { createClientServer } from "@/lib/supabase/supabase";
 import {
-  findWithJoin,
   find,
   updateTable,
   insertTable,
@@ -49,6 +48,8 @@ const candidateRouter = createTRPCRouter({
       const supabaseClient = await createClientServer(1, true);
 
       let jobListingIds: string[] | undefined = undefined;
+
+      // If HR Officer, limit to their job listings
       if (ctx.userJWT!.role === "HR Officer") {
         // Fetch job listings for this officer
         const { data: listings, error: listingsError } = await supabaseClient
@@ -65,61 +66,47 @@ const candidateRouter = createTRPCRouter({
         jobListingIds = (listings || []).map((l: { id: string }) => l.id);
       }
 
-      const filters: QueryFilter[] = [];
+      // Build filters
+      // If jobId is provided, filter by that instead
+      let filters: QueryFilter[] = [];
       if (input.jobId) {
-        filters.push({ column: "joblisting_id", value: input.jobId });
-      }
-      if (jobListingIds) {
-        jobListingIds.forEach((id) => {
-          filters.push({ column: "joblisting_id", value: id });
-        });
+        filters = [{ column: "joblisting_id", value: input.jobId }];
+      } else if (jobListingIds && jobListingIds.length > 0) {
+        filters = [
+          {
+            column: "joblisting_id",
+            value: jobListingIds,
+          },
+        ];
       }
 
-      const baseQuery = findWithJoin<JobApplicant>(
-        supabaseClient,
-        "job_applicants",
-        [
-          {
-            foreignTable: "users",
-            foreignKey: "user_id",
-            fields: "id, first_name, last_name, firebase_uid, resume_id",
-          },
-          {
-            foreignTable: "job_listings",
-            foreignKey: "joblisting_id",
-            fields: "title",
-          },
-        ]
-      );
+      // Fetch applicants with joins
+      let baseQuery = supabaseClient
+        .from("job_applicants_with_user")
+        .select("*");
 
-      let queryBuilder = baseQuery.many(filters);
+      // let queryBuilder = baseQuery.many(filters);
+      filters.forEach(({ column, value }) => {
+        if (Array.isArray(value)) {
+          baseQuery.in(column, value);
+        } else {
+          baseQuery.eq(column, value);
+        }
+      });
 
       if (input.searchQuery) {
         const search = `%${input.searchQuery}%`;
-        queryBuilder = {
-          ...queryBuilder,
-          execute: async () => {
-            let query = supabaseClient
-              .from("job_applicants")
-              .select(
-                `*, users(id, first_name, last_name, firebase_uid, resume_id), job_listings(title)`
-              );
-            if (input.jobId) {
-              query = query.eq("joblisting_id", input.jobId);
-            }
-            query = query.or(
-              `users.first_name.ilike.${search},users.last_name.ilike.${search},job_listings.title.ilike.${search},status.ilike.${search}`
-            );
-            const result = await query;
-            return {
-              data: result.data as typeof applicantsWithUsers,
-              error: result.error,
-            };
-          },
-        };
+        baseQuery = baseQuery.or(
+          `first_name.ilike.${search},last_name.ilike.${search},job_title.ilike.${search},status_text.ilike.${search}`
+        );
+        if (input.jobId) {
+          baseQuery = baseQuery.eq("joblisting_id", input.jobId);
+        } else if (jobListingIds && jobListingIds.length > 0) {
+          baseQuery = baseQuery.in("joblisting_id", jobListingIds);
+        }
       }
       const { data: applicantsWithUsers, error: errorApplicants } =
-        await queryBuilder.execute();
+        await baseQuery;
 
       if (errorApplicants) {
         console.error("Error fetching applicants:", errorApplicants);
@@ -137,6 +124,7 @@ const candidateRouter = createTRPCRouter({
             user_id: userId,
           }
         );
+
         return candidateMatch?.score_data?.predictive_success || 0;
       }
 
@@ -144,13 +132,7 @@ const candidateRouter = createTRPCRouter({
 
       // Batch fetch Firebase users
       const applicantsArr = (applicantsWithUsers || []) as Array<
-        JobApplicant & {
-          users: Pick<
-            User,
-            "id" | "last_name" | "first_name" | "firebase_uid" | "resume_id"
-          >;
-          job_listings: { title: string };
-        }
+        JobApplicant & User
       >;
 
       const firebaseUidToApplicant = new Map<
@@ -166,16 +148,28 @@ const candidateRouter = createTRPCRouter({
       const userIds: string[] = [];
 
       for (const applicant of applicantsArr) {
-        firebaseUidToApplicant.set(applicant.users.firebase_uid, applicant);
-        userIdToApplicant.set(applicant.users.id, applicant);
-        firebaseUids.push(applicant.users.firebase_uid);
-        userIds.push(applicant.users.id);
+        firebaseUidToApplicant.set(applicant.firebase_uid, applicant);
+        userIdToApplicant.set(applicant.id, applicant);
+        firebaseUids.push(applicant.firebase_uid);
+        userIds.push(applicant.user_id);
       }
 
       // Batch fetch Firebase users
-      const firebaseUsersResult = await auth.getUsers(
+      const firebaseUsersPromise = auth.getUsers(
         firebaseUids.map((uid) => ({ uid }))
       );
+
+      const candidateMatchPromises = userIds.map(async (userId) => {
+        const candidateMatch = await getCandidateMatch(userId);
+        return { userId, candidateMatch };
+      });
+      const candidateMatchesPromise = Promise.all(candidateMatchPromises);
+
+      const [firebaseUsersResult, candidateMatches] = await Promise.all([
+        firebaseUsersPromise,
+        candidateMatchesPromise,
+      ]);
+
       const firebaseUserByUid = new Map<string, { email: string }>();
       for (const userRecord of firebaseUsersResult.users) {
         firebaseUserByUid.set(userRecord.uid, {
@@ -183,12 +177,6 @@ const candidateRouter = createTRPCRouter({
         });
       }
 
-      // Batch fetch candidate matches from MongoDB
-      const candidateMatchPromises = userIds.map(async (userId) => {
-        const candidateMatch = await getCandidateMatch(userId);
-        return { userId, candidateMatch };
-      });
-      const candidateMatches = await Promise.all(candidateMatchPromises);
       const candidateMatchByUserId = new Map<string, number>();
       for (const { userId, candidateMatch } of candidateMatches) {
         candidateMatchByUserId.set(userId, candidateMatch);
@@ -196,17 +184,13 @@ const candidateRouter = createTRPCRouter({
 
       // Merge all data
       const applicantWithEmail = applicantsArr.map((applicant) => {
-        const firebaseUser = firebaseUserByUid.get(
-          applicant.users.firebase_uid
-        );
+        const firebaseUser = firebaseUserByUid.get(applicant.firebase_uid);
         const candidateMatch =
-          candidateMatchByUserId.get(applicant.users.id) || 0;
+          candidateMatchByUserId.get(applicant.user_id) || 0;
         return {
           applicantId: applicant.id,
           ...applicant,
-          ...applicant.users,
           email: firebaseUser?.email || "",
-          users: undefined,
           candidateMatch,
         };
       });
@@ -216,13 +200,13 @@ const candidateRouter = createTRPCRouter({
       return {
         applicants: applicantWithEmail
           .map((applicant) => ({
-            id: applicant.applicantId,
+            id: applicant.id,
             user_id: applicant.user_id,
             name: applicant.first_name + " " + applicant.last_name,
             email: applicant.email,
             predictiveSuccess: applicant.candidateMatch,
             status: applicant.status,
-            jobTitle: applicant.job_listings?.title ?? "",
+            jobTitle: applicant.job_title ?? "",
             resumeId: applicant.resume_id,
           }))
           .sort(
@@ -231,7 +215,12 @@ const candidateRouter = createTRPCRouter({
           ),
       };
     }),
-  fetchCandidateProfile: adminProcedure
+  /**
+   * HR Officers can access the candidate profile
+   * Problem is that other HR officer can access other job applicants that's not theirs
+   * Checking the integrity can slow down the response time and it's okay since the HR officers are staffs of the company
+   */
+  fetchCandidateProfile: authorizedProcedure
     .input(
       z.object({
         fetchScore: z.boolean().optional().default(false),
@@ -240,7 +229,14 @@ const candidateRouter = createTRPCRouter({
         candidateId: z.string(),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      if (ctx.userJWT!.role === "User") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You are not authorized to access this resource.",
+        });
+      }
+
       const supabaseClient = await createClientServer(1, true);
 
       const { data: jobApplicant, error: jobApplicantError } =
@@ -289,7 +285,7 @@ const candidateRouter = createTRPCRouter({
         status: jobApplicant?.status ?? null,
       };
     }),
-  updateCandidateStatus: adminProcedure
+  updateCandidateStatus: authorizedProcedure
     .input(
       z.object({
         applicantId: z.string(),
@@ -297,6 +293,13 @@ const candidateRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      if(ctx.userJWT!.role === "User") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You are not authorized to access this resource.",
+        });
+      }
+
       const supabase = await createClientServer(1, true);
 
       const { data: oldData, error: oldDataError } = await find<JobApplicant>(

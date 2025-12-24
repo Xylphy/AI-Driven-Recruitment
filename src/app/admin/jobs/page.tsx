@@ -22,7 +22,9 @@ export default function JobsPage() {
       searchQuery: searchInput,
     },
     {
-      enabled: userInfo.isSuccess && userInfo.data.user.role === "Admin",
+      enabled:
+        (userInfo.isSuccess && userInfo.data.user.role === "Admin") ||
+        userInfo.data?.user.role === "SuperAdmin",
     }
   );
 
@@ -36,7 +38,8 @@ export default function JobsPage() {
   );
 
   const jobs =
-    userInfo.data?.user.role === "Admin"
+    userInfo.data?.user.role === "Admin" ||
+    userInfo.data?.user.role === "SuperAdmin"
       ? jobsQuery.data?.jobs
       : hrOfficerJobsQuery.data?.jobs;
 
