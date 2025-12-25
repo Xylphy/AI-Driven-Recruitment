@@ -7,15 +7,43 @@ import useAuth from "@/hooks/useAuth";
 import { useRouter, useParams } from "next/navigation";
 import { JOB_LOCATIONS } from "@/lib/constants";
 import { trpc } from "@/lib/trpc/client";
+import { start } from "node:repl";
+
+type HROfficer = {
+  id: string;
+  first_name: string;
+  last_name: string;
+};
 
 export default function Page() {
   const router = useRouter();
   const jobId = useParams().id as string;
   const [isSubmitting] = useState(false);
+  const { userInfo, isAuthenticated } = useAuth();
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [HROfficer, setHROfficer] = useState<HROfficer | null>(null);
+  const [hrSearch, setHrSearch] = useState("");
+
+  const userJWT = trpc.auth.decodeJWT.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
+  const hrOfficersQuery = trpc.admin.fetchHrOfficers.useQuery(
+    {
+      query: hrSearch,
+      currentHRId: HROfficer?.id || undefined,
+    },
+    {
+      enabled:
+        userJWT.data?.user.role === "Admin" ||
+        userJWT.data?.user.role === "SuperAdmin",
+    }
+  );
+  const filteredHROfficers = hrOfficersQuery.data?.hrOfficers || [];
 
   const [jobListing, setJobListing] = useState<
     Omit<JobListing, "created_at"> & {
       isFullTime: boolean;
+      assignedHR?: string | null;
     } & Tags
   >({
     title: "",
@@ -26,10 +54,6 @@ export default function Page() {
     isFullTime: true,
   });
 
-  const { userInfo, isAuthenticated } = useAuth();
-  const userJWT = trpc.auth.decodeJWT.useQuery(undefined, {
-    enabled: isAuthenticated,
-  });
   const joblistingDetails = trpc.joblisting.getJobDetails.useQuery(
     { jobId },
     {
@@ -39,11 +63,29 @@ export default function Page() {
   const updateJoblisting = trpc.joblisting.updateJoblisting.useMutation();
 
   useEffect(() => {
-    if (!userJWT.data?.user.role) {
+    if (userJWT.data?.user.role === "User") {
       alert("You are not authorized to edit a job listing");
       router.push("/profile");
     }
   }, [userJWT.data, router]);
+
+  useEffect(() => {
+    if (joblistingDetails.data?.officer_id) {
+      const assignedOfficer = filteredHROfficers.find(
+        (officer) => officer.id === joblistingDetails.data?.officer_id
+      );
+
+      if (assignedOfficer) {
+        startTransition(() => setHROfficer(assignedOfficer));
+        startTransition(() => setShowDropdown(false));
+        startTransition(() =>
+          setHrSearch(
+            assignedOfficer.first_name + " " + assignedOfficer.last_name
+          )
+        );
+      }
+    }
+  }, [joblistingDetails.data?.officer_id]);
 
   useEffect(() => {
     if (joblistingDetails.data) {
@@ -129,7 +171,7 @@ export default function Page() {
         tags: jobListing.tags,
         location: jobListing.location,
         isFullTime: jobListing.isFullTime,
-        hrOfficerId: joblistingDetails.data?.officer_id || "",
+        hrOfficerId: HROfficer?.id ?? undefined,
       },
       {
         onSuccess: (data) => {
@@ -255,6 +297,53 @@ export default function Page() {
               </option>
             ))}
           </select>
+
+          {(userJWT.data?.user.role === "Admin" ||
+            userJWT.data?.user.role === "SuperAdmin") && (
+            <>
+              <label
+                htmlFor="hr_officer"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Assigned HR Officer
+              </label>
+
+              <div className="relative mt-1">
+                <input
+                  type="text"
+                  id="hr_officer"
+                  value={hrSearch}
+                  onChange={(e) => {
+                    setHrSearch(e.target.value);
+                    setShowDropdown(true);
+                  }}
+                  onFocus={() => setShowDropdown(true)}
+                  placeholder="Type to search HR Officer"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:outline-none"
+                  required
+                />
+                {showDropdown && filteredHROfficers.length > 0 && (
+                  <ul className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow max-h-48 overflow-y-auto">
+                    {filteredHROfficers.map((officer) => (
+                      <li
+                        key={officer.id}
+                        onClick={() => {
+                          setHROfficer(officer);
+                          setShowDropdown(false);
+                          setHrSearch(
+                            officer.first_name + " " + officer.last_name
+                          );
+                        }}
+                        className="px-4 py-2 cursor-pointer hover:bg-red-50"
+                      >
+                        {officer.first_name} {officer.last_name}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </>
+          )}
 
           <div className="mt-4">
             <div className="flex items-center">

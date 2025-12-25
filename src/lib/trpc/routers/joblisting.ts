@@ -12,6 +12,7 @@ import {
   deleteRow,
   insertTable,
   updateTable,
+  QueryFilter,
 } from "@/lib/supabase/action";
 import { TRPCError } from "@trpc/server";
 import mongoDb_client from "@/lib/mongodb/mongodb";
@@ -155,11 +156,18 @@ const jobListingRouter = createTRPCRouter({
     )
     .query(async ({ input, ctx }) => {
       const supabase = await createClientServer(1, true);
-      const { data: jobListing, error: errorJobListing } = await find<
-        Omit<JobListing, "created_by">
+
+      const { data: jobListing, error: errorJobListing } = await findWithJoin<
+        JobListing & { users: Pick<User, "first_name" | "last_name"> }
       >(supabase, "job_listings", [
-        { column: "id", value: input.jobId },
-      ]).single();
+        {
+          foreignTable: "users!job_listings_officer_id_fkey",
+          foreignKey: "officer_id",
+          fields: "first_name, last_name",
+        },
+      ])
+        .many([{ column: "id", value: input.jobId }])
+        .execute();
 
       if (errorJobListing || !jobListing) {
         console.error(errorJobListing);
@@ -227,14 +235,25 @@ const jobListingRouter = createTRPCRouter({
 
       const applicantCheck = await applicantCheckPromise;
 
+      const joblistingResponse: (typeof jobListing)[0] & {
+        officer_name?: string;
+      } = {
+        ...jobListing[0],
+      };
+
+      joblistingResponse.officer_name = jobListing[0].users
+        ? `${jobListing[0].users.first_name} ${jobListing[0].users.last_name}`
+        : undefined;
+
       return {
-        ...jobListing,
+        ...joblistingResponse,
         requirements: requirements.data?.map((item) => item.requirement) || [],
         qualifications:
           qualifications.data?.map((item) => item.qualification) || [],
         isApplicant: !!applicantCheck?.data,
         tags: (tags.data || []).map((item) => item.tags.name),
         notify: applicantCheck?.data?.notify || false,
+        users: undefined,
       };
     }),
   applyForJob: rateLimitedProcedure
@@ -349,18 +368,7 @@ const jobListingRouter = createTRPCRouter({
           message: "You are not authorized to access this resource.",
         });
       }
-      if (
-        input.hrOfficerId !== ctx.userJWT!.id &&
-        ctx.userJWT!.role !== "Admin"
-      ) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You are not authorized to update this job listing.",
-        });
-      }
-
       const supabase = await createClientServer(1, true);
-
       const { data: oldJoblisting, error: oldJoblistingError } =
         await find<JobListing>(supabase, "job_listings", [
           { column: "id", value: input.jobId },
@@ -371,6 +379,17 @@ const jobListingRouter = createTRPCRouter({
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Job listing not found",
+        });
+      }
+      if (
+        ctx.userJWT!.role !== "Admin" &&
+        ctx.userJWT!.id !== "SuperAdmin" &&
+        oldJoblisting.officer_id &&
+        oldJoblisting.officer_id !== ctx.userJWT!.id
+      ) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You are not authorized to update this job listing.",
         });
       }
 

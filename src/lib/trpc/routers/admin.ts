@@ -138,7 +138,6 @@ const adminRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
-      console.log("Cursor ", input.cursor);
 
       if (ctx.userJWT!.role === "User") {
         throw new TRPCError({
@@ -368,12 +367,20 @@ const adminRouter = createTRPCRouter({
     .input(
       z.object({
         query: z.string().optional(),
+        currentHRId: z.uuid().optional(),
       })
     )
     .query(async ({ input }) => {
       const supabase = await createClientServer(1, true);
 
-      let query = supabase.from("users").select("*").eq("role", "HR Officer");
+      let query = supabase
+        .from("users")
+        .select("*")
+        .eq("role", "HR Officer")
+      
+        if (input.currentHRId){
+          query = query.neq("id", input.currentHRId);
+        }
 
       if (input.query && input.query.trim() !== "") {
         const q = input.query.trim();
