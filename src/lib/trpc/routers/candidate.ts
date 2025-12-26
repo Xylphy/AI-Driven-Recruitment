@@ -132,7 +132,11 @@ const candidateRouter = createTRPCRouter({
 
       // Batch fetch Firebase users
       const applicantsArr = (applicantsWithUsers || []) as Array<
-        JobApplicant & User
+        JobApplicant &
+          Pick<
+            User,
+            "first_name" | "last_name" | "firebase_uid" | "prefix" | "resume_id"
+          >
       >;
 
       const firebaseUidToApplicant = new Map<
@@ -293,7 +297,7 @@ const candidateRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      if(ctx.userJWT!.role === "User") {
+      if (ctx.userJWT!.role === "User") {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "You are not authorized to access this resource.",
