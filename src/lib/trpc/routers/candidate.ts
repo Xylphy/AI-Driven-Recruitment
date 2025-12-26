@@ -136,7 +136,7 @@ const candidateRouter = createTRPCRouter({
           Pick<
             User,
             "first_name" | "last_name" | "firebase_uid" | "prefix" | "resume_id"
-          >
+          > & { job_title: string }
       >;
 
       const firebaseUidToApplicant = new Map<
