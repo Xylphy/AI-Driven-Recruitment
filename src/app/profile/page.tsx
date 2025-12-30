@@ -69,7 +69,6 @@ function getLinkMeta(rawUrl: string) {
       ? input
       : `https://${input}`;
 
-  // Try to parse hostname for robust matching
   let hostname = "";
   try {
     hostname = new URL(normalized).hostname.replace(/^www\./, "").toLowerCase();
