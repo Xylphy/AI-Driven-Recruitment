@@ -7,7 +7,6 @@ import useAuth from "@/hooks/useAuth";
 import { useRouter, useParams } from "next/navigation";
 import { JOB_LOCATIONS } from "@/lib/constants";
 import { trpc } from "@/lib/trpc/client";
-import { start } from "node:repl";
 
 type HROfficer = {
   id: string;

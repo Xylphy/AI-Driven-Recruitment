@@ -13,7 +13,6 @@ import {
   TooltipItem,
 } from "chart.js";
 import { Bar, Pie } from "react-chartjs-2";
-import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import type { BottleneckPercentileRow } from "@/types/types";
 import jsPDF from "jspdf";
@@ -134,7 +133,6 @@ const barOptions = {
 };
 
 export default function JobsPage() {
-  const router = useRouter();
   const today = new Date();
 
   const [fromDate, setFromDate] = useState(

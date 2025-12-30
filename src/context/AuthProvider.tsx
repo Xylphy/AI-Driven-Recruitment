@@ -15,7 +15,6 @@ import {
   onAuthStateChanged,
   type User as FirebaseAuthUser,
 } from "firebase/auth";
-import { trpc } from "@/lib/trpc/client";
 
 const AuthContext = createContext<{
   isAuthenticated: boolean;

@@ -12,11 +12,10 @@ import {
   deleteRow,
   insertTable,
   updateTable,
-  QueryFilter,
 } from "@/lib/supabase/action";
 import { TRPCError } from "@trpc/server";
 import mongoDb_client from "@/lib/mongodb/mongodb";
-import { deleteDocument, findOne } from "@/lib/mongodb/action";
+import { deleteDocument } from "@/lib/mongodb/action";
 import {
   JobListing,
   JobListingQualifications,
@@ -28,7 +27,7 @@ import {
 } from "@/types/schema";
 import { jobListingSchema } from "@/lib/schemas";
 import type { Notification } from "@/types/types";
-import admin, { db, auth } from "@/lib/firebase/admin";
+import admin, { db } from "@/lib/firebase/admin";
 
 const jobListingRouter = createTRPCRouter({
   joblistings: authorizedProcedure

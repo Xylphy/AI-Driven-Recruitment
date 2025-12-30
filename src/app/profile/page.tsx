@@ -1,12 +1,25 @@
 "use client";
 
-import { FaFacebook, FaInstagram } from "react-icons/fa";
+import {
+  FaFacebook,
+  FaGithub,
+  FaInstagram,
+  FaLinkedin,
+  FaYoutube,
+  FaTiktok,
+  FaTwitter,
+  FaGitlab,
+  FaDiscord,
+  FaStackOverflow,
+  FaMedium,
+} from "react-icons/fa";
 import {
   MdEmail,
   MdPhone,
   MdSettings,
   MdLogout,
   MdArrowBack,
+  MdLink,
 } from "react-icons/md";
 import JobApplicationDetails from "@/components/profile/JobApplications";
 import Image from "next/image";
@@ -16,11 +29,100 @@ import { auth } from "@/lib/firebase/client";
 import { trpc } from "@/lib/trpc/client";
 import Link from "next/link";
 
+type LinkMeta = {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  url: string;
+};
+
+function getLinkMeta(rawUrl: string) {
+  const input = rawUrl?.trim();
+  if (!input) return null;
+
+  const lower = input.toLowerCase();
+
+  const looksLikeEmail =
+    !lower.startsWith("http") &&
+    !lower.startsWith("mailto:") &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(lower);
+
+  if (lower.startsWith("mailto:") || looksLikeEmail) {
+    const mailto = lower.startsWith("mailto:") ? input : `mailto:${input}`;
+    return { icon: MdEmail, label: "Email", url: mailto };
+  }
+
+  // Phone
+  const digits = lower.replace(/[^\d]/g, "");
+  if (
+    lower.startsWith("tel:") ||
+    (digits.length >= 7 && /^[+0-9\s\-()]+$/.test(lower))
+  ) {
+    const tel = lower.startsWith("tel:") ? input : `tel:${input}`;
+    return { icon: MdPhone, label: "Phone", url: tel };
+  }
+
+  const normalized =
+    lower.startsWith("http://") ||
+    lower.startsWith("https://") ||
+    lower.startsWith("mailto:") ||
+    lower.startsWith("tel:")
+      ? input
+      : `https://${input}`;
+
+  // Try to parse hostname for robust matching
+  let hostname = "";
+  try {
+    hostname = new URL(normalized).hostname.replace(/^www\./, "").toLowerCase();
+  } catch {
+    return { icon: MdLink, label: "Link", url: normalized };
+  }
+
+  const providers: Array<{
+    host: string | RegExp;
+    icon: LinkMeta["icon"];
+    label: string;
+  }> = [
+    { host: /(^|\.)facebook\.com$/, icon: FaFacebook, label: "Facebook" },
+    { host: /(^|\.)instagram\.com$/, icon: FaInstagram, label: "Instagram" },
+    { host: /(^|\.)github\.com$/, icon: FaGithub, label: "GitHub" },
+    { host: /(^|\.)gitlab\.com$/, icon: FaGitlab, label: "GitLab" },
+    { host: /(^|\.)linkedin\.com$/, icon: FaLinkedin, label: "LinkedIn" },
+    { host: /(^|\.)x\.com$|(^|\.)twitter\.com$/, icon: FaTwitter, label: "X" },
+    {
+      host: /(^|\.)youtube\.com$|(^|\.)youtu\.be$/,
+      icon: FaYoutube,
+      label: "YouTube",
+    },
+    { host: /(^|\.)tiktok\.com$/, icon: FaTiktok, label: "TikTok" },
+    { host: /(^|\.)medium\.com$/, icon: FaMedium, label: "Medium" },
+    {
+      host: /(^|\.)stackoverflow\.com$/,
+      icon: FaStackOverflow,
+      label: "Stack Overflow",
+    },
+    {
+      host: /(^|\.)discord\.gg$|(^|\.)discord\.com$/,
+      icon: FaDiscord,
+      label: "Discord",
+    },
+  ];
+
+  const match = providers.find((p) =>
+    typeof p.host === "string" ? hostname === p.host : p.host.test(hostname)
+  );
+
+  if (match) return { icon: match.icon, label: match.label, url: normalized };
+
+  return { icon: MdLink, label: "Link", url: normalized };
+}
+
 export default function Profile() {
   const router = useRouter();
   const { userInfo, isAuthenticated } = useAuth({
     fetchUser: true,
+    fetchSocialLinks: true,
   });
+
   const jwtInfo = trpc.auth.decodeJWT.useQuery(undefined, {
     enabled: isAuthenticated,
   });
@@ -28,6 +130,10 @@ export default function Profile() {
   const joblistings = trpc.joblisting.joblistings.useQuery(undefined, {
     enabled: isAuthenticated,
   });
+
+  const contactItems = [
+    ...(userInfo.data?.socialLinks ?? []).map((link) => getLinkMeta(link)),
+  ];
 
   if (isAdmin) {
     return (
@@ -90,10 +196,23 @@ export default function Profile() {
             </h2>
 
             <div className="flex gap-3 my-4">
-              <MdEmail className="text-red-600" />
-              <FaFacebook className="text-red-600" />
-              <FaInstagram className="text-red-600" />
-              <MdPhone className="text-red-600" />
+              {contactItems.map((item, index) => {
+                if (!item) return null;
+                const Icon = item.icon ?? MdLink;
+                return (
+                  <a
+                    key={`${item.url}-${index}`}
+                    href={item.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-gray-600 hover:text-red-600 text-2xl"
+                    aria-label={item.label ?? "Link"}
+                    title={item.label ?? "Link"}
+                  >
+                    <Icon />
+                  </a>
+                );
+              })}
             </div>
             {isAdmin && (
               <>
