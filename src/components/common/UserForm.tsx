@@ -51,7 +51,7 @@ export function UserForm({
   };
   isSubmitting: boolean;
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => Promise<void>;
-  response: {
+  response?: {
     success?: boolean;
     message?: string;
   } | null;

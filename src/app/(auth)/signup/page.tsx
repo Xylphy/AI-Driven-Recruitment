@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { UserForm } from "@/components/common/UserForm";
 import { EducationalDetail, JobExperience, SocialLink } from "@/types/types";
 import { cleanArrayData, getCsrfToken } from "@/lib/library";
+import Swal from "sweetalert2";
 
 export default function SignupPage() {
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
@@ -104,20 +105,39 @@ export default function SignupPage() {
         return response.json();
       })
       .then((data) => {
-        setResponse(data);
-        form.reset();
-        setSocialLinks([]);
-        setEducationalDetails([]);
-        setJobExperience([]);
-        setSelectedFile(null);
-        setTranscriptFile(null);
+        if (data.success) {
+          Swal.fire({
+            icon: "success",
+            title: "Registration Successful!",
+            text: "We’ve sent a confirmation email. Please check your inbox.",
+            confirmButtonText: "Go to Home",
+            allowOutsideClick: false,
+          }).then(() => {
+            window.location.href = "/";
+          });
+
+          form.reset();
+          setSocialLinks([]);
+          setEducationalDetails([]);
+          setJobExperience([]);
+          setSelectedFile(null);
+          setTranscriptFile(null);
+        } else {
+          throw new Error(data.message || "Something went wrong");
+        }
       })
       .catch((error) => {
-        setResponse({
-          success: false,
-          message: error instanceof Error ? error.message : "Submission failed",
+        Swal.fire({
+          icon: "error",
+          title: "Submission Failed",
+          text:
+            error instanceof Error
+              ? error.message
+              : "Something went wrong. Please try again.",
+          confirmButtonText: "Okay",
         });
       })
+
       .finally(() => setIsSubmitting(false));
   };
 

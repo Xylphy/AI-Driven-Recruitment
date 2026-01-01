@@ -1,4 +1,5 @@
 "use client";
+
 import { UserForm } from "@/components/common/UserForm";
 import useAuth from "@/hooks/useAuth";
 import { useState, useEffect, useRef } from "react";
@@ -11,9 +12,11 @@ import {
 import { auth } from "@/lib/firebase/client";
 import { useRouter } from "next/navigation";
 import { cleanArrayData } from "@/lib/library";
+import { swalSuccess, swalError } from "@/lib/swal";
 
 export default function EditProfilePage() {
   const router = useRouter();
+
   const { userInfo: userInfoHook, csrfToken } = useAuth({
     fetchUser: true,
     fetchSkills: true,
@@ -28,6 +31,7 @@ export default function EditProfilePage() {
   >([]);
   const [jobExperiences, setJobExperience] = useState<JobExperience[]>([]);
   const [transcriptFile, setTranscriptFile] = useState<File | null>(null);
+
   const [inputFields, setInputFields] = useState<User>({
     prefix: "",
     firstName: "",
@@ -44,7 +48,9 @@ export default function EditProfilePage() {
     resumeId: "",
     skillSet: "",
   });
-  const [selectedFile, setSelectedFile] = useState<File | null>(null); // resume
+
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [response, setResponse] = useState<{
     success?: boolean;
     message?: string;
@@ -52,8 +58,7 @@ export default function EditProfilePage() {
   const controllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    const controller = controllerRef.current;
-    return () => controller?.abort(); // cancel the request on unmount
+    return () => controllerRef.current?.abort();
   }, []);
 
   useEffect(() => {
@@ -81,146 +86,79 @@ export default function EditProfilePage() {
     );
 
     setJobExperience(
-      userInfoHook.data.experience?.map((experience, index) => ({
+      userInfoHook.data.experience?.map((exp, index) => ({
         id: index,
-        title: experience.title || "",
-        company: experience.company || "",
-        summary: experience.summary || "",
-        currentlyWorking: experience.currently_working,
-        startMonth: experience.start_month,
-        startYear: experience.start_year,
-        endMonth: experience.end_month || "",
-        endYear: experience.end_year || 0,
+        title: exp.title || "",
+        company: exp.company || "",
+        summary: exp.summary || "",
+        currentlyWorking: exp.currently_working,
+        startMonth: exp.start_month,
+        startYear: exp.start_year,
+        endMonth: exp.end_month || "",
+        endYear: exp.end_year || 0,
       })) ?? []
     );
 
-    const userData = userInfoHook.data.user;
-    if (userData)
-      setInputFields({
-        prefix: userData.prefix || "",
-        firstName: userData.first_name || "",
-        lastName: userData.last_name || "",
-        countryCode: userData.country_code || "",
-        street: userData.street || "",
-        zip: userData.zip || "",
-        city: userData.city || "",
-        state_: userData.state || "",
-        country: userData.country || "",
-        jobTitle: userData.job_title || "",
-        email: auth.currentUser?.email || "",
-        mobileNumber: userData.phone_number || "",
-        resumeId: userData.resume_id,
-        skillSet: (userInfoHook.data.skills || []).join(", "),
-      });
+    const user = userInfoHook.data.user;
+    if (!user) return;
+
+    setInputFields({
+      prefix: user.prefix || "",
+      firstName: user.first_name || "",
+      lastName: user.last_name || "",
+      countryCode: user.country_code || "",
+      street: user.street || "",
+      zip: user.zip || "",
+      city: user.city || "",
+      state_: user.state || "",
+      country: user.country || "",
+      jobTitle: user.job_title || "",
+      email: auth.currentUser?.email || "",
+      mobileNumber: user.phone_number || "",
+      resumeId: user.resume_id,
+      skillSet: (userInfoHook.data.skills || []).join(", "),
+    });
   }, [userInfoHook.isSuccess]);
 
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-
-  const handleFileSelect = (file: File | null) => {
-    setSelectedFile(file);
-  };
+  const handleFileSelect = (file: File | null) => setSelectedFile(file);
+  const handleTranscriptSelect = (file: File | null) => setTranscriptFile(file);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formElement = e.currentTarget; // To prevent getting affected by React's synthetic event system
-
     setIsSubmitting(true);
 
-    const formData = new FormData(formElement);
-    const keysToDelete = [];
-
-    // Cleanup empty string fields
-    for (const [key, value] of formData.entries()) {
-      if (typeof value === "string" && value.trim() === "") {
-        keysToDelete.push(key);
-      }
-    }
-
-    keysToDelete.forEach((key) => {
-      formData.delete(key);
-    });
-
-    formData.set(
-      "educationalDetails",
-      JSON.stringify(
-        cleanArrayData(
-          educationalDetails as unknown as Record<string, unknown>[],
-          ["institute", "major", "endMonth"]
-        )
-      )
-    );
-
-    formData.set(
-      "socialLinks",
-      JSON.stringify(
-        cleanArrayData(socialLinks as unknown as Record<string, unknown>[], [
-          "value",
-        ])
-      )
-    );
-
-    formData.set(
-      "jobExperiences",
-      JSON.stringify(
-        cleanArrayData(jobExperiences as unknown as Record<string, unknown>[], [
-          "title",
-          "company",
-          "summary",
-          "endMonth",
-        ])
-      )
-    );
-
-    if (selectedFile) {
-      formData.set("resume", selectedFile);
-    }
-    if (transcriptFile) {
-      formData.set("video", transcriptFile);
-    }
-
     try {
-      fetch("/api/users", {
+      const formData = new FormData(e.currentTarget);
+
+      const res = await fetch("/api/users", {
         method: "PUT",
         headers: {
           "X-CSRF-Token": csrfToken || "",
         },
-        signal: controllerRef.current?.signal,
         body: formData,
-      })
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error("Network response was not ok");
-          }
-          return response.json();
-        })
-        .then((data) => {
-          if (data.error) {
-            setResponse({ success: false, message: data.error });
-          } else {
-            router.refresh();
-            setResponse({
-              success: true,
-              message: "Profile updated successfully!",
-            });
-          }
-        })
-        .catch(() => {
-          setResponse({
-            success: false,
-            message: "Failed to update profile.",
-          });
-        });
+      });
 
-      setResponse(null);
-    } catch {
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        throw new Error(data.error || "Update failed");
+      }
+
+      swalSuccess(
+        "Profile Updated",
+        "Your profile has been updated successfully.",
+        () => router.push("/profile")
+      );
+    } catch (error) {
+      swalError(
+        "Error",
+        error instanceof Error
+          ? error.message
+          : "Something went wrong. Please try again."
+      );
     } finally {
-      controllerRef.current = null;
       setIsSubmitting(false);
     }
-  };
-
-  const handleTranscriptSelect = (file: File | null) => {
-    setTranscriptFile(file);
   };
 
   if (userInfoHook.isLoading || !userInfoHook.isEnabled) {
@@ -230,8 +168,6 @@ export default function EditProfilePage() {
           <svg
             className="animate-spin h-12 w-12 text-red-600"
             viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-hidden="true"
           >
             <circle
               className="opacity-25"
@@ -260,12 +196,14 @@ export default function EditProfilePage() {
         <UserForm
           userInfo={{ user: inputFields, setUserInfo: setInputFields }}
           socialLinksInfo={{ socialLinks, setSocialLinks }}
-          educationalDetailsInfo={{ educationalDetails, setEducationalDetails }}
+          educationalDetailsInfo={{
+            educationalDetails,
+            setEducationalDetails,
+          }}
           jobExperiencesInfo={{ jobExperiences, setJobExperience }}
           isSubmitting={isSubmitting}
           handleSubmit={handleSubmit}
           handleFileSelect={handleFileSelect}
-          response={response}
           title="Update Profile"
           description="Update your resume and personal information"
           fileName={userInfoHook.data?.user?.resume_id || "No file selected"}
@@ -274,9 +212,10 @@ export default function EditProfilePage() {
             userInfoHook.data?.user?.transcript_id || "No file selected"
           }
         />
+
         <button
           onClick={() => router.back()}
-          className="w-full bg-gray-300 text-gray-800 font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-gray-500 hover:border-gray-500"
+          className="w-full mt-4 bg-gray-300 text-gray-800 font-bold px-4 py-2 rounded transition hover:bg-gray-200"
         >
           Back
         </button>

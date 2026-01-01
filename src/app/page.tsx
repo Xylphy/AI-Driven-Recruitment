@@ -2,10 +2,20 @@
 
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
+import { useState } from "react";
 
 export default function Careers() {
   const router = useRouter();
   const jobsQuery = trpc.joblisting.fetchJobs.useQuery({});
+  const [jobTitle, setJobTitle] = useState("");
+  const [location, setLocation] = useState("");
+  const filteredJobs = jobsQuery.data?.jobs.filter((job) => {
+    const matchesTitle = job.title
+      .toLowerCase()
+      .includes(jobTitle.toLowerCase());
+
+    return matchesTitle;
+  });
 
   if (jobsQuery.isLoading) {
     return (
@@ -89,20 +99,20 @@ export default function Careers() {
           <input
             type="text"
             placeholder="Job Title"
-            className="w-full px-4 py-2 border border-gray-300 rounded-md"
+            value={jobTitle}
+            onChange={(e) => setJobTitle(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:outline-none"
           />
-          <input
-            type="text"
-            placeholder="Location"
-            className="w-full px-4 py-2 border border-gray-300 rounded-md"
-          />
-          <button className="bg-[#E30022] text-white font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-500 hover:border-red-500">
+          <button
+            onClick={(e) => e.preventDefault()}
+            className="bg-[#E30022] text-white font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-500 hover:border-red-500"
+          >
             Search
           </button>
         </div>
 
         <div className="md:col-span-2 space-y-4 overflow-y-auto max-h-125 pr-2">
-          {jobsQuery.data?.jobs.map((job, index) => (
+          {filteredJobs?.map((job, index) => (
             <div
               key={index}
               className="flex items-center justify-between p-4 border border-gray-200 rounded-md hover:shadow"
@@ -121,7 +131,6 @@ export default function Careers() {
         </div>
       </section>
 
-      {/* Company Activities */}
       <section className="bg-gray-50 py-10">
         <div className="max-w-6xl mx-auto px-6">
           <h2 className="text-2xl font-bold mb-6 text-red-600 text-center">

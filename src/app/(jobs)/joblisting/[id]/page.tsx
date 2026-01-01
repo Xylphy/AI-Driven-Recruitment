@@ -8,6 +8,7 @@ import { useParams, useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { useState } from "react";
 import { formatDate } from "@/lib/library";
+import { swalSuccess, swalError, swalConfirm } from "@/lib/swal";
 
 type UIState = {
   showDeleteModal: boolean;
@@ -43,17 +44,19 @@ export default function Page() {
 
   const handleNotify = async () => {
     setStates((prev) => ({ ...prev, isNotifying: true }));
-    setError(null);
 
     await notifyMutation.mutateAsync(
       { jobId, notify: !(jobDetails.data?.notify ?? false) },
       {
         onSuccess() {
-          alert("Notification preference updated");
+          swalSuccess(
+            "Notification Updated",
+            "You will be notified about this job."
+          );
           jobDetails.refetch();
         },
         onError(error) {
-          setError(error.message);
+          swalError("Failed to Update Notification", error.message);
         },
         onSettled() {
           setStates((prev) => ({ ...prev, isNotifying: false }));
@@ -64,17 +67,19 @@ export default function Page() {
 
   const handleApply = async () => {
     setStates((prev) => ({ ...prev, isApplying: true }));
-    setError(null);
 
     await applyJobMutation.mutateAsync(
       { jobId },
       {
         onSuccess() {
-          alert("Applied successfully");
+          swalSuccess(
+            "Application Submitted",
+            "Your application was sent successfully."
+          );
           jobDetails.refetch();
         },
         onError(error) {
-          setError(error.message);
+          swalError("Application Failed", error.message);
         },
         onSettled() {
           setStates((prev) => ({ ...prev, isApplying: false }));
@@ -84,29 +89,30 @@ export default function Page() {
   };
 
   const handleDeleteJob = async () => {
-    if (!confirm("This will permanently delete the job listing. Continue?")) {
-      return;
-    }
-    setStates((prev) => ({ ...prev, isDeleting: true }));
-    setError(null);
+    swalConfirm(
+      "Delete Job Listing?",
+      "This action cannot be undone.",
+      async () => {
+        setStates((prev) => ({ ...prev, isDeleting: true }));
 
-    await deleteJobMutation.mutateAsync(
-      { joblistingId: jobId, officer_id: jobDetails.data?.officer_id || "" },
-      {
-        onSuccess() {
-          alert("Job deleted successfully");
-          router.push("/admin");
-        },
-        onError(error) {
-          setError(error.message);
-        },
-        onSettled() {
+        try {
+          await deleteJobMutation.mutateAsync({
+            joblistingId: jobId,
+            officer_id: jobDetails.data?.officer_id || "",
+          });
+
+          swalSuccess("Deleted", "Job listing deleted successfully", () => {
+            router.push("/admin");
+          });
+        } catch (error: any) {
+          swalError("Delete Failed", error.message);
+        } finally {
           setStates((prev) => ({
             ...prev,
             isDeleting: false,
             showDeleteModal: false,
           }));
-        },
+        }
       }
     );
   };
@@ -275,11 +281,6 @@ export default function Page() {
           </div>
 
           <div className="w-full lg:w-1/3 bg-gray-50 border-l p-6">
-            {error && (
-              <div className="mb-4 rounded bg-red-50 border border-red-200 text-red-700 px-4 py-2">
-                {error}
-              </div>
-            )}
             <section className="mb-8">
               <h3 className="text-xl font-bold text-gray-800 mb-2">
                 Job Summary
