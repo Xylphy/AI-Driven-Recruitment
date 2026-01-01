@@ -1,4 +1,3 @@
-// lib/swal.ts
 import Swal from "sweetalert2";
 
 const BASE_CONFIG = {

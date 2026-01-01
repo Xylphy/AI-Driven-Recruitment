@@ -7,12 +7,11 @@ export default function CandidateProfile({
 }) {
   return (
     <>
-      <div className="w-full md:w-2/3 p-6">
-        <h2 className="text-2xl font-bold mb-6">
-          <span className="text-red-600">Candidate</span> Evaluation
-        </h2>
+      <div className="w-full p-6">
+        {/* <h2 className="text-2xl font-bold mb-6">
+          <span className="text-red-600">AI Candidate</span> Evaluation
+        </h2> */}
         <div className="h-[65vh] overflow-y-auto space-y-10 pr-2">
-          {/* Score & Predictive Success */}
           <div className="bg-gray-50 border border-gray-200 p-6 rounded-lg shadow-sm space-y-6">
             <div>
               <span className="block text-sm font-medium text-gray-700 mb-1">
