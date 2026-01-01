@@ -1,3 +1,7 @@
+/**
+ * Router for admin-related procedures
+ */
+
 import { adminProcedure, createTRPCRouter } from "../init";
 import { TRPCError } from "@trpc/server";
 import { createClientServer } from "@/lib/supabase/supabase";
@@ -138,7 +142,6 @@ const adminRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
-
       if (ctx.userJWT!.role === "User") {
         throw new TRPCError({
           code: "FORBIDDEN",
@@ -373,14 +376,11 @@ const adminRouter = createTRPCRouter({
     .query(async ({ input }) => {
       const supabase = await createClientServer(1, true);
 
-      let query = supabase
-        .from("users")
-        .select("*")
-        .eq("role", "HR Officer")
-      
-        if (input.currentHRId){
-          query = query.neq("id", input.currentHRId);
-        }
+      let query = supabase.from("users").select("*").eq("role", "HR Officer");
+
+      if (input.currentHRId) {
+        query = query.neq("id", input.currentHRId);
+      }
 
       if (input.query && input.query.trim() !== "") {
         const q = input.query.trim();

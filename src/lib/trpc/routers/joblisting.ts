@@ -40,8 +40,6 @@ const jobListingRouter = createTRPCRouter({
         .optional()
     )
     .query(async ({ ctx }) => {
-      // const limit = input?.limit ?? 100;
-      // const offset = ((input?.page ?? 1) - 1) * limit;
       const userId = ctx.userJWT!.id;
       const supabase = await createClientServer(1, true);
 
@@ -147,6 +145,8 @@ const jobListingRouter = createTRPCRouter({
 
       return { success: true, message: "Job listing deleted successfully" };
     }),
+
+  // User side
   getJobDetails: rateLimitedProcedure
     .input(
       z.object({
@@ -156,17 +156,10 @@ const jobListingRouter = createTRPCRouter({
     .query(async ({ input, ctx }) => {
       const supabase = await createClientServer(1, true);
 
-      const { data: jobListing, error: errorJobListing } = await findWithJoin<
-        JobListing & { users: Pick<User, "first_name" | "last_name"> }
-      >(supabase, "job_listings", [
-        {
-          foreignTable: "users!job_listings_officer_id_fkey",
-          foreignKey: "officer_id",
-          fields: "first_name, last_name",
-        },
-      ])
-        .many([{ column: "id", value: input.jobId }])
-        .execute();
+      const { data: jobListing, error: errorJobListing } =
+        await find<JobListing>(supabase, "job_listings", [
+          { column: "id", value: input.jobId },
+        ]).single();
 
       if (errorJobListing || !jobListing) {
         console.error(errorJobListing);
@@ -234,21 +227,12 @@ const jobListingRouter = createTRPCRouter({
 
       const applicantCheck = await applicantCheckPromise;
 
-      const joblistingResponse: (typeof jobListing)[0] & {
-        officer_name?: string;
-      } = {
-        ...jobListing[0],
-      };
-
-      joblistingResponse.officer_name = jobListing[0].users
-        ? `${jobListing[0].users.first_name} ${jobListing[0].users.last_name}`
-        : undefined;
-
       return {
-        ...joblistingResponse,
+        ...jobListing,
         requirements: requirements.data?.map((item) => item.requirement) || [],
         qualifications:
           qualifications.data?.map((item) => item.qualification) || [],
+        status: applicantCheck?.data?.status || null,
         isApplicant: !!applicantCheck?.data,
         tags: (tags.data || []).map((item) => item.tags.name),
         notify: applicantCheck?.data?.notify || false,

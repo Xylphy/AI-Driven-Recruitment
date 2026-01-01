@@ -104,3 +104,11 @@ export const adminProcedure = authorizedProcedure.use(async ({ ctx, next }) => {
 
   return next();
 });
+
+export const staffProcedure = authorizedProcedure.use(async ({ ctx, next }) => {
+  if (ctx.userJWT!.role === "User") {
+    throw new TRPCError({ code: "FORBIDDEN" });
+  }
+
+  return next();
+});

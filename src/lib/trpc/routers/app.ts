@@ -1,10 +1,13 @@
 import { createTRPCRouter } from "@/lib/trpc/init";
-import authRouter from "./auth";
-import jobListingRouter from "./joblisting";
-import userRouter from "./user";
-import candidateRouter from "./candidate";
-import hrOfficer from "./hrOfficer";
-import adminRouter from "./admin";
+import {
+  authRouter,
+  jobListingRouter,
+  userRouter,
+  candidateRouter,
+  hrOfficer,
+  adminRouter,
+  staffRouter,
+} from ".";
 
 export const appRouter = createTRPCRouter({
   auth: authRouter,
@@ -12,7 +15,8 @@ export const appRouter = createTRPCRouter({
   user: userRouter,
   candidate: candidateRouter,
   admin: adminRouter,
-  hrOfficer: hrOfficer
+  hrOfficer: hrOfficer,
+  staff: staffRouter,
 });
 
 // export type definition of API

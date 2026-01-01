@@ -17,6 +17,16 @@ type UIState = {
   isNotifying: boolean;
 };
 
+type JobDetail = {
+  title: string;
+  requirements: string[];
+  qualifications: string[];
+  tags: string[];
+  created_at: string;
+  is_fulltime: boolean;
+  location: string;
+};
+
 export default function Page() {
   const router = useRouter();
   const jobId = useParams().id as string;
@@ -27,6 +37,8 @@ export default function Page() {
   const jwtDecoded = trpc.auth.decodeJWT.useQuery(undefined, {
     enabled: isAuthenticated,
   });
+
+  const role = jwtDecoded.data?.user.role;
   const [states, setStates] = useState<UIState>({
     showDeleteModal: false,
     isDeleting: false,
@@ -34,11 +46,24 @@ export default function Page() {
     isNotifying: false,
   });
 
-  const [error, setError] = useState<string | null>(null);
   const deleteJobMutation = trpc.joblisting.deleteJoblisting.useMutation();
-  const jobDetails = trpc.joblisting.getJobDetails.useQuery({
-    jobId,
-  });
+  const jobDetailsUser = trpc.joblisting.getJobDetails.useQuery(
+    { jobId },
+    {
+      enabled: isAuthenticated && role === "User",
+    }
+  );
+
+  const jobDetailsStaff = trpc.staff.getJobDetails.useQuery(
+    { jobId },
+    {
+      enabled: isAuthenticated && role !== "User" /* Staff roles only */,
+    }
+  );
+
+  const jobDetails: JobDetail | undefined =
+    role === "User" ? jobDetailsUser.data : jobDetailsStaff.data;
+
   const applyJobMutation = trpc.joblisting.applyForJob.useMutation();
   const notifyMutation = trpc.joblisting.notify.useMutation();
 
@@ -46,14 +71,14 @@ export default function Page() {
     setStates((prev) => ({ ...prev, isNotifying: true }));
 
     await notifyMutation.mutateAsync(
-      { jobId, notify: !(jobDetails.data?.notify ?? false) },
+      { jobId, notify: !(jobDetailsUser.data?.notify ?? false) },
       {
         onSuccess() {
           swalSuccess(
             "Notification Updated",
             "You will be notified about this job."
           );
-          jobDetails.refetch();
+          jobDetailsUser.refetch();
         },
         onError(error) {
           swalError("Failed to Update Notification", error.message);
@@ -76,7 +101,7 @@ export default function Page() {
             "Application Submitted",
             "Your application was sent successfully."
           );
-          jobDetails.refetch();
+          jobDetailsUser.refetch();
         },
         onError(error) {
           swalError("Application Failed", error.message);
@@ -98,14 +123,19 @@ export default function Page() {
         try {
           await deleteJobMutation.mutateAsync({
             joblistingId: jobId,
-            officer_id: jobDetails.data?.officer_id || "",
+            officer_id: jobDetailsUser.data?.officer_id || "",
           });
 
           swalSuccess("Deleted", "Job listing deleted successfully", () => {
             router.push("/admin");
           });
-        } catch (error: any) {
-          swalError("Delete Failed", error.message);
+        } catch (error: unknown) {
+          swalError(
+            "Delete Failed",
+            typeof error === "object" && error !== null && "message" in error
+              ? String((error as { message?: unknown }).message)
+              : "An unexpected error occurred"
+          );
         } finally {
           setStates((prev) => ({
             ...prev,
@@ -117,7 +147,7 @@ export default function Page() {
     );
   };
 
-  if (jobDetails.isLoading) {
+  if (!!!jobDetails) {
     return (
       <main className="bg-white min-h-screen py-5 px-4 md:px-20">
         <div className="max-w-4xl mx-auto animate-pulse">
@@ -191,34 +221,33 @@ export default function Page() {
           <div className="absolute inset-0 bg-black/75 z-10" />
           <div className="relative z-10 h-full flex flex-col items-center justify-center px-4 text-center">
             <h1 className="text-3xl font-bold text-center text-white">
-              {jobDetails.data?.title}
+              {jobDetails!.title}
             </h1>
             <hr className="w-1/2 mx-auto border-t border-red-600 my-2" />
             <div className="flex justify-center mt-2 space-x-4 text-white font-medium text-sm">
               <span className="flex items-center gap-1">
-                <MdLocationOn className="text-red-600" />{" "}
-                {jobDetails.data?.location}
+                <MdLocationOn className="text-red-600" /> {jobDetails!.location}
               </span>
               <span className="flex items-center gap-1">
                 <MdAccessTime className="text-red-600" />{" "}
-                {jobDetails.data?.is_fulltime ? "Full-Time" : "Part-Time"}
+                {jobDetails!.is_fulltime ? "Full-Time" : "Part-Time"}
               </span>
             </div>
 
             {isAuthenticated &&
-              jwtDecoded.data?.user.role === "User" &&
-              jobDetails.data?.isApplicant && (
+              role === "User" &&
+              jobDetailsUser.data?.status && (
                 <div className="mt-3">
                   <button
                     onClick={handleNotify}
                     disabled={states.isNotifying}
                     className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm border transition-colors ${
-                      jobDetails.data?.notify
+                      jobDetailsUser.data?.notify
                         ? "bg-white/90 text-red-600 border-white/90"
                         : "bg-transparent text-white border-white/50 hover:bg-white/10"
                     } disabled:opacity-60`}
                   >
-                    {jobDetails.data?.notify ? (
+                    {jobDetailsUser.data?.notify ? (
                       <MdNotificationsActive />
                     ) : (
                       <MdNotifications />
@@ -226,7 +255,7 @@ export default function Page() {
                     <span>
                       {states.isNotifying
                         ? "..."
-                        : jobDetails.data?.notify
+                        : jobDetailsUser.data?.notify
                         ? "Notified"
                         : "Notify me"}
                     </span>
@@ -242,7 +271,7 @@ export default function Page() {
                 Qualifications
               </h2>
               <ul className="space-y-2 text-gray-700 text-sm">
-                {jobDetails.data?.qualifications.map((item, index) => (
+                {jobDetails.qualifications.map((item, index) => (
                   <li key={index} className="flex items-start gap-2">
                     <MdChevronRight className="text-red-600 mt-1" />
                     <span>{item}</span>
@@ -256,7 +285,7 @@ export default function Page() {
                 Requirements
               </h2>
               <ul className="space-y-2 text-gray-700 text-sm">
-                {jobDetails.data?.requirements.map((item, index) => (
+                {jobDetails.requirements.map((item, index) => (
                   <li key={index} className="flex items-start gap-2">
                     <MdChevronRight className="text-red-600 mt-1" />
                     <span>{item}</span>
@@ -268,7 +297,7 @@ export default function Page() {
             <section className="mt-8">
               <h2 className="text-2xl font-bold text-red-600 mb-4">Tags</h2>
               <ul className="space-y-2 text-gray-700 text-sm">
-                {jobDetails.data?.tags.map((tag, index) => (
+                {jobDetails.tags.map((tag, index) => (
                   <li
                     key={index}
                     className="inline-block bg-gray-200 text-gray-800 px-3 py-1 rounded-full text-sm mr-2 mb-2"
@@ -288,14 +317,14 @@ export default function Page() {
               <ul className="text-sm text-gray-700 space-y-1">
                 <li>
                   <strong>Published:</strong>{" "}
-                  {formatDate(jobDetails.data?.created_at)}
+                  {formatDate(jobDetails!.created_at)}
                 </li>
                 <li>
                   <strong>Job Nature:</strong>{" "}
-                  {jobDetails.data?.is_fulltime ? "Full-Time" : "Part-Time"}
+                  {jobDetails!.is_fulltime ? "Full-Time" : "Part-Time"}
                 </li>
                 <li>
-                  <strong>Location:</strong> {jobDetails.data?.location}
+                  <strong>Location:</strong> {jobDetails!.location}
                 </li>
               </ul>
             </section>
@@ -315,7 +344,8 @@ export default function Page() {
             {(jwtDecoded.data?.user.role === "Admin" ||
               jwtDecoded.data?.user.role === "SuperAdmin" ||
               (jwtDecoded.data?.user.role !== "User" &&
-                jwtDecoded.data?.user.id === jobDetails.data?.officer_id)) && (
+                jwtDecoded.data?.user.id ===
+                  jobDetailsUser.data?.officer_id)) && (
               <>
                 <button
                   onClick={() => router.push(`/candidates/${jobId}`)}
@@ -342,21 +372,27 @@ export default function Page() {
                 </button>
               </>
             )}
-            {jwtDecoded.data?.user.role === "User" && isAuthenticated && (
+            {role === "User" && isAuthenticated && (
               <>
                 <button
                   className={`mt-2 w-full font-bold py-2 rounded border border-transparent transition-all duration-300 ease-in-out ${
-                    jobDetails.data?.isApplicant
+                    jobDetailsUser.data?.isApplicant
                       ? "bg-gray-400 text-gray-600 cursor-not-allowed"
                       : "bg-red-600 text-white hover:bg-transparent hover:text-red-600 hover:border-red-600"
                   }`}
                   onClick={handleApply}
-                  disabled={jobDetails.data?.isApplicant || states.isApplying}
+                  disabled={
+                    !!jobDetailsUser.data?.status ||
+                    states.isApplying ||
+                    jobDetailsUser.data?.isApplicant
+                  }
                 >
-                  {jobDetails.data?.isApplicant
-                    ? "Applied"
+                  {jobDetailsUser.data?.status
+                    ? jobDetailsUser.data.status
                     : states.isApplying
                     ? "Applying..."
+                    : jobDetailsUser.data?.isApplicant
+                    ? "To be reviewed"
                     : "Apply Job"}
                 </button>
               </>

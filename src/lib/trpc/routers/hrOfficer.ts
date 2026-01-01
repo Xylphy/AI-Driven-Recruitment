@@ -1,3 +1,5 @@
+// Router for HR Officer related procedures
+
 import { TRPCError } from "@trpc/server";
 import { authorizedProcedure, createTRPCRouter } from "../init";
 import { createClientServer } from "@/lib/supabase/supabase";
