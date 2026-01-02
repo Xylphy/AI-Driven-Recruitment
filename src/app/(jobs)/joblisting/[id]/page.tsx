@@ -67,6 +67,12 @@ export default function Page() {
   const applyJobMutation = trpc.joblisting.applyForJob.useMutation();
   const notifyMutation = trpc.joblisting.notify.useMutation();
 
+  const isStaff =
+    role === "Admin" ||
+    role === "SuperAdmin" ||
+    (role !== "User" &&
+      jwtDecoded.data?.user.id === jobDetailsStaff.data?.officer_id);
+
   const handleNotify = async () => {
     setStates((prev) => ({ ...prev, isNotifying: true }));
 
@@ -341,11 +347,7 @@ export default function Page() {
               </p>
             </section>
 
-            {(jwtDecoded.data?.user.role === "Admin" ||
-              jwtDecoded.data?.user.role === "SuperAdmin" ||
-              (jwtDecoded.data?.user.role !== "User" &&
-                jwtDecoded.data?.user.id ===
-                  jobDetailsUser.data?.officer_id)) && (
+            {isStaff && (
               <>
                 <button
                   onClick={() => router.push(`/candidates/${jobId}`)}

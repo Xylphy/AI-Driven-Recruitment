@@ -74,6 +74,9 @@ export const USER_ACTION_EVENT_TYPES = [
   "Admin feedback created",
   "Admin feedback deleted",
   "Admin feedback updated",
+  "Created HR Report",
+  "Deleted HR Report",
+  "Updated HR Report",
 ] as const;
 
 export const ENTITIES = [
@@ -81,4 +84,5 @@ export const ENTITIES = [
   "User",
   "Job Listing",
   "Admin Feedback",
+  "HR Report",
 ] as const;

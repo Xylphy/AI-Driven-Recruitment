@@ -2,16 +2,16 @@
 
 import { FaFacebook, FaInstagram } from "react-icons/fa";
 import { MdEmail, MdPhone, MdArrowBack } from "react-icons/md";
-import Link from "next/link";
 import { FiEdit2, FiTrash2 } from "react-icons/fi";
 import Image from "next/image";
-import { startTransition, useEffect, useState } from "react";
+import { startTransition, useEffect, useMemo, useState } from "react";
 import useAuth from "@/hooks/useAuth";
 import { useParams, useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { CANDIDATE_STATUSES } from "@/lib/constants";
 import dynamic from "next/dynamic";
 import HRReport from "@/components/admin/candidateProfile/HRReport";
+import { formatDate } from "@/lib/library";
 
 type CandidateStatus = (typeof CANDIDATE_STATUSES)[number];
 
@@ -35,22 +35,18 @@ export default function Page() {
   const [activeTab, setActiveTab] = useState<"evaluation" | "resume">(
     "evaluation"
   );
-
-  const [hrReports, setHRReports] = useState<
-    {
-      score: number;
-      highlights: string;
-      summary: string;
-      reporter: string;
-      date: string;
-    }[]
-  >([]);
-
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
+
+  // New: edit form state
+  const [editScore, setEditScore] = useState<number>(0);
+  const [editHighlights, setEditHighlights] = useState<string>("");
+  const [editSummary, setEditSummary] = useState<string>("");
 
   const userJWT = trpc.auth.decodeJWT.useQuery(undefined, {
     enabled: isAuthenticated,
   });
+
+  const { role, id: userId } = userJWT.data?.user || {};
 
   const candidateProfileQuery = trpc.candidate.fetchCandidateProfile.useQuery(
     {
@@ -59,19 +55,55 @@ export default function Page() {
       fetchTranscribed: true,
       fetchResume: true,
     },
-    { enabled: isAuthenticated && userJWT.data?.user.role !== "User" }
+    { enabled: isAuthenticated && role !== "User" }
   );
 
   const updateCandidateStatusMutation =
     trpc.candidate.updateCandidateStatus.useMutation();
 
+  const createHRReportMutation = trpc.staff.postHrReport.useMutation();
+  const getHRReportsQuery = trpc.staff.fetchHRReports.useQuery(
+    { applicantId: candidateId },
+    {
+      enabled: isAuthenticated && role !== "User",
+    }
+  );
+  const deleteHRReportMutation = trpc.hrOfficer.deleteHRReport.useMutation();
+  const updateHRReportMutation = trpc.hrOfficer.editHRReport.useMutation();
+
+  const hrReportsData = useMemo(
+    () => getHRReportsQuery.data ?? [],
+    [getHRReportsQuery.data]
+  );
+
+  const editingReport = useMemo(() => {
+    if (editingIndex === null) return null;
+    return hrReportsData[editingIndex] ?? null;
+  }, [editingIndex, hrReportsData]);
+
+  useEffect(() => {
+    if (!editingReport) return;
+
+    startTransition(() => {
+      setEditScore(
+        typeof editingReport.score === "number" ? editingReport.score : 0
+      );
+      setEditHighlights(
+        Array.isArray(editingReport.highlights)
+          ? editingReport.highlights.join(", ")
+          : String(editingReport.highlights ?? "")
+      );
+      setEditSummary(String(editingReport.summary ?? ""));
+    });
+  }, [editingReport]);
+
   useEffect(() => {
     if (!isAuthenticated) return;
-    if (!userJWT.data?.user.role) {
+    if (role === "User") {
       alert("You are not authorized to view this page.");
       router.back();
     }
-  }, [userJWT.data?.user.role, isAuthenticated, router]);
+  }, [role, isAuthenticated, router]);
 
   useEffect(() => {
     startTransition(() =>
@@ -105,14 +137,53 @@ export default function Page() {
 
   const candidate = candidateProfileQuery.data;
 
-  const handleDeleteReport = (index: number) => {
+  const handleDeleteReport = (reportId: string) => {
     if (confirm("Are you sure you want to delete this HR evaluation?")) {
-      setHRReports((prev) => prev.filter((_, i) => i !== index));
+      deleteHRReportMutation.mutate(
+        { reportId, staffId: getHRReportsQuery.data?.[0]?.staff_id || "" },
+        {
+          onSuccess: () => {
+            alert("HR evaluation deleted successfully.");
+            getHRReportsQuery.refetch();
+          },
+          onError: (error: unknown) => {
+            alert(error instanceof Error ? error.message : String(error));
+          },
+        }
+      );
     }
   };
 
   const handleEditReport = (index: number) => {
     setEditingIndex(index);
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingReport) return;
+
+    updateHRReportMutation.mutate(
+      {
+        reportId: editingReport.id,
+        staffId: editingReport.staff_id,
+        score: Number.isFinite(editScore) ? editScore : 0,
+        keyHighlights: editHighlights,
+        summary: editSummary,
+      },
+      {
+        onSuccess: () => {
+          alert("HR evaluation updated successfully.");
+          setEditingIndex(null);
+          getHRReportsQuery.refetch();
+        },
+        onError: (error: unknown) => {
+          alert(error instanceof Error ? error.message : String(error));
+        },
+      }
+    );
+  };
+
+  const handleCancelEdit = () => {
+    setEditingIndex(null);
   };
 
   return (
@@ -208,68 +279,84 @@ export default function Page() {
                 <h3 className="font-semibold mb-2">HR Officer Report</h3>
                 <div className="w-full flex justify-center mb-4">
                   <HRReport
-                    candidateId={candidateId}
-                    onSubmit={(data) =>
-                      setHRReports((prev) => [
+                    onSubmit={(data) => {
+                      createHRReportMutation.mutate(
                         {
                           ...data,
-                          reporter:
-                            userJWT.data?.user.firstName +
-                            " " +
-                            userJWT.data?.user.lastName,
-                          date: new Date().toLocaleString(),
+                          applicantId: candidateId,
                         },
-                        ...prev,
-                      ])
-                    }
+                        {
+                          onSuccess: () => {
+                            getHRReportsQuery.refetch();
+                            alert("HR Report submitted successfully.");
+                          },
+                          onError: (error) => {
+                            alert(
+                              error instanceof Error
+                                ? error.message
+                                : String(error)
+                            );
+                          },
+                        }
+                      );
+                    }}
                   />
                 </div>
 
-                {hrReports.length > 0 ? (
+                {hrReportsData.length > 0 ? (
                   <div className="flex flex-col gap-4 w-full overflow-auto">
-                    {hrReports.map((report, idx) => (
+                    {hrReportsData.map((report, idx) => (
                       <div
-                        key={idx}
+                        key={report.id}
                         className="bg-white p-4 rounded-lg shadow-md border border-gray-200 w-full relative flex flex-col gap-2"
                       >
                         <div className="absolute top-2 right-2 flex gap-2">
-                          <button
-                            onClick={() => handleEditReport(idx)}
-                            className="text-blue-600 hover:text-blue-800"
-                          >
-                            <FiEdit2 size={18} />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteReport(idx)}
-                            className="text-red-600 hover:text-red-800"
-                          >
-                            <FiTrash2 size={18} />
-                          </button>
+                          {report.staff_id === userId && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => handleEditReport(idx)}
+                                className="text-blue-600 hover:text-blue-800"
+                                aria-label="Edit HR evaluation"
+                                title="Edit"
+                              >
+                                <FiEdit2 size={18} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteReport(report.id)}
+                                className="text-red-600 hover:text-red-800"
+                                aria-label="Delete HR evaluation"
+                                title="Delete"
+                              >
+                                <FiTrash2 size={18} />
+                              </button>
+                            </>
+                          )}
                         </div>
-                        <p>
+
+                        <p className="flex items-start gap-2">
                           <span className="font-semibold text-gray-700">
                             Score:
                           </span>{" "}
-                          <span className="text-red-600 font-bold">
-                            <div className="flex items-center space-x-2">
-                              {[...Array(5)].map((_, i) => (
-                                <svg
-                                  key={i}
-                                  className={`w-5 h-5 ${
-                                    i < Math.floor(report.score || 0)
-                                      ? "text-yellow-400"
-                                      : "text-gray-300"
-                                  }`}
-                                  fill="currentColor"
-                                  viewBox="0 0 20 20"
-                                >
-                                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.184 3.642a1 1 0 00.95.69h3.813c.969 0 1.371 1.24.588 1.81l-3.087 2.243a1 1 0 00-.364 1.118l1.184 3.642c.3.921-.755 1.688-1.54 1.118L10 13.347l-3.087 2.243c-.785.57-1.84-.197-1.54-1.118l1.184-3.642a1 1 0 00-.364-1.118L3.106 9.07c-.783-.57-.38-1.81.588-1.81h3.813a1 1 0 00.95-.69l1.184-3.642z" />
-                                </svg>
-                              ))}
-                              <span className="text-sm text-red-600">
-                                ({report.score || 0}/5)
-                              </span>
-                            </div>
+                          <span className="inline-flex items-center space-x-2 text-red-600 font-bold">
+                            {[...Array(5)].map((_, i) => (
+                              <svg
+                                key={i}
+                                className={`w-5 h-5 ${
+                                  i < Math.floor(report.score || 0)
+                                    ? "text-yellow-400"
+                                    : "text-gray-300"
+                                }`}
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.184 3.642a1 1 0 00.95.69h3.813c.969 0 1.371 1.24.588 1.81l-3.087 2.243a1 1 0 00-.364 1.118l1.184 3.642c.3.921-.755 1.688-1.54 1.118L10 13.347l-3.087 2.243c-.785.57-1.84-.197-1.54-1.118l1.184-3.642a1 1 0 00-.364-1.118L3.106 9.07c-.783-.57-.38-1.81.588-1.81h3.813a1 1 0 00.95-.69l1.184-3.642z" />
+                              </svg>
+                            ))}
+                            <span className="text-sm text-red-600">
+                              ({report.score || 0}/5)
+                            </span>
                           </span>
                         </p>
                         <p>
@@ -277,7 +364,7 @@ export default function Page() {
                             Highlights:
                           </span>{" "}
                           <br />
-                          {report.highlights}
+                          {report.highlights.join(", ")}
                         </p>
                         <p>
                           <span className="font-semibold text-gray-700">
@@ -288,9 +375,88 @@ export default function Page() {
                         </p>
                         <p className="mt-2 text-sm text-gray-500">
                           <em>
-                            Report by {report.reporter} on {report.date}
+                            Report by {report.staff_name} on{" "}
+                            {formatDate(report.created_at)}
                           </em>
                         </p>
+
+                        {/* New: inline edit section */}
+                        {editingIndex === idx && report.staff_id === userId && (
+                          <div className="mt-3 p-3 border border-gray-200 rounded bg-gray-50">
+                            <h4 className="font-semibold mb-3">
+                              Edit HR Evaluation
+                            </h4>
+
+                            <div className="grid gap-3">
+                              <div>
+                                <label className="block text-sm font-semibold mb-1">
+                                  Score (out of 5)
+                                </label>
+                                <input
+                                  type="number"
+                                  min={0}
+                                  max={5}
+                                  step={0.1}
+                                  value={editScore}
+                                  onChange={(e) =>
+                                    setEditScore(parseFloat(e.target.value))
+                                  }
+                                  className="w-full border rounded px-3 py-2"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-sm font-semibold mb-1">
+                                  Key Highlights
+                                </label>
+                                <textarea
+                                  value={editHighlights}
+                                  onChange={(e) =>
+                                    setEditHighlights(e.target.value)
+                                  }
+                                  className="w-full border rounded px-3 py-2"
+                                  rows={3}
+                                  placeholder="e.g. Communication, Leadership, React"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-sm font-semibold mb-1">
+                                  Summary Evaluation
+                                </label>
+                                <textarea
+                                  value={editSummary}
+                                  onChange={(e) =>
+                                    setEditSummary(e.target.value)
+                                  }
+                                  className="w-full border rounded px-3 py-2"
+                                  rows={3}
+                                />
+                              </div>
+
+                              <div className="flex justify-end gap-2">
+                                <button
+                                  type="button"
+                                  onClick={handleCancelEdit}
+                                  className="px-3 py-2 bg-gray-200 rounded hover:bg-gray-300 transition"
+                                  disabled={updateHRReportMutation.isPending}
+                                >
+                                  Cancel
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={handleSaveEdit}
+                                  className="px-3 py-2 bg-red-600 text-white rounded hover:bg-red-500 transition"
+                                  disabled={updateHRReportMutation.isPending}
+                                >
+                                  {updateHRReportMutation.isPending
+                                    ? "Saving..."
+                                    : "Save"}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

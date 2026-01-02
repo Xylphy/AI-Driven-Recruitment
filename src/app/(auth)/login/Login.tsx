@@ -20,7 +20,10 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (isAuthenticated && jwtInfo.data) {
-      if (jwtInfo.data.user.role !== "User") {
+      const role = jwtInfo.data.user.role;
+      if (role === "HR Officer") {
+        router.push("/admin/jobs");
+      } else if (role !== "User") {
         router.push("/admin");
       } else {
         router.push("/profile");

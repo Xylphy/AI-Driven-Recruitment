@@ -127,8 +127,9 @@ export interface AdminFeedback extends IdentifiableItem {
   created_at: string;
 }
 
-export interface AuditLog extends IdentifiableItem {
-  created_at: string; //timestamp
+export interface AuditLog{
+  created_at?: string; //timestamp
+  id?: string; // uuid
 
   // actor (who)
   actor_type: UserRoles;
@@ -150,4 +151,18 @@ export interface AuditLog extends IdentifiableItem {
 export interface Changes {
   before: string;
   after: string;
+}
+
+export interface HRReport extends IdentifiableItem {
+  applicant_id: string;
+  staff_id: string;
+  score: number; // Floating point number
+  summary: string;
+  created_at: string;
+}
+
+export interface KeyHighlights extends IdentifiableItem {
+  created_at: string;
+  report_id: string;
+  highlight: string;
 }

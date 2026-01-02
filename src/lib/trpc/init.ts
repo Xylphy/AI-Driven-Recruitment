@@ -91,7 +91,10 @@ export const rateLimitedProcedure = baseProcedure.use(async ({ ctx, next }) => {
 export const authorizedProcedure = rateLimitedProcedure.use(
   async ({ ctx, next }) => {
     if (!ctx.userJWT) {
-      throw new TRPCError({ code: "UNAUTHORIZED" });
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message: "Not authenticated",
+      });
     }
     return next();
   }
@@ -99,7 +102,10 @@ export const authorizedProcedure = rateLimitedProcedure.use(
 
 export const adminProcedure = authorizedProcedure.use(async ({ ctx, next }) => {
   if (ctx.userJWT!.role !== "Admin" && ctx.userJWT!.role !== "SuperAdmin") {
-    throw new TRPCError({ code: "FORBIDDEN" });
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Access restricted to admin users",
+    });
   }
 
   return next();
@@ -107,8 +113,24 @@ export const adminProcedure = authorizedProcedure.use(async ({ ctx, next }) => {
 
 export const staffProcedure = authorizedProcedure.use(async ({ ctx, next }) => {
   if (ctx.userJWT!.role === "User") {
-    throw new TRPCError({ code: "FORBIDDEN" });
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Access restricted to staff members",
+    });
   }
 
   return next();
 });
+
+export const hrOfficerProcedure = authorizedProcedure.use(
+  async ({ ctx, next }) => {
+    if (ctx.userJWT!.role !== "HR Officer") {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "Access restricted to HR Officers",
+      });
+    }
+
+    return next();
+  }
+);

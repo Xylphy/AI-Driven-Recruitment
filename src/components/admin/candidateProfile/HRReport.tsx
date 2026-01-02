@@ -1,25 +1,37 @@
 "use client";
 
 import { useState, Fragment } from "react";
-import { Dialog, Transition } from "@headlessui/react";
+import {
+  Dialog,
+  DialogTitle,
+  Transition,
+  TransitionChild,
+} from "@headlessui/react";
 
 interface HRReportProps {
-  candidateId: string;
+  score?: number;
+  keyHighlights?: string;
+  summary?: string;
   onSubmit?: (data: {
     score: number;
-    highlights: string;
+    keyHighlights: string;
     summary: string;
   }) => void;
 }
 
-export default function HRReport({ candidateId, onSubmit }: HRReportProps) {
+export default function HRReport({
+  score: initialScore = 0,
+  keyHighlights: initialKeyHighlights = "",
+  summary: initialSummary = "",
+  onSubmit,
+}: HRReportProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [score, setScore] = useState<number>(0);
-  const [highlights, setHighlights] = useState("");
-  const [summary, setSummary] = useState("");
+  const [score, setScore] = useState<number>(initialScore);
+  const [highlights, setHighlights] = useState(initialKeyHighlights);
+  const [summary, setSummary] = useState(initialSummary);
 
   const handleSubmit = () => {
-    const data = { score, highlights, summary };
+    const data = { score, keyHighlights: highlights, summary };
 
     if (onSubmit) {
       onSubmit(data);
@@ -47,7 +59,7 @@ export default function HRReport({ candidateId, onSubmit }: HRReportProps) {
           onClose={() => setIsOpen(false)}
         >
           <div className="flex items-center justify-center min-h-screen px-4">
-            <Transition.Child
+            <TransitionChild
               as={Fragment}
               enter="ease-out duration-300"
               enterFrom="opacity-0"
@@ -57,9 +69,9 @@ export default function HRReport({ candidateId, onSubmit }: HRReportProps) {
               leaveTo="opacity-0"
             >
               <div className="fixed inset-0 bg-black bg-opacity-30" />
-            </Transition.Child>
+            </TransitionChild>
 
-            <Transition.Child
+            <TransitionChild
               as={Fragment}
               enter="ease-out duration-300"
               enterFrom="opacity-0 scale-95"
@@ -69,9 +81,9 @@ export default function HRReport({ candidateId, onSubmit }: HRReportProps) {
               leaveTo="opacity-0 scale-95"
             >
               <div className="bg-white rounded-lg max-w-lg w-full p-6 z-10">
-                <Dialog.Title className="text-lg font-bold mb-4">
+                <DialogTitle className="text-lg font-bold mb-4">
                   HR Evaluation Report
-                </Dialog.Title>
+                </DialogTitle>
 
                 <div className="space-y-4">
                   <div>
@@ -131,7 +143,7 @@ export default function HRReport({ candidateId, onSubmit }: HRReportProps) {
                   </button>
                 </div>
               </div>
-            </Transition.Child>
+            </TransitionChild>
           </div>
         </Dialog>
       </Transition>

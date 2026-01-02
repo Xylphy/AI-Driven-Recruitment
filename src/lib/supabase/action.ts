@@ -19,7 +19,7 @@ interface QueryResult<T> {
 export function insertTable(
   supabase: SupabaseClient,
   table: string,
-  data: object
+  data: object | object[]
 ) {
   return supabase.from(table).insert(data).select("id");
 }
