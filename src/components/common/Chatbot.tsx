@@ -1,11 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { startTransition, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MdChat, MdClose, MdSend } from "react-icons/md";
 
 export default function ChatbotWidget() {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    startTransition(() => setMounted(true));
+  }, []);
+
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <>
@@ -13,7 +22,7 @@ export default function ChatbotWidget() {
         onClick={() => setOpen(true)}
         aria-label="Open chatbot"
         className="fixed bottom-6 right-6 z-50 w-16 h-16 rounded-full
-          bg-gradient-to-br from-red-500 via-red-600 to-red-700
+          bg-linear-to-br from-red-500 via-red-600 to-red-700
           shadow-xl shadow-red-500/30
           flex items-center justify-center
           text-white
@@ -29,7 +38,7 @@ export default function ChatbotWidget() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 60, scale: 0.95 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className="fixed bottom-28 right-6 z-50 w-[360px] max-w-[92vw]
+            className="fixed bottom-28 right-6 z-50 w-90 max-w-[92vw]
               rounded-2xl overflow-hidden
               backdrop-blur-xl bg-white/70
               border border-white/30
@@ -37,7 +46,7 @@ export default function ChatbotWidget() {
           >
             <div
               className="p-4 flex items-center justify-between
-                bg-gradient-to-r from-red-600 to-red-700
+                bg-linear-to-r from-red-600 to-red-700
                 text-white"
             >
               <div>
@@ -75,7 +84,7 @@ export default function ChatbotWidget() {
 
               <div
                 className="max-w-[85%] ml-auto rounded-xl px-4 py-2
-                bg-gradient-to-br from-red-600 to-red-700
+                bg-linear-to-br from-red-600 to-red-700
                 text-white shadow-md"
               >
                 (User message placeholder)
@@ -101,7 +110,7 @@ export default function ChatbotWidget() {
               <button
                 disabled
                 className="w-10 h-10 rounded-full
-                  bg-gradient-to-br from-gray-300 to-gray-400
+                  bg-linear-to-br from-gray-300 to-gray-400
                   text-white flex items-center justify-center
                   cursor-not-allowed"
               >

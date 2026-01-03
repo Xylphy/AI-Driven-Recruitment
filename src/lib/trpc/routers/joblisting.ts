@@ -1,3 +1,7 @@
+/**
+ * Router for job listing related procedures (mostly for users)
+ */
+
 import {
   adminProcedure,
   authorizedProcedure,
@@ -23,7 +27,6 @@ import {
   JobApplicant,
   JobTags,
   Changes,
-  User,
 } from "@/types/schema";
 import { jobListingSchema } from "@/lib/schemas";
 import type { Notification } from "@/types/types";
@@ -658,9 +661,7 @@ const jobListingRouter = createTRPCRouter({
     .query(async ({ input }) => {
       const supabaseClient = await createClientServer(1, true);
 
-      let query = supabaseClient
-        .from("job_listings")
-        .select("*, job_applicants(id)");
+      let query = supabaseClient.from("job_listings").select("*");
 
       if (input.searchQuery) {
         query = query.ilike("title", `%${input.searchQuery}%`);
@@ -683,7 +684,6 @@ const jobListingRouter = createTRPCRouter({
           created_at: item.created_at,
           is_fulltime: item.is_fulltime,
           location: item.location,
-          applicant_count: item.job_applicants?.length || 0,
         })),
       };
     }),

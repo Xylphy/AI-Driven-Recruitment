@@ -2,7 +2,11 @@
  * Router for admin-related procedures
  */
 
-import { adminProcedure, createTRPCRouter } from "../init";
+import {
+  adminProcedure,
+  createTRPCRouter,
+  rateLimitedProcedure,
+} from "../init";
 import { TRPCError } from "@trpc/server";
 import { createClientServer } from "@/lib/supabase/supabase";
 import { countTable, find, insertTable } from "@/lib/supabase/action";
@@ -434,6 +438,47 @@ const adminRouter = createTRPCRouter({
           email: userMap.get(officer.firebase_uid)?.email || "",
           jobsAssigned:
             jobsAssignedResults[index].data?.map((job) => job.title) || [],
+        })),
+      };
+    }),
+  fetchJobs: adminProcedure
+    .input(
+      z.object({
+        searchQuery: z.string().optional(),
+      })
+    )
+    .query(async ({ input }) => {
+      const supabaseClient = await createClientServer(1, true);      let query = supabaseClient
+        .from("job_listings")
+        .select("*, job_applicants(id), officer:users!job_listings_officer_id_fkey(first_name, last_name)");
+
+
+
+      if (input.searchQuery) {
+        query = query.ilike("title", `%${input.searchQuery}%`);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error("Error fetching jobs:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch jobs",
+        });
+      }
+
+      return {
+        jobs: (data || []).map((item) => ({
+          id: item.id,
+          title: item.title,
+          created_at: item.created_at,
+          is_fulltime: item.is_fulltime,
+          location: item.location,
+          applicant_count: item.job_applicants?.length || 0,
+          officer_name: item.officer
+            ? `${item.officer.first_name} ${item.officer.last_name}`
+            : undefined,
         })),
       };
     }),
