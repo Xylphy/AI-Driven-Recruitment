@@ -30,6 +30,7 @@ type JobDetail = {
 export default function Page() {
   const router = useRouter();
   const jobId = useParams().id as string;
+  const [showSkillModal, setShowSkillModal] = useState(false);
 
   const { isAuthenticated } = useAuth({
     routerActivation: false,
@@ -375,29 +376,114 @@ export default function Page() {
               </>
             )}
             {role === "User" && isAuthenticated && (
-              <>
-                <button
-                  className={`mt-2 w-full font-bold py-2 rounded border border-transparent transition-all duration-300 ease-in-out ${
-                    jobDetailsUser.data?.isApplicant
-                      ? "bg-gray-400 text-gray-600 cursor-not-allowed"
-                      : "bg-red-600 text-white hover:bg-transparent hover:text-red-600 hover:border-red-600"
-                  }`}
-                  onClick={handleApply}
-                  disabled={
-                    !!jobDetailsUser.data?.status ||
-                    states.isApplying ||
-                    jobDetailsUser.data?.isApplicant
-                  }
-                >
-                  {jobDetailsUser.data?.status
-                    ? jobDetailsUser.data.status
-                    : states.isApplying
-                    ? "Applying..."
-                    : jobDetailsUser.data?.isApplicant
-                    ? "To be reviewed"
-                    : "Apply Job"}
-                </button>
-              </>
+              <button
+                className={`mt-2 w-full font-bold py-2 rounded border border-transparent transition-all duration-300 ease-in-out ${
+                  jobDetailsUser.data?.isApplicant
+                    ? "bg-gray-400 text-gray-600 cursor-not-allowed"
+                    : "bg-red-600 text-white hover:bg-transparent hover:text-red-600 hover:border-red-600"
+                }`}
+                onClick={() => setShowSkillModal(true)}
+                disabled={
+                  !!jobDetailsUser.data?.status ||
+                  states.isApplying ||
+                  jobDetailsUser.data?.isApplicant
+                }
+              >
+                {jobDetailsUser.data?.status
+                  ? jobDetailsUser.data.status
+                  : states.isApplying
+                  ? "Applying..."
+                  : jobDetailsUser.data?.isApplicant
+                  ? "To be reviewed"
+                  : "Apply Job"}
+              </button>
+            )}
+            {showSkillModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center">
+                <div
+                  className="absolute inset-0 bg-white/40 backdrop-blur-sm"
+                  onClick={() => setShowSkillModal(false)}
+                />
+
+                <div className="relative w-full max-w-2xl mx-4 rounded-2xl border border-white/30 bg-white/30 backdrop-blur-xl shadow-2xl p-6">
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-red-500/10 via-transparent to-black/10 pointer-events-none" />
+
+                  <div className="relative">
+                    <div className="flex justify-between items-center mb-4">
+                      <h2 className="text-2xl font-bold text-red-600">
+                        Skill Self-Assessment
+                      </h2>
+                      <button
+                        onClick={() => setShowSkillModal(false)}
+                        className="text-gray-500 hover:text-red-600 text-xl"
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    <p className="text-sm text-gray-600 mb-6">
+                      Please rate your proficiency in the following skills
+                      before continuing.
+                    </p>
+
+                    <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-1">
+                      {[
+                        "JavaScript",
+                        "React",
+                        "System Design",
+                        "Problem Solving",
+                        "Communication Skills",
+                      ].map((skill, index) => (
+                        <div
+                          key={index}
+                          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-xl bg-white/60 backdrop-blur-md border border-white/40"
+                        >
+                          <div>
+                            <p className="font-semibold text-gray-800">
+                              {skill}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              Rate from 1 (Beginner) to 5 (Expert)
+                            </p>
+                          </div>
+
+                          {/* Rating Buttons */}
+                          <div className="flex gap-2">
+                            {[1, 2, 3, 4, 5].map((num) => (
+                              <button
+                                key={num}
+                                type="button"
+                                className="w-9 h-9 rounded-full border border-gray-300 text-sm font-semibold text-gray-700 bg-white/70 hover:bg-red-600 hover:text-white hover:border-red-600 transition"
+                              >
+                                {num}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="mt-6 flex flex-col sm:flex-row justify-between gap-3">
+                      <button
+                        onClick={() => setShowSkillModal(false)}
+                        className="px-5 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition"
+                      >
+                        Cancel
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setShowSkillModal(false);
+                          handleApply();
+                        }}
+                        className="px-6 py-2 rounded-lg bg-gradient-to-r from-red-600 to-red-500 text-white font-bold"
+                      >
+                        Continue Application
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             )}
 
             <button
