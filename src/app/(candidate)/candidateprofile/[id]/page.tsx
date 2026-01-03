@@ -12,6 +12,14 @@ import { CANDIDATE_STATUSES } from "@/lib/constants";
 import dynamic from "next/dynamic";
 import HRReport from "@/components/admin/candidateProfile/HRReport";
 import { formatDate } from "@/lib/library";
+import {
+  Radar,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  ResponsiveContainer,
+} from "recharts";
 
 type CandidateStatus = (typeof CANDIDATE_STATUSES)[number];
 
@@ -24,6 +32,16 @@ const CandidateResume = dynamic(
   () => import("@/components/admin/candidateProfile/CandidateResume"),
   { ssr: false }
 );
+const glassCard =
+  "bg-white/40 backdrop-blur-xl border border-white/30 shadow-xl rounded-2xl";
+
+export const languageRadarData = [
+  { language: "JavaScript", level: 88 },
+  { language: "TypeScript", level: 82 },
+  { language: "Python", level: 76 },
+  { language: "Java", level: 65 },
+  { language: "C++", level: 58 },
+];
 
 export default function Page() {
   const router = useRouter();
@@ -196,8 +214,8 @@ export default function Page() {
           <MdArrowBack className="text-xl" />
           <span>Back to Candidate List</span>
         </button>
-        <div className="bg-white rounded-lg shadow-md p-6 flex flex-col items-center gap-4">
-          <div className="relative w-32 h-32 rounded-full overflow-hidden">
+        <div className={`${glassCard} p-6 flex flex-col items-center gap-4`}>
+          <div className="relative w-32 h-32 rounded-full overflow-hidden ring-4 ring-red-500/30">
             <Image
               src="/logo.png"
               alt="Profile"
@@ -207,13 +225,13 @@ export default function Page() {
             />
           </div>
 
-          <h2 className="text-xl font-semibold text-center">
+          <h2 className="text-2xl font-bold text-gray-800">
             {candidate
               ? `${candidate.user.firstName} ${candidate.user.lastName}`
               : "Loading..."}
           </h2>
 
-          <div className="flex gap-3 text-red-600">
+          <div className="flex gap-4 text-red-600">
             <MdEmail className="w-6 h-6" />
             <FaFacebook className="w-5 h-5" />
             <FaInstagram className="w-5 h-5" />
@@ -468,8 +486,42 @@ export default function Page() {
               </div>
             </div>
           ) : (
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 h-full overflow-auto">
-              <CandidateResume candidateProfile={candidateProfileQuery.data} />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className={`${glassCard} p-4 h-full overflow-auto`}>
+                <CandidateResume
+                  candidateProfile={candidateProfileQuery.data}
+                />
+              </div>
+
+              <div className={`${glassCard} p-6`}>
+                <h2 className="text-2xl font-bold mb-6">
+                  <span className="text-red-600">Tech</span> Stack
+                </h2>
+
+                <div className="w-full h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RadarChart data={languageRadarData}>
+                      <PolarGrid stroke="rgba(0,0,0,0.15)" />
+                      <PolarAngleAxis
+                        dataKey="language"
+                        tick={{ fill: "#374151", fontSize: 12 }}
+                      />
+                      <PolarRadiusAxis
+                        angle={30}
+                        domain={[0, 100]}
+                        tick={{ fontSize: 10 }}
+                      />
+                      <Radar
+                        name="Proficiency"
+                        dataKey="level"
+                        stroke="#E30022"
+                        fill="#E30022"
+                        fillOpacity={0.35}
+                      />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
             </div>
           )}
         </div>
