@@ -6,6 +6,7 @@ import Footer from "@/components/common/Footer";
 import { TRPCProvider } from "@/lib/trpc/client";
 import LayoutVisibility from "@/components/common/LayoutVisibility";
 import { AuthProvider } from "@/context/AuthProvider";
+import Chatbot from "@/components/common/Chatbot";
 
 export const metadata: Metadata = {
   title: "AI-Driven Recruitment",
@@ -37,6 +38,7 @@ export default function RootLayout({
               <Footer />
             </LayoutVisibility>
           </AuthProvider>
+          <Chatbot />
         </TRPCProvider>
       </body>
     </html>
