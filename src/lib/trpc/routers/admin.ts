@@ -2,16 +2,13 @@
  * Router for admin-related procedures
  */
 
-import {
-  adminProcedure,
-  createTRPCRouter,
-  rateLimitedProcedure,
-} from "../init";
+import { adminProcedure, createTRPCRouter } from "../init";
 import { TRPCError } from "@trpc/server";
 import { createClientServer } from "@/lib/supabase/supabase";
 import { countTable, find, insertTable } from "@/lib/supabase/action";
 import {
   ActiveJob,
+  AuditLog,
   JobListing,
   User,
   WeeklyCumulativeApplicants,
@@ -20,56 +17,84 @@ import { z } from "zod";
 import { auth } from "@/lib/firebase/admin";
 import { BottleneckPercentileRow } from "@/types/types";
 import { USER_ACTION_EVENT_TYPES, USER_ROLES } from "@/lib/constants";
+import mongoDb_client from "@/lib/mongodb/mongodb";
+import { ScoredCandidateDoc } from "@/types/mongo_db/schema";
 
 const adminRouter = createTRPCRouter({
-  fetchStats: adminProcedure.query(async ({ ctx }) => {
-    if (ctx.userJWT!.role === "User") {
-      throw new TRPCError({
-        code: "FORBIDDEN",
-        message: "You do not have permission to access this resource",
-      });
-    }
+  fetchStats: adminProcedure.query(async () => {
     const supabase = await createClientServer(1, true);
 
-    const { data: dailyActiveJobs, error: dailyActiveJobsError } =
-      await find<ActiveJob>(supabase, "daily_active_jobs_last_7_days")
+    const [
+      { data: dailyActiveJobs, error: dailyActiveJobsError },
+      { data: totalCandidates, error: totalCandidatesError },
+      {
+        data: countFinalInterviewCandidates,
+        error: countFinalInterviewCandidatesError,
+      },
+      { data: weeklyApplicants, error: weeklyApplicantsError },
+      { data: numberCandidateStatuses, error: numberCandidateStatusesError },
+    ] = await Promise.all([
+      find<ActiveJob>(supabase, "daily_active_jobs_last_7_days")
         .many()
-        .execute();
+        .execute(),
+      countTable(supabase, "job_applicants"),
+      countTable(supabase, "job_applicants", [
+        { column: "status", value: "Final Interview" },
+      ]),
+      find<WeeklyCumulativeApplicants>(
+        supabase,
+        "weekly_applicants_last_4_weeks"
+      )
+        .many()
+        .execute(),
+      supabase.rpc("count_applicants_by_status"),
+    ]);
 
     if (dailyActiveJobsError) {
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message:
-          dailyActiveJobsError?.message || "Failed to fetch daily active jobs",
+          dailyActiveJobsError.message || "Failed to fetch daily active jobs",
       });
     }
-
-    const { data: totalCandidates, error: totalCandidatesError } =
-      await countTable(supabase, "job_applicants");
-
     if (totalCandidatesError) {
       console.error("Error fetching total candidates", totalCandidatesError);
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message:
-          totalCandidatesError?.message || "Failed to fetch total candidates",
+          totalCandidatesError.message || "Failed to fetch total candidates",
       });
     }
-
-    const { data: weeklyApplicants, error: weeklyApplicantsError } =
-      await find<WeeklyCumulativeApplicants>(
-        supabase,
-        "weekly_applicants_last_4_weeks"
-      )
-        .many()
-        .execute();
-
+    if (countFinalInterviewCandidatesError) {
+      console.error(
+        "Error fetching final interview candidates",
+        countFinalInterviewCandidatesError
+      );
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message:
+          countFinalInterviewCandidatesError.message ||
+          "Failed to fetch final interview candidates",
+      });
+    }
     if (weeklyApplicantsError) {
       console.error("Error fetching weekly applicants", weeklyApplicantsError);
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message:
-          weeklyApplicantsError?.message || "Failed to fetch weekly applicants",
+          weeklyApplicantsError.message || "Failed to fetch weekly applicants",
+      });
+    }
+    if (numberCandidateStatusesError) {
+      console.error(
+        "Error fetching candidate statuses",
+        numberCandidateStatusesError
+      );
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message:
+          numberCandidateStatusesError.message ||
+          "Failed to fetch candidate statuses",
       });
     }
 
@@ -78,11 +103,106 @@ const adminRouter = createTRPCRouter({
       totalJobs: dailyActiveJobs!.at(-1)?.jobs || 0,
       totalCandidates: totalCandidates || 0,
       jobActivity: dailyActiveJobs,
-      shortListed: 0,
       candidateGrowth: weeklyApplicants,
+      candidatesForFinalInterview: countFinalInterviewCandidates || 0,
+      candidateStatuses: (numberCandidateStatuses ?? []).map(
+        (row: {
+          status: string;
+          applicants_count: number | string | bigint;
+        }) => ({
+          stage: row.status,
+          value: Number(row.applicants_count ?? 0),
+        })
+      ),
     };
   }),
-  // Compare candidates
+  topCandidates: adminProcedure
+    .input(
+      z.object({
+        limit: z.number().min(1).max(100).optional().default(10),
+      })
+    )
+    .query(async ({ input }) => {
+      await mongoDb_client.connect();
+
+      const topCandidates = await mongoDb_client
+        .db("ai-driven-recruitment")
+        .collection("scored_candidates")
+        .aggregate([
+          {
+            $addFields: {
+              predictive_success: {
+                $ifNull: ["$score_data.predictive_success", 0],
+              },
+            },
+          },
+          { $sort: { predictive_success: -1 } },
+          { $limit: input.limit },
+          {
+            $project: {
+              user_id: 1,
+              job_id: 1,
+              overall_score: 1,
+              score_data: 1,
+              predictive_success: 1,
+            },
+          },
+        ])
+        .toArray();
+
+      const supabaseClient = await createClientServer(1, true);
+
+      const userIds = Array.from(new Set(topCandidates.map((c) => c.user_id)));
+
+      const { data: users, error: usersError } = userIds.length
+        ? await find<Pick<User, "id" | "first_name" | "last_name">>(
+            supabaseClient,
+            "users",
+            [{ column: "id", value: userIds }],
+            "id, first_name, last_name"
+          )
+            .many()
+            .execute()
+        : { data: [], error: null };
+
+      if (usersError) {
+        console.error(
+          "Error fetching user names for top candidates",
+          usersError
+        );
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message:
+            usersError?.message ||
+            "Failed to fetch user names for top candidates",
+        });
+      }
+
+      const userMap = new Map<
+        string,
+        { first_name: string; last_name: string }
+      >();
+      users?.forEach((user) => {
+        userMap.set(user.id, {
+          first_name: user.first_name,
+          last_name: user.last_name,
+        });
+      });
+
+      const topCandidatesWithNames = topCandidates.map((c) => ({
+        ...c,
+        name: `${userMap.get(c.user_id)?.first_name || "N/A"} ${
+          userMap.get(c.user_id)?.last_name || "N/A"
+        }`,
+      }));
+
+      await mongoDb_client.close();
+      return {
+        topCandidates: topCandidatesWithNames as (ScoredCandidateDoc & {
+          name: string;
+        })[],
+      };
+    }),
   fetchAllJobs: adminProcedure.query(async ({ ctx }) => {
     if (ctx.userJWT!.role === "User") {
       throw new TRPCError({
@@ -192,7 +312,7 @@ const adminRouter = createTRPCRouter({
           : null) || null;
 
       return {
-        auditLogs,
+        auditLogs: auditLogs as AuditLog[],
         nextCursor,
       };
     }),
@@ -448,11 +568,12 @@ const adminRouter = createTRPCRouter({
       })
     )
     .query(async ({ input }) => {
-      const supabaseClient = await createClientServer(1, true);      let query = supabaseClient
+      const supabaseClient = await createClientServer(1, true);
+      let query = supabaseClient
         .from("job_listings")
-        .select("*, job_applicants(id), officer:users!job_listings_officer_id_fkey(first_name, last_name)");
-
-
+        .select(
+          "*, job_applicants(id), officer:users!job_listings_officer_id_fkey(first_name, last_name)"
+        );
 
       if (input.searchQuery) {
         query = query.ilike("title", `%${input.searchQuery}%`);

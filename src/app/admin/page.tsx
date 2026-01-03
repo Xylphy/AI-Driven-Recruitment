@@ -1,6 +1,7 @@
 "use client";
 
 import Header from "@/components/admin/Header";
+import { formatDate } from "@/lib/library";
 import { trpc } from "@/lib/trpc/client";
 import {
   BarChart,
@@ -13,12 +14,6 @@ import {
   Line,
   CartesianGrid,
 } from "recharts";
-
-const funnelData = [
-  { stage: "Screening", value: 120 },
-  { stage: "Interviewing", value: 75 },
-  { stage: "Offer Pending", value: 25 },
-];
 
 const topTalent = [
   { name: "Jane Doe", score: 92 },
@@ -61,6 +56,11 @@ const GlassCard = ({
 export default function AdminDashboard() {
   const statsQuery = trpc.admin.fetchStats.useQuery();
   const { role } = trpc.auth.decodeJWT.useQuery().data?.user || {};
+  const auditLogsQuery = trpc.admin.auditLogs.useQuery({
+    limit: 5,
+    category: "All",
+  });
+  const topTalentQuery = trpc.admin.topCandidates.useQuery({});
 
   if (role !== "Admin" && role !== "SuperAdmin") {
     return (
@@ -77,7 +77,7 @@ export default function AdminDashboard() {
     );
   }
 
-  if (statsQuery.isLoading) {
+  if (statsQuery.isLoading || auditLogsQuery.isLoading) {
     return (
       <div className="flex min-h-screen bg-gray-50">
         <div className="flex-1 flex flex-col">
@@ -127,7 +127,10 @@ export default function AdminDashboard() {
               label: "Total Candidates",
               value: statsQuery.data?.totalCandidates,
             },
-            { label: "Candidates for Final Interview", value: "2" },
+            {
+              label: "Candidates for Final Interview",
+              value: statsQuery.data?.candidatesForFinalInterview,
+            },
             { label: "Avg Time-to-Hire", value: "21 days" },
           ].map((item) => (
             <GlassCard key={item.label} title={item.label}>
@@ -139,7 +142,7 @@ export default function AdminDashboard() {
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <GlassCard title="Recruitment Funnel Overview">
             <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={funnelData}>
+              <BarChart data={statsQuery.data?.candidateStatuses|| []}>
                 <XAxis dataKey="stage" />
                 <YAxis />
                 <Tooltip />
@@ -150,13 +153,15 @@ export default function AdminDashboard() {
 
           <GlassCard title="Top Talent (AI Match >80%)">
             <ul className="space-y-3">
-              {topTalent.map((c) => (
+              {topTalentQuery.data?.topCandidates.map((c, index) => (
                 <li
-                  key={c.name}
+                  key={index}
                   className="flex justify-between items-center bg-white/40 rounded-lg px-4 py-2"
                 >
                   <span className="font-medium">{c.name}</span>
-                  <span className="text-green-600 font-bold">{c.score}%</span>
+                  <span className="text-green-600 font-bold">
+                    {c.score_data!.predictive_success}%
+                  </span>
                 </li>
               ))}
             </ul>
@@ -164,7 +169,16 @@ export default function AdminDashboard() {
 
           <GlassCard title="Audit Logs">
             <ul className="space-y-2 text-sm">
-              <li>list most recent audit logs here</li>
+              {auditLogsQuery.data?.auditLogs.map((log) => (
+                <li key={log.id} className="border-b border-white/30 pb-2">
+                  <p>
+                    <span className="font-semibold">{log.details}</span>
+                  </p>
+                  <p className="text-gray-700 text-xs">
+                    {formatDate(log.created_at)}
+                  </p>
+                </li>
+              ))}
             </ul>
           </GlassCard>
         </section>

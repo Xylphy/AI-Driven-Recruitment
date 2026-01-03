@@ -62,7 +62,11 @@ export function find<T>(
 
       if (filters) {
         filters.forEach(({ column, value }) => {
-          query = query.eq(column, value);
+          if (Array.isArray(value)) {
+            query = query.in(column, value);
+          } else {
+            query = query.eq(column, value);
+          }
         });
       }
 
