@@ -381,7 +381,7 @@ export default function Page() {
 
                         <input
                           type="text"
-                          placeholder="Location / Platform"
+                          placeholder="Location / Meeting Link"
                           className="w-full rounded-lg border border-white/40 bg-white/60 px-4 py-2 focus:outline-none"
                           value={scheduleData.location}
                           onChange={(e) =>
