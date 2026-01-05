@@ -15,7 +15,7 @@ import {
   AuditLog,
   Changes,
   JobApplicant,
-  User,
+  Staff,
 } from "@/types/schema";
 import admin, { auth, db } from "@/lib/firebase/admin";
 import { ObjectId } from "mongodb";
@@ -134,7 +134,7 @@ const candidateRouter = createTRPCRouter({
       const applicantsArr = (applicantsWithUsers || []) as Array<
         JobApplicant &
           Pick<
-            User,
+            Staff,
             "first_name" | "last_name" | "firebase_uid" | "prefix" | "resume_id"
           > & { job_title: string }
       >;
@@ -271,7 +271,7 @@ const candidateRouter = createTRPCRouter({
           findOne("ai-driven-recruitment", "transcribed", {
             user_id: jobApplicant!.user_id,
           }),
-        find<User>(supabaseClient, "users", [
+        find<Staff>(supabaseClient, "users", [
           { column: "id", value: jobApplicant!.user_id },
         ]).single(),
       ]);

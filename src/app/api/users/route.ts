@@ -8,7 +8,7 @@ import {
 } from "@/lib/supabase/action";
 import { JWT } from "@/types/types";
 import jwt from "jsonwebtoken";
-import { User } from "@/types/schema";
+import { Staff } from "@/types/schema";
 import { deleteFile, uploadFile } from "@/lib/cloudinary/cloudinary";
 import { userSchema } from "@/lib/schemas";
 import { parseFormData } from "@/lib/library";
@@ -54,7 +54,7 @@ export async function PUT(request: NextRequest) {
   }
 
   const supabase = await createClientServer(1, true);
-  const { data: userData, error: userError } = await find<User>(
+  const { data: userData, error: userError } = await find<Staff>(
     supabase,
     "users",
     [{ column: "id", value: userId }]

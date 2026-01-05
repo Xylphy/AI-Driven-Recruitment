@@ -19,23 +19,10 @@ export interface Admin extends IdentifiableItem {
   user_id: string;
 }
 
-export interface User extends IdentifiableItem {
+export interface Staff extends IdentifiableItem {
   first_name: string;
   last_name: string;
-  phone_number: string | null;
-  prefix: string;
   firebase_uid: string;
-  country_code: string;
-  resume_id: string | null;
-  street: string | null;
-  zip: string | null;
-  city: string | null;
-  state: string | null;
-  country: string | null;
-  job_title: string | null;
-  parsed_resume_id: string | null;
-  transcript_id: string | null;
-  transcribed_id: string | null;
   role: (typeof USER_ROLES)[number];
 }
 
@@ -127,13 +114,13 @@ export interface AdminFeedback extends IdentifiableItem {
   created_at: string;
 }
 
-export interface AuditLog{
+export interface AuditLog {
   created_at?: string; //timestamp
   id?: string; // uuid
 
   // actor (who)
   actor_type: UserRoles;
-  actor_id: string; // user_id
+  actor_id?: string; // nullable staff_id
 
   // action (what)
   action: "create" | "update" | "delete";

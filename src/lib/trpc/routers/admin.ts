@@ -10,13 +10,13 @@ import {
   ActiveJob,
   AuditLog,
   JobListing,
-  User,
+  Staff,
   WeeklyCumulativeApplicants,
 } from "@/types/schema";
 import { z } from "zod";
 import { auth } from "@/lib/firebase/admin";
 import { BottleneckPercentileRow } from "@/types/types";
-import { USER_ACTION_EVENT_TYPES, USER_ROLES } from "@/lib/constants";
+import { EVENT_TYPES, USER_ROLES } from "@/lib/constants";
 import mongoDb_client from "@/lib/mongodb/mongodb";
 import { ScoredCandidateDoc } from "@/types/mongo_db/schema";
 
@@ -155,7 +155,7 @@ const adminRouter = createTRPCRouter({
       const userIds = Array.from(new Set(topCandidates.map((c) => c.user_id)));
 
       const { data: users, error: usersError } = userIds.length
-        ? await find<Pick<User, "id" | "first_name" | "last_name">>(
+        ? await find<Pick<Staff, "id" | "first_name" | "last_name">>(
             supabaseClient,
             "users",
             [{ column: "id", value: userIds }],
@@ -203,13 +203,7 @@ const adminRouter = createTRPCRouter({
         })[],
       };
     }),
-  fetchAllJobs: adminProcedure.query(async ({ ctx }) => {
-    if (ctx.userJWT!.role === "User") {
-      throw new TRPCError({
-        code: "FORBIDDEN",
-        message: "You do not have permission to access this resource",
-      });
-    }
+  fetchAllJobs: adminProcedure.query(async () => {
     const supabase = await createClientServer(1, true);
 
     const { data: jobs, error: jobsError } = await find<JobListing>(
@@ -238,14 +232,7 @@ const adminRouter = createTRPCRouter({
         applicantIdB: z.uuid(),
       })
     )
-    .query(async ({ ctx, input }) => {
-      if (ctx.userJWT!.role === "User") {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You do not have permission to access this resource",
-        });
-      }
-
+    .query(async ({ input }) => {
       const compareAPI = new URL("http://localhost:8000/score/");
       compareAPI.searchParams.set("applicant1_id", input.applicantIdA);
       compareAPI.searchParams.set("applicant2_id", input.applicantIdB);
@@ -258,21 +245,14 @@ const adminRouter = createTRPCRouter({
     .input(
       z.object({
         query: z.string().optional(),
-        category: z.enum([...USER_ACTION_EVENT_TYPES, "All"]),
+        category: z.enum([...EVENT_TYPES, "All"]),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
         limit: z.number().optional().default(20),
         cursor: z.string().optional(),
       })
     )
-    .query(async ({ ctx, input }) => {
-      if (ctx.userJWT!.role === "User") {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You do not have permission to access this resource",
-        });
-      }
-
+    .query(async ({ input }) => {
       const supabase = await createClientServer(1, true);
       let query = supabase.from("audit_logs").select("*").order("created_at", {
         ascending: false,
@@ -376,7 +356,7 @@ const adminRouter = createTRPCRouter({
       }));
 
       return {
-        users: usersWithEmail as (User & { email: string })[],
+        users: usersWithEmail as (Staff & { email: string })[],
       };
     }),
   changeUserRole: adminProcedure
@@ -396,7 +376,7 @@ const adminRouter = createTRPCRouter({
 
       const supabase = await createClientServer(1, true);
 
-      const { data: user, error: userError } = await find<User>(
+      const { data: user, error: userError } = await find<Staff>(
         supabase,
         "users",
         [
@@ -539,7 +519,7 @@ const adminRouter = createTRPCRouter({
         );
       }
 
-      const jobsAssignedPromises = hrOfficers!.map((officer: User) =>
+      const jobsAssignedPromises = hrOfficers!.map((officer: Staff) =>
         supabase
           .from("job_listings")
           .select("title")
@@ -553,7 +533,7 @@ const adminRouter = createTRPCRouter({
       const jobsAssignedResults = await Promise.all(jobsAssignedPromises);
 
       return {
-        hrOfficers: hrOfficers!.map((officer: User, index: number) => ({
+        hrOfficers: hrOfficers!.map((officer: Staff, index: number) => ({
           ...officer,
           email: userMap.get(officer.firebase_uid)?.email || "",
           jobsAssigned:

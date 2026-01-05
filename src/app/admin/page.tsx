@@ -15,31 +15,6 @@ import {
   CartesianGrid,
 } from "recharts";
 
-const topTalent = [
-  { name: "Jane Doe", score: 92 },
-  { name: "John Smith", score: 89 },
-  { name: "Alex Cruz", score: 85 },
-];
-
-const sourcingData = [
-  { source: "LinkedIn", candidates: 60 },
-  { source: "Career Page", candidates: 35 },
-  { source: "Referrals", candidates: 25 },
-];
-
-const diversityData = [
-  { group: "Women", value: 45 },
-  { group: "Men", value: 50 },
-  { group: "Non-binary", value: 5 },
-];
-
-const predictiveData = [
-  { month: "Jan", hires: 6 },
-  { month: "Feb", hires: 8 },
-  { month: "Mar", hires: 12 },
-  { month: "Apr", hires: 15 },
-];
-
 const GlassCard = ({
   title,
   children,
@@ -142,7 +117,7 @@ export default function AdminDashboard() {
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <GlassCard title="Recruitment Funnel Overview">
             <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={statsQuery.data?.candidateStatuses|| []}>
+              <BarChart data={statsQuery.data?.candidateStatuses || []}>
                 <XAxis dataKey="stage" />
                 <YAxis />
                 <Tooltip />
@@ -151,7 +126,7 @@ export default function AdminDashboard() {
             </ResponsiveContainer>
           </GlassCard>
 
-          <GlassCard title="Top Talent (AI Match >80%)">
+        <GlassCard title="Top Talent (AI Match >80%)">
             <ul className="space-y-3">
               {topTalentQuery.data?.topCandidates.map((c, index) => (
                 <li
@@ -167,7 +142,7 @@ export default function AdminDashboard() {
             </ul>
           </GlassCard>
 
-          <GlassCard title="Audit Logs">
+        <GlassCard title="Audit Logs">
             <ul className="space-y-2 text-sm">
               {auditLogsQuery.data?.auditLogs.map((log) => (
                 <li key={log.id} className="border-b border-white/30 pb-2">

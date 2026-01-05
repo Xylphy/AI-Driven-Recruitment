@@ -47,13 +47,7 @@ export default function Page() {
     isNotifying: false,
   });
 
-  const deleteJobMutation = trpc.joblisting.deleteJoblisting.useMutation();
-  const jobDetailsUser = trpc.joblisting.getJobDetails.useQuery(
-    { jobId },
-    {
-      enabled: isAuthenticated && role === "User",
-    }
-  );
+  const jobDetailsUser = trpc.joblisting.getJobDetails.useQuery({ jobId });
 
   const jobDetailsStaff = trpc.staff.getJobDetails.useQuery(
     { jobId },
@@ -63,16 +57,18 @@ export default function Page() {
   );
 
   const jobDetails: JobDetail | undefined =
-    role === "User" ? jobDetailsUser.data : jobDetailsStaff.data;
+    role && role !== "User" ? jobDetailsStaff.data : jobDetailsUser.data;
 
   const applyJobMutation = trpc.joblisting.applyForJob.useMutation();
   const notifyMutation = trpc.joblisting.notify.useMutation();
+  const deleteJobMutation = trpc.joblisting.deleteJoblisting.useMutation();
 
   const isStaff =
     role === "Admin" ||
     role === "SuperAdmin" ||
     (role !== "User" &&
-      jwtDecoded.data?.user.id === jobDetailsStaff.data?.officer_id);
+      jwtDecoded.data?.user.id === jobDetailsStaff.data?.officer_id &&
+      role);
 
   const handleNotify = async () => {
     setStates((prev) => ({ ...prev, isNotifying: true }));
@@ -406,7 +402,7 @@ export default function Page() {
                 />
 
                 <div className="relative w-full max-w-2xl mx-4 rounded-2xl border border-white/30 bg-white/30 backdrop-blur-xl shadow-2xl p-6">
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-red-500/10 via-transparent to-black/10 pointer-events-none" />
+                  <div className="absolute inset-0 rounded-2xl bg-linear-to-br from-red-500/10 via-transparent to-black/10 pointer-events-none" />
 
                   <div className="relative">
                     <div className="flex justify-between items-center mb-4">

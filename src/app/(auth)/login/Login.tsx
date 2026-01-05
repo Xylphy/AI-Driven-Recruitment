@@ -23,10 +23,8 @@ export default function LoginPage() {
       const role = jwtInfo.data.user.role;
       if (role === "HR Officer") {
         router.push("/admin/jobs");
-      } else if (role !== "User") {
-        router.push("/admin");
       } else {
-        router.push("/profile");
+        router.push("/admin");
       }
     }
   }, [jwtInfo.data, router, isAuthenticated]);

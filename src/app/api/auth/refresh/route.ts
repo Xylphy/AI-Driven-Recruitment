@@ -4,7 +4,7 @@ import { serialize } from "cookie";
 import { createClientServer } from "@/lib/supabase/supabase";
 import { find } from "@/lib/supabase/action";
 import { generateCsrfToken } from "@/lib/csrf";
-import type { User } from "@/types/schema";
+import type { Staff } from "@/types/schema";
 
 interface RefreshTokenPayload {
   userId: string;
@@ -37,9 +37,9 @@ export async function GET(request: NextRequest) {
     }
     const supabase = await createClientServer(1, true);
 
-    const { data: userData, error: usersError } = await find<User>(
+    const { data: userData, error: usersError } = await find<Staff>(
       supabase,
-      "users",
+      "staff",
       [{ column: "id", value: decoded.userId }]
     ).single();
 

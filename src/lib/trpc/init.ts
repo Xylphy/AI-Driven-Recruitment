@@ -30,7 +30,7 @@ export const createTRPCContext = cache(async () => {
         process.env.JWT_SECRET as string
       ) as JWT;
     } catch (error) {
-      console.log("Invalid token:", error);
+      console.error("Invalid token:", error);
     }
   }
 
@@ -90,6 +90,8 @@ export const rateLimitedProcedure = baseProcedure.use(async ({ ctx, next }) => {
 
 export const authorizedProcedure = rateLimitedProcedure.use(
   async ({ ctx, next }) => {
+    console.log(ctx);
+
     if (!ctx.userJWT) {
       throw new TRPCError({
         code: "UNAUTHORIZED",
@@ -105,17 +107,6 @@ export const adminProcedure = authorizedProcedure.use(async ({ ctx, next }) => {
     throw new TRPCError({
       code: "FORBIDDEN",
       message: "Access restricted to admin users",
-    });
-  }
-
-  return next();
-});
-
-export const staffProcedure = authorizedProcedure.use(async ({ ctx, next }) => {
-  if (ctx.userJWT!.role === "User") {
-    throw new TRPCError({
-      code: "FORBIDDEN",
-      message: "Access restricted to staff members",
     });
   }
 

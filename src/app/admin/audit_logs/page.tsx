@@ -5,7 +5,7 @@ import { trpc } from "@/lib/trpc/client";
 import { formatDate } from "@/lib/library";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { USER_ACTION_EVENT_TYPES } from "@/lib/constants";
+import { EVENT_TYPES } from "@/lib/constants";
 import { UserActionEventType } from "@/types/types";
 
 const PAGE_SIZE = 15;
@@ -106,7 +106,7 @@ export default function JobsPage() {
           className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:outline-none"
         >
           <option value="All">All Categories</option>
-          {USER_ACTION_EVENT_TYPES.map((eventType) => (
+          {EVENT_TYPES.map((eventType) => (
             <option key={eventType} value={eventType}>
               {eventType}
             </option>

@@ -51,17 +51,11 @@ export const CANDIDATE_STATUSES = [
   "Close Status",
 ] as const;
 
-export const USER_ROLES = [
-  "Admin",
-  "User",
-  "SuperAdmin",
-  "HR Officer",
-] as const;
+export const USER_ROLES = ["Admin", "SuperAdmin", "HR Officer"] as const;
 
 export const JOB_LOCATIONS = ["Cebu City", "Manila", "Tokyo"] as const;
 
-export const USER_ACTION_EVENT_TYPES = [
-  "Status Changed",
+export const EVENT_TYPES = [
   "Profile Updated",
   "Joblisting modified",
   "Joblisting deleted",
@@ -70,7 +64,6 @@ export const USER_ACTION_EVENT_TYPES = [
   "Changed job alerts",
   "Changed user role",
   "Changed candidate status",
-  "Verified email",
   "Admin feedback created",
   "Admin feedback deleted",
   "Admin feedback updated",
@@ -81,7 +74,6 @@ export const USER_ACTION_EVENT_TYPES = [
 
 export const ENTITIES = [
   "Job Applicant",
-  "User",
   "Job Listing",
   "Admin Feedback",
   "HR Report",

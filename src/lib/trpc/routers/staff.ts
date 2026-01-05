@@ -2,7 +2,7 @@
  * Router for staff-related procedures (HR Officer, SuperAdmin, Admin)
  */
 
-import { createTRPCRouter, staffProcedure } from "../init";
+import { authorizedProcedure, createTRPCRouter } from "../init";
 import { TRPCError } from "@trpc/server";
 import { createClientServer } from "@/lib/supabase/supabase";
 import {
@@ -19,12 +19,12 @@ import {
   JobListingRequirements,
   JobTags,
   KeyHighlights,
-  User,
+  Staff,
 } from "@/types/schema";
 import { z } from "zod";
 
 const staffRouter = createTRPCRouter({
-  getJobDetails: staffProcedure
+  getJobDetails: authorizedProcedure
     .input(
       z.object({
         jobId: z.string(),
@@ -34,7 +34,7 @@ const staffRouter = createTRPCRouter({
       const supabase = await createClientServer(1, true);
 
       const { data: jobListing, error: errorJobListing } = await findWithJoin<
-        JobListing & { users: Pick<User, "first_name" | "last_name"> }
+        JobListing & { users: Pick<Staff, "first_name" | "last_name"> }
       >(supabase, "job_listings", [
         {
           foreignTable: "users!job_listings_officer_id_fkey",
@@ -118,7 +118,7 @@ const staffRouter = createTRPCRouter({
         users: undefined,
       };
     }),
-  postHrReport: staffProcedure
+  postHrReport: authorizedProcedure
     .input(
       z.object({
         score: z.number().min(0).max(5),
@@ -199,7 +199,7 @@ const staffRouter = createTRPCRouter({
         keyHighlights: keyHighlight as KeyHighlights[],
       };
     }),
-  fetchHRReports: staffProcedure
+  fetchHRReports: authorizedProcedure
     .input(
       z.object({
         applicantId: z.string(),
@@ -210,7 +210,7 @@ const staffRouter = createTRPCRouter({
 
       const { data: hrReports, error: hrReportsError } = await findWithJoin<
         HRReport & {
-          users: Pick<User, "first_name" | "last_name">;
+          users: Pick<Staff, "first_name" | "last_name">;
           key_highlights: Pick<KeyHighlights, "highlight">[];
         }
       >(supabase, "hr_reports", [

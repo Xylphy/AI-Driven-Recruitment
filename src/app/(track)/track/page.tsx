@@ -3,23 +3,28 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Search } from "lucide-react";
+import Image from "next/image";
+import type { Route } from "next";
 
 export default function ApplicationTrackPage() {
   const router = useRouter();
   const [applicationId, setApplicationId] = useState("");
 
   const handleTrack = () => {
-    if (!applicationId.trim()) return;
-    router.push(`/trackapplication/${applicationId}`);
-  };
+    const id = applicationId.trim();
+    if (!id) return;
 
+    router.push(`/track_application/${encodeURIComponent(id)}` as Route);
+  };
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[radial-gradient(circle_at_top,_#ffe4e6,_#f8fafc,_#e5e7eb)]">
+    <div className="min-h-screen flex items-center justify-center bg-[radial-gradient(circle_at_top,#ffe4e6,#f8fafc,#e5e7eb)]">
       <div className="relative w-full max-w-lg p-8 rounded-3xl bg-white/30 backdrop-blur-2xl border border-white/40 shadow-[0_20px_60px_rgba(0,0,0,0.15)]">
         {/* Decorative image */}
-        <img
-          src="/illustrations/tracking.svg"
+        <Image
+          src={"/illustrations/tracking.svg"}
           alt="Tracking"
+          width={160}
+          height={160}
           className="w-40 mx-auto mb-6 opacity-90"
         />
 
@@ -44,7 +49,7 @@ export default function ApplicationTrackPage() {
 
         <button
           onClick={handleTrack}
-          className="mt-6 w-full bg-gradient-to-r from-red-600 to-rose-500 text-white font-bold py-3 rounded-xl shadow-lg hover:opacity-90 transition"
+          className="mt-6 w-full bg-linear-to-r from-red-600 to-rose-500 text-white font-bold py-3 rounded-xl shadow-lg hover:opacity-90 transition"
         >
           Track Application
         </button>

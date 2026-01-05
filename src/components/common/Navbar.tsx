@@ -8,6 +8,7 @@ import useNotifications from "@/hooks/useNotifications";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import useAuth from "@/hooks/useAuth";
+import { Route } from "next";
 
 const profileImageUrl = "/default-avatar.png";
 
@@ -15,7 +16,6 @@ const profileLink = {
   Admin: "/admin",
   SuperAdmin: "/admin",
   "HR Officer": "/admin/jobs",
-  User: "/profile",
 } as const;
 
 type Role = keyof typeof profileLink;
@@ -26,7 +26,6 @@ export default function Navbar() {
 
   const { isAuthenticated } = useAuth({
     routerActivation: false,
-    fetchUser: false,
   });
 
   const jwtInfo = trpc.auth.decodeJWT.useQuery(undefined, {
@@ -140,7 +139,7 @@ export default function Navbar() {
             </>
           ) : (
             <Link
-              href="/track"
+              href={"/track" as Route}
               className="bg-[#E30022] text-white font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-500 hover:border-red-500"
             >
               Track Application
