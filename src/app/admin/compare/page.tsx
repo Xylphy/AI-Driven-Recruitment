@@ -178,7 +178,6 @@ export default function ComparePage() {
             Compare Candidates
           </h2>
 
-          {/* Job Select */}
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-2">
               Select Job
@@ -232,7 +231,6 @@ export default function ComparePage() {
             )}
           </div>
 
-          {/* Candidate Select */}
           {selectedJobId && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {candidatesQuery.isLoading || candidatesQuery.isFetching ? (
@@ -295,7 +293,6 @@ export default function ComparePage() {
             </div>
           )}
 
-          {/* Candidate Cards */}
           {candidateA.applicantId && candidateB.applicantId && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8 items-center">
               {[candidateDataA, candidateDataB].map((data, idx) => (
@@ -373,128 +370,188 @@ export default function ComparePage() {
             </div>
           )}
 
-          {/* Admin Feedback */}
-          {candidateA.userId && candidateB.userId && (
-            <div className="mt-6">
-              <button
-                onClick={() => setShowAdminFeedbackFields((prev) => !prev)}
-                className="px-6 py-2 bg-gray-200/50 hover:bg-gray-300/50 rounded-xl backdrop-blur-sm font-semibold transition text-gray-800"
-              >
-                {showAdminFeedbackFields
-                  ? "Hide Admin Feedback"
-                  : "Add Admin Feedback"}
-              </button>
-            </div>
-          )}
-
-          {showAdminFeedbackFields && (
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <textarea
-                value={adminFeedbackA}
-                onChange={(e) => setAdminFeedbackA(e.target.value)}
-                placeholder="Enter feedback for Candidate A"
-                className="w-full p-3 bg-white/40 backdrop-blur-sm border border-gray-200 text-gray-800 rounded-xl placeholder-gray-500"
-                rows={4}
-              />
-              <textarea
-                value={adminFeedbackB}
-                onChange={(e) => setAdminFeedbackB(e.target.value)}
-                placeholder="Enter feedback for Candidate B"
-                className="w-full p-3 bg-white/40 backdrop-blur-sm border border-gray-200 text-gray-800 rounded-xl placeholder-gray-500"
-                rows={4}
-              />
-              <button
-                onClick={handleSubmitFeedback}
-                className="px-6 py-2 bg-gray-200/50 hover:bg-gray-300/50 rounded-xl backdrop-blur-sm font-semibold text-gray-800"
-              >
-                Submit Feedback
-              </button>
-            </div>
-          )}
-
-          {/* Admin Feedback List */}
-          <div className="mt-6 space-y-4">
-            {adminFeedbacksQuery.data?.adminFeedbacks.map(
-              (
-                post: AdminFeedback & {
-                  admin: { last_name: string; first_name: string };
-                  applicant: {
-                    user: { last_name: string; first_name: string };
-                  };
-                },
-                index
-              ) => (
-                <div
-                  key={index}
-                  className="p-4 bg-white/40 backdrop-blur-sm border border-gray-200 rounded-2xl shadow-sm"
-                >
-                  <div className="flex justify-between text-sm text-gray-500 mb-2">
-                    <span>
-                      {post.admin.first_name} {post.admin.last_name}
-                    </span>
-                    <span>{formatDate(post.created_at)}</span>
-                  </div>
-
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1">
-                      <strong className="text-sm">
-                        Candidate {post.applicant.user.first_name}{" "}
-                        {post.applicant.user.last_name}:
-                      </strong>
-
-                      {editingFeedbackId === post.id ? (
-                        <div className="mt-2 space-y-2">
-                          <textarea
-                            value={editedFeedback}
-                            onChange={(e) => setEditedFeedback(e.target.value)}
-                            className="w-full p-2 bg-white/40 backdrop-blur-sm border border-gray-200 rounded-xl text-gray-800 text-sm"
-                            rows={3}
-                          />
-                          <div className="flex gap-2 mt-1">
-                            <button
-                              onClick={() => handleSaveEdit(post.id)}
-                              className="px-3 py-1 bg-red-500/50 hover:bg-red-600/50 text-white text-xs rounded"
-                            >
-                              Save
-                            </button>
-                            <button
-                              onClick={() => {
-                                setEditingFeedbackId(null);
-                                setEditedFeedback("");
-                              }}
-                              className="px-3 py-1 bg-gray-200/50 hover:bg-gray-300/50 text-gray-800 text-xs rounded"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <p className="text-gray-700 mt-1 text-sm">
-                          {post.feedback}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-2 shrink-0">
-                      <button
-                        title="Edit feedback"
-                        className="p-1 rounded hover:bg-gray-100 transition"
-                        onClick={() => handleEditClick(post)}
-                      >
-                        <Pencil className="w-4 h-4 text-red-500" />
-                      </button>
-                      <button
-                        title="Delete feedback"
-                        className="p-1 rounded hover:bg-gray-200 transition"
-                        onClick={() => handleDeleteFeedback(post.id)}
-                      >
-                        <Trash2 className="w-4 h-4 text-red-500" />
-                      </button>
-                    </div>
-                  </div>
+          <div className="mt-6 space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-2">
+                {" "}
+                AI Feedback{" "}
+              </label>
+              {AIQuery.isLoading || AIQuery.isFetching ? (
+                <div className="animate-pulse space-y-3">
+                  <div className="h-6 bg-gray-200 rounded w-1/2 mb-2" />
+                  <div className="h-4 bg-gray-200 rounded w-1/3 mb-2" />
+                  <div className="h-20 bg-gray-200 rounded mb-2" />
+                  <div className="h-4 bg-gray-200 rounded w-1/4 mb-2" />
+                  <div className="h-10 bg-gray-200 rounded mb-2" />
+                  <div className="h-4 bg-gray-200 rounded w-1/4 mb-2" />
+                  <div className="h-12 bg-gray-200 rounded" />{" "}
                 </div>
-              )
+              ) : AIQuery.data ? (
+                <>
+                  <h1 className="text-xl mb-2">
+                    {" "}
+                    Better Candidate:{" "}
+                    <b className="text-red-600">
+                      {" "}
+                      {AIQuery.data.better_candidate}{" "}
+                    </b>
+                  </h1>
+                  <h3>
+                    <b>Reason</b>
+                  </h3>
+                  <textarea
+                    readOnly
+                    value={AIQuery.data.reason}
+                    className="w-full p-3 border rounded-md bg-gray-100 text-gray-500"
+                    rows={4}
+                  ></textarea>
+                  <h3>
+                    <b>Highlights</b>
+                  </h3>
+                  <textarea
+                    readOnly
+                    value={AIQuery.data.highlights}
+                    className="w-full p-3 border rounded-md bg-gray-100 text-gray-500"
+                    rows={2}
+                  />
+                  <h3>
+                    <b>Recommendations</b>
+                  </h3>
+                  <textarea
+                    readOnly
+                    value={AIQuery.data.recommendations}
+                    className="w-full p-3 border rounded-md bg-gray-100 text-gray-500"
+                    rows={3}
+                  />
+                </>
+              ) : (
+                <div className="text-gray-400">No AI feedback available.</div>
+              )}
+            </div>
+
+            {candidateA.userId && candidateB.userId && (
+              <div className="mt-6">
+                <button
+                  onClick={() => setShowAdminFeedbackFields((prev) => !prev)}
+                  className="px-6 py-2 bg-gray-200/50 hover:bg-gray-300/50 rounded-xl backdrop-blur-sm font-semibold transition text-gray-800"
+                >
+                  {showAdminFeedbackFields
+                    ? "Hide Admin Feedback"
+                    : "Add Admin Feedback"}
+                </button>
+              </div>
             )}
+
+            {showAdminFeedbackFields && (
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <textarea
+                  value={adminFeedbackA}
+                  onChange={(e) => setAdminFeedbackA(e.target.value)}
+                  placeholder="Enter feedback for Candidate A"
+                  className="w-full p-3 bg-white/40 backdrop-blur-sm border border-gray-200 text-gray-800 rounded-xl placeholder-gray-500"
+                  rows={4}
+                />
+                <textarea
+                  value={adminFeedbackB}
+                  onChange={(e) => setAdminFeedbackB(e.target.value)}
+                  placeholder="Enter feedback for Candidate B"
+                  className="w-full p-3 bg-white/40 backdrop-blur-sm border border-gray-200 text-gray-800 rounded-xl placeholder-gray-500"
+                  rows={4}
+                />
+                <button
+                  onClick={handleSubmitFeedback}
+                  className="px-6 py-2 bg-gray-200/50 hover:bg-gray-300/50 rounded-xl backdrop-blur-sm font-semibold text-gray-800"
+                >
+                  Submit Feedback
+                </button>
+              </div>
+            )}
+
+            <div className="mt-6 space-y-4">
+              {adminFeedbacksQuery.data?.adminFeedbacks.map(
+                (
+                  post: AdminFeedback & {
+                    admin: { last_name: string; first_name: string };
+                    applicant: {
+                      user: { last_name: string; first_name: string };
+                    };
+                  },
+                  index
+                ) => (
+                  <div
+                    key={index}
+                    className="p-4 bg-white/40 backdrop-blur-sm border border-gray-200 rounded-2xl shadow-sm"
+                  >
+                    <div className="flex justify-between text-sm text-gray-500 mb-2">
+                      <span>
+                        {post.admin.first_name} {post.admin.last_name}
+                      </span>
+                      <span>{formatDate(post.created_at)}</span>
+                    </div>
+
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1">
+                        <strong className="text-sm">
+                          Candidate {post.applicant.user.first_name}{" "}
+                          {post.applicant.user.last_name}:
+                        </strong>
+
+                        {editingFeedbackId === post.id ? (
+                          <div className="mt-2 space-y-2">
+                            <textarea
+                              value={editedFeedback}
+                              onChange={(e) =>
+                                setEditedFeedback(e.target.value)
+                              }
+                              className="w-full p-2 bg-white/40 backdrop-blur-sm border border-gray-200 rounded-xl text-gray-800 text-sm"
+                              rows={3}
+                            />
+                            <div className="flex gap-2 mt-1">
+                              <button
+                                onClick={() => handleSaveEdit(post.id)}
+                                className="px-3 py-1 bg-red-500/50 hover:bg-red-600/50 text-white text-xs rounded"
+                              >
+                                Save
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setEditingFeedbackId(null);
+                                  setEditedFeedback("");
+                                }}
+                                className="px-3 py-1 bg-gray-200/50 hover:bg-gray-300/50 text-gray-800 text-xs rounded"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-gray-700 mt-1 text-sm">
+                            {post.feedback}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          title="Edit feedback"
+                          className="p-1 rounded hover:bg-gray-100 transition"
+                          onClick={() => handleEditClick(post)}
+                        >
+                          <Pencil className="w-4 h-4 text-red-500" />
+                        </button>
+                        <button
+                          title="Delete feedback"
+                          className="p-1 rounded hover:bg-gray-200 transition"
+                          onClick={() => handleDeleteFeedback(post.id)}
+                        >
+                          <Trash2 className="w-4 h-4 text-red-500" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )
+              )}
+            </div>
           </div>
         </div>
       </div>
