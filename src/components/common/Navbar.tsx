@@ -11,6 +11,15 @@ import useAuth from "@/hooks/useAuth";
 
 const profileImageUrl = "/default-avatar.png";
 
+const profileLink = {
+  Admin: "/admin",
+  SuperAdmin: "/admin",
+  "HR Officer": "/admin/jobs",
+  User: "/profile",
+} as const;
+
+type Role = keyof typeof profileLink;
+
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const router = useRouter();
@@ -24,7 +33,7 @@ export default function Navbar() {
     enabled: isAuthenticated,
   });
 
-  const isAdmin = jwtInfo.data?.user.role !== "User";
+  const role = jwtInfo.data?.user.role as Role | undefined;
 
   const {
     notifications,
@@ -117,7 +126,7 @@ export default function Navbar() {
                   )}
                 </div>
               )}
-              <Link href={isAdmin ? "/admin" : "/profile"}>
+              <Link href={role ? profileLink[role] : "/profile"}>
                 <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-red-500 hover:border-black transition-all duration-300">
                   <Image
                     src={profileImageUrl}

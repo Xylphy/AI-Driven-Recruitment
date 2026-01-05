@@ -1,6 +1,7 @@
 "use client";
 
 import Header from "@/components/admin/Header";
+import { formatDate } from "@/lib/library";
 import { trpc } from "@/lib/trpc/client";
 import {
   BarChart,
@@ -12,14 +13,7 @@ import {
   LineChart,
   Line,
   CartesianGrid,
-  Legend,
 } from "recharts";
-
-const funnelData = [
-  { stage: "Screening", value: 120 },
-  { stage: "Interviewing", value: 75 },
-  { stage: "Offer Pending", value: 25 },
-];
 
 const topTalent = [
   { name: "Jane Doe", score: 92 },
@@ -61,17 +55,68 @@ const GlassCard = ({
 
 export default function AdminDashboard() {
   const statsQuery = trpc.admin.fetchStats.useQuery();
+  const { role } = trpc.auth.decodeJWT.useQuery().data?.user || {};
+  const auditLogsQuery = trpc.admin.auditLogs.useQuery({
+    limit: 5,
+    category: "All",
+  });
+  const topTalentQuery = trpc.admin.topCandidates.useQuery({});
 
-  if (statsQuery.isLoading) {
+  if (role !== "Admin" && role !== "SuperAdmin") {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-500">Loading dashboard…</p>
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="bg-white p-8 rounded-lg shadow-md text-center">
+          <h2 className="text-2xl font-semibold mb-4 text-red-600">
+            Access Denied
+          </h2>
+          <p className="text-gray-600">
+            You do not have permission to view this page.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (statsQuery.isLoading || auditLogsQuery.isLoading) {
+    return (
+      <div className="flex min-h-screen bg-gray-50">
+        <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col">
+            <Header />
+
+            <main className="flex-1 p-6 overflow-y-auto space-y-8">
+              <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[0, 1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="bg-white p-5 rounded-lg shadow-md text-center"
+                  >
+                    <div className="h-4 bg-gray-200 rounded w-1/3 mx-auto mb-4 animate-pulse" />
+                    <div className="h-10 bg-gray-200 rounded w-1/2 mx-auto animate-pulse" />
+                  </div>
+                ))}
+              </section>
+
+              <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="bg-white p-5 rounded-lg shadow-md">
+                  <div className="h-6 bg-gray-200 rounded w-1/3 mb-4 animate-pulse" />
+                  <div className="h-64 bg-gray-100 rounded animate-pulse" />
+                </div>
+
+                <div className="bg-white p-5 rounded-lg shadow-md">
+                  <div className="h-6 bg-gray-200 rounded w-1/3 mb-4 animate-pulse" />
+                  <div className="h-64 bg-gray-100 rounded animate-pulse" />
+                </div>
+              </section>
+            </main>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 via-white to-red-50">
+    <div className="min-h-screen bg-linear-to-br from-gray-100 via-white to-red-50">
       <Header />
 
       <main className="p-6 space-y-8">
@@ -82,7 +127,10 @@ export default function AdminDashboard() {
               label: "Total Candidates",
               value: statsQuery.data?.totalCandidates,
             },
-            { label: "Candidates for Final Interview", value: "2" },
+            {
+              label: "Candidates for Final Interview",
+              value: statsQuery.data?.candidatesForFinalInterview,
+            },
             { label: "Avg Time-to-Hire", value: "21 days" },
           ].map((item) => (
             <GlassCard key={item.label} title={item.label}>
@@ -94,7 +142,7 @@ export default function AdminDashboard() {
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <GlassCard title="Recruitment Funnel Overview">
             <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={funnelData}>
+              <BarChart data={statsQuery.data?.candidateStatuses|| []}>
                 <XAxis dataKey="stage" />
                 <YAxis />
                 <Tooltip />
@@ -105,13 +153,15 @@ export default function AdminDashboard() {
 
           <GlassCard title="Top Talent (AI Match >80%)">
             <ul className="space-y-3">
-              {topTalent.map((c) => (
+              {topTalentQuery.data?.topCandidates.map((c, index) => (
                 <li
-                  key={c.name}
+                  key={index}
                   className="flex justify-between items-center bg-white/40 rounded-lg px-4 py-2"
                 >
                   <span className="font-medium">{c.name}</span>
-                  <span className="text-green-600 font-bold">{c.score}%</span>
+                  <span className="text-green-600 font-bold">
+                    {c.score_data!.predictive_success}%
+                  </span>
                 </li>
               ))}
             </ul>
@@ -119,23 +169,21 @@ export default function AdminDashboard() {
 
           <GlassCard title="Audit Logs">
             <ul className="space-y-2 text-sm">
-              <li>list most recent audit logs here</li>
+              {auditLogsQuery.data?.auditLogs.map((log) => (
+                <li key={log.id} className="border-b border-white/30 pb-2">
+                  <p>
+                    <span className="font-semibold">{log.details}</span>
+                  </p>
+                  <p className="text-gray-700 text-xs">
+                    {formatDate(log.created_at)}
+                  </p>
+                </li>
+              ))}
             </ul>
           </GlassCard>
         </section>
 
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <GlassCard title="Diversity & Inclusion Snapshot">
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={diversityData}>
-                <XAxis dataKey="group" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="value" fill="#E30022" />
-              </BarChart>
-            </ResponsiveContainer>
-          </GlassCard>
-
           <GlassCard title="Candidate Growth">
             <ResponsiveContainer width="100%" height={250}>
               <LineChart

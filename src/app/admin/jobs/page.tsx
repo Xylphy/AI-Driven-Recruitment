@@ -11,33 +11,32 @@ type Job = {
   is_fulltime: boolean;
   location: string;
   applicant_count: number;
-  hr_officer?: string;
+  officer_name?: string;
 };
 
 export default function JobsPage() {
   const router = useRouter();
   const [searchInput, setSearchInput] = useState("");
   const userInfo = trpc.auth.decodeJWT.useQuery();
+  const role = userInfo.data?.user.role;
 
-  const jobsQuery = trpc.joblisting.fetchJobs.useQuery(
+  const jobsQuery = trpc.admin.fetchJobs.useQuery(
     { searchQuery: searchInput },
     {
       enabled:
-        (userInfo.isSuccess && userInfo.data.user.role === "Admin") ||
-        userInfo.data?.user.role === "SuperAdmin",
+        (userInfo.isSuccess && role === "Admin") || role === "SuperAdmin",
     }
   );
 
   const hrOfficerJobsQuery = trpc.hrOfficer.assignedJobs.useQuery(
     { query: searchInput },
     {
-      enabled: userInfo.isSuccess && userInfo.data.user.role === "HR Officer",
+      enabled: userInfo.isSuccess && role === "HR Officer",
     }
   );
 
   const jobs =
-    userInfo.data?.user.role === "Admin" ||
-    userInfo.data?.user.role === "SuperAdmin"
+    role === "Admin" || role === "SuperAdmin"
       ? jobsQuery.data?.jobs
       : hrOfficerJobsQuery.data?.jobs;
 
@@ -54,8 +53,7 @@ export default function JobsPage() {
           className="w-full md:w-1/2 px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-red-500 focus:outline-none transition-all"
         />
 
-        {(userInfo.data?.user.role === "Admin" ||
-          userInfo.data?.user.role === "SuperAdmin") && (
+        {(role === "Admin" || role === "SuperAdmin") && (
           <button
             onClick={() => router.push("/createjob")}
             className="px-5 py-3 bg-red-600 text-white font-semibold rounded-lg shadow hover:bg-red-700 transition flex items-center gap-2"
@@ -77,7 +75,7 @@ export default function JobsPage() {
         )}
       </div>
 
-      <div className="overflow-x-auto max-h-[500px] rounded-lg shadow border border-gray-200">
+      <div className="overflow-x-auto max-h-125 rounded-lg shadow border border-gray-200">
         <table className="w-full border-collapse text-gray-700">
           <thead className="bg-gray-50 sticky top-0 z-10">
             <tr>
@@ -100,9 +98,11 @@ export default function JobsPage() {
                   <td className="p-4">
                     <div className="h-4 bg-gray-200 rounded w-1/4 animate-pulse" />
                   </td>
-                  <td className="p-4">
-                    <div className="h-4 bg-gray-200 rounded w-1/2 animate-pulse" />
-                  </td>
+                  {role !== "HR Officer" && (
+                    <td className="p-4">
+                      <div className="h-4 bg-gray-200 rounded w-1/2 animate-pulse" />
+                    </td>
+                  )}
                 </tr>
               ))
             ) : Array.isArray(jobs) && jobs.length > 0 ? (
@@ -119,7 +119,9 @@ export default function JobsPage() {
                       Open
                     </span>
                   </td>
-                  <td className="p-4">{job.hr_officer || "-"}</td>
+                  {role !== "HR Officer" && (
+                    <td className="p-4">{job.officer_name || "-"}</td>
+                  )}
                 </tr>
               ))
             ) : (
