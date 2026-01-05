@@ -12,6 +12,7 @@ import { CANDIDATE_STATUSES } from "@/lib/constants";
 import dynamic from "next/dynamic";
 import HRReport from "@/components/admin/candidateProfile/HRReport";
 import { formatDate } from "@/lib/library";
+import Swal from "sweetalert2";
 import {
   Radar,
   RadarChart,
@@ -35,6 +36,13 @@ const CandidateResume = dynamic(
 const glassCard =
   "bg-white/40 backdrop-blur-xl border border-white/30 shadow-xl rounded-2xl";
 
+const INTERVIEW_STATUSES: CandidateStatus[] = [
+  "Exam",
+  "HR Interview",
+  "Technical Interview",
+  "Final Interview",
+];
+
 export const languageRadarData = [
   { language: "JavaScript", level: 88 },
   { language: "TypeScript", level: 82 },
@@ -54,7 +62,16 @@ export default function Page() {
     "evaluation"
   );
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState<CandidateStatus | null>(
+    null
+  );
 
+  const [scheduleData, setScheduleData] = useState({
+    date: "",
+    time: "",
+    location: "",
+  });
   // New: edit form state
   const [editScore, setEditScore] = useState<number>(0);
   const [editHighlights, setEditHighlights] = useState<string>("");
@@ -133,24 +150,34 @@ export default function Page() {
     e: React.ChangeEvent<HTMLSelectElement>
   ) => {
     const newStatus = e.target.value as CandidateStatus | null;
-    const oldStatus = selectedStatus;
 
-    setSelectedStatus(newStatus);
-    await updateCandidateStatusMutation.mutateAsync(
-      {
+    if (!newStatus) return;
+
+    if (INTERVIEW_STATUSES.includes(newStatus)) {
+      setPendingStatus(newStatus);
+      setShowScheduleModal(true);
+      return;
+    }
+
+    try {
+      await updateCandidateStatusMutation.mutateAsync({
         applicantId: candidateId,
         newStatus,
-      },
-      {
-        onSuccess: () => {
-          alert("Candidate status updated successfully.");
-        },
-        onError: (error: unknown) => {
-          alert(error instanceof Error ? error.message : String(error));
-          setSelectedStatus(oldStatus);
-        },
-      }
-    );
+      });
+
+      Swal.fire({
+        icon: "success",
+        title: "Status Updated",
+        text: `Candidate moved to ${newStatus}`,
+        confirmButtonColor: "#E30022",
+      });
+    } catch (err) {
+      Swal.fire({
+        icon: "error",
+        title: "Update failed",
+        text: err instanceof Error ? err.message : "Something went wrong",
+      });
+    }
   };
 
   const candidate = candidateProfileQuery.data;
@@ -320,6 +347,102 @@ export default function Page() {
                     }}
                   />
                 </div>
+                {showScheduleModal && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                    <div className={`${glassCard} w-full max-w-md p-6`}>
+                      <h2 className="text-xl font-bold mb-4 text-gray-800">
+                        Schedule Details — {pendingStatus}
+                      </h2>
+
+                      <div className="space-y-4">
+                        <input
+                          type="date"
+                          className="w-full rounded-lg border border-white/40 bg-white/60 px-4 py-2 focus:outline-none"
+                          value={scheduleData.date}
+                          onChange={(e) =>
+                            setScheduleData({
+                              ...scheduleData,
+                              date: e.target.value,
+                            })
+                          }
+                        />
+
+                        <input
+                          type="time"
+                          className="w-full rounded-lg border border-white/40 bg-white/60 px-4 py-2 focus:outline-none"
+                          value={scheduleData.time}
+                          onChange={(e) =>
+                            setScheduleData({
+                              ...scheduleData,
+                              time: e.target.value,
+                            })
+                          }
+                        />
+
+                        <input
+                          type="text"
+                          placeholder="Location / Platform"
+                          className="w-full rounded-lg border border-white/40 bg-white/60 px-4 py-2 focus:outline-none"
+                          value={scheduleData.location}
+                          onChange={(e) =>
+                            setScheduleData({
+                              ...scheduleData,
+                              location: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+
+                      <div className="flex justify-end gap-3 mt-6">
+                        <button
+                          onClick={() => {
+                            setShowScheduleModal(false);
+                            setScheduleData({
+                              date: "",
+                              time: "",
+                              location: "",
+                            });
+                          }}
+                          className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 transition"
+                        >
+                          Cancel
+                        </button>
+
+                        <button
+                          onClick={async () => {
+                            setShowScheduleModal(false);
+
+                            await updateCandidateStatusMutation.mutateAsync({
+                              applicantId: candidateId,
+                              newStatus: pendingStatus,
+                            });
+
+                            Swal.fire({
+                              icon: "success",
+                              title: "Scheduled Successfully",
+                              html: `
+                <strong>Status:</strong> ${pendingStatus}<br/>
+                <strong>Date:</strong> ${scheduleData.date}<br/>
+                <strong>Time:</strong> ${scheduleData.time}<br/>
+                <strong>Location:</strong> ${scheduleData.location}
+              `,
+                              confirmButtonColor: "#E30022",
+                            });
+
+                            setScheduleData({
+                              date: "",
+                              time: "",
+                              location: "",
+                            });
+                          }}
+                          className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-500 transition"
+                        >
+                          Save & Update
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {hrReportsData.length > 0 ? (
                   <div className="flex flex-col gap-4 w-full overflow-auto">
@@ -398,7 +521,6 @@ export default function Page() {
                           </em>
                         </p>
 
-                        {/* New: inline edit section */}
                         {editingIndex === idx && report.staff_id === userId && (
                           <div className="mt-3 p-3 border border-gray-200 rounded bg-gray-50">
                             <h4 className="font-semibold mb-3">
