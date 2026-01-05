@@ -140,10 +140,10 @@ export default function Navbar() {
             </>
           ) : (
             <Link
-              href="/login"
+              href="/track"
               className="bg-[#E30022] text-white font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-500 hover:border-red-500"
             >
-              Apply Now
+              Track Application
             </Link>
           )}
         </div>
