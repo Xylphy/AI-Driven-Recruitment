@@ -15,10 +15,6 @@ export interface IdentifiableItem<T = string> {
   id: T;
 }
 
-export interface Admin extends IdentifiableItem {
-  user_id: string;
-}
-
 export interface Staff extends IdentifiableItem {
   first_name: string;
   last_name: string;
@@ -26,62 +22,43 @@ export interface Staff extends IdentifiableItem {
   role: (typeof USER_ROLES)[number];
 }
 
-export interface EducationalDetails
-  extends IdentifiableItem,
-    DateRange,
-    Pick<Admin, "user_id"> {
-  degree: string | null;
-  institute: string | null;
-  currently_pursuing: boolean;
-  major: string | null;
-}
-
-export interface SocialLinks extends IdentifiableItem, Pick<Admin, "user_id"> {
-  link: string;
-}
-
-export interface Skills extends IdentifiableItem, Pick<Admin, "user_id"> {
-  skill: string | null;
-}
-
-export interface JobExperiences
-  extends IdentifiableItem,
-    Pick<Admin, "user_id">,
-    DateRange {
-  title: string | null;
-  company: string | null;
-  summary: string | null;
-  currently_working: boolean;
-}
-
-export interface JobApplicant extends IdentifiableItem, Pick<Admin, "user_id"> {
-  created_at: string;
+export interface Applicants extends IdentifiableItem {
   joblisting_id: string;
-  score_id: string;
+  first_name: string;
+  last_name: string;
+  resume_id: string;
+  country_code: string;
+  street?: string;
+  zip?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  parsed_resume_id?: string;
+  transcript_id: string;
+  transcribed_id?: string;
+  birthday: string;
   status: (typeof CANDIDATE_STATUSES)[number] | null;
-  notify: boolean;
+  created_at: string;
 }
 
-export interface JobListing
-  extends IdentifiableItem,
-    Pick<JobApplicant, "created_at">,
-    Title {
+export interface JobListing extends IdentifiableItem, Title {
+  created_at: string;
   joblisting_id: string;
   location: "Cebu City" | "Manila" | "Tokyo";
   created_by: string;
   is_fulltime: boolean;
-  officer_id: string;
+  officer_id?: string;
 }
 
 export interface JobListingQualifications
   extends IdentifiableItem,
-    Pick<JobApplicant, "joblisting_id"> {
+    Pick<Applicants, "joblisting_id"> {
   qualification: string;
 }
 
 export interface JobListingRequirements
   extends IdentifiableItem,
-    Pick<JobApplicant, "joblisting_id"> {
+    Pick<Applicants, "joblisting_id"> {
   requirement: string;
 }
 

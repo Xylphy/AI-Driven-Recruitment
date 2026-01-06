@@ -14,7 +14,7 @@ import {
   AdminFeedback,
   AuditLog,
   Changes,
-  JobApplicant,
+  Applicants,
   Staff,
 } from "@/types/schema";
 import admin, { auth, db } from "@/lib/firebase/admin";
@@ -132,7 +132,7 @@ const candidateRouter = createTRPCRouter({
 
       // Batch fetch Firebase users
       const applicantsArr = (applicantsWithUsers || []) as Array<
-        JobApplicant &
+        Applicants &
           Pick<
             Staff,
             "first_name" | "last_name" | "firebase_uid" | "prefix" | "resume_id"
@@ -244,7 +244,7 @@ const candidateRouter = createTRPCRouter({
       const supabaseClient = await createClientServer(1, true);
 
       const { data: jobApplicant, error: jobApplicantError } =
-        await find<JobApplicant>(supabaseClient, "job_applicants", [
+        await find<Applicants>(supabaseClient, "job_applicants", [
           { column: "id", value: input.candidateId },
         ]).single();
 
@@ -306,7 +306,7 @@ const candidateRouter = createTRPCRouter({
 
       const supabase = await createClientServer(1, true);
 
-      const { data: oldData, error: oldDataError } = await find<JobApplicant>(
+      const { data: oldData, error: oldDataError } = await find<Applicants>(
         supabase,
         "job_applicants",
         [{ column: "id", value: input.applicantId }]

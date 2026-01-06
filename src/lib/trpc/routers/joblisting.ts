@@ -24,7 +24,7 @@ import {
   JobListing,
   JobListingQualifications,
   JobListingRequirements,
-  JobApplicant,
+  Applicants,
   JobTags,
   Changes,
 } from "@/types/schema";
@@ -47,7 +47,7 @@ const jobListingRouter = createTRPCRouter({
       const supabase = await createClientServer(1, true);
 
       const { data: appliedData, error: appliedError } = await findWithJoin<
-        JobApplicant & { job_listings: JobListing }
+        Applicants & { job_listings: JobListing }
       >(supabase, "job_applicants", [
         {
           foreignTable: "job_listings",
@@ -206,7 +206,7 @@ const jobListingRouter = createTRPCRouter({
       let applicantCheckPromise;
 
       if (userJWT) {
-        applicantCheckPromise = find<JobApplicant>(supabase, "job_applicants", [
+        applicantCheckPromise = find<Applicants>(supabase, "job_applicants", [
           { column: "joblisting_id", value: input.jobId },
           { column: "user_id", value: userJWT.id },
         ]).single();
@@ -259,7 +259,7 @@ const jobListingRouter = createTRPCRouter({
       const supabaseClient = await createClientServer(1, true);
 
       const { data: existingApplicant, error: existingError } =
-        await find<JobApplicant>(
+        await find<Applicants>(
           supabaseClient,
           "job_applicants",
           [

@@ -90,8 +90,6 @@ export const rateLimitedProcedure = baseProcedure.use(async ({ ctx, next }) => {
 
 export const authorizedProcedure = rateLimitedProcedure.use(
   async ({ ctx, next }) => {
-    console.log(ctx);
-
     if (!ctx.userJWT) {
       throw new TRPCError({
         code: "UNAUTHORIZED",
