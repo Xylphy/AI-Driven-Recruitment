@@ -480,7 +480,7 @@ const adminRouter = createTRPCRouter({
     .query(async ({ input }) => {
       const supabase = await createClientServer(1, true);
 
-      let query = supabase.from("users").select("*").eq("role", "HR Officer");
+      let query = supabase.from("staff").select("*").eq("role", "HR Officer");
 
       if (input.currentHRId) {
         query = query.neq("id", input.currentHRId);
@@ -552,7 +552,7 @@ const adminRouter = createTRPCRouter({
       let query = supabaseClient
         .from("job_listings")
         .select(
-          "*, job_applicants(id), officer:users!job_listings_officer_id_fkey(first_name, last_name)"
+          "*, applicants(id), officer:staff!job_listings_officer_id_fkey(first_name, last_name)"
         );
 
       if (input.searchQuery) {

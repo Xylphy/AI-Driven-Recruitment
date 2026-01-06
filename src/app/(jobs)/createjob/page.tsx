@@ -215,7 +215,6 @@ export default function JobListingPage() {
               onFocus={() => setShowDropdown(true)}
               placeholder="Type to search HR Officer"
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:outline-none"
-              required
             />
 
             {showDropdown && filteredHROfficers.length > 0 && (
