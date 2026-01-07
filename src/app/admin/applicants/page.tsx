@@ -104,7 +104,6 @@ export default function ApplicantsPage() {
                   className="border-t hover:bg-gray-50 transition"
                 >
                   <td className="py-3 px-4 font-medium">{candidate.name}</td>
-                  <td className="py-3 px-4">{candidate.email}</td>
                   <td className="py-3 px-4">{candidate.jobTitle}</td>
                   <td className="py-3 px-4 text-center">
                     <span

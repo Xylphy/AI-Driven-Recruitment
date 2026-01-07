@@ -17,7 +17,7 @@ import {
   Applicants,
   Staff,
 } from "@/types/schema";
-import admin, { auth, db } from "@/lib/firebase/admin";
+import admin, { db } from "@/lib/firebase/admin";
 import { ObjectId } from "mongodb";
 import { Notification } from "@/types/types";
 import { CANDIDATE_STATUSES } from "@/lib/constants";
@@ -38,13 +38,6 @@ const candidateRouter = createTRPCRouter({
       })
     )
     .query(async ({ input, ctx }) => {
-      if (ctx.userJWT!.role === "User") {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You are not authorized to access this resource.",
-        });
-      }
-
       const supabaseClient = await createClientServer(1, true);
 
       let jobListingIds: string[] | undefined = undefined;
@@ -82,8 +75,8 @@ const candidateRouter = createTRPCRouter({
 
       // Fetch applicants with joins
       let baseQuery = supabaseClient
-        .from("job_applicants_with_user")
-        .select("*");
+        .from("applicants")
+        .select("*, job_title: job_listings(title)");
 
       // let queryBuilder = baseQuery.many(filters);
       filters.forEach(({ column, value }) => {
@@ -105,8 +98,7 @@ const candidateRouter = createTRPCRouter({
           baseQuery = baseQuery.in("joblisting_id", jobListingIds);
         }
       }
-      const { data: applicantsWithUsers, error: errorApplicants } =
-        await baseQuery;
+      const { data: applicants, error: errorApplicants } = await baseQuery;
 
       if (errorApplicants) {
         console.error("Error fetching applicants:", errorApplicants);
@@ -131,37 +123,23 @@ const candidateRouter = createTRPCRouter({
       await mongoDb_client.connect();
 
       // Batch fetch Firebase users
-      const applicantsArr = (applicantsWithUsers || []) as Array<
-        Applicants &
-          Pick<
-            Staff,
-            "first_name" | "last_name" | "firebase_uid" | "prefix" | "resume_id"
-          > & { job_title: string }
+      const applicantsArr = (applicants || []) as Array<
+        Applicants & {
+          job_title?: { title: string };
+        }
       >;
 
-      const firebaseUidToApplicant = new Map<
-        string,
-        (typeof applicantsArr)[number]
-      >();
       const userIdToApplicant = new Map<
         string,
         (typeof applicantsArr)[number]
       >();
 
-      const firebaseUids: string[] = [];
       const userIds: string[] = [];
 
       for (const applicant of applicantsArr) {
-        firebaseUidToApplicant.set(applicant.firebase_uid, applicant);
         userIdToApplicant.set(applicant.id, applicant);
-        firebaseUids.push(applicant.firebase_uid);
-        userIds.push(applicant.user_id);
+        userIds.push(applicant.id);
       }
-
-      // Batch fetch Firebase users
-      const firebaseUsersPromise = auth.getUsers(
-        firebaseUids.map((uid) => ({ uid }))
-      );
 
       const candidateMatchPromises = userIds.map(async (userId) => {
         const candidateMatch = await getCandidateMatch(userId);
@@ -169,17 +147,7 @@ const candidateRouter = createTRPCRouter({
       });
       const candidateMatchesPromise = Promise.all(candidateMatchPromises);
 
-      const [firebaseUsersResult, candidateMatches] = await Promise.all([
-        firebaseUsersPromise,
-        candidateMatchesPromise,
-      ]);
-
-      const firebaseUserByUid = new Map<string, { email: string }>();
-      for (const userRecord of firebaseUsersResult.users) {
-        firebaseUserByUid.set(userRecord.uid, {
-          email: userRecord.email || "",
-        });
-      }
+      const candidateMatches = await candidateMatchesPromise;
 
       const candidateMatchByUserId = new Map<string, number>();
       for (const { userId, candidateMatch } of candidateMatches) {
@@ -188,13 +156,10 @@ const candidateRouter = createTRPCRouter({
 
       // Merge all data
       const applicantWithEmail = applicantsArr.map((applicant) => {
-        const firebaseUser = firebaseUserByUid.get(applicant.firebase_uid);
-        const candidateMatch =
-          candidateMatchByUserId.get(applicant.user_id) || 0;
+        const candidateMatch = candidateMatchByUserId.get(applicant.id) || 0;
         return {
           applicantId: applicant.id,
           ...applicant,
-          email: firebaseUser?.email || "",
           candidateMatch,
         };
       });
@@ -205,13 +170,12 @@ const candidateRouter = createTRPCRouter({
         applicants: applicantWithEmail
           .map((applicant) => ({
             id: applicant.id,
-            user_id: applicant.user_id,
+            user_id: applicant.id,
             name: applicant.first_name + " " + applicant.last_name,
-            email: applicant.email,
             predictiveSuccess: applicant.candidateMatch,
             status: applicant.status,
-            jobTitle: applicant.job_title ?? "",
             resumeId: applicant.resume_id,
+            jobTitle: applicant.job_title?.title || "N/A",
           }))
           .sort(
             (applicantA, applicantB) =>
@@ -233,18 +197,11 @@ const candidateRouter = createTRPCRouter({
         candidateId: z.string(),
       })
     )
-    .query(async ({ input, ctx }) => {
-      if (ctx.userJWT!.role === "User") {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You are not authorized to access this resource.",
-        });
-      }
-
+    .query(async ({ input }) => {
       const supabaseClient = await createClientServer(1, true);
 
       const { data: jobApplicant, error: jobApplicantError } =
-        await find<Applicants>(supabaseClient, "job_applicants", [
+        await find<Applicants>(supabaseClient, "applicants", [
           { column: "id", value: input.candidateId },
         ]).single();
 
@@ -261,18 +218,18 @@ const candidateRouter = createTRPCRouter({
       const [parsedResume, score, transcribed, userData] = await Promise.all([
         input.fetchResume &&
           findOne("ai-driven-recruitment", "parsed_resume", {
-            user_id: jobApplicant!.user_id,
+            user_id: jobApplicant!.id,
           }),
         input.fetchScore &&
           findOne("ai-driven-recruitment", "scored_candidates", {
-            _id: ObjectId.createFromHexString(jobApplicant!.score_id),
+            _id: ObjectId.createFromHexString(jobApplicant!.id),
           }),
         input.fetchTranscribed &&
           findOne("ai-driven-recruitment", "transcribed", {
-            user_id: jobApplicant!.user_id,
+            user_id: jobApplicant!.id,
           }),
         find<Staff>(supabaseClient, "users", [
-          { column: "id", value: jobApplicant!.user_id },
+          { column: "id", value: jobApplicant!.id },
         ]).single(),
       ]);
 
@@ -297,18 +254,11 @@ const candidateRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      if (ctx.userJWT!.role === "User") {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You are not authorized to access this resource.",
-        });
-      }
-
       const supabase = await createClientServer(1, true);
 
       const { data: oldData, error: oldDataError } = await find<Applicants>(
         supabase,
-        "job_applicants",
+        "applicants",
         [{ column: "id", value: input.applicantId }]
       ).single();
 
@@ -322,12 +272,12 @@ const candidateRouter = createTRPCRouter({
 
       const { data, error } = await updateTable(
         supabase,
-        "job_applicants",
+        "applicants",
         {
           status: input.newStatus,
         },
         [{ column: "id", value: input.applicantId }],
-        "user_id, joblisting_id"
+        "id, joblisting_id"
       );
 
       if (error) {
@@ -343,8 +293,8 @@ const candidateRouter = createTRPCRouter({
         : (data as unknown as Record<string, unknown>);
 
       const userId =
-        typeof updatedRow?.user_id === "string"
-          ? (updatedRow.user_id as string)
+        typeof updatedRow?.id === "string"
+          ? (updatedRow.id as string)
           : undefined;
       const joblistingId =
         typeof updatedRow?.joblisting_id === "string"
@@ -356,7 +306,7 @@ const candidateRouter = createTRPCRouter({
 
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Updated row missing user_id",
+          message: "Updated row missing id",
         });
       }
       if (!joblistingId) {

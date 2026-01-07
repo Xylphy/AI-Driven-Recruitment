@@ -25,6 +25,7 @@ import {
 } from "react-icons/md";
 import { trpc } from "@/lib/trpc/client";
 import useAuth from "@/hooks/useAuth";
+import { Route } from "next";
 
 export default function AdminLayout({
   children,
@@ -139,12 +140,12 @@ export default function AdminLayout({
                   </Link>
 
                   <Link
-                    href="/admin/users"
+                    href={"/admin/staffs" as Route}
                     className={`flex items-center gap-3 hover:bg-white/20 px-3 py-2 rounded-md transition ${
-                      pathName === "/admin/users" ? "bg-white/30" : ""
+                      pathName === "/admin/staffs" ? "bg-white/30" : ""
                     }`}
                   >
-                    <MdPeople /> Users
+                    <MdPeople /> Staffs
                   </Link>
 
                   <Link

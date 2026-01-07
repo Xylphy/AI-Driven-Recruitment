@@ -311,7 +311,7 @@ const adminRouter = createTRPCRouter({
       }
       const supabase = await createClientServer(1, true);
 
-      let query = supabase.from("users").select("*").neq("role", "SuperAdmin");
+      let query = supabase.from("staff").select("*").neq("role", "SuperAdmin");
 
       // No results when search query is empty or undefined
       if (input.searchQuery && input.searchQuery.trim() !== "") {
