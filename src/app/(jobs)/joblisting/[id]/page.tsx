@@ -2,7 +2,6 @@
 
 import { MdLocationOn, MdAccessTime, MdChevronRight } from "react-icons/md";
 import Image from "next/image";
-import { MdNotifications, MdNotificationsActive } from "react-icons/md";
 import useAuth from "@/hooks/useAuth";
 import { useParams, useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
@@ -35,11 +34,6 @@ export default function Page() {
   const { isAuthenticated } = useAuth({
     routerActivation: false,
   });
-  const jwtDecoded = trpc.auth.decodeJWT.useQuery(undefined, {
-    enabled: isAuthenticated,
-  });
-
-  const role = jwtDecoded.data?.user.role;
   const [states, setStates] = useState<UIState>({
     showDeleteModal: false,
     isDeleting: false,
@@ -52,46 +46,16 @@ export default function Page() {
   const jobDetailsStaff = trpc.staff.getJobDetails.useQuery(
     { jobId },
     {
-      enabled: isAuthenticated && role !== "User" /* Staff roles only */,
+      enabled: isAuthenticated,
     }
   );
 
-  const jobDetails: JobDetail | undefined =
-    role && role !== "User" ? jobDetailsStaff.data : jobDetailsUser.data;
+  const jobDetails: JobDetail | undefined = isAuthenticated
+    ? jobDetailsStaff.data
+    : jobDetailsUser.data;
 
   const applyJobMutation = trpc.joblisting.applyForJob.useMutation();
-  const notifyMutation = trpc.joblisting.notify.useMutation();
   const deleteJobMutation = trpc.joblisting.deleteJoblisting.useMutation();
-
-  const isStaff =
-    role === "Admin" ||
-    role === "SuperAdmin" ||
-    (role !== "User" &&
-      jwtDecoded.data?.user.id === jobDetailsStaff.data?.officer_id &&
-      role);
-
-  const handleNotify = async () => {
-    setStates((prev) => ({ ...prev, isNotifying: true }));
-
-    await notifyMutation.mutateAsync(
-      { jobId, notify: !(jobDetailsUser.data?.notify ?? false) },
-      {
-        onSuccess() {
-          swalSuccess(
-            "Notification Updated",
-            "You will be notified about this job."
-          );
-          jobDetailsUser.refetch();
-        },
-        onError(error) {
-          swalError("Failed to Update Notification", error.message);
-        },
-        onSettled() {
-          setStates((prev) => ({ ...prev, isNotifying: false }));
-        },
-      }
-    );
-  };
 
   const handleApply = async () => {
     setStates((prev) => ({ ...prev, isApplying: true }));
@@ -236,35 +200,6 @@ export default function Page() {
                 {jobDetails!.is_fulltime ? "Full-Time" : "Part-Time"}
               </span>
             </div>
-
-            {isAuthenticated &&
-              role === "User" &&
-              jobDetailsUser.data?.status && (
-                <div className="mt-3">
-                  <button
-                    onClick={handleNotify}
-                    disabled={states.isNotifying}
-                    className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm border transition-colors ${
-                      jobDetailsUser.data?.notify
-                        ? "bg-white/90 text-red-600 border-white/90"
-                        : "bg-transparent text-white border-white/50 hover:bg-white/10"
-                    } disabled:opacity-60`}
-                  >
-                    {jobDetailsUser.data?.notify ? (
-                      <MdNotificationsActive />
-                    ) : (
-                      <MdNotifications />
-                    )}
-                    <span>
-                      {states.isNotifying
-                        ? "..."
-                        : jobDetailsUser.data?.notify
-                        ? "Notified"
-                        : "Notify me"}
-                    </span>
-                  </button>
-                </div>
-              )}
           </div>
         </div>
         <div className="flex flex-col lg:flex-row py-5">
@@ -344,7 +279,7 @@ export default function Page() {
               </p>
             </section>
 
-            {isStaff && (
+            {isAuthenticated && (
               <>
                 <button
                   onClick={() => router.push(`/candidates/${jobId}`)}
@@ -371,29 +306,24 @@ export default function Page() {
                 </button>
               </>
             )}
-            {role === "User" && isAuthenticated && (
-              <button
-                className={`mt-2 w-full font-bold py-2 rounded border border-transparent transition-all duration-300 ease-in-out ${
-                  jobDetailsUser.data?.isApplicant
-                    ? "bg-gray-400 text-gray-600 cursor-not-allowed"
-                    : "bg-red-600 text-white hover:bg-transparent hover:text-red-600 hover:border-red-600"
-                }`}
-                onClick={() => setShowSkillModal(true)}
-                disabled={
-                  !!jobDetailsUser.data?.status ||
-                  states.isApplying ||
-                  jobDetailsUser.data?.isApplicant
-                }
-              >
-                {jobDetailsUser.data?.status
-                  ? jobDetailsUser.data.status
-                  : states.isApplying
-                  ? "Applying..."
-                  : jobDetailsUser.data?.isApplicant
-                  ? "To be reviewed"
-                  : "Apply Job"}
-              </button>
-            )}
+            <button
+              className={`mt-2 w-full font-bold py-2 rounded border border-transparent transition-all duration-300 ease-in-out "bg-red-600 text-white hover:bg-transparent hover:text-red-600 hover:border-red-600"`}
+              onClick={() => setShowSkillModal(true)}
+              disabled={
+                !!jobDetailsUser.data?.status ||
+                states.isApplying ||
+                jobDetailsUser.data?.isApplicant
+              }
+            >
+              {jobDetailsUser.data?.status
+                ? jobDetailsUser.data.status
+                : states.isApplying
+                ? "Applying..."
+                : jobDetailsUser.data?.isApplicant
+                ? "To be reviewed"
+                : "Apply Job"}
+            </button>
+
             {showSkillModal && (
               <div className="fixed inset-0 z-50 flex items-center justify-center">
                 <div
@@ -472,7 +402,7 @@ export default function Page() {
                           setShowSkillModal(false);
                           handleApply();
                         }}
-                        className="px-6 py-2 rounded-lg bg-gradient-to-r from-red-600 to-red-500 text-white font-bold"
+                        className="px-6 py-2 rounded-lg bg-linear-to-r from-red-600 to-red-500 text-white font-bold"
                       >
                         Continue Application
                       </button>

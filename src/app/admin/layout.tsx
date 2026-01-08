@@ -166,13 +166,6 @@ export default function AdminLayout({
                   className="cursor-pointer hover:text-red-300"
                 />
               </div>
-
-              <button
-                onClick={() => router.push("/profile/edit")}
-                className="text-white font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-300"
-              >
-                EDIT PROFILE
-              </button>
             </nav>
           </motion.aside>
         )}
@@ -199,12 +192,6 @@ export default function AdminLayout({
               </Link>
 
               <Bell className="w-6 h-6 text-gray-600 hover:text-red-600 cursor-pointer" />
-
-              <Link href="/profile">
-                <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-red-500 hover:border-black transition-all duration-300 cursor-pointer">
-                  {/* Profile Image */}
-                </div>
-              </Link>
             </div>
           </header>
 

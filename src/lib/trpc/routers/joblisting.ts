@@ -88,13 +88,6 @@ const jobListingRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      if (ctx.userJWT!.role === "User") {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You are not authorized to access this resource.",
-        });
-      }
-
       if (
         input.officer_id !== ctx.userJWT!.id &&
         ctx.userJWT!.role !== "Admin"
@@ -238,7 +231,6 @@ const jobListingRouter = createTRPCRouter({
         status: applicantCheck?.data?.status || null,
         isApplicant: !!applicantCheck?.data,
         tags: (tags.data || []).map((item) => item.tags.name),
-        notify: applicantCheck?.data?.notify || false,
         users: undefined,
       };
     }),
@@ -249,13 +241,6 @@ const jobListingRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      if (ctx.userJWT!.role !== "User") {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Admins cannot apply for jobs",
-        });
-      }
-
       const supabaseClient = await createClientServer(1, true);
 
       const { data: existingApplicant, error: existingError } =
@@ -348,12 +333,6 @@ const jobListingRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      if (ctx.userJWT!.role === "User") {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You are not authorized to access this resource.",
-        });
-      }
       const supabase = await createClientServer(1, true);
       const { data: oldJoblisting, error: oldJoblistingError } =
         await find<JobListing>(supabase, "job_listings", [
@@ -686,73 +665,6 @@ const jobListingRouter = createTRPCRouter({
           location: item.location,
         })),
       };
-    }),
-  notify: rateLimitedProcedure
-    .input(
-      z.object({
-        jobId: z.uuid(),
-        notify: z.boolean(),
-      })
-    )
-    .mutation(async ({ input, ctx }) => {
-      if (ctx.userJWT!.role !== "User") {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Only users can set notifications",
-        });
-      }
-
-      const supabase = await createClientServer(1, true);
-
-      await updateTable(
-        supabase,
-        "job_applicants",
-        {
-          notify: input.notify,
-        },
-        [
-          { column: "user_id", value: ctx.userJWT!.id },
-          { column: "joblisting_id", value: input.jobId },
-        ]
-      );
-
-      const changes: Record<string, Changes> = {
-        notify: {
-          before: (!input.notify).toString(),
-          after: input.notify.toString(),
-        },
-      };
-
-      const details = input.notify
-        ? `User with ID ${
-            ctx.userJWT!.id
-          } subscribed to job alerts for job listing with ID ${input.jobId}.`
-        : `User with ID ${
-            ctx.userJWT!.id
-          } unsubscribed from job alerts for job listing with ID ${
-            input.jobId
-          }.`;
-
-      const { error: insertLogError } = await insertTable(
-        supabase,
-        "audit_logs",
-        {
-          actor_type: ctx.userJWT!.role,
-          actor_id: ctx.userJWT!.id,
-          action: "update",
-          event_type: "Changed job alerts",
-          entity_type: "Job Applicant",
-          entity_id: input.jobId,
-          changes,
-          details,
-        }
-      );
-
-      if (insertLogError) {
-        console.error("Error inserting audit log:", insertLogError);
-      }
-
-      return { success: true, message: "You will be notified for updates" };
     }),
 });
 

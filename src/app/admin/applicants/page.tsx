@@ -7,7 +7,7 @@ import { trpc } from "@/lib/trpc/client";
 export default function ApplicantsPage() {
   const router = useRouter();
   const [searchInput, setSearchInput] = useState("");
-  const applicantsQuery = trpc.candidate.getCandidateFromJob.useQuery({
+  const applicantsQuery = trpc.candidate.getCandidatesFromJob.useQuery({
     searchQuery: searchInput,
   });
 

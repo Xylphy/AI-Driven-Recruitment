@@ -4,7 +4,7 @@ import useAuth from "@/hooks/useAuth";
 import { formatDate } from "@/lib/library";
 import { trpc } from "@/lib/trpc/client";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Select from "react-select";
 import { Pencil, Trash2 } from "lucide-react";
 import { AdminFeedback } from "@/types/schema";
@@ -36,19 +36,14 @@ export default function ComparePage() {
   const [showAdminFeedbackFields, setShowAdminFeedbackFields] = useState(false);
 
   const { isAuthenticated } = useAuth();
-  const jwtQuery = trpc.auth.decodeJWT.useQuery(undefined, {
-    enabled: isAuthenticated,
-  });
 
-  useEffect(() => {
-    if (jwtQuery.isFetched && !jwtQuery.data?.user.role) {
-      alert("You are not authorized to access this page.");
-      router.push("/profile");
-    }
-  }, [jwtQuery.isFetched, jwtQuery.data?.user.role, router]);
+  if (!isAuthenticated) {
+    alert("You are not authorized to access this page.");
+    router.push("/login");
+  }
 
   const fetchJobsQuery = trpc.admin.fetchAllJobs.useQuery(undefined, {
-    enabled: jwtQuery.data?.user.role !== "User",
+    enabled: isAuthenticated,
   });
 
   const AIQuery = trpc.candidate.fetchAICompare.useQuery(
@@ -62,12 +57,12 @@ export default function ComparePage() {
     }
   );
 
-  const candidatesQuery = trpc.candidate.getCandidateFromJob.useQuery(
+  const candidatesQuery = trpc.candidate.getCandidatesFromJob.useQuery(
     {
       jobId: selectedJobId,
     },
     {
-      enabled: !!selectedJobId && jwtQuery.data?.user.role !== "User",
+      enabled: !!selectedJobId && isAuthenticated,
     }
   );
 
@@ -118,7 +113,9 @@ export default function ComparePage() {
     });
 
   const handleSubmitFeedback = () => {
-    if (!jwtQuery.data?.user) return;
+    if (!isAuthenticated) {
+      return;
+    }
 
     if (adminFeedbackA.trim()) {
       postAdminFeedbackMutation.mutate({
@@ -140,6 +137,12 @@ export default function ComparePage() {
   };
 
   const handleDeleteFeedback = (feedbackId: string) => {
+    if (!isAuthenticated) {
+      alert("You are not authorized to perform this action.");
+      router.push("/login");
+      return;
+    }
+
     if (confirm("Are you sure you want to delete this feedback?")) {
       deleteAdminFeedbackMutation.mutate(
         { feedbackId },
@@ -179,9 +182,11 @@ export default function ComparePage() {
           </h2>
 
           <div>
-            <label className="block text-sm font-medium text-gray-600 mb-2">
-              Select Job
-            </label>
+            {!isAuthenticated && (
+              <label className="block text-sm font-medium text-gray-600 mb-2">
+                Select Job
+              </label>
+            )}
             {fetchJobsQuery.isLoading || fetchJobsQuery.isFetching ? (
               <div className="w-full p-3 border rounded-xl bg-white/50 flex items-center gap-3">
                 <div className="h-8 w-8 rounded-full bg-gray-200 animate-pulse" />

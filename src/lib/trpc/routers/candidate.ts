@@ -30,7 +30,7 @@ type AICompareRes = {
 };
 
 const candidateRouter = createTRPCRouter({
-  getCandidateFromJob: authorizedProcedure
+  getCandidatesFromJob: authorizedProcedure
     .input(
       z.object({
         jobId: z.uuid().optional(),
@@ -176,6 +176,7 @@ const candidateRouter = createTRPCRouter({
             status: applicant.status,
             resumeId: applicant.resume_id,
             jobTitle: applicant.job_title?.title || "N/A",
+            email: applicant.email || "N/A",
           }))
           .sort(
             (applicantA, applicantB) =>

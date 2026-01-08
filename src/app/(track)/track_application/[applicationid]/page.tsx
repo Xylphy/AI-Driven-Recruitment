@@ -18,7 +18,7 @@ const TRACKABLE_STATUSES = CANDIDATE_STATUSES.filter(
   (status) => status !== "Accepted Job Offer" && status !== "Close Status"
 );
 
-const STATUS_ICONS: Record<string, any> = {
+const STATUS_ICONS: Record<string, React.ElementType> = {
   "Paper Screening": FileText,
   Exam: ClipboardCheck,
   "HR Interview": Users,
@@ -59,7 +59,7 @@ export default function ApplicationTrackingPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-gray-100 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-linear-to-br from-red-50 via-white to-gray-100 flex items-center justify-center p-6">
       <div className="w-full max-w-5xl backdrop-blur-xl bg-white/70 border border-white/30 shadow-xl rounded-2xl p-8 space-y-8">
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold text-red-600">

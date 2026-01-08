@@ -125,7 +125,7 @@ export default function Navbar() {
                   )}
                 </div>
               )}
-              <Link href={role ? profileLink[role] : "/profile"}>
+              <Link href={role ? profileLink[role] : "/login"}>
                 <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-red-500 hover:border-black transition-all duration-300">
                   <Image
                     src={profileImageUrl}

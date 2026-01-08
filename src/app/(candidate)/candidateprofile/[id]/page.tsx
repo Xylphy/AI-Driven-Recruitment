@@ -81,7 +81,7 @@ export default function Page() {
     enabled: isAuthenticated,
   });
 
-  const { role, id: userId } = userJWT.data?.user || {};
+  const { id: userId } = userJWT.data?.user || {};
 
   const candidateProfileQuery = trpc.candidate.fetchCandidateProfile.useQuery(
     {
@@ -90,7 +90,7 @@ export default function Page() {
       fetchTranscribed: true,
       fetchResume: true,
     },
-    { enabled: isAuthenticated && role !== "User" }
+    { enabled: isAuthenticated }
   );
 
   const updateCandidateStatusMutation =
@@ -100,7 +100,7 @@ export default function Page() {
   const getHRReportsQuery = trpc.staff.fetchHRReports.useQuery(
     { applicantId: candidateId },
     {
-      enabled: isAuthenticated && role !== "User",
+      enabled: isAuthenticated,
     }
   );
   const deleteHRReportMutation = trpc.hrOfficer.deleteHRReport.useMutation();
@@ -131,14 +131,6 @@ export default function Page() {
       setEditSummary(String(editingReport.summary ?? ""));
     });
   }, [editingReport]);
-
-  useEffect(() => {
-    if (!isAuthenticated) return;
-    if (role === "User") {
-      alert("You are not authorized to view this page.");
-      router.back();
-    }
-  }, [role, isAuthenticated, router]);
 
   useEffect(() => {
     startTransition(() =>
@@ -230,6 +222,40 @@ export default function Page() {
   const handleCancelEdit = () => {
     setEditingIndex(null);
   };
+
+  if (!isAuthenticated) {
+    return (
+      <main className="bg-linear-to-br from-red-50 via-white to-gray-100 min-h-screen flex items-center justify-center">
+        <div className="bg-white/80 rounded-2xl shadow-xl px-8 py-12 flex flex-col items-center max-w-md w-full border border-red-100">
+          <svg
+            className="w-16 h-16 text-red-400 mb-6"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={1.5}
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 11v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          <h1 className="text-2xl font-bold text-gray-800 mb-2">
+            Authentication Required
+          </h1>
+          <p className="text-gray-600 mb-6 text-center">
+            You must be logged in to view this candidate profile.
+          </p>
+          <button
+            onClick={() => (window.location.href = "/login")}
+            className="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-2 rounded-lg shadow transition"
+          >
+            Go to Login
+          </button>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="bg-gray-50 min-h-screen p-6">

@@ -11,10 +11,6 @@ const limiter = rateLimit({
 // Paths that do not require an access token
 const publicPathToken = [
   {
-    path: "/api/users",
-    acceptedMethods: ["POST"],
-  },
-  {
     path: "/api/auth/jwt",
     acceptedMethods: ["GET"],
   },

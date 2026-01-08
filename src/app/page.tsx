@@ -8,7 +8,6 @@ export default function Careers() {
   const router = useRouter();
   const jobsQuery = trpc.joblisting.fetchJobs.useQuery({});
   const [jobTitle, setJobTitle] = useState("");
-  const [location, setLocation] = useState("");
   const filteredJobs = jobsQuery.data?.jobs.filter((job) => {
     const matchesTitle = job.title
       .toLowerCase()

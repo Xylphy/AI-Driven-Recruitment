@@ -4,6 +4,8 @@ import { USER_ROLES } from "@/lib/constants";
 import { trpc } from "@/lib/trpc/client";
 import { useState } from "react";
 
+type staffRole = "Admin" | "HR Officer";
+
 export default function UsersPage() {
   const [searchInput, setSearchInput] = useState("");
   const usersQuery = trpc.admin.users.useQuery({
@@ -11,11 +13,7 @@ export default function UsersPage() {
   });
   const changeRoleMutation = trpc.admin.changeUserRole.useMutation();
 
-  const handleRoleChange = async (
-    userId: string,
-    // newRole: "Admin" | "User" | "HR Officer"
-    newRole: "Admin" | "User"
-  ) =>
+  const handleRoleChange = async (userId: string, newRole: staffRole) =>
     await changeRoleMutation.mutateAsync(
       { userId, newRole },
       {
@@ -67,8 +65,6 @@ export default function UsersPage() {
                       className={`px-3 py-1 text-sm font-semibold rounded-full ${
                         user.role === "Admin"
                           ? "bg-green-100 text-green-700"
-                          : user.role === "User"
-                          ? "bg-blue-100 text-blue-700"
                           : "bg-gray-100 text-gray-700"
                       }`}
                     >
@@ -79,11 +75,7 @@ export default function UsersPage() {
                     <select
                       value={user.role}
                       onChange={(e) =>
-                        handleRoleChange(
-                          user.id,
-                          // e.target.value as "Admin" | "User" | "HR Officer"
-                          e.target.value as "Admin" | "User"
-                        )
+                        handleRoleChange(user.id, e.target.value as staffRole)
                       }
                       className="border rounded px-2 py-1 text-sm focus:ring-1 focus:ring-red-500 focus:outline-none"
                     >

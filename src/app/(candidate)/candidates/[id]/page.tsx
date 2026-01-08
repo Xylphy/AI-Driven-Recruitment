@@ -31,35 +31,20 @@ export default function Page() {
     isFullTime: true,
     createdAt: "",
   });
-  const userJWT = trpc.auth.decodeJWT.useQuery(undefined, {
-    enabled: isAuthenticated,
-  });
   const joblistingDetails = trpc.joblisting.getJobDetails.useQuery(
     { jobId },
     {
       enabled: isAuthenticated,
     }
   );
-  const candidatesData = trpc.candidate.getCandidateFromJob.useQuery(
+  const candidatesData = trpc.candidate.getCandidatesFromJob.useQuery(
     { jobId },
     {
-      enabled: isAuthenticated && !!userJWT.data?.user.role,
+      enabled: isAuthenticated,
     }
   );
   const deleteJobMutation = trpc.joblisting.deleteJoblisting.useMutation();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-
-  // Admin only
-  useEffect(() => {
-    if (userJWT.isLoading || !userJWT.isEnabled) {
-      return;
-    }
-
-    if (!userJWT.data?.user.role) {
-      alert("You are not authorized to view this page.");
-      router.push("/profile");
-    }
-  }, [userJWT.data]);
 
   // Propagate job details
   useEffect(() => {
@@ -91,7 +76,7 @@ export default function Page() {
       {
         onSuccess() {
           alert("Job deleted successfully");
-          router.push("/profile");
+          router.push("/admin/jobs");
         },
         onError(error) {
           alert("Error deleting job: " + error.message);

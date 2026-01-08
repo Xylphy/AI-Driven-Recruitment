@@ -4,13 +4,6 @@ import { CANDIDATE_STATUSES, USER_ROLES } from "@/lib/constants";
 // -------------------------------- Database Schema -------------------------------- //
 // For Database Schema, we use snake_case for field names
 
-interface DateRange {
-  start_month: string;
-  start_year: number;
-  end_month: string | null;
-  end_year: number | null;
-}
-
 export interface IdentifiableItem<T = string> {
   id: T;
 }
@@ -24,6 +17,7 @@ export interface Staff extends IdentifiableItem {
 
 export interface Applicants extends IdentifiableItem {
   joblisting_id: string;
+  email?: string;
   first_name: string;
   last_name: string;
   resume_id: string;

@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useEffect, useState } from "react";
+import { startTransition, useEffect, useMemo, useState } from "react";
 import { JobListing, Tags } from "@/types/types";
 import ListInputSection from "@/components/joblisting/Qualifications";
 import useAuth from "@/hooks/useAuth";
@@ -18,7 +18,7 @@ export default function Page() {
   const router = useRouter();
   const jobId = useParams().id as string;
   const [isSubmitting] = useState(false);
-  const { userInfo, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
   const [HROfficer, setHROfficer] = useState<HROfficer | null>(null);
   const [hrSearch, setHrSearch] = useState("");
@@ -26,18 +26,22 @@ export default function Page() {
   const userJWT = trpc.auth.decodeJWT.useQuery(undefined, {
     enabled: isAuthenticated,
   });
+
+  const { role, id: userId } = userJWT.data?.user || {};
+
   const hrOfficersQuery = trpc.admin.fetchHrOfficers.useQuery(
     {
       query: hrSearch,
       currentHRId: HROfficer?.id || undefined,
     },
     {
-      enabled:
-        userJWT.data?.user.role === "Admin" ||
-        userJWT.data?.user.role === "SuperAdmin",
+      enabled: role === "Admin" || role === "SuperAdmin",
     }
   );
-  const filteredHROfficers = hrOfficersQuery.data?.hrOfficers || [];
+  const filteredHROfficers = useMemo(
+    () => hrOfficersQuery.data?.hrOfficers || [],
+    [hrOfficersQuery.data?.hrOfficers]
+  );
 
   const [jobListing, setJobListing] = useState<
     Omit<JobListing, "created_at"> & {
@@ -56,17 +60,17 @@ export default function Page() {
   const joblistingDetails = trpc.joblisting.getJobDetails.useQuery(
     { jobId },
     {
-      enabled: !!userInfo.data,
+      enabled: isAuthenticated,
     }
   );
   const updateJoblisting = trpc.joblisting.updateJoblisting.useMutation();
 
   useEffect(() => {
-    if (userJWT.data?.user.role === "User") {
-      alert("You are not authorized to edit a job listing");
-      router.push("/profile");
+    if (!isAuthenticated) {
+      alert("You must be logged in to access this page");
+      router.push("/login");
     }
-  }, [userJWT.data, router]);
+  }, [isAuthenticated, router]);
 
   useEffect(() => {
     if (joblistingDetails.data?.officer_id) {
@@ -84,7 +88,7 @@ export default function Page() {
         );
       }
     }
-  }, [joblistingDetails.data?.officer_id]);
+  }, [joblistingDetails.data?.officer_id, filteredHROfficers]);
 
   useEffect(() => {
     if (joblistingDetails.data) {
@@ -156,9 +160,9 @@ export default function Page() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!userJWT.data?.user.role) {
-      alert("You are not authorized to create a job listing");
-      router.push("/profile");
+    if (!isAuthenticated || joblistingDetails.data?.created_by !== userId) {
+      alert("You are not authorized to edit this job listing");
+      router.push("/login");
     }
 
     await updateJoblisting.mutateAsync(
@@ -183,6 +187,13 @@ export default function Page() {
       }
     );
   };
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      alert("You must be logged in to access this page");
+      router.push("/login");
+    }
+  }, [isAuthenticated, router]);
 
   if (joblistingDetails.isLoading) {
     return (
@@ -297,8 +308,7 @@ export default function Page() {
             ))}
           </select>
 
-          {(userJWT.data?.user.role === "Admin" ||
-            userJWT.data?.user.role === "SuperAdmin") && (
+          {(role === "Admin" || role === "SuperAdmin") && (
             <>
               <label
                 htmlFor="hr_officer"

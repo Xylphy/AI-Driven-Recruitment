@@ -105,15 +105,6 @@ export default function LoginPage() {
               {isAuthLoading ? "Signing in..." : "Sign in"}
             </Button>
           </form>
-
-          <p className="text-l text-gray-500 mb-2">
-            Don&apos;t have an account yet?{" "}
-            <span className="text-red-600">
-              <Link href="/signup" className="text-red-500 hover:underline">
-                Signup Here!
-              </Link>
-            </span>
-          </p>
         </div>
 
         <div

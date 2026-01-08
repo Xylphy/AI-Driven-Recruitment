@@ -24,6 +24,7 @@ export default function JobListingPage() {
   const userJWT = trpc.auth.decodeJWT.useQuery(undefined, {
     enabled: isAuthenticated,
   });
+  const { role } = userJWT.data?.user || {};
   const createJoblisting = trpc.joblisting.createJoblisting.useMutation();
   const [hrSearch, setHrSearch] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
@@ -80,9 +81,9 @@ export default function JobListingPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!userJWT.data?.user.role) {
+    if (role !== "Admin" && role !== "SuperAdmin") {
       alert("You are not authorized to create a job listing");
-      router.push("/profile");
+      router.push("/login");
     }
 
     await createJoblisting.mutateAsync(
