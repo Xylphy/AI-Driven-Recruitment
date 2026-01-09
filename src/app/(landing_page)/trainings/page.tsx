@@ -1,9 +1,3 @@
-
-
-export default function Trainings(){
-    return (
-        <div>
-            
-        </div>
-    )
+export default function Trainings() {
+	return <div></div>;
 }
