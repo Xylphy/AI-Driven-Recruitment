@@ -1,11 +1,10 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useState } from "react";
 import { trpc } from "@/lib/trpc/client";
 
 export default function Careers() {
-	const router = useRouter();
 	const jobsQuery = trpc.joblisting.fetchJobs.useQuery({});
 	const [jobTitle, setJobTitle] = useState("");
 	const filteredJobs = jobsQuery.data?.jobs.filter((job) => {
@@ -39,9 +38,9 @@ export default function Careers() {
 
 					{/* Job list skeleton */}
 					<div className="md:col-span-2 space-y-4 overflow-hidden max-h-125 pr-2">
-						{Array.from({ length: 6 }).map((_, index) => (
+						{Array.from({ length: 6 }).map(() => (
 							<div
-								key={index}
+								key={crypto.randomUUID()}
 								className="flex items-center justify-between p-4 border border-gray-200 rounded-md bg-white"
 							>
 								<div className="flex-1 space-y-3">
@@ -61,9 +60,9 @@ export default function Careers() {
 				<section className="bg-gray-50 py-10">
 					<div className="max-w-6xl mx-auto px-6">
 						<div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-							{Array.from({ length: 5 }).map((_, i) => (
+							{Array.from({ length: 5 }).map(() => (
 								<div
-									key={i}
+									key={crypto.randomUUID()}
 									className="bg-white rounded-md shadow p-4 text-center"
 								>
 									<div className="h-24 bg-gray-200 rounded mb-2 animate-pulse"></div>
@@ -112,11 +111,12 @@ export default function Careers() {
 				</div>
 
 				<div className="md:col-span-2 space-y-4 overflow-y-auto max-h-125 pr-2">
-					{filteredJobs?.map((job, index) => (
-						<div
-							key={index}
-							className="flex items-center justify-between p-4 border border-gray-200 rounded-md hover:shadow"
-							onClick={() => router.push(`/joblisting/${job.id}`)}
+					{filteredJobs?.map((job) => (
+						<Link
+							key={job.id}
+							href={`/joblisting/${job.id}`}
+							className="block items-center justify-between p-4 border border-gray-200 rounded-md hover:shadow focus:outline-none focus:ring-2 focus:ring-red-500"
+							aria-label={`View job listing: ${job.title}`}
 						>
 							<div>
 								<h3 className="text-lg font-bold">{job.title}</h3>
@@ -126,7 +126,7 @@ export default function Careers() {
 									<span>{job.is_fulltime ? "Full-time" : "Part-time"}</span>
 								</div>
 							</div>
-						</div>
+						</Link>
 					))}
 				</div>
 			</section>
@@ -139,9 +139,9 @@ export default function Careers() {
 					<div className="grid grid-cols-2 md:grid-cols-5 gap-4">
 						{Array(5)
 							.fill(0)
-							.map((_, index) => (
+							.map(() => (
 								<div
-									key={index}
+									key={crypto.randomUUID()}
 									className="bg-white rounded-md shadow p-4 text-center"
 								>
 									<div className="h-24 bg-gray-200 rounded mb-2"></div>
@@ -161,9 +161,9 @@ export default function Careers() {
 					<div className="grid grid-cols-2 md:grid-cols-5 gap-4">
 						{Array(5)
 							.fill(0)
-							.map((_, index) => (
+							.map(() => (
 								<div
-									key={index}
+									key={crypto.randomUUID()}
 									className="bg-white rounded-md shadow p-4 text-center"
 								>
 									<div className="h-24 bg-gray-200 rounded mb-2"></div>

@@ -43,12 +43,12 @@ const candidateRouter = createTRPCRouter({
 			let jobListingIds: string[] | undefined;
 
 			// If HR Officer, limit to their job listings
-			if (ctx.userJWT!.role === "HR Officer") {
+			if (ctx.userJWT?.role === "HR Officer") {
 				// Fetch job listings for this officer
 				const { data: listings, error: listingsError } = await supabaseClient
 					.from("job_listings")
 					.select("id")
-					.eq("officer_id", ctx.userJWT!.id);
+					.eq("officer_id", ctx.userJWT?.id);
 
 				if (listingsError) {
 					throw new TRPCError({
@@ -171,7 +171,7 @@ const candidateRouter = createTRPCRouter({
 					.map((applicant) => ({
 						id: applicant.id,
 						user_id: applicant.id,
-						name: applicant.first_name + " " + applicant.last_name,
+						name: `${applicant.first_name} ${applicant.last_name}`,
 						predictiveSuccess: applicant.candidateMatch,
 						status: applicant.status,
 						resumeId: applicant.resume_id,
@@ -219,18 +219,18 @@ const candidateRouter = createTRPCRouter({
 			const [parsedResume, score, transcribed, userData] = await Promise.all([
 				input.fetchResume &&
 					findOne("ai-driven-recruitment", "parsed_resume", {
-						user_id: jobApplicant!.id,
+						user_id: jobApplicant?.id,
 					}),
 				input.fetchScore &&
 					findOne("ai-driven-recruitment", "scored_candidates", {
-						_id: ObjectId.createFromHexString(jobApplicant!.id),
+						_id: ObjectId.createFromHexString(jobApplicant?.id || ""),
 					}),
 				input.fetchTranscribed &&
 					findOne("ai-driven-recruitment", "transcribed", {
-						user_id: jobApplicant!.id,
+						user_id: jobApplicant?.id,
 					}),
 				find<Staff>(supabaseClient, "users", [
-					{ column: "id", value: jobApplicant!.id },
+					{ column: "id", value: jobApplicant?.id || "" },
 				]).single(),
 			]);
 
@@ -340,9 +340,9 @@ const candidateRouter = createTRPCRouter({
 
 			const changes: Record<string, Changes> = {};
 
-			if (oldData!.status !== input.newStatus) {
-				changes["status"] = {
-					before: oldData!.status || "null",
+			if (oldData?.status !== input.newStatus) {
+				changes.status = {
+					before: oldData?.status || "null",
 					after: input.newStatus || "null",
 				};
 			}
@@ -353,8 +353,8 @@ const candidateRouter = createTRPCRouter({
 				supabase,
 				"audit_logs",
 				{
-					actor_type: ctx.userJWT!.role,
-					actor_id: ctx.userJWT!.id,
+					actor_type: ctx.userJWT?.role,
+					actor_id: ctx.userJWT?.id,
 					action: "update",
 					event_type: "Changed candidate status",
 					entity_type: "Job Applicant",
@@ -472,7 +472,7 @@ const candidateRouter = createTRPCRouter({
 				applicant_id: input.candidateId,
 				feedback: input.feedback,
 				created_at: new Date().toISOString(),
-				admin_id: ctx.userJWT!.id,
+				admin_id: ctx.userJWT?.id,
 			} as Omit<AdminFeedback, "id">);
 
 			if (error) {
@@ -487,8 +487,8 @@ const candidateRouter = createTRPCRouter({
 				supabase,
 				"audit_logs",
 				{
-					actor_type: ctx.userJWT!.role,
-					actor_id: ctx.userJWT!.id,
+					actor_type: ctx.userJWT?.role,
+					actor_id: ctx.userJWT?.id,
 					action: "create",
 					event_type: "Admin feedback created",
 					entity_type: "Admin Feedback",
@@ -589,9 +589,9 @@ const candidateRouter = createTRPCRouter({
 
 			const changes: Record<string, Changes> = {};
 
-			if (oldData!.feedback !== input.newFeedback) {
-				changes["feedback"] = {
-					before: oldData!.feedback,
+			if (oldData?.feedback !== input.newFeedback) {
+				changes.feedback = {
+					before: oldData?.feedback || "null",
 					after: input.newFeedback,
 				};
 			}
@@ -600,8 +600,8 @@ const candidateRouter = createTRPCRouter({
 				supabase,
 				"audit_logs",
 				{
-					actor_type: ctx.userJWT!.role,
-					actor_id: ctx.userJWT!.id,
+					actor_type: ctx.userJWT?.role,
+					actor_id: ctx.userJWT?.id,
 					action: "update",
 					event_type: "Admin feedback updated",
 					entity_type: "Admin Feedback",
@@ -645,8 +645,8 @@ const candidateRouter = createTRPCRouter({
 				supabase,
 				"audit_logs",
 				{
-					actor_type: ctx.userJWT!.role,
-					actor_id: ctx.userJWT!.id,
+					actor_type: ctx.userJWT?.role,
+					actor_id: ctx.userJWT?.id,
 					action: "delete",
 					event_type: "Admin feedback deleted",
 					entity_type: "Admin Feedback",

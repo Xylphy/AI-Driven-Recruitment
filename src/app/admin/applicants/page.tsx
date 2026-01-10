@@ -43,6 +43,7 @@ export default function ApplicantsPage() {
 							<button
 								onClick={() => router.refresh()}
 								className="px-3 py-1 text-sm bg-[#E30022] text-white rounded hover:bg-red-700 transition"
+								type="button"
 							>
 								Retry
 							</button>
@@ -82,25 +83,23 @@ export default function ApplicantsPage() {
 					</thead>
 					<tbody className="text-gray-700">
 						{applicantsQuery.isLoading ? (
-							<>
-								{[0, 1, 2].map((i) => (
-									<tr key={i}>
-										<td className="p-4">
-											<div className="h-4 bg-gray-200 rounded w-2/3 animate-pulse" />
-										</td>
-										<td className="p-4">
-											<div className="h-4 bg-gray-200 rounded w-1/4 animate-pulse" />
-										</td>
-										<td className="p-4">
-											<div className="h-6 bg-gray-200 rounded w-16 animate-pulse" />
-										</td>
-									</tr>
-								))}
-							</>
+							[0, 1, 2].map((i) => (
+								<tr key={i}>
+									<td className="p-4">
+										<div className="h-4 bg-gray-200 rounded w-2/3 animate-pulse" />
+									</td>
+									<td className="p-4">
+										<div className="h-4 bg-gray-200 rounded w-1/4 animate-pulse" />
+									</td>
+									<td className="p-4">
+										<div className="h-6 bg-gray-200 rounded w-16 animate-pulse" />
+									</td>
+								</tr>
+							))
 						) : filteredApplicants.length > 0 ? (
-							filteredApplicants.map((candidate, index) => (
+							filteredApplicants.map((candidate) => (
 								<tr
-									key={index}
+									key={crypto.randomUUID()}
 									className="border-t hover:bg-gray-50 transition"
 								>
 									<td className="py-3 px-4 font-medium">{candidate.name}</td>
@@ -141,11 +140,15 @@ export default function ApplicantsPage() {
 												onClick={() =>
 													router.push(`/candidateprofile/${candidate.id}`)
 												}
+												type="button"
 											>
 												View
 											</button>
 
-											<button className="px-3 py-1 text-sm border border-[#E30022] text-[#E30022] rounded hover:bg-red-50 transition">
+											<button
+												className="px-3 py-1 text-sm border border-[#E30022] text-[#E30022] rounded hover:bg-red-50 transition"
+												type="button"
+											>
 												Compare
 											</button>
 

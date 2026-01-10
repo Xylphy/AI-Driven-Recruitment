@@ -3,7 +3,7 @@ import Image from "next/image";
 export default function AboutUs() {
 	return (
 		<div className="text-gray-800">
-			<section className="relative w-full h-[400px]">
+			<section className="relative w-full h-100">
 				<Image
 					src="/group-photo.png"
 					alt="Alliance Team Banner"
@@ -54,9 +54,9 @@ export default function AboutUs() {
 							title: "Growth",
 							text: "We help individuals and companies grow with purpose and confidence.",
 						},
-					].map((val, idx) => (
+					].map((val) => (
 						<div
-							key={idx}
+							key={crypto.randomUUID()}
 							className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-all duration-300 text-center"
 						>
 							<div className="text-4xl mb-4">{val.icon}</div>

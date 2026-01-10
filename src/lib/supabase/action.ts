@@ -101,7 +101,9 @@ export function updateTable(
 	const query = supabase.from(table).update(data);
 
 	if (queryFilter) {
-		queryFilter.forEach(({ column, value }) => query.eq(column, value));
+		queryFilter.forEach(({ column, value }) => {
+			query.eq(column, value);
+		});
 	}
 
 	if (

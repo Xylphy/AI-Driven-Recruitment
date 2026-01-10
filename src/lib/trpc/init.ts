@@ -100,7 +100,7 @@ export const authorizedProcedure = rateLimitedProcedure.use(
 );
 
 export const adminProcedure = authorizedProcedure.use(async ({ ctx, next }) => {
-	if (ctx.userJWT!.role !== "Admin" && ctx.userJWT!.role !== "SuperAdmin") {
+	if (ctx.userJWT?.role !== "Admin" && ctx.userJWT?.role !== "SuperAdmin") {
 		throw new TRPCError({
 			code: "FORBIDDEN",
 			message: "Access restricted to admin users",
@@ -112,7 +112,7 @@ export const adminProcedure = authorizedProcedure.use(async ({ ctx, next }) => {
 
 export const hrOfficerProcedure = authorizedProcedure.use(
 	async ({ ctx, next }) => {
-		if (ctx.userJWT!.role !== "HR Officer") {
+		if (ctx.userJWT?.role !== "HR Officer") {
 			throw new TRPCError({
 				code: "FORBIDDEN",
 				message: "Access restricted to HR Officers",

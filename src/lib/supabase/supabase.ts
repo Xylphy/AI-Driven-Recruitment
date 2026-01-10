@@ -2,14 +2,14 @@ import { createBrowserClient, createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
 const database1 = {
-	url: process.env.NEXT_PUBLIC_SUPABASE_URL!,
-	key: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+	url: process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+	key: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "",
 	serviceKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
 };
 
 const database2 = {
-	url: process.env.NEXT_PUBLIC_SUPABASE_URL_2!,
-	key: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_2!,
+	url: process.env.NEXT_PUBLIC_SUPABASE_URL_2 || "",
+	key: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_2 || "",
 	serviceKey: process.env.SUPABASE_SERVICE_ROLE_KEY_2, // used to bypass RLS (administrative tasks)
 };
 
@@ -52,9 +52,9 @@ export async function createClientServer(
 			},
 			setAll(cookiesToSet) {
 				try {
-					cookiesToSet.forEach(({ name, value, options }) =>
-						cookieStore.set(name, value, options),
-					);
+					cookiesToSet.forEach(({ name, value, options }) => {
+						cookieStore.set(name, value, options);
+					});
 				} catch {
 					// The `setAll` method was called from a Server Component.
 					//

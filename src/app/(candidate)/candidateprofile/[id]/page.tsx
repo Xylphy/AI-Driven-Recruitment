@@ -234,6 +234,7 @@ export default function Page() {
 						strokeWidth={1.5}
 						viewBox="0 0 24 24"
 					>
+						<title>Icon representing authentication required</title>
 						<path
 							strokeLinecap="round"
 							strokeLinejoin="round"
@@ -247,8 +248,9 @@ export default function Page() {
 						You must be logged in to view this candidate profile.
 					</p>
 					<button
-						onClick={() => (window.location.href = "/login")}
+						onClick={() => router.push("/login")}
 						className="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-2 rounded-lg shadow transition"
+						type="button"
 					>
 						Go to Login
 					</button>
@@ -263,6 +265,7 @@ export default function Page() {
 				<button
 					onClick={() => router.back()}
 					className="flex items-center gap-2 text-gray-600 hover:text-red-600 cursor-pointer"
+					type="button"
 				>
 					<MdArrowBack className="text-xl" />
 					<span>Back to Candidate List</span>
@@ -312,22 +315,24 @@ export default function Page() {
 				<div className="bg-white rounded-lg shadow-md p-6">
 					<div className="flex justify-center gap-4 mb-6">
 						<button
-							onClick={() => setActiveTab("evaluation")}
 							className={`px-4 py-2 rounded font-semibold transition ${
 								activeTab === "evaluation"
 									? "bg-red-600 text-white"
 									: "bg-gray-200 text-gray-700 hover:bg-gray-300"
 							}`}
+							onClick={() => setActiveTab("evaluation")}
+							type="button"
 						>
 							Candidate Evaluation
 						</button>
 						<button
-							onClick={() => setActiveTab("resume")}
 							className={`px-4 py-2 rounded font-semibold transition ${
 								activeTab === "resume"
 									? "bg-red-600 text-white"
 									: "bg-gray-200 text-gray-700 hover:bg-gray-300"
 							}`}
+							onClick={() => setActiveTab("resume")}
+							type="button"
 						>
 							Resume
 						</button>
@@ -421,6 +426,7 @@ export default function Page() {
 
 											<div className="flex justify-end gap-3 mt-6">
 												<button
+													className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 transition"
 													onClick={() => {
 														setShowScheduleModal(false);
 														setScheduleData({
@@ -429,7 +435,7 @@ export default function Page() {
 															location: "",
 														});
 													}}
-													className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 transition"
+													type="button"
 												>
 													Cancel
 												</button>
@@ -447,11 +453,11 @@ export default function Page() {
 															icon: "success",
 															title: "Scheduled Successfully",
 															html: `
-                <strong>Status:</strong> ${pendingStatus}<br/>
-                <strong>Date:</strong> ${scheduleData.date}<br/>
-                <strong>Time:</strong> ${scheduleData.time}<br/>
-                <strong>Location:</strong> ${scheduleData.location}
-              `,
+																		<strong>Status:</strong> ${pendingStatus}<br/>
+																		<strong>Date:</strong> ${scheduleData.date}<br/>
+																		<strong>Time:</strong> ${scheduleData.time}<br/>
+																		<strong>Location:</strong> ${scheduleData.location}
+																	`,
 															confirmButtonColor: "#E30022",
 														});
 
@@ -462,6 +468,7 @@ export default function Page() {
 														});
 													}}
 													className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-500 transition"
+													type="button"
 												>
 													Save & Update
 												</button>
@@ -507,20 +514,31 @@ export default function Page() {
 														Score:
 													</span>{" "}
 													<span className="inline-flex items-center space-x-2 text-red-600 font-bold">
-														{[...Array(5)].map((_, i) => (
-															<svg
-																key={i}
-																className={`w-5 h-5 ${
-																	i < Math.floor(report.score || 0)
-																		? "text-yellow-400"
-																		: "text-gray-300"
-																}`}
-																fill="currentColor"
-																viewBox="0 0 20 20"
-															>
-																<path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.184 3.642a1 1 0 00.95.69h3.813c.969 0 1.371 1.24.588 1.81l-3.087 2.243a1 1 0 00-.364 1.118l1.184 3.642c.3.921-.755 1.688-1.54 1.118L10 13.347l-3.087 2.243c-.785.57-1.84-.197-1.54-1.118l1.184-3.642a1 1 0 00-.364-1.118L3.106 9.07c-.783-.57-.38-1.81.588-1.81h3.813a1 1 0 00.95-.69l1.184-3.642z" />
-															</svg>
-														))}
+														{[...Array(5)].map((_, i) => {
+															const filled = i < Math.floor(report.score || 0);
+
+															return (
+																<svg
+																	key={`${report.id}-star-${i}`}
+																	className={`w-5 h-5 ${filled ? "text-yellow-400" : "text-gray-300"}`}
+																	fill="currentColor"
+																	viewBox="0 0 20 20"
+																	role="img"
+																	aria-label={
+																		filled
+																			? "Filled rating star"
+																			: "Empty rating star"
+																	}
+																>
+																	<title>
+																		{filled
+																			? "Filled rating star"
+																			: "Empty rating star"}
+																	</title>
+																	<path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.184 3.642a1 1 0 00.95.69h3.813c.969 0 1.371 1.24.588 1.81l-3.087 2.243a1 1 0 00-.364 1.118l1.184 3.642c.3.921-.755 1.688-1.54 1.118L10 13.347l-3.087 2.243c-.785.57-1.84-.197-1.54-1.118l1.184-3.642a1 1 0 00-.364-1.118L3.106 9.07c-.783-.57-.38-1.81.588-1.81h3.813a1 1 0 00.95-.69l1.184-3.642z" />
+																</svg>
+															);
+														})}
 														<span className="text-sm text-red-600">
 															({report.score || 0}/5)
 														</span>
@@ -555,10 +573,14 @@ export default function Page() {
 
 														<div className="grid gap-3">
 															<div>
-																<label className="block text-sm font-semibold mb-1">
+																<label
+																	htmlFor="score"
+																	className="block text-sm font-semibold mb-1"
+																>
 																	Score (out of 5)
 																</label>
 																<input
+																	id="score"
 																	type="number"
 																	min={0}
 																	max={5}
@@ -572,10 +594,14 @@ export default function Page() {
 															</div>
 
 															<div>
-																<label className="block text-sm font-semibold mb-1">
+																<label
+																	htmlFor="highlights"
+																	className="block text-sm font-semibold mb-1"
+																>
 																	Key Highlights
 																</label>
 																<textarea
+																	id="highlights"
 																	value={editHighlights}
 																	onChange={(e) =>
 																		setEditHighlights(e.target.value)
@@ -587,10 +613,14 @@ export default function Page() {
 															</div>
 
 															<div>
-																<label className="block text-sm font-semibold mb-1">
+																<label
+																	htmlFor="summary"
+																	className="block text-sm font-semibold mb-1"
+																>
 																	Summary Evaluation
 																</label>
 																<textarea
+																	id="summary"
 																	value={editSummary}
 																	onChange={(e) =>
 																		setEditSummary(e.target.value)

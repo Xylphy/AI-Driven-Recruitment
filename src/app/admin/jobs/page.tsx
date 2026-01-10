@@ -55,8 +55,9 @@ export default function JobsPage() {
 
 				{(role === "Admin" || role === "SuperAdmin") && (
 					<button
-						onClick={() => router.push("/createjob")}
 						className="px-5 py-3 bg-red-600 text-white font-semibold rounded-lg shadow hover:bg-red-700 transition flex items-center gap-2"
+						onClick={() => router.push("/createjob")}
+						type="button"
 					>
 						Add Job Listing
 						<svg
@@ -65,6 +66,7 @@ export default function JobsPage() {
 							viewBox="0 0 20 20"
 							fill="currentColor"
 						>
+							<title>Icon for adding a new job listing</title>
 							<path
 								fillRule="evenodd"
 								d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
@@ -87,8 +89,8 @@ export default function JobsPage() {
 					</thead>
 					<tbody>
 						{jobsQuery.isLoading ? (
-							[...Array(3)].map((_, i) => (
-								<tr key={i} className="border-t">
+							[...Array(3)].map((_) => (
+								<tr key={crypto.randomUUID()} className="border-t">
 									<td className="p-4">
 										<div className="h-4 bg-gray-200 rounded w-2/3 animate-pulse" />
 									</td>

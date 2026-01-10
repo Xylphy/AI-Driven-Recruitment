@@ -99,8 +99,8 @@ const adminRouter = createTRPCRouter({
 		}
 
 		return {
-			activeJobs: dailyActiveJobs!.at(-1)?.jobs || 0,
-			totalJobs: dailyActiveJobs!.at(-1)?.jobs || 0,
+			activeJobs: dailyActiveJobs?.at(-1)?.jobs || 0,
+			totalJobs: dailyActiveJobs?.at(-1)?.jobs || 0,
 			totalCandidates: totalCandidates || 0,
 			jobActivity: dailyActiveJobs,
 			candidateGrowth: weeklyApplicants,
@@ -303,7 +303,7 @@ const adminRouter = createTRPCRouter({
 			}),
 		)
 		.query(async ({ ctx, input }) => {
-			if (ctx.userJWT!.role !== "SuperAdmin") {
+			if (ctx.userJWT?.role !== "SuperAdmin") {
 				throw new TRPCError({
 					code: "FORBIDDEN",
 					message: "You do not have permission to access this resource",
@@ -367,7 +367,7 @@ const adminRouter = createTRPCRouter({
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
-			if (ctx.userJWT!.role !== "SuperAdmin") {
+			if (ctx.userJWT?.role !== "SuperAdmin") {
 				throw new TRPCError({
 					code: "FORBIDDEN",
 					message: "You do not have permission to access this resource",
@@ -417,8 +417,8 @@ const adminRouter = createTRPCRouter({
 				supabase,
 				"audit_logs",
 				{
-					actor_type: ctx.userJWT!.role,
-					actor_id: ctx.userJWT!.id,
+					actor_type: ctx.userJWT?.role,
+					actor_id: ctx.userJWT?.id,
 					action: "update",
 					event_type: "Changed user role",
 					entity_type: "User",
@@ -519,7 +519,7 @@ const adminRouter = createTRPCRouter({
 				);
 			}
 
-			const jobsAssignedPromises = hrOfficers!.map((officer: Staff) =>
+			const jobsAssignedPromises = hrOfficers?.map((officer: Staff) =>
 				supabase
 					.from("job_listings")
 					.select("title")
@@ -533,7 +533,7 @@ const adminRouter = createTRPCRouter({
 			const jobsAssignedResults = await Promise.all(jobsAssignedPromises);
 
 			return {
-				hrOfficers: hrOfficers!.map((officer: Staff, index: number) => ({
+				hrOfficers: hrOfficers?.map((officer: Staff, index: number) => ({
 					...officer,
 					email: userMap.get(officer.firebase_uid)?.email || "",
 					jobsAssigned:

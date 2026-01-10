@@ -132,6 +132,7 @@ export default function JobsPage() {
 				<button
 					onClick={handleDownloadReport}
 					className="text-white bg-red-600 font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:border-red-600 hover:text-red-600"
+					type="button"
 				>
 					DOWNLOAD REPORT
 				</button>
@@ -208,6 +209,7 @@ export default function JobsPage() {
 					<button
 						onClick={() => auditLogsInfinite.fetchNextPage()}
 						className="px-4 py-2 bg-gray-100 rounded"
+						type="button"
 					>
 						Load more
 					</button>

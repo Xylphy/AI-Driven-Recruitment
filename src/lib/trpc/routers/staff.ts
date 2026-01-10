@@ -137,7 +137,7 @@ const staffRouter = createTRPCRouter({
 					score: input.score,
 					applicant_id: input.applicantId,
 					summary: input.summary,
-					staff_id: ctx.userJWT!.id,
+					staff_id: ctx.userJWT?.id,
 				},
 			);
 
@@ -176,8 +176,8 @@ const staffRouter = createTRPCRouter({
 				supabase,
 				"audit_logs",
 				{
-					actor_type: ctx.userJWT!.role,
-					actor_id: ctx.userJWT!.id,
+					actor_type: ctx.userJWT?.role,
+					actor_id: ctx.userJWT?.id,
 					action: "create",
 					event_type: "Created HR Report",
 					entity_type: "HR Report",

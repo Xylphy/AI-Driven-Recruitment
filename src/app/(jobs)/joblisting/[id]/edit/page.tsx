@@ -83,7 +83,7 @@ export default function Page() {
 				startTransition(() => setShowDropdown(false));
 				startTransition(() =>
 					setHrSearch(
-						assignedOfficer.first_name + " " + assignedOfficer.last_name,
+						`${assignedOfficer.first_name} ${assignedOfficer.last_name}`,
 					),
 				);
 			}
@@ -340,10 +340,20 @@ export default function Page() {
 													setHROfficer(officer);
 													setShowDropdown(false);
 													setHrSearch(
-														officer.first_name + " " + officer.last_name,
+														`${officer.first_name} ${officer.last_name}`,
 													);
 												}}
-												className="px-4 py-2 cursor-pointer hover:bg-red-50"
+												onKeyDown={(e) => {
+													if (e.key === "Enter" || e.key === " ") {
+														e.preventDefault(); // prevents page scroll on Space
+														setHROfficer(officer);
+														setShowDropdown(false);
+														setHrSearch(
+															`${officer.first_name} ${officer.last_name}`,
+														);
+													}
+												}}
+												className="px-4 py-2 cursor-pointer hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500"
 											>
 												{officer.first_name} {officer.last_name}
 											</li>
@@ -391,8 +401,9 @@ export default function Page() {
 			</form>
 
 			<button
-				onClick={() => router.back()}
 				className="mt-4 bg-gray-300 text-gray-800 font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-gray-500 hover:border-gray-500"
+				onClick={() => router.back()}
+				type="button"
 			>
 				Back
 			</button>

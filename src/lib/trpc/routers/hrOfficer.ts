@@ -20,7 +20,7 @@ const hrOfficerRouter = createTRPCRouter({
 			const query = supabase
 				.from("job_listings")
 				.select("*, job_applicants(id)")
-				.eq("officer_id", ctx.userJWT!.id);
+				.eq("officer_id", ctx.userJWT?.id);
 
 			if (input.query) {
 				query.ilike("title", `%${input.query}%`);
@@ -55,7 +55,7 @@ const hrOfficerRouter = createTRPCRouter({
 			}),
 		)
 		.mutation(async ({ input, ctx }) => {
-			const { id, role } = ctx.userJWT!;
+			const { id, role } = ctx.userJWT ?? {};
 			if (id !== input.staffId && role !== "SuperAdmin" && role !== "Admin") {
 				throw new TRPCError({
 					code: "FORBIDDEN",
@@ -84,8 +84,8 @@ const hrOfficerRouter = createTRPCRouter({
 				supabase,
 				"audit_logs",
 				{
-					actor_type: ctx.userJWT!.role,
-					actor_id: ctx.userJWT!.id,
+					actor_type: ctx.userJWT?.role,
+					actor_id: ctx.userJWT?.id,
 					action: "delete",
 					event_type: "Deleted HR Report",
 					entity_type: "HR Report",
@@ -115,7 +115,7 @@ const hrOfficerRouter = createTRPCRouter({
 			}),
 		)
 		.mutation(async ({ input, ctx }) => {
-			if (ctx.userJWT!.id !== input.staffId) {
+			if (ctx.userJWT?.id !== input.staffId) {
 				throw new TRPCError({
 					code: "FORBIDDEN",
 					message: "You do not have permission to edit this HR report.",
@@ -219,8 +219,8 @@ const hrOfficerRouter = createTRPCRouter({
 				supabase,
 				"audit_logs",
 				{
-					actor_type: ctx.userJWT!.role,
-					actor_id: ctx.userJWT!.id,
+					actor_type: ctx.userJWT?.role,
+					actor_id: ctx.userJWT?.id,
 					action: "update",
 					event_type: "Updated HR Report",
 					entity_type: "HR Report",

@@ -159,6 +159,7 @@ export default function Page() {
 												</p>
 											</div>
 											<button
+												type="button"
 												onClick={() =>
 													router.push(`/candidateprofile/${candidate.id}`)
 												}
@@ -205,24 +206,28 @@ export default function Page() {
 						</section>
 
 						<button
+							type="button"
 							onClick={() => router.push(`/joblisting/${jobId}`)}
 							className="mt-6 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600"
 						>
 							See Job Details
 						</button>
 						<button
+							type="button"
 							className="mt-2 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600"
 							onClick={() => setShowDeleteModal(true)}
 						>
 							Delete Job
 						</button>
 						<button
+							type="button"
 							className="mt-2 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600"
 							onClick={() => router.push(`/joblisting/${jobId}/edit`)}
 						>
 							Edit Job
 						</button>
 						<button
+							type="button"
 							onClick={() => router.back()}
 							className="mt-2 w-full bg-gray-300 text-gray-800 font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-gray-500 hover:border-gray-500"
 						>
@@ -240,12 +245,14 @@ export default function Page() {
 							<button
 								className="bg-gray-300 text-gray-800 px-4 py-2 rounded"
 								onClick={() => setShowDeleteModal(false)}
+								type="button"
 							>
 								Cancel
 							</button>
 							<button
 								className="bg-red-600 text-white px-4 py-2 rounded font-bold"
 								onClick={handleDeleteJob}
+								type="button"
 							>
 								Delete
 							</button>

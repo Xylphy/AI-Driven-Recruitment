@@ -50,6 +50,16 @@ export default function Navbar() {
 		);
 	};
 
+	const onNotificationKeyDown = (
+		e: React.KeyboardEvent<HTMLButtonElement>,
+		notificationId: string,
+	) => {
+		if (e.key === "Enter" || e.key === " ") {
+			e.preventDefault(); // prevents page scroll on Space
+			clickNotification(notificationId);
+		}
+	};
+
 	return (
 		<nav className="bg-white text-black shadow-md">
 			<div className="container mx-auto px-4 py-3 flex justify-between items-center">
@@ -66,7 +76,11 @@ export default function Navbar() {
 				<div className="flex items-center gap-4 relative">
 					{isAuthenticated ? (
 						<>
-							<button onClick={() => setOpen(!open)} className="relative">
+							<button
+								onClick={() => setOpen(!open)}
+								className="relative"
+								type="button"
+							>
 								<Bell className="w-6 h-6 text-gray-600 hover:text-red-600" />
 								{unreadCount > 0 && (
 									<span className="absolute -top-1 -right-1 min-w-4.5 h-4 bg-red-600 text-white text-xs flex items-center justify-center rounded-full px-1">
@@ -85,6 +99,7 @@ export default function Navbar() {
 													e.stopPropagation();
 													markAllAsRead();
 												}}
+												type="button"
 											>
 												Mark all as read
 											</button>
@@ -97,25 +112,32 @@ export default function Navbar() {
 									) : (
 										<ul className="max-h-60 overflow-y-auto">
 											{notifications.map((notification) => (
-												<li
-													key={notification.id}
-													className={`p-2 rounded mb-1 cursor-pointer ${
-														!notification.isRead ? "bg-gray-100" : ""
-													} hover:bg-gray-200`}
-													onClick={() => clickNotification(notification.id)}
-												>
-													<div className="flex justify-between items-center">
-														<span>{notification.body}</span>
-														{!notification.isRead && (
-															<span className="ml-2 w-2.5 h-2.5 bg-red-600 rounded-full inline-block"></span>
-														)}
-													</div>
+												<li key={notification.id} className="mb-1">
+													<button
+														type="button"
+														className={`w-full text-left p-2 rounded cursor-pointer ${
+															!notification.isRead ? "bg-gray-100" : ""
+														} hover:bg-gray-200`}
+														onClick={() => clickNotification(notification.id)}
+														onKeyDown={(e) =>
+															onNotificationKeyDown(e, notification.id)
+														}
+													>
+														<div className="flex justify-between items-center">
+															<span>{notification.body}</span>
+															{!notification.isRead && (
+																<span className="ml-2 w-2.5 h-2.5 bg-red-600 rounded-full inline-block"></span>
+															)}
+														</div>
+													</button>
+
 													<button
 														className="text-xs text-red-500 mt-1"
 														onClick={(e) => {
 															e.stopPropagation();
 															deleteNotification(notification.id);
 														}}
+														type="button"
 													>
 														Delete
 													</button>

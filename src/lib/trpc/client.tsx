@@ -19,7 +19,10 @@ function getQueryClient() {
 		return makeQueryClient();
 	}
 	// Browser: use singleton pattern to keep the same query client
-	return (clientQueryClientSingleton ??= makeQueryClient());
+	if (!clientQueryClientSingleton) {
+		clientQueryClientSingleton = makeQueryClient();
+	}
+	return clientQueryClientSingleton;
 }
 
 function getUrl() {

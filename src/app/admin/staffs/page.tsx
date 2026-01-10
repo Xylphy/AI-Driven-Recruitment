@@ -21,7 +21,7 @@ export default function UsersPage() {
 					usersQuery.refetch();
 				},
 				onError: (error) => {
-					alert("Failed to change user role: " + error.message);
+					alert(`Failed to change user role: ${error.message}`);
 				},
 			},
 		);

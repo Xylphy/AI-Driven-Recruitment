@@ -48,8 +48,8 @@ export default function ComparePage() {
 
 	const AIQuery = trpc.candidate.fetchAICompare.useQuery(
 		{
-			userId_A: candidateA.userId!,
-			userId_B: candidateB.userId!,
+			userId_A: candidateA.userId ?? "",
+			userId_B: candidateB.userId ?? "",
 			jobId: selectedJobId,
 		},
 		{
@@ -68,7 +68,7 @@ export default function ComparePage() {
 
 	const candidateDataA = trpc.candidate.fetchCandidateProfile.useQuery(
 		{
-			candidateId: candidateA.applicantId!,
+			candidateId: candidateA.applicantId ?? "",
 			fetchResume: true,
 			fetchScore: true,
 			fetchTranscribed: true,
@@ -80,7 +80,7 @@ export default function ComparePage() {
 
 	const candidateDataB = trpc.candidate.fetchCandidateProfile.useQuery(
 		{
-			candidateId: candidateB.applicantId!,
+			candidateId: candidateB.applicantId ?? "",
 			fetchResume: true,
 			fetchScore: true,
 			fetchTranscribed: true,
@@ -92,8 +92,8 @@ export default function ComparePage() {
 
 	const adminFeedbacksQuery = trpc.candidate.fetchAdminFeedbacks.useQuery(
 		{
-			candidateAId: candidateA.applicantId!,
-			candidateBId: candidateB.applicantId!,
+			candidateAId: candidateA.applicantId ?? "",
+			candidateBId: candidateB.applicantId ?? "",
 		},
 		{
 			enabled: !!candidateA.applicantId && !!candidateB.applicantId,
@@ -119,7 +119,7 @@ export default function ComparePage() {
 
 		if (adminFeedbackA.trim()) {
 			postAdminFeedbackMutation.mutate({
-				candidateId: candidateA.applicantId!,
+				candidateId: candidateA.applicantId ?? "",
 				feedback: adminFeedbackA.trim(),
 			});
 			setAdminFeedbackA("");
@@ -127,7 +127,7 @@ export default function ComparePage() {
 
 		if (adminFeedbackB.trim()) {
 			postAdminFeedbackMutation.mutate({
-				candidateId: candidateB.applicantId!,
+				candidateId: candidateB.applicantId ?? "",
 				feedback: adminFeedbackB.trim(),
 			});
 			setAdminFeedbackB("");
@@ -173,6 +173,11 @@ export default function ComparePage() {
 		});
 	};
 
+	// Add stable ids to associate labels with react-select inputs
+	const jobSelectId = "job-select";
+	const candidateASelectId = "candidate-a-select";
+	const candidateBSelectId = "candidate-b-select";
+
 	return (
 		<div className="min-h-screen bg-gray-50 p-8 flex justify-center">
 			<div className="w-full max-w-7xl">
@@ -182,11 +187,13 @@ export default function ComparePage() {
 					</h2>
 
 					<div>
-						{!isAuthenticated && (
-							<label className="block text-sm font-medium text-gray-600 mb-2">
-								Select Job
-							</label>
-						)}
+						<label
+							htmlFor={jobSelectId}
+							className="block text-sm font-medium text-gray-600 mb-2"
+						>
+							Select Job
+						</label>
+
 						{fetchJobsQuery.isLoading || fetchJobsQuery.isFetching ? (
 							<div className="w-full p-3 border rounded-xl bg-white/50 flex items-center gap-3">
 								<div className="h-8 w-8 rounded-full bg-gray-200 animate-pulse" />
@@ -198,6 +205,8 @@ export default function ComparePage() {
 							</div>
 						) : (
 							<Select
+								inputId={jobSelectId}
+								instanceId={jobSelectId}
 								options={fetchJobsQuery.data?.jobs?.map((job) => ({
 									value: job.id,
 									label: job.title,
@@ -245,10 +254,15 @@ export default function ComparePage() {
 							) : (
 								<>
 									<div>
-										<label className="block text-sm font-medium text-gray-600 mb-2">
+										<label
+											htmlFor={candidateASelectId}
+											className="block text-sm font-medium text-gray-600 mb-2"
+										>
 											Candidate A
 										</label>
 										<Select
+											inputId={candidateASelectId}
+											instanceId={candidateASelectId}
 											options={candidatesQuery.data?.applicants.map((c) => ({
 												value: { userId: c.user_id, applicantId: c.id },
 												label: c.name,
@@ -270,10 +284,15 @@ export default function ComparePage() {
 									</div>
 
 									<div>
-										<label className="block text-sm font-medium text-gray-600 mb-2">
+										<label
+											htmlFor={candidateBSelectId}
+											className="block text-sm font-medium text-gray-600 mb-2"
+										>
 											Candidate B
 										</label>
 										<Select
+											inputId={candidateBSelectId}
+											instanceId={candidateBSelectId}
 											options={candidatesQuery.data?.applicants.map((c) => ({
 												value: { userId: c.user_id, applicantId: c.id },
 												label: c.name,
@@ -302,7 +321,7 @@ export default function ComparePage() {
 						<div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8 items-center">
 							{[candidateDataA, candidateDataB].map((data, idx) => (
 								<div
-									key={idx}
+									key={crypto.randomUUID()}
 									className="p-6 bg-white/40 backdrop-blur-md border border-gray-200 rounded-2xl shadow-md space-y-3"
 								>
 									<h3 className="text-xl font-semibold text-gray-800">
@@ -377,10 +396,10 @@ export default function ComparePage() {
 
 					<div className="mt-6 space-y-6">
 						<div>
-							<label className="block text-sm font-medium text-gray-600 mb-2">
-								{" "}
-								AI Feedback{" "}
-							</label>
+							<div className="block text-sm font-medium text-gray-600 mb-2">
+								AI Feedback
+							</div>
+
 							{AIQuery.isLoading || AIQuery.isFetching ? (
 								<div className="animate-pulse space-y-3">
 									<div className="h-6 bg-gray-200 rounded w-1/2 mb-2" />
@@ -437,8 +456,9 @@ export default function ComparePage() {
 						{candidateA.userId && candidateB.userId && (
 							<div className="mt-6">
 								<button
-									onClick={() => setShowAdminFeedbackFields((prev) => !prev)}
 									className="px-6 py-2 bg-gray-200/50 hover:bg-gray-300/50 rounded-xl backdrop-blur-sm font-semibold transition text-gray-800"
+									onClick={() => setShowAdminFeedbackFields((prev) => !prev)}
+									type="button"
 								>
 									{showAdminFeedbackFields
 										? "Hide Admin Feedback"
@@ -464,8 +484,9 @@ export default function ComparePage() {
 									rows={4}
 								/>
 								<button
-									onClick={handleSubmitFeedback}
 									className="px-6 py-2 bg-gray-200/50 hover:bg-gray-300/50 rounded-xl backdrop-blur-sm font-semibold text-gray-800"
+									onClick={handleSubmitFeedback}
+									type="button"
 								>
 									Submit Feedback
 								</button>
@@ -481,10 +502,9 @@ export default function ComparePage() {
 											user: { last_name: string; first_name: string };
 										};
 									},
-									index,
 								) => (
 									<div
-										key={index}
+										key={crypto.randomUUID()}
 										className="p-4 bg-white/40 backdrop-blur-sm border border-gray-200 rounded-2xl shadow-sm"
 									>
 										<div className="flex justify-between text-sm text-gray-500 mb-2">
@@ -513,17 +533,19 @@ export default function ComparePage() {
 														/>
 														<div className="flex gap-2 mt-1">
 															<button
-																onClick={() => handleSaveEdit(post.id)}
 																className="px-3 py-1 bg-red-500/50 hover:bg-red-600/50 text-white text-xs rounded"
+																onClick={() => handleSaveEdit(post.id)}
+																type="button"
 															>
 																Save
 															</button>
 															<button
+																className="px-3 py-1 bg-gray-200/50 hover:bg-gray-300/50 text-gray-800 text-xs rounded"
 																onClick={() => {
 																	setEditingFeedbackId(null);
 																	setEditedFeedback("");
 																}}
-																className="px-3 py-1 bg-gray-200/50 hover:bg-gray-300/50 text-gray-800 text-xs rounded"
+																type="button"
 															>
 																Cancel
 															</button>
@@ -538,16 +560,18 @@ export default function ComparePage() {
 
 											<div className="flex items-center gap-2 shrink-0">
 												<button
-													title="Edit feedback"
 													className="p-1 rounded hover:bg-gray-100 transition"
 													onClick={() => handleEditClick(post)}
+													title="Edit feedback"
+													type="button"
 												>
 													<Pencil className="w-4 h-4 text-red-500" />
 												</button>
 												<button
-													title="Delete feedback"
 													className="p-1 rounded hover:bg-gray-200 transition"
 													onClick={() => handleDeleteFeedback(post.id)}
+													title="Delete feedback"
+													type="button"
 												>
 													<Trash2 className="w-4 h-4 text-red-500" />
 												</button>

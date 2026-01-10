@@ -18,6 +18,7 @@ import {
 import { createClientServer } from "@/lib/supabase/supabase";
 import type {
 	Applicants,
+	AuditLog,
 	Changes,
 	JobListing,
 	JobListingQualifications,
@@ -43,7 +44,7 @@ const jobListingRouter = createTRPCRouter({
 				.optional(),
 		)
 		.query(async ({ ctx }) => {
-			const userId = ctx.userJWT!.id;
+			const userId = ctx.userJWT?.id ?? "";
 			const supabase = await createClientServer(1, true);
 
 			const { data: appliedData, error: appliedError } = await findWithJoin<
@@ -89,8 +90,8 @@ const jobListingRouter = createTRPCRouter({
 		)
 		.mutation(async ({ ctx, input }) => {
 			if (
-				input.officer_id !== ctx.userJWT!.id &&
-				ctx.userJWT!.role !== "Admin"
+				input.officer_id !== ctx.userJWT?.id &&
+				ctx.userJWT?.role !== "Admin"
 			) {
 				throw new TRPCError({
 					code: "FORBIDDEN",
@@ -124,15 +125,15 @@ const jobListingRouter = createTRPCRouter({
 				supabase,
 				"audit_logs",
 				{
-					actor_type: ctx.userJWT!.role,
-					actor_id: ctx.userJWT!.id,
+					actor_type: ctx.userJWT?.role,
+					actor_id: ctx.userJWT?.id,
 					action: "delete",
 					event_type: "Joblisting deleted",
 					entity_type: "Job Listing",
 					entity_id: input.joblistingId,
 					changes: {},
 					details: `Job listing with ID ${input.joblistingId} was deleted.`,
-				},
+				} as AuditLog,
 			);
 
 			if (insertLogError) {
@@ -196,14 +197,13 @@ const jobListingRouter = createTRPCRouter({
 				.execute();
 
 			const userJWT = ctx.userJWT;
-			let applicantCheckPromise;
 
-			if (userJWT) {
-				applicantCheckPromise = find<Applicants>(supabase, "job_applicants", [
-					{ column: "joblisting_id", value: input.jobId },
-					{ column: "user_id", value: userJWT.id },
-				]).single();
-			}
+			const applicantCheckPromise = userJWT
+				? find<Applicants>(supabase, "job_applicants", [
+						{ column: "joblisting_id", value: input.jobId },
+						{ column: "user_id", value: userJWT.id },
+					]).single()
+				: Promise.resolve(null);
 
 			const qualifications = await qualificationsPromise;
 			const requirements = await requirementsPromise;
@@ -275,7 +275,7 @@ const jobListingRouter = createTRPCRouter({
 				supabaseClient,
 				"job_applicants",
 				{
-					user_id: ctx.userJWT!.id,
+					user_id: ctx.userJWT?.id,
 					joblisting_id: input.jobId,
 				},
 			);
@@ -290,7 +290,7 @@ const jobListingRouter = createTRPCRouter({
 
 			const scoreAPI = new URL("http://localhost:8000/score/");
 			scoreAPI.searchParams.set("job_id", input.jobId);
-			scoreAPI.searchParams.set("user_id", ctx.userJWT!.id);
+			scoreAPI.searchParams.set("user_id", ctx.userJWT?.id ?? "");
 			scoreAPI.searchParams.set("applicant_id", applicantsID[0].id);
 
 			fetch(scoreAPI.toString(), {
@@ -304,17 +304,17 @@ const jobListingRouter = createTRPCRouter({
 				supabaseClient,
 				"audit_logs",
 				{
-					actor_type: ctx.userJWT!.role,
-					actor_id: ctx.userJWT!.id,
+					actor_type: ctx.userJWT?.role,
+					actor_id: ctx.userJWT?.id,
 					action: "create",
 					event_type: "Applied for job",
 					entity_type: "Job Applicant",
 					entity_id: applicantsID[0].id,
 					changes: {},
 					details: `User with ID ${
-						ctx.userJWT!.id
+						ctx.userJWT?.id
 					} applied for job listing with ID ${input.jobId}.`,
-				},
+				} as AuditLog,
 			);
 
 			if (insertLogError) {
@@ -347,10 +347,10 @@ const jobListingRouter = createTRPCRouter({
 				});
 			}
 			if (
-				ctx.userJWT!.role !== "Admin" &&
-				ctx.userJWT!.id !== "SuperAdmin" &&
+				ctx.userJWT?.role !== "Admin" &&
+				ctx.userJWT?.id !== "SuperAdmin" &&
 				oldJoblisting.officer_id &&
-				oldJoblisting.officer_id !== ctx.userJWT!.id
+				oldJoblisting.officer_id !== ctx.userJWT?.id
 			) {
 				throw new TRPCError({
 					code: "FORBIDDEN",
@@ -463,15 +463,15 @@ const jobListingRouter = createTRPCRouter({
 				supabase,
 				"audit_logs",
 				{
-					actor_type: ctx.userJWT!.role,
-					actor_id: ctx.userJWT!.id,
+					actor_type: ctx.userJWT?.role,
+					actor_id: ctx.userJWT?.id,
 					action: "update",
 					event_type: "Joblisting modified",
 					entity_type: "Job Listing",
 					entity_id: input.jobId,
 					changes,
 					details: `Job listing with ID ${input.jobId} was updated.`,
-				},
+				} as AuditLog,
 			);
 
 			if (insertLogError) {
@@ -509,7 +509,7 @@ const jobListingRouter = createTRPCRouter({
 				{
 					title: input.title,
 					location: input.location,
-					created_by: ctx.userJWT!.id,
+					created_by: ctx.userJWT?.id,
 					is_fulltime: input.isFullTime,
 					officer_id: input.hrOfficerId || null,
 				},
@@ -614,15 +614,15 @@ const jobListingRouter = createTRPCRouter({
 				supabase,
 				"audit_logs",
 				{
-					actor_type: ctx.userJWT!.role,
-					actor_id: ctx.userJWT!.id,
+					actor_type: ctx.userJWT?.role,
+					actor_id: ctx.userJWT?.id,
 					action: "create",
 					event_type: "Created joblisting",
 					entity_type: "Job Listing",
 					entity_id: insertedData[0].id,
 					changes: {},
 					details: `Job listing with ID ${insertedData[0].id} was created.`,
-				},
+				} as AuditLog,
 			);
 
 			if (insertLogError) {

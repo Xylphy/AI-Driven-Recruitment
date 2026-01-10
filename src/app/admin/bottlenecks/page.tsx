@@ -285,8 +285,9 @@ export default function JobsPage() {
 				</div>
 
 				<button
-					onClick={handleDownloadReport}
 					className="text-white bg-red-600 font-bold px-4 py-2 rounded transition hover:bg-transparent hover:text-red-600 hover:border hover:border-red-600"
+					onClick={handleDownloadReport}
+					type="button"
 				>
 					DOWNLOAD REPORT
 				</button>

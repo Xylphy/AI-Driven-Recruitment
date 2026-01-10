@@ -48,6 +48,7 @@ export default function ApplicationTrackPage() {
 				</div>
 
 				<button
+					type="button"
 					onClick={handleTrack}
 					className="mt-6 w-full bg-linear-to-r from-red-600 to-rose-500 text-white font-bold py-3 rounded-xl shadow-lg hover:opacity-90 transition"
 				>

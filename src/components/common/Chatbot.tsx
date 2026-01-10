@@ -19,14 +19,15 @@ export default function ChatbotWidget() {
 	return (
 		<>
 			<button
-				onClick={() => setOpen(true)}
-				aria-label="Open chatbot"
 				className="fixed bottom-6 right-6 z-50 w-16 h-16 rounded-full
           bg-linear-to-br from-red-500 via-red-600 to-red-700
           shadow-xl shadow-red-500/30
           flex items-center justify-center
           text-white
           hover:scale-110 transition-transform duration-300"
+				onClick={() => setOpen(true)}
+				type="button"
+				aria-label="Open chatbot"
 			>
 				<MdChat className="text-2xl" />
 			</button>
@@ -59,9 +60,10 @@ export default function ChatbotWidget() {
 							</div>
 
 							<button
-								onClick={() => setOpen(false)}
 								aria-label="Close chatbot"
 								className="hover:opacity-80 transition"
+								onClick={() => setOpen(false)}
+								type="button"
 							>
 								<MdClose className="text-xl" />
 							</button>
@@ -108,11 +110,12 @@ export default function ChatbotWidget() {
 							/>
 
 							<button
-								disabled
 								className="w-10 h-10 rounded-full
                   bg-linear-to-br from-gray-300 to-gray-400
                   text-white flex items-center justify-center
                   cursor-not-allowed"
+								disabled
+								type="button"
 							>
 								<MdSend />
 							</button>

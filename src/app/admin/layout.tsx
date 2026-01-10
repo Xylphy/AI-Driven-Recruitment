@@ -19,7 +19,6 @@ import {
 	MdSettings,
 	MdWork,
 } from "react-icons/md";
-import useAuth from "@/hooks/useAuth";
 import { auth } from "@/lib/firebase/client";
 import { trpc } from "@/lib/trpc/client";
 
@@ -28,10 +27,10 @@ export default function AdminLayout({
 }: {
 	children: React.ReactNode;
 }) {
+	const router = useRouter();
 	const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 	const pathName = usePathname();
 	const jwtDecoded = trpc.auth.decodeJWT.useQuery();
-	const {} = useAuth(); // For logout functionality
 
 	if (jwtDecoded.isLoading || !jwtDecoded.isSuccess || !jwtDecoded.data) {
 		return (
@@ -157,7 +156,10 @@ export default function AdminLayout({
 							<div className="flex gap-4 justify-center">
 								<MdSettings className="cursor-pointer hover:text-red-300" />
 								<MdLogout
-									onClick={() => auth.signOut()}
+									onClick={() => {
+										auth.signOut();
+										router.push("/login");
+									}}
 									className="cursor-pointer hover:text-red-300"
 								/>
 							</div>
@@ -167,6 +169,7 @@ export default function AdminLayout({
 				<div className="flex-1 flex flex-col">
 					<header className="bg-white shadow p-4 flex justify-between items-center">
 						<button
+							type="button"
 							onClick={() => setIsSidebarOpen(!isSidebarOpen)}
 							className="flex items-center gap-2 text-[#E30022] font-bold"
 						>

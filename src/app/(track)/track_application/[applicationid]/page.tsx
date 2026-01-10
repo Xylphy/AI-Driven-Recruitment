@@ -14,10 +14,6 @@ import { CANDIDATE_STATUSES } from "@/lib/constants";
 
 type CandidateStatus = (typeof CANDIDATE_STATUSES)[number];
 
-const TRACKABLE_STATUSES = CANDIDATE_STATUSES.filter(
-	(status) => status !== "Accepted Job Offer" && status !== "Close Status",
-);
-
 const STATUS_ICONS: Record<string, React.ElementType> = {
 	"Paper Screening": FileText,
 	Exam: ClipboardCheck,
@@ -54,8 +50,8 @@ const MOCK_APPLICATION = {
 export default function ApplicationTrackingPage() {
 	const { applicationId } = useParams();
 
-	const currentStepIndex = TRACKABLE_STATUSES.findIndex(
-		(s) => s === MOCK_APPLICATION.currentStatus,
+	const currentStepIndex = CANDIDATE_STATUSES.indexOf(
+		MOCK_APPLICATION.currentStatus,
 	);
 
 	return (
@@ -75,7 +71,7 @@ export default function ApplicationTrackingPage() {
 				</div>
 
 				<div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-					{TRACKABLE_STATUSES.map((status, index) => {
+					{CANDIDATE_STATUSES.map((status, index) => {
 						const Icon = STATUS_ICONS[status];
 						const isCompleted = index < currentStepIndex;
 						const isCurrent = index === currentStepIndex;

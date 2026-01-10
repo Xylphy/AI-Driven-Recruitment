@@ -46,8 +46,9 @@ export default function HRReport({
 	return (
 		<div className="flex flex-col items-center">
 			<button
-				onClick={() => setIsOpen(true)}
 				className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-500 transition"
+				onClick={() => setIsOpen(true)}
+				type="button"
 			>
 				Add HR Officer Report
 			</button>
@@ -87,10 +88,11 @@ export default function HRReport({
 
 								<div className="space-y-4">
 									<div>
-										<label className="block font-semibold mb-1">
+										<label htmlFor="score" className="block font-semibold mb-1">
 											Score (out of 5)
 										</label>
 										<input
+											id="score"
 											type="number"
 											min={0}
 											max={5}
@@ -102,28 +104,36 @@ export default function HRReport({
 									</div>
 
 									<div>
-										<label className="block font-semibold mb-1">
+										<label
+											htmlFor="keyHighlights"
+											className="block font-semibold mb-1"
+										>
 											Key Highlights
 										</label>
 										<textarea
-											value={highlights}
-											onChange={(e) => setHighlights(e.target.value)}
 											className="w-full border rounded px-3 py-2"
-											rows={3}
+											id="keyHighlights"
+											onChange={(e) => setHighlights(e.target.value)}
 											placeholder="Highlight candidate's strengths"
+											rows={3}
+											value={highlights}
 										/>
 									</div>
 
 									<div>
-										<label className="block font-semibold mb-1">
+										<label
+											htmlFor="summary"
+											className="block font-semibold mb-1"
+										>
 											Summary Evaluation
 										</label>
 										<textarea
-											value={summary}
-											onChange={(e) => setSummary(e.target.value)}
 											className="w-full border rounded px-3 py-2"
-											rows={3}
+											id="summary"
+											onChange={(e) => setSummary(e.target.value)}
 											placeholder="Add your summary evaluation"
+											rows={3}
+											value={summary}
 										/>
 									</div>
 								</div>
@@ -132,12 +142,14 @@ export default function HRReport({
 									<button
 										onClick={() => setIsOpen(false)}
 										className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 transition"
+										type="button"
 									>
 										Cancel
 									</button>
 									<button
-										onClick={handleSubmit}
 										className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-500 transition"
+										onClick={handleSubmit}
+										type="button"
 									>
 										Submit
 									</button>

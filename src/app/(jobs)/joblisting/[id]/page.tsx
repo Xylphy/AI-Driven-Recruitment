@@ -156,18 +156,20 @@ export default function Page() {
 						</p>
 						<div className="flex gap-3 justify-end">
 							<button
+								className="px-4 py-2 text-gray-600 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+								disabled={states.isDeleting}
 								onClick={() =>
 									setStates((prev) => ({ ...prev, showDeleteModal: false }))
 								}
-								disabled={states.isDeleting}
-								className="px-4 py-2 text-gray-600 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+								type="button"
 							>
 								Cancel
 							</button>
 							<button
-								onClick={handleDeleteJob}
-								disabled={states.isDeleting}
 								className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
+								disabled={states.isDeleting}
+								onClick={handleDeleteJob}
+								type="button"
 							>
 								{states.isDeleting ? "Deleting..." : "Delete"}
 							</button>
@@ -188,16 +190,16 @@ export default function Page() {
 					<div className="absolute inset-0 bg-black/75 z-10" />
 					<div className="relative z-10 h-full flex flex-col items-center justify-center px-4 text-center">
 						<h1 className="text-3xl font-bold text-center text-white">
-							{jobDetails!.title}
+							{jobDetails.title}
 						</h1>
 						<hr className="w-1/2 mx-auto border-t border-red-600 my-2" />
 						<div className="flex justify-center mt-2 space-x-4 text-white font-medium text-sm">
 							<span className="flex items-center gap-1">
-								<MdLocationOn className="text-red-600" /> {jobDetails!.location}
+								<MdLocationOn className="text-red-600" /> {jobDetails.location}
 							</span>
 							<span className="flex items-center gap-1">
 								<MdAccessTime className="text-red-600" />{" "}
-								{jobDetails!.is_fulltime ? "Full-Time" : "Part-Time"}
+								{jobDetails.is_fulltime ? "Full-Time" : "Part-Time"}
 							</span>
 						</div>
 					</div>
@@ -209,8 +211,11 @@ export default function Page() {
 								Qualifications
 							</h2>
 							<ul className="space-y-2 text-gray-700 text-sm">
-								{jobDetails.qualifications.map((item, index) => (
-									<li key={index} className="flex items-start gap-2">
+								{jobDetails.qualifications.map((item) => (
+									<li
+										key={crypto.randomUUID()}
+										className="flex items-start gap-2"
+									>
 										<MdChevronRight className="text-red-600 mt-1" />
 										<span>{item}</span>
 									</li>
@@ -223,8 +228,11 @@ export default function Page() {
 								Requirements
 							</h2>
 							<ul className="space-y-2 text-gray-700 text-sm">
-								{jobDetails.requirements.map((item, index) => (
-									<li key={index} className="flex items-start gap-2">
+								{jobDetails.requirements.map((item) => (
+									<li
+										key={crypto.randomUUID()}
+										className="flex items-start gap-2"
+									>
 										<MdChevronRight className="text-red-600 mt-1" />
 										<span>{item}</span>
 									</li>
@@ -235,9 +243,9 @@ export default function Page() {
 						<section className="mt-8">
 							<h2 className="text-2xl font-bold text-red-600 mb-4">Tags</h2>
 							<ul className="space-y-2 text-gray-700 text-sm">
-								{jobDetails.tags.map((tag, index) => (
+								{jobDetails.tags.map((tag) => (
 									<li
-										key={index}
+										key={crypto.randomUUID()}
 										className="inline-block bg-gray-200 text-gray-800 px-3 py-1 rounded-full text-sm mr-2 mb-2"
 									>
 										{tag}
@@ -255,14 +263,14 @@ export default function Page() {
 							<ul className="text-sm text-gray-700 space-y-1">
 								<li>
 									<strong>Published:</strong>{" "}
-									{formatDate(jobDetails!.created_at)}
+									{formatDate(jobDetails.created_at)}
 								</li>
 								<li>
 									<strong>Job Nature:</strong>{" "}
-									{jobDetails!.is_fulltime ? "Full-Time" : "Part-Time"}
+									{jobDetails.is_fulltime ? "Full-Time" : "Part-Time"}
 								</li>
 								<li>
-									<strong>Location:</strong> {jobDetails!.location}
+									<strong>Location:</strong> {jobDetails.location}
 								</li>
 							</ul>
 						</section>
@@ -282,25 +290,28 @@ export default function Page() {
 						{isAuthenticated && (
 							<>
 								<button
-									onClick={() => router.push(`/candidates/${jobId}`)}
 									className="mt-6 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600"
+									onClick={() => router.push(`/candidates/${jobId}`)}
+									type="button"
 								>
 									See Applicants
 								</button>
 								<button
+									className="mt-2 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600"
 									onClick={() =>
 										setStates((prev) => ({
 											...prev,
 											showDeleteModal: true,
 										}))
 									}
-									className="mt-2 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600"
+									type="button"
 								>
 									Delete Job
 								</button>
 								<button
 									className="mt-2 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600"
 									onClick={() => router.push(`/joblisting/${jobId}/edit`)}
+									type="button"
 								>
 									Edit Job
 								</button>
@@ -308,12 +319,13 @@ export default function Page() {
 						)}
 						<button
 							className={`mt-2 w-full font-bold py-2 rounded border border-transparent transition-all duration-300 ease-in-out "bg-red-600 text-white hover:bg-transparent hover:text-red-600 hover:border-red-600"`}
-							onClick={() => setShowSkillModal(true)}
 							disabled={
 								!!jobDetailsUser.data?.status ||
 								states.isApplying ||
 								jobDetailsUser.data?.isApplicant
 							}
+							onClick={() => setShowSkillModal(true)}
+							type="button"
 						>
 							{jobDetailsUser.data?.status
 								? jobDetailsUser.data.status
@@ -326,7 +338,9 @@ export default function Page() {
 
 						{showSkillModal && (
 							<div className="fixed inset-0 z-50 flex items-center justify-center">
-								<div
+								<button
+									type="button"
+									aria-label="Close skill self-assessment modal"
 									className="absolute inset-0 bg-white/40 backdrop-blur-sm"
 									onClick={() => setShowSkillModal(false)}
 								/>
@@ -342,6 +356,7 @@ export default function Page() {
 											<button
 												onClick={() => setShowSkillModal(false)}
 												className="text-gray-500 hover:text-red-600 text-xl"
+												type="button"
 											>
 												✕
 											</button>
@@ -359,9 +374,9 @@ export default function Page() {
 												"System Design",
 												"Problem Solving",
 												"Communication Skills",
-											].map((skill, index) => (
+											].map((skill) => (
 												<div
-													key={index}
+													key={crypto.randomUUID()}
 													className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-xl bg-white/60 backdrop-blur-md border border-white/40"
 												>
 													<div>
@@ -391,18 +406,20 @@ export default function Page() {
 
 										<div className="mt-6 flex flex-col sm:flex-row justify-between gap-3">
 											<button
-												onClick={() => setShowSkillModal(false)}
 												className="px-5 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition"
+												onClick={() => setShowSkillModal(false)}
+												type="button"
 											>
 												Cancel
 											</button>
 
 											<button
+												className="px-6 py-2 rounded-lg bg-linear-to-r from-red-600 to-red-500 text-white font-bold"
 												onClick={() => {
 													setShowSkillModal(false);
 													handleApply();
 												}}
-												className="px-6 py-2 rounded-lg bg-linear-to-r from-red-600 to-red-500 text-white font-bold"
+												type="button"
 											>
 												Continue Application
 											</button>
@@ -413,8 +430,9 @@ export default function Page() {
 						)}
 
 						<button
-							onClick={() => router.back()}
 							className="mt-2 w-full bg-gray-300 text-gray-800 font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-gray-500 hover:border-gray-500"
+							onClick={() => router.back()}
+							type="button"
 						>
 							Back
 						</button>

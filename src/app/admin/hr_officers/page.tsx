@@ -52,9 +52,9 @@ export default function HROfficersPage() {
 									<td className="py-3 px-4">
 										<div className="flex flex-wrap gap-2">
 											{user.jobsAssigned && user.jobsAssigned.length > 0 ? (
-												user.jobsAssigned.map((job, index) => (
+												user.jobsAssigned.map((job) => (
 													<span
-														key={index}
+														key={crypto.randomUUID()}
 														className="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700"
 													>
 														{job}

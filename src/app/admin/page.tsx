@@ -128,14 +128,14 @@ export default function AdminDashboard() {
 
 					<GlassCard title="Top Talent (AI Match >80%)">
 						<ul className="space-y-3">
-							{topTalentQuery.data?.topCandidates.map((c, index) => (
+							{topTalentQuery.data?.topCandidates.map((c) => (
 								<li
-									key={index}
+									key={crypto.randomUUID()}
 									className="flex justify-between items-center bg-white/40 rounded-lg px-4 py-2"
 								>
 									<span className="font-medium">{c.name}</span>
 									<span className="text-green-600 font-bold">
-										{c.score_data!.predictive_success}%
+										{c.score_data.predictive_success}%
 									</span>
 								</li>
 							))}

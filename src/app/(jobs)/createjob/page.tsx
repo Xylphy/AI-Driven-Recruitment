@@ -227,6 +227,15 @@ export default function JobListingPage() {
 											setHrSearch(`${officer.first_name} ${officer.last_name}`);
 											setShowDropdown(false);
 										}}
+										onKeyDown={(e) => {
+											if (e.key === "Enter" || e.key === " ") {
+												setHrOfficerId(officer.id);
+												setHrSearch(
+													`${officer.first_name} ${officer.last_name}`,
+												);
+												setShowDropdown(false);
+											}
+										}}
 										className="px-4 py-2 cursor-pointer hover:bg-red-50"
 									>
 										{officer.first_name} {officer.last_name}
@@ -272,6 +281,7 @@ export default function JobListingPage() {
 			</form>
 
 			<button
+				type="button"
 				onClick={() => router.back()}
 				className="mt-4 bg-gray-300 text-gray-800 font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-gray-500 hover:border-gray-500"
 			>

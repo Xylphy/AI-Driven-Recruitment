@@ -8,7 +8,7 @@ cloudinary.config({
 
 export async function uploadFile(file: File, folder: string) {
 	let resourceType: "auto" | "image" | "video" | "raw" = "raw";
-	let specificOptions;
+	let specificOptions: Record<string, string> = {};
 
 	if (file.type.startsWith("image/")) {
 		resourceType = "image";
