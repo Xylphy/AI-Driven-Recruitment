@@ -91,7 +91,8 @@ const jobListingRouter = createTRPCRouter({
 		.mutation(async ({ ctx, input }) => {
 			if (
 				input.officer_id !== ctx.userJWT?.id &&
-				ctx.userJWT?.role !== "Admin"
+				ctx.userJWT?.role !== "Admin" &&
+				ctx.userJWT?.role !== "SuperAdmin"
 			) {
 				throw new TRPCError({
 					code: "FORBIDDEN",
@@ -150,7 +151,7 @@ const jobListingRouter = createTRPCRouter({
 				jobId: z.uuid(),
 			}),
 		)
-		.query(async ({ input, ctx }) => {
+		.query(async ({ input }) => {
 			const supabase = await createClientServer(1, true);
 
 			const { data: jobListing, error: errorJobListing } =
@@ -196,15 +197,6 @@ const jobListingRouter = createTRPCRouter({
 				.many([{ column: "joblisting_id", value: input.jobId }])
 				.execute();
 
-			const userJWT = ctx.userJWT;
-
-			const applicantCheckPromise = userJWT
-				? find<Applicants>(supabase, "job_applicants", [
-						{ column: "joblisting_id", value: input.jobId },
-						{ column: "user_id", value: userJWT.id },
-					]).single()
-				: Promise.resolve(null);
-
 			const qualifications = await qualificationsPromise;
 			const requirements = await requirementsPromise;
 			const tags = await tagsPromise;
@@ -221,15 +213,11 @@ const jobListingRouter = createTRPCRouter({
 				});
 			}
 
-			const applicantCheck = await applicantCheckPromise;
-
 			return {
 				...jobListing,
 				requirements: requirements.data?.map((item) => item.requirement) || [],
 				qualifications:
 					qualifications.data?.map((item) => item.qualification) || [],
-				status: applicantCheck?.data?.status || null,
-				isApplicant: !!applicantCheck?.data,
 				tags: (tags.data || []).map((item) => item.tags.name),
 				users: undefined,
 			};

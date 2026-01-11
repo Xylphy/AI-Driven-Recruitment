@@ -37,7 +37,7 @@ const staffRouter = createTRPCRouter({
 				JobListing & { users: Pick<Staff, "first_name" | "last_name"> }
 			>(supabase, "job_listings", [
 				{
-					foreignTable: "users!job_listings_officer_id_fkey",
+					foreignTable: "staff!job_listings_officer_id_fkey",
 					foreignKey: "officer_id",
 					fields: "first_name, last_name",
 				},

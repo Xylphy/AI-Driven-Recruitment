@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MdAccessTime, MdChevronRight, MdLocationOn } from "react-icons/md";
 import useAuth from "@/hooks/useAuth";
 import { formatDate } from "@/lib/library";
@@ -30,6 +30,12 @@ export default function Page() {
 	const router = useRouter();
 	const jobId = useParams().id as string;
 	const [showSkillModal, setShowSkillModal] = useState(false);
+	const [tags, setTags] = useState<
+		{
+			skill: string;
+			rating: number;
+		}[]
+	>([]);
 
 	const { isAuthenticated } = useAuth({
 		routerActivation: false,
@@ -42,7 +48,6 @@ export default function Page() {
 	});
 
 	const jobDetailsUser = trpc.joblisting.getJobDetails.useQuery({ jobId });
-
 	const jobDetailsStaff = trpc.staff.getJobDetails.useQuery(
 		{ jobId },
 		{
@@ -56,6 +61,20 @@ export default function Page() {
 
 	const applyJobMutation = trpc.joblisting.applyForJob.useMutation();
 	const deleteJobMutation = trpc.joblisting.deleteJoblisting.useMutation();
+
+	useEffect(() => {
+		if (!jobDetails?.tags) {
+			return;
+		}
+
+		setTags((prev) => {
+			const prevMap = new Map(prev.map((t) => [t.skill, t.rating]));
+			return jobDetails.tags.map((tag) => ({
+				skill: tag,
+				rating: prevMap.get(tag) ?? 0,
+			}));
+		});
+	}, [jobDetails?.tags]);
 
 	const handleApply = async () => {
 		setStates((prev) => ({ ...prev, isApplying: true }));
@@ -243,12 +262,12 @@ export default function Page() {
 						<section className="mt-8">
 							<h2 className="text-2xl font-bold text-red-600 mb-4">Tags</h2>
 							<ul className="space-y-2 text-gray-700 text-sm">
-								{jobDetails.tags.map((tag) => (
+								{tags.map((tag) => (
 									<li
 										key={crypto.randomUUID()}
 										className="inline-block bg-gray-200 text-gray-800 px-3 py-1 rounded-full text-sm mr-2 mb-2"
 									>
-										{tag}
+										{tag.skill}
 									</li>
 								))}
 							</ul>
@@ -317,25 +336,17 @@ export default function Page() {
 								</button>
 							</>
 						)}
-						<button
-							className={`mt-2 w-full font-bold py-2 rounded border border-transparent transition-all duration-300 ease-in-out "bg-red-600 text-white hover:bg-transparent hover:text-red-600 hover:border-red-600"`}
-							disabled={
-								!!jobDetailsUser.data?.status ||
-								states.isApplying ||
-								jobDetailsUser.data?.isApplicant
-							}
-							onClick={() => setShowSkillModal(true)}
-							type="button"
-						>
-							{jobDetailsUser.data?.status
-								? jobDetailsUser.data.status
-								: states.isApplying
-									? "Applying..."
-									: jobDetailsUser.data?.isApplicant
-										? "To be reviewed"
-										: "Apply Job"}
-						</button>
 
+						{!isAuthenticated && (
+							<button
+								className="mt-2 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-600 hover:border-red-600"
+								disabled={states.isApplying}
+								onClick={() => setShowSkillModal(true)}
+								type="button"
+							>
+								{states.isApplying ? "Applying..." : "Apply"}
+							</button>
+						)}
 						{showSkillModal && (
 							<div className="fixed inset-0 z-50 flex items-center justify-center">
 								<button
@@ -368,20 +379,14 @@ export default function Page() {
 										</p>
 
 										<div className="space-y-4 max-h-[50vh] overflow-y-auto pr-1">
-											{[
-												"JavaScript",
-												"React",
-												"System Design",
-												"Problem Solving",
-												"Communication Skills",
-											].map((skill) => (
+											{tags.map((tag) => (
 												<div
 													key={crypto.randomUUID()}
 													className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-xl bg-white/60 backdrop-blur-md border border-white/40"
 												>
 													<div>
 														<p className="font-semibold text-gray-800">
-															{skill}
+															{tag.skill}
 														</p>
 														<p className="text-xs text-gray-500">
 															Rate from 1 (Beginner) to 5 (Expert)
@@ -390,15 +395,31 @@ export default function Page() {
 
 													{/* Rating Buttons */}
 													<div className="flex gap-2">
-														{[1, 2, 3, 4, 5].map((num) => (
-															<button
-																key={num}
-																type="button"
-																className="w-9 h-9 rounded-full border border-gray-300 text-sm font-semibold text-gray-700 bg-white/70 hover:bg-red-600 hover:text-white hover:border-red-600 transition"
-															>
-																{num}
-															</button>
-														))}
+														{[1, 2, 3, 4, 5].map((num) => {
+															const isSelected = tag.rating === num;
+															return (
+																<button
+																	key={num}
+																	type="button"
+																	className={`w-9 h-9 rounded-full border text-sm font-semibold transition ${
+																		isSelected
+																			? "bg-red-600 text-white border-red-600"
+																			: "border-gray-300 text-gray-700 bg-white/70 hover:bg-red-600 hover:text-white hover:border-red-600"
+																	}`}
+																	onClick={() =>
+																		setTags((prevTags) =>
+																			prevTags.map((t) =>
+																				t.skill === tag.skill
+																					? { ...t, rating: num }
+																					: t,
+																			),
+																		)
+																	}
+																>
+																	{num}
+																</button>
+															);
+														})}
 													</div>
 												</div>
 											))}
