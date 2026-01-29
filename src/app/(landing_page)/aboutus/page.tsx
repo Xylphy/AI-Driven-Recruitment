@@ -40,23 +40,26 @@ export default function AboutUs() {
 				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
 					{[
 						{
+							id: 1,
 							icon: "💡",
 							title: "Innovation",
 							text: "We harness modern tools to make job seeking and hiring smarter.",
 						},
 						{
+							id: 2,
 							icon: "🤝",
 							title: "Integrity",
 							text: "Trust and transparency are at the heart of every connection we build.",
 						},
 						{
+							id: 3,
 							icon: "🚀",
 							title: "Growth",
 							text: "We help individuals and companies grow with purpose and confidence.",
 						},
 					].map((val) => (
 						<div
-							key={crypto.randomUUID()}
+							key={val.id}
 							className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-all duration-300 text-center"
 						>
 							<div className="text-4xl mb-4">{val.icon}</div>
