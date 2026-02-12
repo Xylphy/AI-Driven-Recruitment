@@ -1,6 +1,7 @@
 import SocialLinks from "@/components/application/SocialLinks";
 import EducationalDetails from "@/components/application/EducationalDetails";
 import JobExperiences from "@/components/application/JobExperience";
+import { useRouter } from "next/navigation";
 import {
   EducationalDetailClass,
   JobExperienceClass,
@@ -61,6 +62,7 @@ export function ApplicationForm({
   handleTranscriptSelect?: (file: File | null) => void;
   transcriptFileName?: string;
 }) {
+  const router = useRouter();
   return (
     <>
       <div className="flex justify-center items-center mt-10">
@@ -130,7 +132,7 @@ export function ApplicationForm({
             type="text"
             id="firstName"
             name="firstName"
-            className="flex-1 ml-2 w-130 px-4 py-2 border border-gray-300 rounded-md focus:ring-red-600 focus:border-red-600"
+            className="flex-1 ml-2 w-177 px-4 py-2 border border-gray-300 rounded-md focus:ring-red-600 focus:border-red-600"
             required
             defaultValue={userInfo?.user.firstName}
           />
@@ -294,40 +296,6 @@ export function ApplicationForm({
           </div>
         </div>
         <div className="mb-4">
-          <h3 className="mb-2 font-bold">Professional Details</h3>
-          <div className="mt-2">
-            <label
-              htmlFor="jobTitle"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Current Job Title
-            </label>
-            <input
-              type="text"
-              id="jobTitle"
-              name="jobTitle"
-              className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-              defaultValue={userInfo?.user.jobTitle}
-            />
-          </div>
-          <div className="mt-4">
-            <label
-              htmlFor="skillSet"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Skill Set
-            </label>
-            <textarea
-              id="skillSet"
-              name="skillSet"
-              rows={4}
-              className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-              placeholder="List your skills separated by commas"
-              defaultValue={userInfo?.user?.skillSet}
-            ></textarea>
-          </div>
-        </div>
-        <div className="mb-4">
           <EducationalDetails
             add={() => {
               educationalDetailsInfo.setEducationalDetails([
@@ -419,7 +387,8 @@ export function ApplicationForm({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="flex mb-5 justify-center items-center w-full bg-red-600 text-white font-bold px-4 py-3 rounded-md border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-500 hover:border-red-500"
+          onClick={() => router.push(`/application/skillassessment`)}
+          className="flex mb-5 justify-center items-center w-full px-6 py-2 rounded-lg bg-gradient-to-r from-red-600 to-red-500 text-white font-bold shadow-lg hover:scale-[1.02] transition"
         >
           {isSubmitting ? "Continuing..." : "Continue to Skill Assessment"}
         </button>

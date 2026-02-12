@@ -82,7 +82,6 @@ export default function ApplicationPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-100 via-white to-red-50 px-6 py-12 flex justify-center">
-      <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-red-500/10 via-transparent to-black/10 pointer-events-none" />
       <div className="w-full max-w-4xl">
         <div className="mb-12">
           <div className="flex items-center justify-center">
@@ -134,7 +133,8 @@ export default function ApplicationPage() {
           </div>
         </div>
 
-        <div className="bg-white/70 backdrop-blur-2xl border border-white/40 shadow-2xl rounded-2xl p-10 transition-all">
+        <div className="bg-white/70 backdrop-blur-2xl border border-white/40 shadow-2xl rounded-2xl p-10 relative">
+          <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-red-500/10 via-transparent to-black/10 pointer-events-none" />
           <ApplicationForm
             socialLinksInfo={{ socialLinks, setSocialLinks }}
             educationalDetailsInfo={{

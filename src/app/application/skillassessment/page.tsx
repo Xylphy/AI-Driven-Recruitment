@@ -88,7 +88,6 @@ export default function SkillAssessmentPage() {
               completing your application.
             </p>
 
-            {/* Skill List */}
             <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-1">
               {tags.map((tag, index) => (
                 <div
@@ -132,7 +131,6 @@ export default function SkillAssessmentPage() {
               ))}
             </div>
 
-            {/* Buttons */}
             <div className="mt-8 flex flex-col sm:flex-row justify-between gap-3">
               <button
                 className="px-5 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition"
