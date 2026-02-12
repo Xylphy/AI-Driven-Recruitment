@@ -54,11 +54,7 @@ export default function JobsPage() {
 		});
 		observer.observe(el);
 		return () => observer.disconnect();
-	}, [
-		auditLogsInfinite.hasNextPage,
-		auditLogsInfinite.isFetchingNextPage,
-		auditLogsInfinite.fetchNextPage,
-	]);
+	}, [auditLogsInfinite]);
 
 	const handleDownloadReport = () => {
 		const doc = new jsPDF();
