@@ -1,21 +1,21 @@
-import SocialLinks from "@/components/application/SocialLinks";
+import { useRouter } from "next/navigation";
+import type React from "react";
 import EducationalDetails from "@/components/application/EducationalDetails";
 import JobExperiences from "@/components/application/JobExperience";
-import { useRouter } from "next/navigation";
+import SocialLinks from "@/components/application/SocialLinks";
+import FileUpload from "@/components/common/FileUpload";
+import { COUNTRY, COUNTRY_CODES, PREFIXES } from "@/lib/constants";
 import {
   EducationalDetailClass,
   JobExperienceClass,
   SocialLinkClass,
 } from "@/types/classes";
-import FileUpload from "@/components/common/FileUpload";
-import {
-  SocialLink,
+import type {
   EducationalDetail,
   JobExperience,
+  SocialLink,
   User,
 } from "@/types/types";
-import React from "react";
-import { COUNTRY, COUNTRY_CODES, PREFIXES } from "@/lib/constants";
 
 export function ApplicationForm({
   socialLinksInfo,
@@ -68,11 +68,9 @@ export function ApplicationForm({
       <div className="flex justify-center items-center mt-10">
         {response && (
           <div
-            className={`${
-              response.success ? "bg-green-100" : "bg-red-100"
-            } border-l-4 border-${
-              response.success ? "green" : "red"
-            }-500 text-${response.success ? "green" : "red"}-700 p-4`}
+            className={`${response.success ? "bg-green-100" : "bg-red-100"
+              } border-l-4 border-${response.success ? "green" : "red"
+              }-500 text-${response.success ? "green" : "red"}-700 p-4`}
             role="alert"
           >
             <p>{response.message}</p>
@@ -388,7 +386,7 @@ export function ApplicationForm({
           type="submit"
           disabled={isSubmitting}
           onClick={() => router.push(`/application/skillassessment`)}
-          className="flex mb-5 justify-center items-center w-full px-6 py-2 rounded-lg bg-gradient-to-r from-red-600 to-red-500 text-white font-bold shadow-lg hover:scale-[1.02] transition"
+          className="flex mb-5 justify-center items-center w-full px-6 py-2 rounded-lg bg-linear-to-r from-red-600 to-red-500 text-white font-bold shadow-lg hover:scale-[1.02] transition"
         >
           {isSubmitting ? "Continuing..." : "Continue to Skill Assessment"}
         </button>

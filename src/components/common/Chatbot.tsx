@@ -63,7 +63,7 @@ export default function ChatbotWidget() {
       {/* Floating Button */}
       <button
         className="fixed bottom-6 right-6 z-50 w-16 h-16 rounded-full
-        bg-gradient-to-br from-red-800 via-red-600 to-red-500
+        bg-linear-to-br from-red-800 via-red-600 to-red-500
         shadow-xl shadow-red-600/30
         flex items-center justify-center
         text-white
@@ -90,7 +90,7 @@ export default function ChatbotWidget() {
             {/* Header */}
             <div
               className="p-4 flex items-center justify-between
-              bg-gradient-to-r from-red-800 via-red-600 to-red-500
+              bg-linear-to-r from-red-800 via-red-600 to-red-500
               text-white"
             >
               <div>
@@ -114,11 +114,10 @@ export default function ChatbotWidget() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.25 }}
-                    className={`max-w-[85%] rounded-xl px-4 py-2 shadow-md ${
-                      msg.sender === "user"
-                        ? "ml-auto bg-gradient-to-br from-red-800 via-red-600 to-red-500 text-white"
+                    className={`max-w-[85%] rounded-xl px-4 py-2 shadow-md ${msg.sender === "user"
+                        ? "ml-auto bg-linear-to-br from-red-800 via-red-600 to-red-500 text-white"
                         : "bg-white border border-red-100"
-                    }`}
+                      }`}
                   >
                     {msg.text}
                   </motion.div>
@@ -162,7 +161,7 @@ export default function ChatbotWidget() {
                 whileTap={{ scale: 0.9 }}
                 onClick={handleSend}
                 className="w-10 h-10 rounded-full
-                bg-gradient-to-br from-red-800 via-red-600 to-red-500
+                bg-linear-to-br from-red-800 via-red-600 to-red-500
                 text-white flex items-center justify-center
                 shadow-md"
                 type="button"

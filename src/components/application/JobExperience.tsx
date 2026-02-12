@@ -1,6 +1,6 @@
 "use client";
 
-import { JobExperience } from "@/types/types";
+import type { JobExperience } from "@/types/types";
 
 const years = Array.from({ length: 56 }, (_, i) => 1980 + i);
 

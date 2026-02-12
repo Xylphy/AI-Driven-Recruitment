@@ -1,7 +1,7 @@
 "use client";
 
-import { EducationalDetail } from "@/types/types";
 import { MONTHS } from "@/lib/constants";
+import type { EducationalDetail } from "@/types/types";
 
 const years = Array.from({ length: 56 }, (_, i) => 1980 + i);
 

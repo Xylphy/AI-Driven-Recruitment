@@ -5,23 +5,23 @@ import { useEffect } from "react";
 import { useAuthContext } from "@/context/AuthProvider";
 
 type UseAuthOptions = {
-	routerActivation?: boolean;
+  routerActivation?: boolean;
 };
 
 export default function useAuth({
-	routerActivation = true,
+  routerActivation = true,
 }: UseAuthOptions = {}) {
-	const router = useRouter();
-	const { isAuthenticated, csrfToken, isLoading } = useAuthContext();
+  const router = useRouter();
+  const { isAuthenticated, csrfToken, isLoading } = useAuthContext();
 
-	useEffect(() => {
-		if (routerActivation && !isAuthenticated && !isLoading) {
-			router.push("/login");
-		}
-	}, [routerActivation, isAuthenticated, router, isLoading]);
+  useEffect(() => {
+    if (routerActivation && !isAuthenticated && !isLoading) {
+      router.push("/login");
+    }
+  }, [routerActivation, isAuthenticated, router, isLoading]);
 
-	return {
-		isAuthenticated,
-		csrfToken,
-	};
+  return {
+    isAuthenticated,
+    csrfToken,
+  };
 }

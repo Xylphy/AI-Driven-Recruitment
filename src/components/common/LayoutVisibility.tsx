@@ -3,13 +3,13 @@
 import { usePathname } from "next/navigation";
 
 export default function LayoutVisibility({
-	children,
+  children,
 }: {
-	children: React.ReactNode;
+  children: React.ReactNode;
 }) {
-	const pathname = usePathname();
+  const pathname = usePathname();
 
-	const isAdminRoute = pathname.startsWith("/admin");
+  const isAdminRoute = pathname.startsWith("/admin");
 
-	return <>{!isAdminRoute && children}</>;
+  return <>{!isAdminRoute && children}</>;
 }
