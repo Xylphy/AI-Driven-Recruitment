@@ -29,7 +29,7 @@ type JobDetail = {
 export default function Page() {
   const router = useRouter();
   const jobId = useParams().id as string;
-  const [showSkillModal, setShowSkillModal] = useState(false);
+  // const [showSkillModal, setShowSkillModal] = useState(false);
   const [tags, setTags] = useState<
     {
       skill: string;
@@ -59,7 +59,7 @@ export default function Page() {
     ? jobDetailsStaff.data
     : jobDetailsUser.data;
 
-  const applyJobMutation = trpc.joblisting.applyForJob.useMutation();
+  // const applyJobMutation = trpc.joblisting.applyForJob.useMutation();
   const deleteJobMutation = trpc.joblisting.deleteJoblisting.useMutation();
 
   useEffect(() => {
@@ -76,28 +76,28 @@ export default function Page() {
     });
   }, [jobDetails?.tags]);
 
-  const handleApply = async () => {
-    setStates((prev) => ({ ...prev, isApplying: true }));
+  // const handleApply = async () => {
+  //   setStates((prev) => ({ ...prev, isApplying: true }));
 
-    await applyJobMutation.mutateAsync(
-      { jobId },
-      {
-        onSuccess() {
-          swalSuccess(
-            "Application Submitted",
-            "Your application was sent successfully.",
-          );
-          jobDetailsUser.refetch();
-        },
-        onError(error) {
-          swalError("Application Failed", error.message);
-        },
-        onSettled() {
-          setStates((prev) => ({ ...prev, isApplying: false }));
-        },
-      },
-    );
-  };
+  //   await applyJobMutation.mutateAsync(
+  //     { jobId },
+  //     {
+  //       onSuccess() {
+  //         swalSuccess(
+  //           "Application Submitted",
+  //           "Your application was sent successfully.",
+  //         );
+  //         jobDetailsUser.refetch();
+  //       },
+  //       onError(error) {
+  //         swalError("Application Failed", error.message);
+  //       },
+  //       onSettled() {
+  //         setStates((prev) => ({ ...prev, isApplying: false }));
+  //       },
+  //     },
+  //   );
+  // };
 
   const handleDeleteJob = async () => {
     swalConfirm(
@@ -341,7 +341,7 @@ export default function Page() {
               <button
                 className="mt-2 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-600 hover:border-red-600"
                 disabled={states.isApplying}
-                onClick={() => router.push("/application/form")}
+                // onClick={() => router.push("/application/form")}
                 type="button"
               >
                 {states.isApplying ? "Applying..." : "Apply"}

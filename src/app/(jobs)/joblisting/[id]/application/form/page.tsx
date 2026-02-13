@@ -74,8 +74,9 @@ export default function ApplicationPage() {
     } catch (error) {
       setResponse({
         success: false,
-        message: `An unexpected error occurred. ${error instanceof Error ? error.message : ""
-          }`,
+        message: `An unexpected error occurred. ${
+          error instanceof Error ? error.message : ""
+        }`,
       });
     } finally {
       setIsSubmitting(false);
@@ -90,39 +91,44 @@ export default function ApplicationPage() {
             <div className="flex items-center">
               <div
                 className={`w-10 h-10 flex items-center justify-center rounded-full text-sm font-bold transition-all
-          ${currentStep >= 1
-                    ? "bg-red-600 text-white shadow-lg"
-                    : "bg-gray-200 text-gray-500"
-                  }`}
+          ${
+            currentStep >= 1
+              ? "bg-red-600 text-white shadow-lg"
+              : "bg-gray-200 text-gray-500"
+          }`}
               >
                 1
               </div>
               <span
-                className={`ml-3 text-sm font-medium ${currentStep >= 1 ? "text-red-600" : "text-gray-500"
-                  }`}
+                className={`ml-3 text-sm font-medium ${
+                  currentStep >= 1 ? "text-red-600" : "text-gray-500"
+                }`}
               >
                 Application Form
               </span>
             </div>
 
             <div
-              className={`flex-1 h-1 mx-6 rounded transition-all ${totalSteps === 2 ? "bg-red-600" : "bg-gray-300"
-                }`}
+              className={`flex-1 h-1 mx-6 rounded transition-all ${
+                totalSteps === 2 ? "bg-red-600" : "bg-gray-300"
+              }`}
             />
 
             <div className="flex items-center">
               <div
                 className={`w-10 h-10 flex items-center justify-center rounded-full text-sm font-bold transition-all
-          ${totalSteps === 2
-                    ? "bg-red-600 text-white shadow-lg"
-                    : "bg-gray-200 text-gray-500"
-                  }`}
+          ${
+            totalSteps === 2
+              ? "bg-red-600 text-white shadow-lg"
+              : "bg-gray-200 text-gray-500"
+          }`}
               >
                 2
               </div>
               <span
-                className={`ml-3 text-sm font-medium ${totalSteps === 2 ? "text-red-600" : "text-gray-500"
-                  }`}
+                className={`ml-3 text-sm font-medium ${
+                  totalSteps === 2 ? "text-red-600" : "text-gray-500"
+                }`}
               >
                 Skill Assessment
               </span>
