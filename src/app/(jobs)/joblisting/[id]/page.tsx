@@ -1,5 +1,6 @@
 "use client";
 
+import type { Route } from "next";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -75,29 +76,6 @@ export default function Page() {
       }));
     });
   }, [jobDetails?.tags]);
-
-  // const handleApply = async () => {
-  //   setStates((prev) => ({ ...prev, isApplying: true }));
-
-  //   await applyJobMutation.mutateAsync(
-  //     { jobId },
-  //     {
-  //       onSuccess() {
-  //         swalSuccess(
-  //           "Application Submitted",
-  //           "Your application was sent successfully.",
-  //         );
-  //         jobDetailsUser.refetch();
-  //       },
-  //       onError(error) {
-  //         swalError("Application Failed", error.message);
-  //       },
-  //       onSettled() {
-  //         setStates((prev) => ({ ...prev, isApplying: false }));
-  //       },
-  //     },
-  //   );
-  // };
 
   const handleDeleteJob = async () => {
     swalConfirm(
@@ -341,7 +319,9 @@ export default function Page() {
               <button
                 className="mt-2 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-600 hover:border-red-600"
                 disabled={states.isApplying}
-                // onClick={() => router.push("/application/form")}
+                onClick={() =>
+                  router.push(`/joblisting/${jobId}/application/form` as Route)
+                }
                 type="button"
               >
                 {states.isApplying ? "Applying..." : "Apply"}

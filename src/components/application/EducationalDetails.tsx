@@ -109,8 +109,11 @@ export default function EducationalDetails({
               onChange={(e) =>
                 update(box.id, "currentlyPursuing", e.target.checked)
               }
+              name="currentlyPursuing"
             />
-            <label className="text-sm">Currently pursuing</label>
+            <label className="text-sm" htmlFor="currentlyPursuing">
+              Currently pursuing
+            </label>
           </div>
           <button
             type="button"
@@ -121,12 +124,13 @@ export default function EducationalDetails({
           </button>
         </div>
       ))}
-      <p
+      <button
+        type="button"
         onClick={add}
         className="text-green-500 cursor-pointer hover:underline mb-4"
       >
         Add Educational Detail
-      </p>
+      </button>
     </div>
   );
 }

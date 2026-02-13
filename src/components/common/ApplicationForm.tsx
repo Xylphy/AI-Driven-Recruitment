@@ -1,4 +1,5 @@
-// import { useParams, useRouter } from "next/navigation";
+import type { Route } from "next";
+import { useParams, useRouter } from "next/navigation";
 import type React from "react";
 import EducationalDetails from "@/components/application/EducationalDetails";
 import JobExperiences from "@/components/application/JobExperience";
@@ -62,8 +63,8 @@ export function ApplicationForm({
   handleTranscriptSelect?: (file: File | null) => void;
   transcriptFileName?: string;
 }) {
-  // const router = useRouter();
-  // const { id: jobId } = useParams();
+  const router = useRouter();
+  const { id: jobId } = useParams();
   return (
     <>
       <div className="flex justify-center items-center mt-10">
@@ -388,7 +389,11 @@ export function ApplicationForm({
         <button
           type="submit"
           disabled={isSubmitting}
-          // onClick={() => router.push(`/joblisting/${jobId as string}/application/skill-assessment`)}
+          onClick={() =>
+            router.push(
+              `/joblisting/${jobId as string}/application/skill-assessment` as Route,
+            )
+          }
           className="flex mb-5 justify-center items-center w-full px-6 py-2 rounded-lg bg-linear-to-r from-red-600 to-red-500 text-white font-bold shadow-lg hover:scale-[1.02] transition"
         >
           {isSubmitting ? "Continuing..." : "Continue to Skill Assessment"}

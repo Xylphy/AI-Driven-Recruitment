@@ -13,7 +13,7 @@ export default function SkillAssessmentPage() {
 
   const currentStep = 2;
   const totalSteps = 2;
-  const progress = (currentStep / totalSteps) * 100;
+  // const progress = (currentStep / totalSteps) * 100;
 
   const [tags, setTags] = useState<SkillTag[]>([
     { skill: "JavaScript" },
@@ -24,7 +24,7 @@ export default function SkillAssessmentPage() {
   ]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-100 via-white to-red-50 px-6 py-12 flex justify-center">
+    <div className="min-h-screen bg-linear-to-br from-red-100 via-white to-red-50 px-6 py-12 flex justify-center">
       <div className="w-full max-w-4xl">
         <div className="mb-12">
           <div className="flex items-center justify-center">
@@ -77,7 +77,7 @@ export default function SkillAssessmentPage() {
         </div>
 
         <div className="bg-white/70 backdrop-blur-2xl border border-white/40 shadow-2xl rounded-2xl p-10 relative">
-          <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-red-500/10 via-transparent to-black/10 pointer-events-none" />
+          <div className="absolute inset-0 rounded-2xl bg-linear-to-br from-red-500/10 via-transparent to-black/10 pointer-events-none" />
           <div className="relative">
             <h1 className="text-3xl font-bold text-red-600 mb-2 text-center">
               SKILL ASSESSMENT
@@ -141,7 +141,7 @@ export default function SkillAssessmentPage() {
               </button>
 
               <button
-                className="px-6 py-2 rounded-lg bg-gradient-to-r from-red-600 to-red-500 text-white font-bold shadow-lg hover:scale-[1.02] transition"
+                className="px-6 py-2 rounded-lg bg-linear-to-r from-red-600 to-red-500 text-white font-bold shadow-lg hover:scale-[1.02] transition"
                 type="button"
               >
                 Complete Application
