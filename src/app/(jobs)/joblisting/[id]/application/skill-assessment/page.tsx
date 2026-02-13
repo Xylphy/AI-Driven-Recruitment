@@ -11,10 +11,6 @@ type SkillTag = {
 export default function SkillAssessmentPage() {
   const router = useRouter();
 
-  const currentStep = 2;
-  const totalSteps = 2;
-  // const progress = (currentStep / totalSteps) * 100;
-
   const [tags, setTags] = useState<SkillTag[]>([
     { skill: "JavaScript" },
     { skill: "React" },
@@ -30,46 +26,31 @@ export default function SkillAssessmentPage() {
           <div className="flex items-center justify-center">
             <div className="flex items-center">
               <div
-                className={`w-10 h-10 flex items-center justify-center rounded-full text-sm font-bold transition-all
-          ${
-            currentStep >= 1
-              ? "bg-red-600 text-white shadow-lg"
-              : "bg-gray-200 text-gray-500"
-          }`}
+                className="w-12 h-12 flex items-center justify-center 
+        rounded-full text-sm font-bold
+        bg-gradient-to-br from-red-600 to-rose-500
+        text-white shadow-lg shadow-red-500/30"
               >
                 1
               </div>
-              <span
-                className={`ml-3 text-sm font-medium ${
-                  currentStep >= 1 ? "text-red-600" : "text-gray-500"
-                }`}
-              >
+
+              <span className="ml-3 text-sm font-semibold text-red-600 tracking-wide">
                 Application Form
               </span>
             </div>
-
-            <div
-              className={`flex-1 h-1 mx-6 rounded transition-all ${
-                totalSteps === 2 ? "bg-red-600" : "bg-gray-300"
-              }`}
-            />
+            <div className="flex-1 h-[2px] mx-6 bg-gradient-to-r from-red-600 to-rose-500 rounded-full" />
 
             <div className="flex items-center">
               <div
-                className={`w-10 h-10 flex items-center justify-center rounded-full text-sm font-bold transition-all
-          ${
-            totalSteps === 2
-              ? "bg-red-600 text-white shadow-lg"
-              : "bg-gray-200 text-gray-500"
-          }`}
+                className="w-12 h-12 flex items-center justify-center 
+        rounded-full text-sm font-bold
+        bg-gradient-to-br from-red-600 to-rose-500
+        text-white shadow-lg shadow-red-500/30"
               >
                 2
               </div>
-              <span
-                className={`ml-3 text-sm font-medium ${
-                  totalSteps === 2 ? "text-red-600" : "text-gray-500"
-                }`}
-              >
+
+              <span className="ml-3 text-sm font-semibold text-red-600 tracking-wide">
                 Skill Assessment
               </span>
             </div>
