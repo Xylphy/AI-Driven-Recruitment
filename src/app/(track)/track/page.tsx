@@ -20,15 +20,15 @@ export default function ApplicationTrackPage() {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-white">
-      <div className="pointer-events-none absolute -top-40 -left-40 h-[500px] w-[500px] rounded-full bg-red-500/20 blur-[120px]" />
-      <div className="pointer-events-none absolute top-1/3 -right-40 h-[500px] w-[500px] rounded-full bg-rose-400/20 blur-[120px]" />
+      <div className="pointer-events-none absolute -top-40 -left-40 h-125 w-125 rounded-full bg-red-500/20 blur-[120px]" />
+      <div className="pointer-events-none absolute top-1/3 -right-40 h-125 w-125 rounded-full bg-rose-400/20 blur-[120px]" />
 
       <div className="relative z-10 flex min-h-screen items-center justify-center px-6">
         <div className="grid w-full max-w-6xl grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div className="space-y-6">
             <h1 className="text-4xl lg:text-5xl font-extrabold leading-tight text-gray-900">
               Build Your Future with <br />
-              <span className="bg-gradient-to-r from-red-600 to-rose-500 bg-clip-text text-transparent">
+              <span className="bg-linear-to-r from-red-600 to-rose-500 bg-clip-text text-transparent">
                 Alliance Software
               </span>
             </h1>
@@ -40,7 +40,7 @@ export default function ApplicationTrackPage() {
 
             <Link
               href={"/"}
-              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-red-600 to-rose-500 px-6 py-3 font-semibold text-white shadow-lg hover:opacity-90 transition"
+              className="inline-flex items-center gap-2 rounded-xl bg-linear-to-r from-red-600 to-rose-500 px-6 py-3 font-semibold text-white shadow-lg hover:opacity-90 transition"
             >
               Apply Now
             </Link>
@@ -78,7 +78,7 @@ export default function ApplicationTrackPage() {
               <button
                 type="button"
                 onClick={handleTrack}
-                className="mt-6 w-full rounded-xl bg-gradient-to-r from-red-600 to-rose-500 py-3 font-bold text-white shadow-lg hover:scale-[1.01] hover:opacity-90 transition"
+                className="mt-6 w-full rounded-xl bg-linear-to-r from-red-600 to-rose-500 py-3 font-bold text-white shadow-lg hover:scale-[1.01] hover:opacity-90 transition"
               >
                 Track Application
               </button>
