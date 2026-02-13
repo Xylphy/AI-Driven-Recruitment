@@ -61,7 +61,10 @@ export default function ChatbotWidget() {
       `http://localhost:8000/chatbot/use/${conversationId}`,
     );
 
-    setMessages((prev) => [...prev, { message, role: "user" }]);
+    setMessages((prev) => [
+      ...prev,
+      { message, role: "user", id: prev.length.toString() },
+    ]);
 
     // Show typing animation
     setIsTyping(true);
@@ -85,6 +88,7 @@ export default function ChatbotWidget() {
           {
             message: data.reply,
             role: "assistant",
+            id: prev.length.toString(),
           },
         ]);
       })

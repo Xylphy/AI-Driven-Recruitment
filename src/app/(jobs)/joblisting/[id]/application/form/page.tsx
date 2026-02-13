@@ -86,12 +86,7 @@ export default function ApplicationPage() {
         <div className="mb-12">
           <div className="flex items-center justify-center">
             <div className="flex items-center">
-              <div
-                className="w-12 h-12 flex items-center justify-center 
-        rounded-full text-sm font-bold
-        bg-gradient-to-br from-red-600 to-rose-500
-        text-white shadow-lg shadow-red-500/30"
-              >
+              <div className="w-12 h-12 flex items-center justify-center  rounded-full text-sm font-bold bg-linear-to-br from-red-600 to-rose-500 text-white shadow-lg shadow-red-500/30">
                 1
               </div>
 
@@ -100,7 +95,7 @@ export default function ApplicationPage() {
               </span>
             </div>
 
-            <div className="flex-1 h-[2px] mx-6 bg-gray-300 rounded-full" />
+            <div className="flex-1 h-0.5 mx-6 bg-gray-300 rounded-full" />
 
             <div className="flex items-center">
               <div

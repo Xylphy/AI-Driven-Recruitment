@@ -52,7 +52,6 @@ export const userSchema = z.object({
     )
     .optional()
     .default([]),
-  skillSet: z.string().optional().default(""),
   resume: z
     .instanceof(File)
     .optional()

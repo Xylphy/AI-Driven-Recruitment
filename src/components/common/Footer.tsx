@@ -8,7 +8,7 @@ const Header: React.FC = () => {
   return (
     <header className="relative w-full bg-white">
       {/* Red gradient overlay glow */}
-      <div className="absolute inset-0 bg-gradient-to-r from-red-600/10 via-rose-500/10 to-red-700/10 pointer-events-none" />
+      <div className="absolute inset-0 bg-linear-to-r from-red-600/10 via-rose-500/10 to-red-700/10 pointer-events-none" />
 
       <div className="relative backdrop-blur-xl bg-white/70 border-b border-white/40 shadow-lg">
         <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-6">
@@ -62,7 +62,7 @@ const Header: React.FC = () => {
                   className="relative hover:text-red-600 transition group"
                 >
                   HOME
-                  <span className="absolute left-0 -bottom-1 w-0 h-[2px] bg-red-600 transition-all group-hover:w-full" />
+                  <span className="absolute left-0 -bottom-1 w-0 h-0.5 bg-red-600 transition-all group-hover:w-full" />
                 </Link>
               </li>
 
@@ -72,7 +72,7 @@ const Header: React.FC = () => {
                   className="relative hover:text-red-600 transition group"
                 >
                   ABOUT US
-                  <span className="absolute left-0 -bottom-1 w-0 h-[2px] bg-red-600 transition-all group-hover:w-full" />
+                  <span className="absolute left-0 -bottom-1 w-0 h-0.5 bg-red-600 transition-all group-hover:w-full" />
                 </Link>
               </li>
 
@@ -82,14 +82,14 @@ const Header: React.FC = () => {
                   className="relative hover:text-red-600 transition group"
                 >
                   CONTACT US
-                  <span className="absolute left-0 -bottom-1 w-0 h-[2px] bg-red-600 transition-all group-hover:w-full" />
+                  <span className="absolute left-0 -bottom-1 w-0 h-0.5 bg-red-600 transition-all group-hover:w-full" />
                 </Link>
               </li>
 
               <li>
                 <Link
                   href="/login"
-                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-red-600 to-rose-500 text-white shadow-md hover:opacity-90 transition"
+                  className="px-4 py-2 rounded-xl bg-linear-to-r from-red-600 to-rose-500 text-white shadow-md hover:opacity-90 transition"
                 >
                   ALLIANCE
                 </Link>
