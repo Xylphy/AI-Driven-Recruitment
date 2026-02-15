@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
-import { MdChat, MdClose, MdSend } from "react-icons/md";
+import { MdChat, MdClose, MdSend, MdAdd } from "react-icons/md";
 
 type Message = {
   id?: string;
@@ -129,7 +129,6 @@ export default function ChatbotWidget() {
 
   return (
     <>
-      {/* Floating Button */}
       <button
         className="fixed bottom-6 right-6 z-50 w-16 h-16 rounded-full
         bg-linear-to-br from-red-800 via-red-600 to-red-500
@@ -156,25 +155,43 @@ export default function ChatbotWidget() {
             border border-red-100
             shadow-2xl"
           >
-            {/* Header */}
             <div
               className="p-4 flex items-center justify-between
-              bg-linear-to-r from-red-800 via-red-600 to-red-500
-              text-white"
+  bg-linear-to-r from-red-800 via-red-600 to-red-500
+  text-white"
             >
               <div>
-                <h3 className="font-semibold text-sm">AI Assistant</h3>
+                <h3 className="font-semibold text-sm tracking-wide">
+                  AI Assistant
+                </h3>
                 <p className="text-[11px] opacity-90">
                   Smart help, instant answers
                 </p>
               </div>
 
-              <button onClick={handleClose} type="button">
-                <MdClose className="text-xl" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  className="flex items-center gap-1 px-3 py-1.5
+      text-xs font-medium
+      bg-white/20 hover:bg-white/30
+      backdrop-blur-md
+      rounded-full transition-all duration-200"
+                >
+                  <MdAdd className="text-sm" />
+                  New Chat
+                </button>
+
+                <button
+                  onClick={handleClose}
+                  type="button"
+                  className="hover:opacity-80 transition"
+                >
+                  <MdClose className="text-xl" />
+                </button>
+              </div>
             </div>
 
-            {/* Messages */}
             <div className="p-4 space-y-3 text-sm overflow-y-auto h-72 bg-red-50/40">
               <AnimatePresence>
                 {messages.map((msg) => (
@@ -194,7 +211,6 @@ export default function ChatbotWidget() {
                 ))}
               </AnimatePresence>
 
-              {/* Typing Indicator */}
               {isTyping && (
                 <motion.div
                   initial={{ opacity: 0 }}
@@ -212,7 +228,6 @@ export default function ChatbotWidget() {
               <div ref={bottomRef} />
             </div>
 
-            {/* Input */}
             <div className="p-3 flex items-center gap-2 border-t border-red-100 bg-white">
               <input
                 type="text"
