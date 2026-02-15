@@ -103,7 +103,7 @@ export default function AdminDashboard() {
               value: statsQuery.data?.totalCandidates,
             },
             {
-              label: "Candidates for Final Interview",
+              label: "Hiring Success Rate",
               value: statsQuery.data?.candidatesForFinalInterview,
             },
             { label: "Avg Time-to-Hire", value: "21 days" },

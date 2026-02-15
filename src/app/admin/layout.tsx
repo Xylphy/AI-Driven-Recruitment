@@ -18,6 +18,7 @@ import {
   MdPeople,
   MdSettings,
   MdWork,
+  MdInsights,
 } from "react-icons/md";
 import { auth } from "@/lib/firebase/client";
 import { trpc } from "@/lib/trpc/client";
@@ -131,6 +132,15 @@ export default function AdminLayout({
                     }`}
                   >
                     <MdNotifications /> Audit Logs
+                  </Link>
+
+                  <Link
+                    href={{ pathname: "/admin/kpi_metrics" }}
+                    className={`flex items-center gap-3 hover:bg-white/20 px-3 py-2 rounded-md transition ${
+                      pathName === "/admin/kpi_metrics" ? "bg-white/30" : ""
+                    }`}
+                  >
+                    <MdInsights /> KPI Metrics
                   </Link>
 
                   <Link
