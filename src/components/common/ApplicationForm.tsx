@@ -20,8 +20,6 @@ import type {
 
 export function ApplicationForm({
   socialLinksInfo,
-  educationalDetailsInfo,
-  jobExperiencesInfo,
   userInfo,
   isSubmitting,
   handleSubmit,
@@ -31,20 +29,11 @@ export function ApplicationForm({
   title,
   fileName,
   handleTranscriptSelect,
+  transcriptFileName,
 }: {
   socialLinksInfo: {
     socialLinks: SocialLink[];
     setSocialLinks: React.Dispatch<React.SetStateAction<SocialLink[]>>;
-  };
-  educationalDetailsInfo: {
-    educationalDetails: EducationalDetail[];
-    setEducationalDetails: React.Dispatch<
-      React.SetStateAction<EducationalDetail[]>
-    >;
-  };
-  jobExperiencesInfo: {
-    jobExperiences: JobExperience[];
-    setJobExperience: React.Dispatch<React.SetStateAction<JobExperience[]>>;
   };
   userInfo?: {
     user: User;
@@ -65,340 +54,192 @@ export function ApplicationForm({
 }) {
   const router = useRouter();
   const { id: jobId } = useParams();
+
+  const inputStyle =
+    "w-full px-4 py-3 rounded-xl bg-white border border-gray-300 shadow-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition";
+
   return (
-    <>
-      <div className="flex justify-center items-center mt-10">
+    <div>
+      <div className="bg-linear-to-br from-red-100 via-white to-red-50 border border-gray-200 shadow-2xl rounded-3xl p-10">
         {response && (
-          <div
-            className={`${
-              response.success ? "bg-green-100" : "bg-red-100"
-            } border-l-4 border-${
-              response.success ? "green" : "red"
-            }-500 text-${response.success ? "green" : "red"}-700 p-4`}
-            role="alert"
-          >
-            <p>{response.message}</p>
+          <div className="mb-6 rounded-xl px-4 py-3 text-sm font-medium border bg-red-50 border-red-400 text-red-700">
+            {response.message}
           </div>
         )}
-      </div>
-      <h1 className="text-4xl font-bold text-[#E30022] text-center mb-2 uppercase tracking-wide">
-        {title}
-      </h1>
-      <hr></hr>
-      <p className="text-center text-sm text-gray-700 mt-2 mb-6">
-        {description}
-      </p>
-      <form onSubmit={handleSubmit} className="mt-6">
-        <div className="mb-4">
-          <label
-            htmlFor="resume"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Upload Resume
-          </label>
-          <FileUpload
-            onFileSelect={handleFileSelect}
-            defaultFileName={fileName}
-            labelName="Upload Resume"
-          />
-        </div>
-        <h3 className="mb-2 font-bold">Basic Information</h3>
-        <div className="mb-4">
-          <label
-            htmlFor="firstName"
-            className="block text-sm font-medium text-gray-700"
-          >
-            First Name
-          </label>
-          <select
-            id="prefix"
-            name="prefix"
-            className="w-24 px-4 py-2 border border-gray-300 rounded-md focus:ring-red-600 "
-            value={userInfo?.user.prefix}
-            onChange={(e) => {
-              userInfo?.setUserInfo((prev) => ({
-                ...prev,
-                prefix: e.target.value,
-              }));
-            }}
-          >
-            <option value="">None</option>
-            {PREFIXES.map((prefix) => (
-              <option key={prefix} value={prefix}>
-                {prefix}
-              </option>
-            ))}
-          </select>
 
-          <input
-            type="text"
-            id="firstName"
-            name="firstName"
-            className="flex-1 ml-2 w-177 px-4 py-2 border border-gray-300 rounded-md focus:ring-red-600 focus:border-red-600"
-            required
-            defaultValue={userInfo?.user.firstName}
-          />
-        </div>
-        <div className="mb-4">
-          <label
-            htmlFor="lastName"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Last Name
-          </label>
-          <input
-            type="text"
-            id="lastName"
-            name="lastName"
-            className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-            required
-            defaultValue={userInfo?.user.lastName}
-          />
-        </div>
-        <div className="mb-4">
-          <label
-            htmlFor="email"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Email
-          </label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-            required
-            defaultValue={userInfo?.user.email}
-          />
-        </div>
-        <div className="mb-4">
-          <label
-            htmlFor="mobileNumber"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Mobile Number
-          </label>
-          <div className="flex">
-            <select
-              id="countryCode"
-              name="countryCode"
-              className="w-35 px-4 py-2 border border-gray-300 rounded-md focus:ring-red-600"
-              value={userInfo?.user.countryCode}
-              onChange={(e) => {
-                userInfo?.setUserInfo((prev) => ({
-                  ...prev,
-                  countryCode: e.target.value,
-                }));
+        <h1 className="text-3xl font-bold text-red-600 text-center uppercase tracking-wide">
+          {title}
+        </h1>
+
+        <p className="text-center text-gray-600 mt-2 mb-8 text-sm">
+          {description}
+        </p>
+
+        <form onSubmit={handleSubmit} className="space-y-10">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">
+              Upload Resume
+            </label>
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+              <FileUpload
+                onFileSelect={handleFileSelect}
+                defaultFileName={fileName}
+                labelName="Upload Resume"
+              />
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-lg font-semibold text-gray-800 mb-6 border-b border-gray-200 pb-2">
+              Basic Information
+            </h3>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-sm text-gray-600">First Name</label>
+                <input
+                  type="text"
+                  name="firstName"
+                  required
+                  defaultValue={userInfo?.user.firstName}
+                  className={inputStyle}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm text-gray-600">Last Name</label>
+                <input
+                  type="text"
+                  name="lastName"
+                  required
+                  defaultValue={userInfo?.user.lastName}
+                  className={inputStyle}
+                />
+              </div>
+
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-sm text-gray-600">Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  required
+                  defaultValue={userInfo?.user.email}
+                  className={inputStyle}
+                />
+              </div>
+
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-sm text-gray-600">Mobile Number</label>
+                <input
+                  type="tel"
+                  name="mobileNumber"
+                  required
+                  defaultValue={userInfo?.user.mobileNumber}
+                  className={inputStyle}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-lg font-semibold text-gray-800 mb-6 border-b border-gray-200 pb-2">
+              Address Information
+            </h3>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              <input
+                type="text"
+                placeholder="Street"
+                defaultValue={userInfo?.user.street}
+                className={inputStyle}
+              />
+
+              <input
+                type="text"
+                placeholder="City"
+                defaultValue={userInfo?.user.city}
+                className={inputStyle}
+              />
+
+              <input
+                type="text"
+                placeholder="State / Province"
+                defaultValue={userInfo?.user.state_}
+                className={inputStyle}
+              />
+
+              <input
+                type="text"
+                placeholder="ZIP / Postal Code"
+                defaultValue={userInfo?.user.zip}
+                className={inputStyle}
+              />
+            </div>
+          </div>
+
+          {/* Social Links */}
+          <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              Social Links
+            </h3>
+
+            <SocialLinks
+              update={(id: number, value: string) => {
+                socialLinksInfo?.setSocialLinks((prev) =>
+                  prev.map((link) =>
+                    link.id === id ? { ...link, value } : link,
+                  ),
+                );
               }}
-            >
-              {Object.entries(COUNTRY_CODES).map(([country, code]) => (
-                <option key={country} value={code}>
-                  {code} ({country})
-                </option>
-              ))}
-            </select>
-            <input
-              type="tel"
-              id="mobileNumber"
-              name="mobileNumber"
-              className="w-full mt-0 px-4 py-2 border border-gray-300 rounded-r-md focus:ring-blue-500 focus:border-blue-500"
-              required
-              defaultValue={userInfo?.user.mobileNumber}
-            />
-          </div>
-        </div>
-        <div className="mb-4">
-          <h3 className="mb-2 font-bold">Address Information</h3>
-          <div className="mt-2">
-            <label
-              htmlFor="street"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Street
-            </label>
-            <input
-              type="text"
-              id="street"
-              name="street"
-              className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-              defaultValue={userInfo?.user.street}
-            />
-          </div>
-          <div className="mt-4">
-            <label
-              htmlFor="zip"
-              className="block text-sm font-medium text-gray-700"
-            >
-              ZIP/Postal Code
-            </label>
-            <input
-              type="text"
-              id="zip"
-              name="zip"
-              className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-              defaultValue={userInfo?.user.zip}
-            />
-          </div>
-          <div className="mt-4">
-            <label
-              htmlFor="city"
-              className="block text-sm font-medium text-gray-700"
-            >
-              City
-            </label>
-            <input
-              type="text"
-              id="city"
-              name="city"
-              className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-              defaultValue={userInfo?.user.city}
-            />
-          </div>
-          <div className="mt-4">
-            <label
-              htmlFor="state"
-              className="block text-sm font-medium text-gray-700"
-            >
-              State/Province
-            </label>
-            <input
-              type="text"
-              id="state"
-              name="state"
-              className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-              defaultValue={userInfo?.user.state_}
-            />
-          </div>
-          <div className="mt-4">
-            <label
-              htmlFor="country"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Country
-            </label>
-            <select
-              id="country"
-              name="country"
-              className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-              value={userInfo?.user.country}
-              onChange={(e) => {
-                userInfo?.setUserInfo((prev) => ({
-                  ...prev,
-                  country: e.target.value,
-                }));
+              delete={(id: number) => {
+                socialLinksInfo.setSocialLinks((prev) =>
+                  prev.filter((link) => link.id !== id),
+                );
               }}
-            >
-              <option value="">Select a country</option>
-              {Object.entries(COUNTRY).map(([code, name]) => (
-                <option key={code} value={code}>
-                  {name}
-                </option>
-              ))}
-            </select>
+              add={() => {
+                socialLinksInfo.setSocialLinks((links) => [
+                  ...links,
+                  new SocialLinkClass(links.length + 1),
+                ]);
+              }}
+              getSocialLinks={socialLinksInfo.socialLinks || []}
+            />
           </div>
-        </div>
-        <div className="mb-4">
-          <EducationalDetails
-            add={() => {
-              educationalDetailsInfo.setEducationalDetails([
-                ...educationalDetailsInfo.educationalDetails,
-                new EducationalDetailClass(
-                  educationalDetailsInfo.educationalDetails.length + 1,
-                ),
-              ]);
-            }}
-            update={(id: number, key: string, value: string | boolean) => {
-              educationalDetailsInfo.setEducationalDetails((prev) =>
-                prev.map((detail) =>
-                  detail.id === id ? { ...detail, [key]: value } : detail,
-                ),
-              );
-            }}
-            delete={(id: number) => {
-              educationalDetailsInfo.setEducationalDetails((prev) =>
-                prev.filter((detail) => detail.id !== id),
-              );
-            }}
-            getEducationalDetails={
-              educationalDetailsInfo.educationalDetails || []
+          <div className="space-y-2">
+            <label
+              htmlFor="transcript"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Upload Interview Video
+            </label>
+
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+              {handleTranscriptSelect && (
+                <FileUpload
+                  onFileSelect={handleTranscriptSelect}
+                  defaultFileName={transcriptFileName}
+                  labelName="Upload Interview Video"
+                />
+              )}
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            onClick={() =>
+              router.push(
+                `/joblisting/${jobId as string}/application/skill-assessment` as Route,
+              )
             }
-          />
-        </div>
-        <div className="mb-4">
-          <JobExperiences
-            add={() => {
-              jobExperiencesInfo.setJobExperience([
-                ...jobExperiencesInfo.jobExperiences,
-                new JobExperienceClass(
-                  jobExperiencesInfo.jobExperiences.length + 1,
-                ),
-              ]);
-            }}
-            update={(id: number, key: string, value: string | boolean) => {
-              jobExperiencesInfo.setJobExperience((prev) =>
-                prev.map((detail) =>
-                  detail.id === id ? { ...detail, [key]: value } : detail,
-                ),
-              );
-            }}
-            delete={(id: number) => {
-              jobExperiencesInfo.setJobExperience((prev) =>
-                prev.filter((detail) => detail.id !== id),
-              );
-            }}
-            getJobExperiences={jobExperiencesInfo.jobExperiences || []}
-          />
-        </div>
-        <div className="mb-4">
-          <SocialLinks
-            update={(id: number, value: string) => {
-              socialLinksInfo?.setSocialLinks((prev) =>
-                prev.map((link) =>
-                  link.id === id ? { ...link, value } : link,
-                ),
-              );
-            }}
-            delete={(id: number) => {
-              socialLinksInfo.setSocialLinks((prev) =>
-                prev.filter((link) => link.id !== id),
-              );
-            }}
-            add={() => {
-              socialLinksInfo.setSocialLinks((links) => [
-                ...links,
-                new SocialLinkClass(links.length + 1),
-              ]);
-            }}
-            getSocialLinks={socialLinksInfo.socialLinks || []}
-          />
-        </div>
-        <div className="mb-6">
-          <label
-            htmlFor="transcript"
-            className="block text-sm font-medium text-gray-700 mb-2"
+            className="w-full py-4 rounded-2xl font-bold text-white text-lg
+            bg-gradient-to-r from-red-600 to-red-500
+            shadow-xl hover:scale-[1.02] transition-transform duration-300 disabled:opacity-70"
           >
-            Upload Interview Video
-          </label>
-          {handleTranscriptSelect && (
-            <FileUpload
-              onFileSelect={handleTranscriptSelect}
-              labelName="Upload Transcript"
-            />
-          )}
-        </div>
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          onClick={() =>
-            router.push(
-              `/joblisting/${jobId as string}/application/skill-assessment` as Route,
-            )
-          }
-          className="flex mb-5 justify-center items-center w-full px-6 py-2 rounded-lg bg-linear-to-r from-red-600 to-red-500 text-white font-bold shadow-lg hover:scale-[1.02] transition"
-        >
-          {isSubmitting ? "Continuing..." : "Continue to Skill Assessment"}
-        </button>
-      </form>
-    </>
+            {isSubmitting ? "Continuing..." : "Continue to Skill Assessment"}
+          </button>
+        </form>
+      </div>
+    </div>
   );
 }

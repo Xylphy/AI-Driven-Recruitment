@@ -63,8 +63,7 @@ export default function SkillAssessmentPage() {
             <h1 className="text-3xl font-bold text-red-600 mb-2 text-center">
               SKILL ASSESSMENT
             </h1>
-            <hr></hr>
-            <p className="text-gray-600 mb-8 text-center">
+            <p className="text-gray-600 mb-8 text-center text-sm">
               Please rate your proficiency in the following skills before
               completing your application.
             </p>

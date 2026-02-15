@@ -113,25 +113,17 @@ export default function ApplicationPage() {
           </div>
         </div>
 
-        <div className="bg-white/70 backdrop-blur-2xl border border-white/40 shadow-2xl rounded-2xl p-10 relative">
-          <div className="absolute inset-0 rounded-2xl bg-linear-to-br from-red-500/10 via-transparent to-black/10 pointer-events-none" />
-          <ApplicationForm
-            socialLinksInfo={{ socialLinks, setSocialLinks }}
-            educationalDetailsInfo={{
-              educationalDetails,
-              setEducationalDetails,
-            }}
-            jobExperiencesInfo={{ jobExperiences, setJobExperience }}
-            handleSubmit={handleSubmit}
-            isSubmitting={isSubmitting}
-            handleFileSelect={handleFileSelect}
-            response={response}
-            description="Complete your application details to proceed to the skill assessment."
-            title="APPLICATION"
-            handleTranscriptSelect={handleTranscriptSelect}
-            transcriptFileName={transcriptFileName}
-          />
-        </div>
+        <ApplicationForm
+          socialLinksInfo={{ socialLinks, setSocialLinks }}
+          handleSubmit={handleSubmit}
+          isSubmitting={isSubmitting}
+          handleFileSelect={handleFileSelect}
+          response={response}
+          description="Complete your application details to proceed to the skill assessment."
+          title="APPLICATION"
+          handleTranscriptSelect={handleTranscriptSelect}
+          transcriptFileName={transcriptFileName}
+        />
       </div>
     </div>
   );
