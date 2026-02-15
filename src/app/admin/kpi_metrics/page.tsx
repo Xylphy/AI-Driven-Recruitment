@@ -204,10 +204,7 @@ export default function KPIMetrics() {
 
             <tbody>
               {kpiRows.map((row, index) => (
-                <tr
-                  key={index}
-                  className="border-t hover:bg-red-50/40 transition"
-                >
+                <tr key={index} className="hover:bg-red-50/40 transition">
                   <td className="p-4 font-medium">{row.role}</td>
                   <td className="p-4 text-center">{row.totalApplicants}</td>
                   <td className="p-4 text-center">{row.interviewed}</td>
