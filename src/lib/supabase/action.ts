@@ -1,4 +1,4 @@
-import { SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export interface QueryFilter {
   column: string;
@@ -19,7 +19,7 @@ interface QueryResult<T> {
 export function insertTable(
   supabase: SupabaseClient,
   table: string,
-  data: object | object[]
+  data: object | object[],
 ) {
   return supabase.from(table).insert(data).select("id");
 }
@@ -28,7 +28,7 @@ export function deleteRow(
   supabase: SupabaseClient,
   table: string,
   column: string,
-  value: string
+  value: string,
 ) {
   return supabase.from(table).delete().eq(column, value);
 }
@@ -37,7 +37,7 @@ export function find<T>(
   supabase: SupabaseClient,
   table: string,
   filters?: Array<QueryFilter>,
-  select: string = "*"
+  select: string = "*",
 ) {
   return {
     single: async (): Promise<QueryResult<T>> => {
@@ -96,12 +96,14 @@ export function updateTable(
   table: string,
   data: object,
   queryFilter?: Array<QueryFilter>,
-  selectColumns?: string
+  selectColumns?: string,
 ) {
   const query = supabase.from(table).update(data);
 
   if (queryFilter) {
-    queryFilter.forEach(({ column, value }) => query.eq(column, value));
+    queryFilter.forEach(({ column, value }) => {
+      query.eq(column, value);
+    });
   }
 
   if (
@@ -119,7 +121,7 @@ export function updateTable(
 export function findWithJoin<T>(
   supabase: SupabaseClient,
   mainTable: string,
-  joinConfigs: Array<QueryForeignKey>
+  joinConfigs: Array<QueryForeignKey>,
 ) {
   return {
     many: (filters?: Array<QueryFilter>) => {
@@ -155,7 +157,7 @@ export function findWithJoin<T>(
 export async function countTable(
   supabase: SupabaseClient,
   table: string,
-  filters?: Array<{ column: string; value: string }>
+  filters?: Array<{ column: string; value: string }>,
 ): Promise<QueryResult<number>> {
   let query = supabase.from(table).select("*", { count: "exact", head: true }); // returns only count and no data
 

@@ -1,20 +1,15 @@
 "use client";
 
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
-import { getCsrfToken, refreshToken } from "@/lib/library";
-import { auth } from "@/lib/firebase/client";
-import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  onAuthStateChanged,
   type User as FirebaseAuthUser,
+  onAuthStateChanged,
 } from "firebase/auth";
+import { useRouter } from "next/navigation";
+import type React from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { auth } from "@/lib/firebase/client";
+import { getCsrfToken, refreshToken } from "@/lib/library";
 
 const AuthContext = createContext<{
   isAuthenticated: boolean;
@@ -69,6 +64,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   // Handle Firebase auth state changes
+  // biome-ignore lint/correctness/useExhaustiveDependencies: // Removing router and queryClient to avoid aborting on navigation and dependency array size issues
   useEffect(() => {
     if (!csrfToken) return;
 
@@ -112,13 +108,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setIsAuthenticated(true);
           wasAuthenticated.current = true;
         }
-      }
+      },
     );
 
     return () => unsubscribe();
     // Remove `router` and `queryClient` from deps to avoid aborting on navigation and dependency array size issues
     // Silently ignore the lint warning for exhaustive-deps
-  }, [csrfToken]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [csrfToken]);
 
   return (
     <AuthContext.Provider value={{ isAuthenticated, csrfToken, isLoading }}>

@@ -1,18 +1,18 @@
 // Router for HR Officer related procedures
 
 import { TRPCError } from "@trpc/server";
-import { createTRPCRouter, hrOfficerProcedure } from "../init";
-import { createClientServer } from "@/lib/supabase/supabase";
 import { z } from "zod";
 import { deleteRow, find, insertTable } from "@/lib/supabase/action";
-import { AuditLog, Changes, HRReport } from "@/types/schema";
+import { createClientServer } from "@/lib/supabase/supabase";
+import type { AuditLog, Changes, HRReport } from "@/types/schema";
+import { createTRPCRouter, hrOfficerProcedure } from "../init";
 
 const hrOfficerRouter = createTRPCRouter({
   assignedJobs: hrOfficerProcedure
     .input(
       z.object({
         query: z.string().optional(),
-      })
+      }),
     )
     .query(async ({ input, ctx }) => {
       const supabase = await createClientServer(1, true);
@@ -20,7 +20,7 @@ const hrOfficerRouter = createTRPCRouter({
       const query = supabase
         .from("job_listings")
         .select("*, job_applicants(id)")
-        .eq("officer_id", ctx.userJWT!.id);
+        .eq("officer_id", ctx.userJWT?.id);
 
       if (input.query) {
         query.ilike("title", `%${input.query}%`);
@@ -52,10 +52,10 @@ const hrOfficerRouter = createTRPCRouter({
       z.object({
         reportId: z.uuid(),
         staffId: z.uuid(),
-      })
+      }),
     )
     .mutation(async ({ input, ctx }) => {
-      const { id, role } = ctx.userJWT!;
+      const { id, role } = ctx.userJWT ?? {};
       if (id !== input.staffId && role !== "SuperAdmin" && role !== "Admin") {
         throw new TRPCError({
           code: "FORBIDDEN",
@@ -69,7 +69,7 @@ const hrOfficerRouter = createTRPCRouter({
         supabase,
         "hr_reports",
         "id",
-        input.reportId
+        input.reportId,
       );
 
       if (deleteReportError) {
@@ -84,21 +84,21 @@ const hrOfficerRouter = createTRPCRouter({
         supabase,
         "audit_logs",
         {
-          actor_type: ctx.userJWT!.role,
-          actor_id: ctx.userJWT!.id,
+          actor_type: ctx.userJWT?.role,
+          actor_id: ctx.userJWT?.id,
           action: "delete",
           event_type: "Deleted HR Report",
           entity_type: "HR Report",
           entity_id: input.reportId,
           changes: {},
           details: `HR Report with ID ${input.reportId} deleted`,
-        } as AuditLog
+        } as AuditLog,
       );
 
       if (insertLogError) {
         console.error(
           "Error inserting audit log for HR Report deletion:",
-          insertLogError
+          insertLogError,
         );
       }
 
@@ -112,10 +112,10 @@ const hrOfficerRouter = createTRPCRouter({
         keyHighlights: z.string(),
         summary: z.string().optional(),
         staffId: z.uuid(),
-      })
+      }),
     )
     .mutation(async ({ input, ctx }) => {
-      if (ctx.userJWT!.id !== input.staffId) {
+      if (ctx.userJWT?.id !== input.staffId) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "You do not have permission to edit this HR report.",
@@ -132,7 +132,7 @@ const hrOfficerRouter = createTRPCRouter({
             column: "id",
             value: input.reportId,
           },
-        ]
+        ],
       ).single();
 
       if (oldDataError || !oldData) {
@@ -189,7 +189,7 @@ const hrOfficerRouter = createTRPCRouter({
             .map((highlight) => ({
               report_id: input.reportId,
               highlight,
-            }))
+            })),
         );
 
       if (keyHighlightError || !keyHighlight) {
@@ -219,21 +219,21 @@ const hrOfficerRouter = createTRPCRouter({
         supabase,
         "audit_logs",
         {
-          actor_type: ctx.userJWT!.role,
-          actor_id: ctx.userJWT!.id,
+          actor_type: ctx.userJWT?.role,
+          actor_id: ctx.userJWT?.id,
           action: "update",
           event_type: "Updated HR Report",
           entity_type: "HR Report",
           entity_id: input.reportId,
           changes,
           details: `HR Report with ID ${input.reportId} updated`,
-        } as AuditLog
+        } as AuditLog,
       );
 
       if (insertLogError) {
         console.error(
           "Error inserting audit log for HR Report update:",
-          insertLogError
+          insertLogError,
         );
       }
 

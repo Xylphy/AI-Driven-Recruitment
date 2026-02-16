@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 
 export const metadata = {
   title: "Signup",
@@ -11,10 +11,8 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <>
-      <div className="flex justify-center pt-10">
-        <div className="px-6">{children}</div>
-      </div>
-    </>
+    <div className="flex justify-center pt-10">
+      <div className="px-6">{children}</div>
+    </div>
   );
 }

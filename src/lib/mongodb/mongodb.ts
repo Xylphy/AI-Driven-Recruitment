@@ -11,7 +11,7 @@ const mongoDb_client = new MongoClient(
       strict: true,
       deprecationErrors: true,
     },
-  }
+  },
 );
 
 export default mongoDb_client;

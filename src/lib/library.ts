@@ -1,4 +1,4 @@
-import { FieldValue, Timestamp } from "firebase/firestore";
+import type { FieldValue, Timestamp } from "firebase/firestore";
 
 export async function getCsrfToken(): Promise<string | null> {
   if (typeof document === "undefined") {
@@ -69,7 +69,7 @@ export function parseFormData(formData: FormData, jsonFields: string[] = []) {
 export function cleanArrayData<T extends Record<string, unknown>>(
   items: T[],
   stringFields: (keyof T)[],
-  filterEmptyObjects: boolean = false
+  filterEmptyObjects: boolean = false,
 ): T[] {
   return items
     .map((item) => {
@@ -87,7 +87,7 @@ export function cleanArrayData<T extends Record<string, unknown>>(
 
       // Keep items that have at least one non-empty string field
       return stringFields.some(
-        (field) => item[field] && item[field] !== undefined
+        (field) => item[field] && item[field] !== undefined,
       );
     });
 }
@@ -101,7 +101,7 @@ function firebaseTimestampToDate(
     | { seconds: number; nanoseconds: number }
     | { toDate?: () => Date }
     | null
-    | undefined
+    | undefined,
 ): Date | null {
   if (!ts) return null;
 
@@ -130,7 +130,9 @@ function firebaseTimestampToDate(
  */
 type FirestoreTimestamp = Parameters<typeof firebaseTimestampToDate>[0];
 
-export function formatDate(iso: string | Timestamp | FieldValue | null | undefined): string {
+export function formatDate(
+  iso: string | Timestamp | FieldValue | null | undefined,
+): string {
   if (!iso) return "";
 
   // Handle ISO strings, numbers, and Date directly; otherwise try Firestore timestamp conversion.

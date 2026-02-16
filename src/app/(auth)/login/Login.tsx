@@ -1,12 +1,13 @@
 "use client";
 
-import { Button } from "@/components/common/Button";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/lib/firebase/client";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/common/Button";
 import useAuth from "@/hooks/useAuth";
+import { auth } from "@/lib/firebase/client";
+import { swalError, swalInfo } from "@/lib/swal";
 import { trpc } from "@/lib/trpc/client";
 
 export default function LoginPage() {
@@ -14,6 +15,7 @@ export default function LoginPage() {
   const [isAuthLoading, setIsAuthLoading] = useState(false);
   const [jwtSuccess, setJwtSuccess] = useState(false);
   const { isAuthenticated } = useAuth({ routerActivation: false });
+
   const jwtInfo = trpc.auth.decodeJWT.useQuery(undefined, {
     enabled: isAuthenticated && jwtSuccess,
   });
@@ -23,10 +25,8 @@ export default function LoginPage() {
       const role = jwtInfo.data.user.role;
       if (role === "HR Officer") {
         router.push("/admin/jobs");
-      } else if (role !== "User") {
-        router.push("/admin");
       } else {
-        router.push("/profile");
+        router.push("/admin");
       }
     }
   }, [jwtInfo.data, router, isAuthenticated]);
@@ -34,11 +34,17 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsAuthLoading(true);
+
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email")?.toString().trim();
     const password = formData.get("password")?.toString().trim();
+
     if (!email || !password) {
-      alert("Please enter valid credentials");
+      setIsAuthLoading(false);
+      swalInfo(
+        "Missing Credentials",
+        "Please enter both email and password to continue.",
+      );
       return;
     }
 
@@ -47,9 +53,25 @@ export default function LoginPage() {
 
       setJwtSuccess(true);
       void jwtInfo.refetch();
-    } catch {
-      alert("Authentication failed");
+    } catch (error) {
       auth.signOut();
+
+      let message = "Authentication failed. Please try again.";
+
+      const firebaseError = error as { code?: string };
+
+      if (firebaseError?.code === "auth/invalid-credential") {
+        message = "Invalid email or password.";
+      } else if (firebaseError?.code === "auth/user-not-found") {
+        message = "No account found with this email.";
+      } else if (firebaseError?.code === "auth/wrong-password") {
+        message = "Incorrect password.";
+      } else if (firebaseError?.code === "auth/too-many-requests") {
+        message =
+          "Too many failed attempts. Please wait a moment and try again.";
+      }
+
+      swalError("Login Failed", message);
     } finally {
       setIsAuthLoading(false);
     }
@@ -67,10 +89,14 @@ export default function LoginPage() {
             Careers account
           </h3>
           <hr className="border border-red-500 w-50" />
+
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="pt-5">
-              <label className="text-sm text-gray-500">Email address</label>
+              <label htmlFor="email" className="text-sm text-gray-500">
+                Email address
+              </label>
               <input
+                id="email"
                 type="email"
                 name="email"
                 required
@@ -79,8 +105,11 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label className="text-sm text-gray-500">Password</label>
+              <label htmlFor="password" className="text-sm text-gray-500">
+                Password
+              </label>
               <input
+                id="password"
                 type="password"
                 name="password"
                 required
@@ -107,15 +136,6 @@ export default function LoginPage() {
               {isAuthLoading ? "Signing in..." : "Sign in"}
             </Button>
           </form>
-
-          <p className="text-l text-gray-500 mb-2">
-            Don&apos;t have an account yet?{" "}
-            <span className="text-red-600">
-              <Link href="/signup" className="text-red-500 hover:underline">
-                Signup Here!
-              </Link>
-            </span>
-          </p>
         </div>
 
         <div

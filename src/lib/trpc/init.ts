@@ -1,12 +1,11 @@
-import { initTRPC } from "@trpc/server";
-import { cookies, headers } from "next/headers";
-import superjson from "superjson";
+import { initTRPC, TRPCError } from "@trpc/server";
 import jwt from "jsonwebtoken";
-import { JWT } from "@/types/types";
-import { TRPCError } from "@trpc/server";
-import { rateLimit } from "@/lib/rate-limit";
-import { NextRequest } from "next/server";
+import { cookies, headers } from "next/headers";
+import type { NextRequest } from "next/server";
 import { cache } from "react";
+import superjson from "superjson";
+import { rateLimit } from "@/lib/rate-limit";
+import type { JWT } from "@/types/types";
 
 const standardLimiter = rateLimit({
   max: process.env.NODE_ENV === "development" ? 1000 : 200,
@@ -27,10 +26,10 @@ export const createTRPCContext = cache(async () => {
     try {
       userJWT = jwt.verify(
         token.value,
-        process.env.JWT_SECRET as string
+        process.env.JWT_SECRET as string,
       ) as JWT;
     } catch (error) {
-      console.log("Invalid token:", error);
+      console.error("Invalid token:", error);
     }
   }
 
@@ -97,11 +96,11 @@ export const authorizedProcedure = rateLimitedProcedure.use(
       });
     }
     return next();
-  }
+  },
 );
 
 export const adminProcedure = authorizedProcedure.use(async ({ ctx, next }) => {
-  if (ctx.userJWT!.role !== "Admin" && ctx.userJWT!.role !== "SuperAdmin") {
+  if (ctx.userJWT?.role !== "Admin" && ctx.userJWT?.role !== "SuperAdmin") {
     throw new TRPCError({
       code: "FORBIDDEN",
       message: "Access restricted to admin users",
@@ -111,20 +110,9 @@ export const adminProcedure = authorizedProcedure.use(async ({ ctx, next }) => {
   return next();
 });
 
-export const staffProcedure = authorizedProcedure.use(async ({ ctx, next }) => {
-  if (ctx.userJWT!.role === "User") {
-    throw new TRPCError({
-      code: "FORBIDDEN",
-      message: "Access restricted to staff members",
-    });
-  }
-
-  return next();
-});
-
 export const hrOfficerProcedure = authorizedProcedure.use(
   async ({ ctx, next }) => {
-    if (ctx.userJWT!.role !== "HR Officer") {
+    if (ctx.userJWT?.role !== "HR Officer") {
       throw new TRPCError({
         code: "FORBIDDEN",
         message: "Access restricted to HR Officers",
@@ -132,5 +120,5 @@ export const hrOfficerProcedure = authorizedProcedure.use(
     }
 
     return next();
-  }
+  },
 );

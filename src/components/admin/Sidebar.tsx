@@ -1,7 +1,7 @@
 "use client";
+import { BarChart2, Briefcase, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Briefcase, Users, BarChart2 } from "lucide-react";
 import type { ReactElement } from "react";
 
 const navItems: { name: string; href: string; icon: ReactElement }[] = [

@@ -1,9 +1,9 @@
 import { sendSignInLinkToEmail } from "firebase/auth";
-import { auth } from "./client";
-import { RegisterState } from "@/types/types";
+import type { RegisterState } from "@/types/types";
 import { insertTokenData } from "../mongodb/action";
-import { auth as adminAuth } from "./admin";
 import mongoDb_client from "../mongodb/mongodb";
+import { auth as adminAuth } from "./admin";
+import { auth } from "./client";
 
 export async function sendEmailVerification(data: RegisterState) {
   await mongoDb_client.connect();

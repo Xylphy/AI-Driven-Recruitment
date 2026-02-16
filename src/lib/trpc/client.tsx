@@ -4,9 +4,9 @@ import type { QueryClient } from "@tanstack/react-query";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { httpBatchLink } from "@trpc/client";
 import { createTRPCReact } from "@trpc/react-query";
+import superjson from "superjson";
 import { makeQueryClient } from "@/lib/trpc/query-client";
 import type { AppRouter } from "./routers/app";
-import superjson from "superjson";
 
 export const trpc = createTRPCReact<AppRouter>({
   abortOnUnmount: true,
@@ -19,7 +19,10 @@ function getQueryClient() {
     return makeQueryClient();
   }
   // Browser: use singleton pattern to keep the same query client
-  return (clientQueryClientSingleton ??= makeQueryClient());
+  if (!clientQueryClientSingleton) {
+    clientQueryClientSingleton = makeQueryClient();
+  }
+  return clientQueryClientSingleton;
 }
 
 function getUrl() {
@@ -34,7 +37,7 @@ function getUrl() {
 export function TRPCProvider(
   props: Readonly<{
     children: React.ReactNode;
-  }>
+  }>,
 ) {
   const queryClient = getQueryClient();
   const trpcClient = trpc.createClient({

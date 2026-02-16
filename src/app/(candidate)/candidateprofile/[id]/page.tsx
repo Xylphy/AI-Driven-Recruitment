@@ -1,39 +1,47 @@
 "use client";
 
-import { FaFacebook, FaInstagram } from "react-icons/fa";
-import { MdEmail, MdPhone, MdArrowBack } from "react-icons/md";
-import { FiEdit2, FiTrash2 } from "react-icons/fi";
-import Image from "next/image";
-import { startTransition, useEffect, useMemo, useState } from "react";
-import useAuth from "@/hooks/useAuth";
-import { useParams, useRouter } from "next/navigation";
-import { trpc } from "@/lib/trpc/client";
-import { CANDIDATE_STATUSES } from "@/lib/constants";
 import dynamic from "next/dynamic";
-import HRReport from "@/components/admin/candidateProfile/HRReport";
-import { formatDate } from "@/lib/library";
+import Image from "next/image";
+import { useParams, useRouter } from "next/navigation";
+import { startTransition, useEffect, useMemo, useState } from "react";
+import { FaFacebook, FaInstagram } from "react-icons/fa";
+import { FiEdit2, FiTrash2 } from "react-icons/fi";
+import { MdArrowBack, MdEmail, MdPhone } from "react-icons/md";
 import {
+  PolarAngleAxis,
+  PolarGrid,
+  PolarRadiusAxis,
   Radar,
   RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
   ResponsiveContainer,
 } from "recharts";
+import Swal from "sweetalert2";
+import HRReport from "@/components/admin/candidateProfile/HRReport";
+import useAuth from "@/hooks/useAuth";
+import { CANDIDATE_STATUSES } from "@/lib/constants";
+import { formatDate } from "@/lib/library";
+import { trpc } from "@/lib/trpc/client";
 
 type CandidateStatus = (typeof CANDIDATE_STATUSES)[number];
 
 const CandidateProfile = dynamic(
   () => import("@/components/admin/candidateProfile/CandidateProfile"),
-  { ssr: false }
+  { ssr: false },
 );
 
 const CandidateResume = dynamic(
   () => import("@/components/admin/candidateProfile/CandidateResume"),
-  { ssr: false }
+  { ssr: false },
 );
 const glassCard =
   "bg-white/40 backdrop-blur-xl border border-white/30 shadow-xl rounded-2xl";
+
+const INTERVIEW_STATUSES: CandidateStatus[] = [
+  "Exam",
+  "HR Interview",
+  "Technical Interview",
+  "Final Interview",
+];
 
 export const languageRadarData = [
   { language: "JavaScript", level: 88 },
@@ -48,13 +56,22 @@ export default function Page() {
   const candidateId = useParams().id as string;
   const { isAuthenticated } = useAuth();
   const [selectedStatus, setSelectedStatus] = useState<CandidateStatus | null>(
-    null
+    null,
   );
   const [activeTab, setActiveTab] = useState<"evaluation" | "resume">(
-    "evaluation"
+    "evaluation",
   );
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState<CandidateStatus | null>(
+    null,
+  );
 
+  const [scheduleData, setScheduleData] = useState({
+    date: "",
+    time: "",
+    location: "",
+  });
   // New: edit form state
   const [editScore, setEditScore] = useState<number>(0);
   const [editHighlights, setEditHighlights] = useState<string>("");
@@ -64,7 +81,7 @@ export default function Page() {
     enabled: isAuthenticated,
   });
 
-  const { role, id: userId } = userJWT.data?.user || {};
+  const { id: userId } = userJWT.data?.user || {};
 
   const candidateProfileQuery = trpc.candidate.fetchCandidateProfile.useQuery(
     {
@@ -73,7 +90,7 @@ export default function Page() {
       fetchTranscribed: true,
       fetchResume: true,
     },
-    { enabled: isAuthenticated && role !== "User" }
+    { enabled: isAuthenticated },
   );
 
   const updateCandidateStatusMutation =
@@ -83,15 +100,15 @@ export default function Page() {
   const getHRReportsQuery = trpc.staff.fetchHRReports.useQuery(
     { applicantId: candidateId },
     {
-      enabled: isAuthenticated && role !== "User",
-    }
+      enabled: isAuthenticated,
+    },
   );
   const deleteHRReportMutation = trpc.hrOfficer.deleteHRReport.useMutation();
   const updateHRReportMutation = trpc.hrOfficer.editHRReport.useMutation();
 
   const hrReportsData = useMemo(
     () => getHRReportsQuery.data ?? [],
-    [getHRReportsQuery.data]
+    [getHRReportsQuery.data],
   );
 
   const editingReport = useMemo(() => {
@@ -104,53 +121,55 @@ export default function Page() {
 
     startTransition(() => {
       setEditScore(
-        typeof editingReport.score === "number" ? editingReport.score : 0
+        typeof editingReport.score === "number" ? editingReport.score : 0,
       );
       setEditHighlights(
         Array.isArray(editingReport.highlights)
           ? editingReport.highlights.join(", ")
-          : String(editingReport.highlights ?? "")
+          : String(editingReport.highlights ?? ""),
       );
       setEditSummary(String(editingReport.summary ?? ""));
     });
   }, [editingReport]);
 
   useEffect(() => {
-    if (!isAuthenticated) return;
-    if (role === "User") {
-      alert("You are not authorized to view this page.");
-      router.back();
-    }
-  }, [role, isAuthenticated, router]);
-
-  useEffect(() => {
     startTransition(() =>
-      setSelectedStatus(candidateProfileQuery.data?.status ?? null)
+      setSelectedStatus(candidateProfileQuery.data?.status ?? null),
     );
   }, [candidateProfileQuery.data?.status]);
 
   const handleStatusChange = async (
-    e: React.ChangeEvent<HTMLSelectElement>
+    e: React.ChangeEvent<HTMLSelectElement>,
   ) => {
     const newStatus = e.target.value as CandidateStatus | null;
-    const oldStatus = selectedStatus;
 
-    setSelectedStatus(newStatus);
-    await updateCandidateStatusMutation.mutateAsync(
-      {
+    if (!newStatus) return;
+
+    if (INTERVIEW_STATUSES.includes(newStatus)) {
+      setPendingStatus(newStatus);
+      setShowScheduleModal(true);
+      return;
+    }
+
+    try {
+      await updateCandidateStatusMutation.mutateAsync({
         applicantId: candidateId,
         newStatus,
-      },
-      {
-        onSuccess: () => {
-          alert("Candidate status updated successfully.");
-        },
-        onError: (error: unknown) => {
-          alert(error instanceof Error ? error.message : String(error));
-          setSelectedStatus(oldStatus);
-        },
-      }
-    );
+      });
+
+      Swal.fire({
+        icon: "success",
+        title: "Status Updated",
+        text: `Candidate moved to ${newStatus}`,
+        confirmButtonColor: "#E30022",
+      });
+    } catch (err) {
+      Swal.fire({
+        icon: "error",
+        title: "Update failed",
+        text: err instanceof Error ? err.message : "Something went wrong",
+      });
+    }
   };
 
   const candidate = candidateProfileQuery.data;
@@ -167,7 +186,7 @@ export default function Page() {
           onError: (error: unknown) => {
             alert(error instanceof Error ? error.message : String(error));
           },
-        }
+        },
       );
     }
   };
@@ -196,7 +215,7 @@ export default function Page() {
         onError: (error: unknown) => {
           alert(error instanceof Error ? error.message : String(error));
         },
-      }
+      },
     );
   };
 
@@ -204,12 +223,49 @@ export default function Page() {
     setEditingIndex(null);
   };
 
+  if (!isAuthenticated) {
+    return (
+      <main className="bg-linear-to-br from-red-50 via-white to-gray-100 min-h-screen flex items-center justify-center">
+        <div className="bg-white/80 rounded-2xl shadow-xl px-8 py-12 flex flex-col items-center max-w-md w-full border border-red-100">
+          <svg
+            className="w-16 h-16 text-red-400 mb-6"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={1.5}
+            viewBox="0 0 24 24"
+          >
+            <title>Icon representing authentication required</title>
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 11v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          <h1 className="text-2xl font-bold text-gray-800 mb-2">
+            Authentication Required
+          </h1>
+          <p className="text-gray-600 mb-6 text-center">
+            You must be logged in to view this candidate profile.
+          </p>
+          <button
+            onClick={() => router.push("/login")}
+            className="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-2 rounded-lg shadow transition"
+            type="button"
+          >
+            Go to Login
+          </button>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="bg-gray-50 min-h-screen p-6">
       <div className="container mx-auto max-w-6xl space-y-6">
         <button
           onClick={() => router.back()}
           className="flex items-center gap-2 text-gray-600 hover:text-red-600 cursor-pointer"
+          type="button"
         >
           <MdArrowBack className="text-xl" />
           <span>Back to Candidate List</span>
@@ -259,22 +315,24 @@ export default function Page() {
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="flex justify-center gap-4 mb-6">
             <button
-              onClick={() => setActiveTab("evaluation")}
               className={`px-4 py-2 rounded font-semibold transition ${
                 activeTab === "evaluation"
                   ? "bg-red-600 text-white"
                   : "bg-gray-200 text-gray-700 hover:bg-gray-300"
               }`}
+              onClick={() => setActiveTab("evaluation")}
+              type="button"
             >
               Candidate Evaluation
             </button>
             <button
-              onClick={() => setActiveTab("resume")}
               className={`px-4 py-2 rounded font-semibold transition ${
                 activeTab === "resume"
                   ? "bg-red-600 text-white"
                   : "bg-gray-200 text-gray-700 hover:bg-gray-300"
               }`}
+              onClick={() => setActiveTab("resume")}
+              type="button"
             >
               Resume
             </button>
@@ -312,14 +370,112 @@ export default function Page() {
                             alert(
                               error instanceof Error
                                 ? error.message
-                                : String(error)
+                                : String(error),
                             );
                           },
-                        }
+                        },
                       );
                     }}
                   />
                 </div>
+                {showScheduleModal && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                    <div className={`${glassCard} w-full max-w-md p-6`}>
+                      <h2 className="text-xl font-bold mb-4 text-gray-800">
+                        Schedule Details — {pendingStatus}
+                      </h2>
+
+                      <div className="space-y-4">
+                        <input
+                          type="date"
+                          className="w-full rounded-lg border border-white/40 bg-white/60 px-4 py-2 focus:outline-none"
+                          value={scheduleData.date}
+                          onChange={(e) =>
+                            setScheduleData({
+                              ...scheduleData,
+                              date: e.target.value,
+                            })
+                          }
+                        />
+
+                        <input
+                          type="time"
+                          className="w-full rounded-lg border border-white/40 bg-white/60 px-4 py-2 focus:outline-none"
+                          value={scheduleData.time}
+                          onChange={(e) =>
+                            setScheduleData({
+                              ...scheduleData,
+                              time: e.target.value,
+                            })
+                          }
+                        />
+
+                        <input
+                          type="text"
+                          placeholder="Location / Meeting Link"
+                          className="w-full rounded-lg border border-white/40 bg-white/60 px-4 py-2 focus:outline-none"
+                          value={scheduleData.location}
+                          onChange={(e) =>
+                            setScheduleData({
+                              ...scheduleData,
+                              location: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+
+                      <div className="flex justify-end gap-3 mt-6">
+                        <button
+                          className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 transition"
+                          onClick={() => {
+                            setShowScheduleModal(false);
+                            setScheduleData({
+                              date: "",
+                              time: "",
+                              location: "",
+                            });
+                          }}
+                          type="button"
+                        >
+                          Cancel
+                        </button>
+
+                        <button
+                          onClick={async () => {
+                            setShowScheduleModal(false);
+
+                            await updateCandidateStatusMutation.mutateAsync({
+                              applicantId: candidateId,
+                              newStatus: pendingStatus,
+                            });
+
+                            Swal.fire({
+                              icon: "success",
+                              title: "Scheduled Successfully",
+                              html: `
+																		<strong>Status:</strong> ${pendingStatus}<br/>
+																		<strong>Date:</strong> ${scheduleData.date}<br/>
+																		<strong>Time:</strong> ${scheduleData.time}<br/>
+																		<strong>Location:</strong> ${scheduleData.location}
+																	`,
+                              confirmButtonColor: "#E30022",
+                            });
+
+                            setScheduleData({
+                              date: "",
+                              time: "",
+                              location: "",
+                            });
+                          }}
+                          className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-500 transition"
+                          type="button"
+                        >
+                          Save & Update
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {hrReportsData.length > 0 ? (
                   <div className="flex flex-col gap-4 w-full overflow-auto">
@@ -358,20 +514,31 @@ export default function Page() {
                             Score:
                           </span>{" "}
                           <span className="inline-flex items-center space-x-2 text-red-600 font-bold">
-                            {[...Array(5)].map((_, i) => (
-                              <svg
-                                key={i}
-                                className={`w-5 h-5 ${
-                                  i < Math.floor(report.score || 0)
-                                    ? "text-yellow-400"
-                                    : "text-gray-300"
-                                }`}
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
-                              >
-                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.184 3.642a1 1 0 00.95.69h3.813c.969 0 1.371 1.24.588 1.81l-3.087 2.243a1 1 0 00-.364 1.118l1.184 3.642c.3.921-.755 1.688-1.54 1.118L10 13.347l-3.087 2.243c-.785.57-1.84-.197-1.54-1.118l1.184-3.642a1 1 0 00-.364-1.118L3.106 9.07c-.783-.57-.38-1.81.588-1.81h3.813a1 1 0 00.95-.69l1.184-3.642z" />
-                              </svg>
-                            ))}
+                            {[...Array(5)].map((_, i) => {
+                              const filled = i < Math.floor(report.score || 0);
+
+                              return (
+                                <svg
+                                  key={`${report.id}-star-${i}`}
+                                  className={`w-5 h-5 ${filled ? "text-yellow-400" : "text-gray-300"}`}
+                                  fill="currentColor"
+                                  viewBox="0 0 20 20"
+                                  role="img"
+                                  aria-label={
+                                    filled
+                                      ? "Filled rating star"
+                                      : "Empty rating star"
+                                  }
+                                >
+                                  <title>
+                                    {filled
+                                      ? "Filled rating star"
+                                      : "Empty rating star"}
+                                  </title>
+                                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.184 3.642a1 1 0 00.95.69h3.813c.969 0 1.371 1.24.588 1.81l-3.087 2.243a1 1 0 00-.364 1.118l1.184 3.642c.3.921-.755 1.688-1.54 1.118L10 13.347l-3.087 2.243c-.785.57-1.84-.197-1.54-1.118l1.184-3.642a1 1 0 00-.364-1.118L3.106 9.07c-.783-.57-.38-1.81.588-1.81h3.813a1 1 0 00.95-.69l1.184-3.642z" />
+                                </svg>
+                              );
+                            })}
                             <span className="text-sm text-red-600">
                               ({report.score || 0}/5)
                             </span>
@@ -398,7 +565,6 @@ export default function Page() {
                           </em>
                         </p>
 
-                        {/* New: inline edit section */}
                         {editingIndex === idx && report.staff_id === userId && (
                           <div className="mt-3 p-3 border border-gray-200 rounded bg-gray-50">
                             <h4 className="font-semibold mb-3">
@@ -407,10 +573,14 @@ export default function Page() {
 
                             <div className="grid gap-3">
                               <div>
-                                <label className="block text-sm font-semibold mb-1">
+                                <label
+                                  htmlFor="score"
+                                  className="block text-sm font-semibold mb-1"
+                                >
                                   Score (out of 5)
                                 </label>
                                 <input
+                                  id="score"
                                   type="number"
                                   min={0}
                                   max={5}
@@ -424,10 +594,14 @@ export default function Page() {
                               </div>
 
                               <div>
-                                <label className="block text-sm font-semibold mb-1">
+                                <label
+                                  htmlFor="highlights"
+                                  className="block text-sm font-semibold mb-1"
+                                >
                                   Key Highlights
                                 </label>
                                 <textarea
+                                  id="highlights"
                                   value={editHighlights}
                                   onChange={(e) =>
                                     setEditHighlights(e.target.value)
@@ -439,10 +613,14 @@ export default function Page() {
                               </div>
 
                               <div>
-                                <label className="block text-sm font-semibold mb-1">
+                                <label
+                                  htmlFor="summary"
+                                  className="block text-sm font-semibold mb-1"
+                                >
                                   Summary Evaluation
                                 </label>
                                 <textarea
+                                  id="summary"
                                   value={editSummary}
                                   onChange={(e) =>
                                     setEditSummary(e.target.value)

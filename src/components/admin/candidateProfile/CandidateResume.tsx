@@ -52,8 +52,8 @@ export default function CandidateResume({
           </h3>
           <div className="bg-white p-4 border rounded">
             {candidateProfile?.parsedResume?.raw_output?.educational_background.map(
-              (edu: EducationalBackground, index: number) => (
-                <div key={index} className="mb-4">
+              (edu: EducationalBackground) => (
+                <div key={crypto.randomUUID()} className="mb-4">
                   <p>
                     <strong>Degree:</strong> {edu.degree}
                   </p>
@@ -65,7 +65,7 @@ export default function CandidateResume({
                     {new Date(edu.start_date).getFullYear()}
                   </p>
                 </div>
-              )
+              ),
             )}
           </div>
         </div>
@@ -78,7 +78,7 @@ export default function CandidateResume({
             {candidateProfile?.parsedResume?.raw_output?.soft_skills &&
             candidateProfile.parsedResume?.raw_output?.soft_skills.length > 0
               ? candidateProfile.parsedResume.raw_output.soft_skills.map(
-                  (skill: string, index: number) => <li key={index}>{skill}</li>
+                  (skill: string) => <li key={crypto.randomUUID()}>{skill}</li>,
                 )
               : null}
           </ul>
@@ -92,7 +92,7 @@ export default function CandidateResume({
             {candidateProfile?.parsedResume?.raw_output?.hard_skills &&
             candidateProfile.parsedResume.raw_output.hard_skills.length > 0
               ? candidateProfile.parsedResume.raw_output.hard_skills.map(
-                  (skill: string, index: number) => <li key={index}>{skill}</li>
+                  (skill: string) => <li key={crypto.randomUUID()}>{skill}</li>,
                 )
               : null}
           </ul>
@@ -104,8 +104,11 @@ export default function CandidateResume({
           </h3>
           <div className="space-y-4">
             {candidateProfile?.parsedResume?.raw_output?.work_experience.map(
-              (work: WorkExperience, index: number) => (
-                <div key={index} className="bg-white p-4 border rounded">
+              (work: WorkExperience) => (
+                <div
+                  key={crypto.randomUUID()}
+                  className="bg-white p-4 border rounded"
+                >
                   <p>
                     <strong>Title:</strong> {work.title}
                   </p>
@@ -125,7 +128,7 @@ export default function CandidateResume({
                       : "Present"}
                   </p>
                 </div>
-              )
+              ),
             )}
           </div>
         </div>
@@ -135,8 +138,11 @@ export default function CandidateResume({
           {candidateProfile?.parsedResume?.raw_output?.projects &&
           candidateProfile.parsedResume?.raw_output.projects?.length > 0 ? (
             candidateProfile.parsedResume?.raw_output.projects.map(
-              (project: Project, index: number) => (
-                <div key={index} className="bg-white p-4 border rounded">
+              (project: Project) => (
+                <div
+                  key={crypto.randomUUID()}
+                  className="bg-white p-4 border rounded"
+                >
                   <p>
                     <strong>Name:</strong> {project.name}
                   </p>
@@ -148,7 +154,7 @@ export default function CandidateResume({
                     <strong>Description:</strong> {project.description}
                   </p>
                 </div>
-              )
+              ),
             )
           ) : (
             <p>No projects listed.</p>

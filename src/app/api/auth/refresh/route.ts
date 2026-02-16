@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
 import { serialize } from "cookie";
-import { createClientServer } from "@/lib/supabase/supabase";
-import { find } from "@/lib/supabase/action";
+import jwt from "jsonwebtoken";
+import { type NextRequest, NextResponse } from "next/server";
 import { generateCsrfToken } from "@/lib/csrf";
-import type { User } from "@/types/schema";
+import { find } from "@/lib/supabase/action";
+import { createClientServer } from "@/lib/supabase/supabase";
+import type { Staff } from "@/types/schema";
 
 interface RefreshTokenPayload {
   userId: string;
@@ -19,34 +19,34 @@ export async function GET(request: NextRequest) {
   if (!refreshTokenCookie) {
     return NextResponse.json(
       { error: "Refresh token not found." },
-      { status: 401 }
+      { status: 401 },
     );
   }
 
   try {
     const decoded = jwt.verify(
       refreshTokenCookie.value,
-      process.env.REFRESH_TOKEN_SECRET as string
+      process.env.REFRESH_TOKEN_SECRET as string,
     ) as RefreshTokenPayload;
 
     if (decoded.type !== "refresh") {
       return NextResponse.json(
         { error: "Invalid token type." },
-        { status: 401 }
+        { status: 401 },
       );
     }
     const supabase = await createClientServer(1, true);
 
-    const { data: userData, error: usersError } = await find<User>(
+    const { data: userData, error: usersError } = await find<Staff>(
       supabase,
-      "users",
-      [{ column: "id", value: decoded.userId }]
+      "staff",
+      [{ column: "id", value: decoded.userId }],
     ).single();
 
     if (!userData || usersError) {
       const response = NextResponse.json(
         { error: "Invalid refresh token or user not found." },
-        { status: 401 }
+        { status: 401 },
       );
       response.headers.append(
         "Set-Cookie",
@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
           sameSite: "strict",
           expires: new Date(0),
           path: "/",
-        })
+        }),
       );
       response.headers.append(
         "Set-Cookie",
@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
           sameSite: "strict",
           expires: new Date(0),
           path: "/api/auth/refresh",
-        })
+        }),
       );
       return response;
     }
@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
             type: "access",
           },
           process.env.JWT_SECRET as string,
-          { expiresIn: "1h" }
+          { expiresIn: "1h" },
         ),
         {
           httpOnly: true,
@@ -95,8 +95,8 @@ export async function GET(request: NextRequest) {
           sameSite: "strict",
           maxAge: 60 * 60, // 1 hour
           path: "/",
-        }
-      )
+        },
+      ),
     );
 
     response.headers.append(
@@ -106,7 +106,7 @@ export async function GET(request: NextRequest) {
         jwt.sign(
           { userId: userData.id, type: "refresh" },
           process.env.REFRESH_TOKEN_SECRET as string,
-          { expiresIn: "7d" }
+          { expiresIn: "7d" },
         ),
         {
           httpOnly: true,
@@ -114,15 +114,15 @@ export async function GET(request: NextRequest) {
           sameSite: "strict",
           maxAge: 60 * 60 * 24 * 7, // 7 days
           path: "/api/auth/refresh", // Scoped to refresh endpoint
-        }
-      )
+        },
+      ),
     );
 
     return response;
   } catch {
     const response = NextResponse.json(
       { error: "Invalid or expired refresh token." },
-      { status: 401 }
+      { status: 401 },
     );
     response.headers.append(
       "Set-Cookie",
@@ -132,7 +132,7 @@ export async function GET(request: NextRequest) {
         sameSite: "strict",
         expires: new Date(0),
         path: "/",
-      })
+      }),
     );
     response.headers.append(
       "Set-Cookie",
@@ -142,7 +142,7 @@ export async function GET(request: NextRequest) {
         sameSite: "strict",
         expires: new Date(0),
         path: "/api/auth/refresh",
-      })
+      }),
     );
     return response;
   }

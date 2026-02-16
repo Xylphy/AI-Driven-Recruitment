@@ -1,22 +1,22 @@
 "use client";
-import { useState, useEffect } from "react";
 import {
   collection,
-  query,
-  orderBy,
+  deleteDoc,
+  doc,
   limit,
   onSnapshot,
+  orderBy,
+  query,
   updateDoc,
-  doc,
   writeBatch,
-  deleteDoc,
 } from "firebase/firestore";
+import { useEffect, useState } from "react";
 import { db } from "@/lib/firebase/client";
 import type { Notification } from "@/types/types";
 
 export default function useNotifications(
   limitCount: number = 20,
-  userId?: string
+  userId?: string,
 ) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -50,7 +50,7 @@ export default function useNotifications(
       (error) => {
         console.error("Notification listener error:", error);
         setLoading(false);
-      }
+      },
     );
 
     return () => unsubscribe();

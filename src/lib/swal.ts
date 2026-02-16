@@ -7,7 +7,7 @@ const BASE_CONFIG = {
 export const swalSuccess = (
   title: string,
   text?: string,
-  onConfirm?: () => void
+  onConfirm?: () => void,
 ) => {
   Swal.fire({
     icon: "success",
@@ -42,7 +42,7 @@ export const swalInfo = (title: string, text?: string) => {
 export const swalConfirm = (
   title: string,
   text: string,
-  onConfirm: () => void
+  onConfirm: () => void,
 ) => {
   Swal.fire({
     icon: "warning",

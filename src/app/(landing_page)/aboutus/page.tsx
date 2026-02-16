@@ -3,7 +3,7 @@ import Image from "next/image";
 export default function AboutUs() {
   return (
     <div className="text-gray-800">
-      <section className="relative w-full h-[400px]">
+      <section className="relative w-full h-100">
         <Image
           src="/group-photo.png"
           alt="Alliance Team Banner"
@@ -20,8 +20,8 @@ export default function AboutUs() {
       <section className="max-w-4xl mx-auto px-6 py-16">
         <p className="mb-6 text-lg leading-relaxed">
           <strong>Alliance</strong> is a people-first job platform connecting
-          talent with the right opportunities. We&apos;re passionate about removing
-          hiring friction and elevating careers with purpose.
+          talent with the right opportunities. We&apos;re passionate about
+          removing hiring friction and elevating careers with purpose.
         </p>
         <p className="mb-6 text-lg leading-relaxed">
           With innovative tools and a human-centered approach, Alliance helps
@@ -40,23 +40,26 @@ export default function AboutUs() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {[
             {
+              id: 1,
               icon: "💡",
               title: "Innovation",
               text: "We harness modern tools to make job seeking and hiring smarter.",
             },
             {
+              id: 2,
               icon: "🤝",
               title: "Integrity",
               text: "Trust and transparency are at the heart of every connection we build.",
             },
             {
+              id: 3,
               icon: "🚀",
               title: "Growth",
               text: "We help individuals and companies grow with purpose and confidence.",
             },
-          ].map((val, idx) => (
+          ].map((val) => (
             <div
-              key={idx}
+              key={val.id}
               className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-all duration-300 text-center"
             >
               <div className="text-4xl mb-4">{val.icon}</div>

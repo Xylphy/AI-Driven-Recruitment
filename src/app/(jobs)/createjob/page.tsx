@@ -1,13 +1,12 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { JobListing } from "@/types/types";
 import ListInputSection from "@/components/joblisting/Qualifications";
 import useAuth from "@/hooks/useAuth";
-import { useRouter } from "next/navigation";
 import { JOB_LOCATIONS } from "@/lib/constants";
-import { Tags } from "@/types/types";
 import { trpc } from "@/lib/trpc/client";
+import type { JobListing, Tags } from "@/types/types";
 
 export default function JobListingPage() {
   const router = useRouter();
@@ -24,6 +23,7 @@ export default function JobListingPage() {
   const userJWT = trpc.auth.decodeJWT.useQuery(undefined, {
     enabled: isAuthenticated,
   });
+  const { role } = userJWT.data?.user || {};
   const createJoblisting = trpc.joblisting.createJoblisting.useMutation();
   const [hrSearch, setHrSearch] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
@@ -35,13 +35,13 @@ export default function JobListingPage() {
     },
     {
       enabled: isAuthenticated,
-    }
+    },
   );
 
   const filteredHROfficers = hrOfficersQuery.data?.hrOfficers || [];
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
     setJobListing((prev) => ({ ...prev, [name]: value }));
@@ -57,19 +57,19 @@ export default function JobListingPage() {
   const handleUpdate = (
     field: "qualifications" | "requirements" | "tags",
     id: number,
-    value: string
+    value: string,
   ) => {
     setJobListing((prev) => ({
       ...prev,
       [field]: prev[field].map((item) =>
-        item.id === id ? { ...item, title: value } : item
+        item.id === id ? { ...item, title: value } : item,
       ),
     }));
   };
 
   const handleDelete = (
     field: "qualifications" | "requirements" | "tags",
-    id: number
+    id: number,
   ) => {
     setJobListing((prev) => ({
       ...prev,
@@ -80,9 +80,9 @@ export default function JobListingPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!userJWT.data?.user.role) {
+    if (role !== "Admin" && role !== "SuperAdmin") {
       alert("You are not authorized to create a job listing");
-      router.push("/profile");
+      router.push("/login");
     }
 
     await createJoblisting.mutateAsync(
@@ -112,7 +112,7 @@ export default function JobListingPage() {
         onError: (error) => {
           alert(error.message);
         },
-      }
+      },
     );
   };
 
@@ -215,7 +215,6 @@ export default function JobListingPage() {
               onFocus={() => setShowDropdown(true)}
               placeholder="Type to search HR Officer"
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:outline-none"
-              required
             />
 
             {showDropdown && filteredHROfficers.length > 0 && (
@@ -227,6 +226,15 @@ export default function JobListingPage() {
                       setHrOfficerId(officer.id);
                       setHrSearch(`${officer.first_name} ${officer.last_name}`);
                       setShowDropdown(false);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        setHrOfficerId(officer.id);
+                        setHrSearch(
+                          `${officer.first_name} ${officer.last_name}`,
+                        );
+                        setShowDropdown(false);
+                      }
                     }}
                     className="px-4 py-2 cursor-pointer hover:bg-red-50"
                   >
@@ -273,6 +281,7 @@ export default function JobListingPage() {
       </form>
 
       <button
+        type="button"
         onClick={() => router.back()}
         className="mt-4 bg-gray-300 text-gray-800 font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-gray-500 hover:border-gray-500"
       >

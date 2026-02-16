@@ -1,4 +1,8 @@
-import { EducationalDetail, JobExperience, SocialLink } from "../types/types";
+import type {
+  EducationalDetail,
+  JobExperience,
+  SocialLink,
+} from "../types/types";
 
 export class EducationalDetailClass implements EducationalDetail {
   id: number;

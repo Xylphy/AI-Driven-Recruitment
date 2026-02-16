@@ -1,13 +1,14 @@
 "use client";
 
-import Link from "next/link";
-import Image from "next/image";
-import { useState } from "react";
 import { Bell } from "lucide-react";
-import useNotifications from "@/hooks/useNotifications";
+import type { Route } from "next";
+import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { trpc } from "@/lib/trpc/client";
+import { useState } from "react";
 import useAuth from "@/hooks/useAuth";
+import useNotifications from "@/hooks/useNotifications";
+import { trpc } from "@/lib/trpc/client";
 
 const profileImageUrl = "/default-avatar.png";
 
@@ -15,7 +16,6 @@ const profileLink = {
   Admin: "/admin",
   SuperAdmin: "/admin",
   "HR Officer": "/admin/jobs",
-  User: "/profile",
 } as const;
 
 type Role = keyof typeof profileLink;
@@ -26,7 +26,6 @@ export default function Navbar() {
 
   const { isAuthenticated } = useAuth({
     routerActivation: false,
-    fetchUser: false,
   });
 
   const jwtInfo = trpc.auth.decodeJWT.useQuery(undefined, {
@@ -47,8 +46,18 @@ export default function Navbar() {
     markAsRead(notificationId);
     router.push(
       (notifications.find((n) => n.id === notificationId)?.link ??
-        "/") as unknown as Parameters<typeof router.push>[0]
+        "/") as unknown as Parameters<typeof router.push>[0],
     );
+  };
+
+  const onNotificationKeyDown = (
+    e: React.KeyboardEvent<HTMLButtonElement>,
+    notificationId: string,
+  ) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault(); // prevents page scroll on Space
+      clickNotification(notificationId);
+    }
   };
 
   return (
@@ -67,7 +76,11 @@ export default function Navbar() {
         <div className="flex items-center gap-4 relative">
           {isAuthenticated ? (
             <>
-              <button onClick={() => setOpen(!open)} className="relative">
+              <button
+                onClick={() => setOpen(!open)}
+                className="relative"
+                type="button"
+              >
                 <Bell className="w-6 h-6 text-gray-600 hover:text-red-600" />
                 {unreadCount > 0 && (
                   <span className="absolute -top-1 -right-1 min-w-4.5 h-4 bg-red-600 text-white text-xs flex items-center justify-center rounded-full px-1">
@@ -86,6 +99,7 @@ export default function Navbar() {
                           e.stopPropagation();
                           markAllAsRead();
                         }}
+                        type="button"
                       >
                         Mark all as read
                       </button>
@@ -98,25 +112,32 @@ export default function Navbar() {
                   ) : (
                     <ul className="max-h-60 overflow-y-auto">
                       {notifications.map((notification) => (
-                        <li
-                          key={notification.id}
-                          className={`p-2 rounded mb-1 cursor-pointer ${
-                            !notification.isRead ? "bg-gray-100" : ""
-                          } hover:bg-gray-200`}
-                          onClick={() => clickNotification(notification.id)}
-                        >
-                          <div className="flex justify-between items-center">
-                            <span>{notification.body}</span>
-                            {!notification.isRead && (
-                              <span className="ml-2 w-2.5 h-2.5 bg-red-600 rounded-full inline-block"></span>
-                            )}
-                          </div>
+                        <li key={notification.id} className="mb-1">
+                          <button
+                            type="button"
+                            className={`w-full text-left p-2 rounded cursor-pointer ${
+                              !notification.isRead ? "bg-gray-100" : ""
+                            } hover:bg-gray-200`}
+                            onClick={() => clickNotification(notification.id)}
+                            onKeyDown={(e) =>
+                              onNotificationKeyDown(e, notification.id)
+                            }
+                          >
+                            <div className="flex justify-between items-center">
+                              <span>{notification.body}</span>
+                              {!notification.isRead && (
+                                <span className="ml-2 w-2.5 h-2.5 bg-red-600 rounded-full inline-block"></span>
+                              )}
+                            </div>
+                          </button>
+
                           <button
                             className="text-xs text-red-500 mt-1"
                             onClick={(e) => {
                               e.stopPropagation();
                               deleteNotification(notification.id);
                             }}
+                            type="button"
                           >
                             Delete
                           </button>
@@ -126,7 +147,7 @@ export default function Navbar() {
                   )}
                 </div>
               )}
-              <Link href={role ? profileLink[role] : "/profile"}>
+              <Link href={role ? profileLink[role] : "/login"}>
                 <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-red-500 hover:border-black transition-all duration-300">
                   <Image
                     src={profileImageUrl}
@@ -140,10 +161,10 @@ export default function Navbar() {
             </>
           ) : (
             <Link
-              href="/login"
+              href={"/track" as Route}
               className="bg-[#E30022] text-white font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-500 hover:border-red-500"
             >
-              Apply Now
+              Track Application
             </Link>
           )}
         </div>

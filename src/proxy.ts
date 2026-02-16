@@ -1,7 +1,6 @@
-import { type NextRequest } from "next/server";
-import { NextResponse } from "next/server";
-import { rateLimit } from "./lib/rate-limit";
+import { type NextRequest, NextResponse } from "next/server";
 import { verifyCsrfToken } from "@/lib/csrf";
+import { rateLimit } from "./lib/rate-limit";
 
 const limiter = rateLimit({
   max: 200, // Default 75
@@ -10,10 +9,6 @@ const limiter = rateLimit({
 
 // Paths that do not require an access token
 const publicPathToken = [
-  {
-    path: "/api/users",
-    acceptedMethods: ["POST"],
-  },
   {
     path: "/api/auth/jwt",
     acceptedMethods: ["GET"],
@@ -26,15 +21,14 @@ const publicPathToken = [
     path: "/api/csrf",
     acceptedMethods: ["GET"],
   },
+  {
+    path: "/api/uploadFiles",
+    acceptedMethods: ["POST"],
+  },
 ];
 
 // Paths that do not require CSRF token
-const publicPathCsrf = [
-  "/api/auth/refresh",
-  "/api/auth/jwt",
-  "/api/csrf",
-  "/api/admin/stats",
-];
+const publicPathCsrf = ["/api/auth/refresh", "/api/auth/jwt", "/api/csrf"];
 
 const allowedOrigins =
   process.env.NODE_ENV === "development"
@@ -57,7 +51,7 @@ export async function proxy(request: NextRequest) {
     if (!limiter.check(request).success) {
       return NextResponse.json(
         { error: "Rate limit exceeded" },
-        { status: 429 }
+        { status: 429 },
       );
     }
 
@@ -67,7 +61,7 @@ export async function proxy(request: NextRequest) {
     if (!isSameOrigin && !(origin && allowedOrigins.includes(origin))) {
       return NextResponse.json(
         { error: "Origin not allowed" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -77,14 +71,14 @@ export async function proxy(request: NextRequest) {
       if (!csrfToken) {
         return NextResponse.json(
           { error: "CSRF token is required" },
-          { status: 403 }
+          { status: 403 },
         );
       }
 
       if (!verifyCsrfToken(csrfToken)) {
         return NextResponse.json(
           { error: "Invalid CSRF token" },
-          { status: 403 }
+          { status: 403 },
         );
       }
     }
@@ -94,7 +88,7 @@ export async function proxy(request: NextRequest) {
       !publicPathToken.some(
         (publicPath) =>
           pathname.startsWith(publicPath.path) &&
-          publicPath.acceptedMethods.includes(request.method)
+          publicPath.acceptedMethods.includes(request.method),
       )
     ) {
       return NextResponse.json({ error: "Token is required" }, { status: 403 });
@@ -106,11 +100,11 @@ export async function proxy(request: NextRequest) {
       response.headers.set("Vary", "Origin");
       response.headers.set(
         "Access-Control-Allow-Headers",
-        "Content-Type, Authorization, X-CSRF-Token"
+        "Content-Type, Authorization, X-CSRF-Token",
       );
       response.headers.set(
         "Access-Control-Allow-Methods",
-        "GET, POST, PUT, DELETE, OPTIONS"
+        "GET, POST, PUT, DELETE, OPTIONS",
       );
       response.headers.set("Access-Control-Allow-Credentials", "true");
       response.headers.set("Access-Control-Max-Age", "86400");

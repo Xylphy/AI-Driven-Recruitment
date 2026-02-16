@@ -22,9 +22,12 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: "100mb",
     },
+    turbopackFileSystemCacheForDev: true,
+    turbopackFileSystemCacheForBuild: true,
   },
   typedRoutes: true,
   reactCompiler: true,
+  cacheComponents: true,
 };
 
 export default nextConfig;

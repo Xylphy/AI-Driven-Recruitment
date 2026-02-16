@@ -1,4 +1,4 @@
-import { ObjectId } from "mongodb";
+import type { ObjectId } from "mongodb";
 export type ScoredCandidateScoreData = {
   raw_score: number;
   reason: string;

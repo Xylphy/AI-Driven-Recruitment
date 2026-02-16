@@ -1,6 +1,7 @@
 // lib/rate-limit.ts
-import { NextRequest } from "next/server";
+
 import { LRUCache } from "lru-cache";
+import type { NextRequest } from "next/server";
 
 const rateLimitCache = new LRUCache<string, number[]>({
   max: 1000,
@@ -21,7 +22,7 @@ export function rateLimit(config: { max: number; windowMs: number }) {
       const now = Date.now();
 
       requestTimestamps = requestTimestamps.filter(
-        (timestamp) => now - timestamp < config.windowMs
+        (timestamp) => now - timestamp < config.windowMs,
       );
 
       requestTimestamps.push(now);

@@ -2,16 +2,16 @@
  * Router for staff-related procedures (HR Officer, SuperAdmin, Admin)
  */
 
-import { createTRPCRouter, staffProcedure } from "../init";
 import { TRPCError } from "@trpc/server";
-import { createClientServer } from "@/lib/supabase/supabase";
+import { z } from "zod";
 import {
   deleteRow,
   find,
   findWithJoin,
   insertTable,
 } from "@/lib/supabase/action";
-import {
+import { createClientServer } from "@/lib/supabase/supabase";
+import type {
   AuditLog,
   HRReport,
   JobListing,
@@ -19,25 +19,25 @@ import {
   JobListingRequirements,
   JobTags,
   KeyHighlights,
-  User,
+  Staff,
 } from "@/types/schema";
-import { z } from "zod";
+import { authorizedProcedure, createTRPCRouter } from "../init";
 
 const staffRouter = createTRPCRouter({
-  getJobDetails: staffProcedure
+  getJobDetails: authorizedProcedure
     .input(
       z.object({
         jobId: z.string(),
-      })
+      }),
     )
     .query(async ({ input }) => {
       const supabase = await createClientServer(1, true);
 
       const { data: jobListing, error: errorJobListing } = await findWithJoin<
-        JobListing & { users: Pick<User, "first_name" | "last_name"> }
+        JobListing & { users: Pick<Staff, "first_name" | "last_name"> }
       >(supabase, "job_listings", [
         {
-          foreignTable: "users!job_listings_officer_id_fkey",
+          foreignTable: "staff!job_listings_officer_id_fkey",
           foreignKey: "officer_id",
           fields: "first_name, last_name",
         },
@@ -56,7 +56,7 @@ const staffRouter = createTRPCRouter({
       const qualificationsPromise = find<JobListingQualifications>(
         supabase,
         "jl_qualifications",
-        [{ column: "joblisting_id", value: input.jobId }]
+        [{ column: "joblisting_id", value: input.jobId }],
       )
         .many()
         .execute();
@@ -64,7 +64,7 @@ const staffRouter = createTRPCRouter({
       const requirementsPromise = find<JobListingRequirements>(
         supabase,
         "jl_requirements",
-        [{ column: "joblisting_id", value: input.jobId }]
+        [{ column: "joblisting_id", value: input.jobId }],
       )
         .many()
         .execute();
@@ -78,7 +78,7 @@ const staffRouter = createTRPCRouter({
             foreignKey: "tag_id",
             fields: "id, name",
           },
-        ]
+        ],
       )
         .many([{ column: "joblisting_id", value: input.jobId }])
         .execute();
@@ -118,14 +118,14 @@ const staffRouter = createTRPCRouter({
         users: undefined,
       };
     }),
-  postHrReport: staffProcedure
+  postHrReport: authorizedProcedure
     .input(
       z.object({
         score: z.number().min(0).max(5),
         applicantId: z.uuid(),
         summary: z.string(),
         keyHighlights: z.string(),
-      })
+      }),
     )
     .mutation(async ({ input, ctx }) => {
       const supabase = await createClientServer(1, true);
@@ -137,8 +137,8 @@ const staffRouter = createTRPCRouter({
           score: input.score,
           applicant_id: input.applicantId,
           summary: input.summary,
-          staff_id: ctx.userJWT!.id,
-        }
+          staff_id: ctx.userJWT?.id,
+        },
       );
 
       if (hrReportError || !hrReport) {
@@ -160,7 +160,7 @@ const staffRouter = createTRPCRouter({
             .map((highlight) => ({
               report_id: hrReport[0].id,
               highlight,
-            }))
+            })),
         );
 
       if (keyHighlightError || !keyHighlight) {
@@ -176,21 +176,21 @@ const staffRouter = createTRPCRouter({
         supabase,
         "audit_logs",
         {
-          actor_type: ctx.userJWT!.role,
-          actor_id: ctx.userJWT!.id,
+          actor_type: ctx.userJWT?.role,
+          actor_id: ctx.userJWT?.id,
           action: "create",
           event_type: "Created HR Report",
           entity_type: "HR Report",
           entity_id: hrReport[0].id,
           changes: {},
           details: `HR Report created with score ${input.score}`,
-        } as AuditLog
+        } as AuditLog,
       );
 
       if (insertLogError) {
         console.error(
           "Error inserting audit log for HR Report:",
-          insertLogError
+          insertLogError,
         );
       }
 
@@ -199,18 +199,18 @@ const staffRouter = createTRPCRouter({
         keyHighlights: keyHighlight as KeyHighlights[],
       };
     }),
-  fetchHRReports: staffProcedure
+  fetchHRReports: authorizedProcedure
     .input(
       z.object({
         applicantId: z.string(),
-      })
+      }),
     )
     .query(async ({ input }) => {
       const supabase = await createClientServer(1, true);
 
       const { data: hrReports, error: hrReportsError } = await findWithJoin<
         HRReport & {
-          users: Pick<User, "first_name" | "last_name">;
+          users: Pick<Staff, "first_name" | "last_name">;
           key_highlights: Pick<KeyHighlights, "highlight">[];
         }
       >(supabase, "hr_reports", [

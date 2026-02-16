@@ -1,32 +1,143 @@
 "use client";
 
-import { startTransition, useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { MdChat, MdClose, MdSend } from "react-icons/md";
+import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { MdAdd, MdChat, MdClose, MdSend } from "react-icons/md";
+
+type Message = {
+  id?: string;
+  message: string;
+  role: "user" | "assistant";
+  created_at?: string;
+};
+
+type ConversationCreatedResponse = {
+  conversation_id: string;
+  message: string; // Success message from the server
+};
+
+const initialMessages: Message[] = [
+  {
+    id: "f3ac1c09-d1c2-480c-8c23-883d6c656090", // Dummy ID (not from database)
+    message: "👋 Hi! I’m your AI assistant.",
+    role: "assistant",
+  },
+  {
+    id: "f1b1e2bc-ee73-41a2-af47-569c99160789",
+    message: "Ask me about jobs, applications, or your profile.",
+    role: "assistant",
+  },
+];
 
 export default function ChatbotWidget() {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [message, setMessage] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+
+  const [messages, setMessages] = useState<Message[]>(initialMessages);
+
+  const bottomRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    startTransition(() => setMounted(true));
+    setMounted(true);
   }, []);
 
-  if (!mounted) {
-    return null;
-  }
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, []);
+
+  if (!mounted) return null;
+
+  const handleSend = () => {
+    if (!message.trim()) return;
+
+    const userMessage = {
+      user_input: message,
+    };
+
+    const chatbotAPI = new URL(
+      `http://localhost:8000/chatbot/use/${conversationId}`,
+    );
+
+    setMessages((prev) => [
+      ...prev,
+      { message, role: "user", id: prev.length.toString() },
+    ]);
+
+    // Show typing animation
+    setIsTyping(true);
+
+    fetch(chatbotAPI.toString(), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(userMessage),
+    })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`Server error: ${res.statusText}`);
+        }
+        return res.json();
+      })
+      .then((data: { reply: string }) => {
+        setMessages((prev) => [
+          ...prev,
+          {
+            message: data.reply,
+            role: "assistant",
+            id: prev.length.toString(),
+          },
+        ]);
+      })
+      .catch((err) => alert(`Error sending message: ${err}`))
+      .finally(() => setIsTyping(false));
+
+    setMessage("");
+  };
+
+  const handleOpen = () => {
+    fetch("http://localhost:8000/chatbot/new_conv", {
+      method: "POST",
+    })
+      .then((res) => res.json())
+      .then((data: ConversationCreatedResponse) => {
+        setConversationId(data.conversation_id);
+        setOpen(true);
+        setMessages(initialMessages); // Reset to initial messages on new conversation
+      })
+      .catch((err) => alert(`Error starting conversation:${err}`));
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+
+    const chatbotAPI = new URL(
+      `http://localhost:8000/chatbot/delete/${conversationId}`,
+    );
+
+    fetch(chatbotAPI.toString(), {
+      method: "DELETE",
+    })
+      .then(() => {
+        setConversationId(null);
+      })
+      .catch((err) => alert(`Error ending conversation:${err}`));
+  };
 
   return (
     <>
       <button
-        onClick={() => setOpen(true)}
-        aria-label="Open chatbot"
         className="fixed bottom-6 right-6 z-50 w-16 h-16 rounded-full
-          bg-linear-to-br from-red-500 via-red-600 to-red-700
-          shadow-xl shadow-red-500/30
-          flex items-center justify-center
-          text-white
-          hover:scale-110 transition-transform duration-300"
+        bg-linear-to-br from-red-800 via-red-600 to-red-500
+        shadow-xl shadow-red-600/30
+        flex items-center justify-center
+        text-white
+        hover:scale-110 transition-transform duration-300"
+        onClick={handleOpen}
+        type="button"
       >
         <MdChat className="text-2xl" />
       </button>
@@ -37,17 +148,17 @@ export default function ChatbotWidget() {
             initial={{ opacity: 0, y: 60, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 60, scale: 0.95 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-            className="fixed bottom-28 right-6 z-50 w-90 max-w-[92vw]
-              rounded-2xl overflow-hidden
-              backdrop-blur-xl bg-white/70
-              border border-white/30
-              shadow-2xl"
+            transition={{ duration: 0.3 }}
+            className="fixed bottom-28 right-6 z-50 w-96 max-w-[92vw]
+            rounded-2xl overflow-hidden
+            backdrop-blur-xl bg-white/90
+            border border-red-100
+            shadow-2xl"
           >
             <div
               className="p-4 flex items-center justify-between
-                bg-linear-to-r from-red-600 to-red-700
-                text-white"
+  bg-linear-to-r from-red-800 via-red-600 to-red-500
+  text-white"
             >
               <div>
                 <h3 className="font-semibold text-sm tracking-wide">
@@ -58,64 +169,90 @@ export default function ChatbotWidget() {
                 </p>
               </div>
 
-              <button
-                onClick={() => setOpen(false)}
-                aria-label="Close chatbot"
-                className="hover:opacity-80 transition"
-              >
-                <MdClose className="text-xl" />
-              </button>
-            </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  className="flex items-center gap-1 px-3 py-1.5
+      text-xs font-medium
+      bg-white/20 hover:bg-white/30
+      backdrop-blur-md
+      rounded-full transition-all duration-200"
+                >
+                  <MdAdd className="text-sm" />
+                  New Chat
+                </button>
 
-            <div className="p-4 space-y-3 text-sm overflow-y-auto h-72">
-              <div
-                className="max-w-[85%] rounded-xl px-4 py-2
-                bg-white/80 backdrop-blur border border-white/40 shadow-sm"
-              >
-                👋 Hi! I’m your AI assistant.
-              </div>
-
-              <div
-                className="max-w-[85%] rounded-xl px-4 py-2
-                bg-white/80 backdrop-blur border border-white/40 shadow-sm"
-              >
-                Ask me about jobs, applications, or your profile.
-              </div>
-
-              <div
-                className="max-w-[85%] ml-auto rounded-xl px-4 py-2
-                bg-linear-to-br from-red-600 to-red-700
-                text-white shadow-md"
-              >
-                (User message placeholder)
+                <button
+                  onClick={handleClose}
+                  type="button"
+                  className="hover:opacity-80 transition"
+                >
+                  <MdClose className="text-xl" />
+                </button>
               </div>
             </div>
 
-            <div
-              className="p-3 flex items-center gap-2
-                border-t border-white/40
-                bg-white/60 backdrop-blur"
-            >
+            <div className="p-4 space-y-3 text-sm overflow-y-auto h-72 bg-red-50/40">
+              <AnimatePresence>
+                {messages.map((msg) => (
+                  <motion.div
+                    key={msg.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25 }}
+                    className={`max-w-[85%] rounded-xl px-4 py-2 shadow-md ${
+                      msg.role === "user"
+                        ? "ml-auto bg-linear-to-br from-red-800 via-red-600 to-red-500 text-white"
+                        : "bg-white border border-red-100"
+                    }`}
+                  >
+                    {msg.message}
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+
+              {isTyping && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="max-w-[85%] rounded-xl px-4 py-2 bg-white border border-red-100"
+                >
+                  <div className="flex gap-1">
+                    <span className="w-2 h-2 bg-red-400 rounded-full animate-bounce" />
+                    <span className="w-2 h-2 bg-red-400 rounded-full animate-bounce delay-150" />
+                    <span className="w-2 h-2 bg-red-400 rounded-full animate-bounce delay-300" />
+                  </div>
+                </motion.div>
+              )}
+
+              <div ref={bottomRef} />
+            </div>
+
+            <div className="p-3 flex items-center gap-2 border-t border-red-100 bg-white">
               <input
                 type="text"
                 placeholder="Type your message..."
-                disabled
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleSend();
+                }}
                 className="flex-1 px-4 py-2 text-sm rounded-full
-                  bg-white/70 backdrop-blur
-                  border border-white/40
-                  focus:outline-none
-                  cursor-not-allowed"
+                bg-red-50 border border-red-200
+                focus:outline-none focus:ring-2 focus:ring-red-400"
               />
 
-              <button
-                disabled
+              <motion.button
+                whileTap={{ scale: 0.9 }}
+                onClick={handleSend}
                 className="w-10 h-10 rounded-full
-                  bg-linear-to-br from-gray-300 to-gray-400
-                  text-white flex items-center justify-center
-                  cursor-not-allowed"
+                bg-linear-to-br from-red-800 via-red-600 to-red-500
+                text-white flex items-center justify-center
+                shadow-md"
+                type="button"
               >
                 <MdSend />
-              </button>
+              </motion.button>
             </div>
           </motion.div>
         )}

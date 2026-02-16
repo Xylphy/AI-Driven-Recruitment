@@ -1,100 +1,61 @@
-import { EntityTypes, Title, UserActionEventType, UserRoles } from "./types";
-import { CANDIDATE_STATUSES, USER_ROLES } from "@/lib/constants";
+import type { CANDIDATE_STATUSES, USER_ROLES } from "@/lib/constants";
+import type {
+  EntityTypes,
+  Title,
+  UserActionEventType,
+  UserRoles,
+} from "./types";
 
 // -------------------------------- Database Schema -------------------------------- //
 // For Database Schema, we use snake_case for field names
-
-interface DateRange {
-  start_month: string;
-  start_year: number;
-  end_month: string | null;
-  end_year: number | null;
-}
 
 export interface IdentifiableItem<T = string> {
   id: T;
 }
 
-export interface Admin extends IdentifiableItem {
-  user_id: string;
-}
-
-export interface User extends IdentifiableItem {
+export interface Staff extends IdentifiableItem {
   first_name: string;
   last_name: string;
-  phone_number: string | null;
-  prefix: string;
   firebase_uid: string;
-  country_code: string;
-  resume_id: string | null;
-  street: string | null;
-  zip: string | null;
-  city: string | null;
-  state: string | null;
-  country: string | null;
-  job_title: string | null;
-  parsed_resume_id: string | null;
-  transcript_id: string | null;
-  transcribed_id: string | null;
   role: (typeof USER_ROLES)[number];
 }
 
-export interface EducationalDetails
-  extends IdentifiableItem,
-    DateRange,
-    Pick<Admin, "user_id"> {
-  degree: string | null;
-  institute: string | null;
-  currently_pursuing: boolean;
-  major: string | null;
-}
-
-export interface SocialLinks extends IdentifiableItem, Pick<Admin, "user_id"> {
-  link: string;
-}
-
-export interface Skills extends IdentifiableItem, Pick<Admin, "user_id"> {
-  skill: string | null;
-}
-
-export interface JobExperiences
-  extends IdentifiableItem,
-    Pick<Admin, "user_id">,
-    DateRange {
-  title: string | null;
-  company: string | null;
-  summary: string | null;
-  currently_working: boolean;
-}
-
-export interface JobApplicant extends IdentifiableItem, Pick<Admin, "user_id"> {
-  created_at: string;
+export interface Applicants extends IdentifiableItem {
   joblisting_id: string;
-  score_id: string;
-  status: (typeof CANDIDATE_STATUSES)[number] | null;
-  notify: boolean;
+  first_name: string;
+  last_name: string;
+  resume_id: string;
+  street?: string;
+  zip?: string;
+  city?: string;
+  state?: string;
+  parsed_resume_id?: string;
+  transcript_id: string;
+  transcribed_id?: string;
+  status?: (typeof CANDIDATE_STATUSES)[number] | null;
+  created_at: string;
+  email?: string;
+  contact_number?: string;
 }
 
-export interface JobListing
-  extends IdentifiableItem,
-    Pick<JobApplicant, "created_at">,
-    Title {
+export interface JobListing extends IdentifiableItem, Title {
+  created_at: string;
   joblisting_id: string;
   location: "Cebu City" | "Manila" | "Tokyo";
   created_by: string;
   is_fulltime: boolean;
-  officer_id: string;
+  officer_id?: string;
 }
 
 export interface JobListingQualifications
   extends IdentifiableItem,
-    Pick<JobApplicant, "joblisting_id"> {
+    Pick<Applicants, "joblisting_id"> {
   qualification: string;
 }
 
 export interface JobListingRequirements
   extends IdentifiableItem,
-    Pick<JobApplicant, "joblisting_id"> {
+    Pick<Applicants, "joblisting_id"> {
   requirement: string;
 }
 
@@ -127,13 +88,13 @@ export interface AdminFeedback extends IdentifiableItem {
   created_at: string;
 }
 
-export interface AuditLog{
+export interface AuditLog {
   created_at?: string; //timestamp
   id?: string; // uuid
 
   // actor (who)
   actor_type: UserRoles;
-  actor_id: string; // user_id
+  actor_id?: string; // nullable staff_id
 
   // action (what)
   action: "create" | "update" | "delete";
@@ -165,4 +126,11 @@ export interface KeyHighlights extends IdentifiableItem {
   created_at: string;
   report_id: string;
   highlight: string;
+}
+
+// Table name: applicant_skills
+export interface ApplicantSkills extends IdentifiableItem {
+  applicant_id: string;
+  skill_id: string;
+  rating: number;
 }

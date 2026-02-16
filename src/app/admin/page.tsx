@@ -1,44 +1,19 @@
 "use client";
 
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import Header from "@/components/admin/Header";
 import { formatDate } from "@/lib/library";
 import { trpc } from "@/lib/trpc/client";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  CartesianGrid,
-} from "recharts";
-
-const topTalent = [
-  { name: "Jane Doe", score: 92 },
-  { name: "John Smith", score: 89 },
-  { name: "Alex Cruz", score: 85 },
-];
-
-const sourcingData = [
-  { source: "LinkedIn", candidates: 60 },
-  { source: "Career Page", candidates: 35 },
-  { source: "Referrals", candidates: 25 },
-];
-
-const diversityData = [
-  { group: "Women", value: 45 },
-  { group: "Men", value: 50 },
-  { group: "Non-binary", value: 5 },
-];
-
-const predictiveData = [
-  { month: "Jan", hires: 6 },
-  { month: "Feb", hires: 8 },
-  { month: "Mar", hires: 12 },
-  { month: "Apr", hires: 15 },
-];
 
 const GlassCard = ({
   title,
@@ -128,7 +103,7 @@ export default function AdminDashboard() {
               value: statsQuery.data?.totalCandidates,
             },
             {
-              label: "Candidates for Final Interview",
+              label: "Hiring Success Rate",
               value: statsQuery.data?.candidatesForFinalInterview,
             },
             { label: "Avg Time-to-Hire", value: "21 days" },
@@ -142,7 +117,7 @@ export default function AdminDashboard() {
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <GlassCard title="Recruitment Funnel Overview">
             <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={statsQuery.data?.candidateStatuses|| []}>
+              <BarChart data={statsQuery.data?.candidateStatuses || []}>
                 <XAxis dataKey="stage" />
                 <YAxis />
                 <Tooltip />
@@ -153,14 +128,14 @@ export default function AdminDashboard() {
 
           <GlassCard title="Top Talent (AI Match >80%)">
             <ul className="space-y-3">
-              {topTalentQuery.data?.topCandidates.map((c, index) => (
+              {topTalentQuery.data?.topCandidates.map((c) => (
                 <li
-                  key={index}
+                  key={crypto.randomUUID()}
                   className="flex justify-between items-center bg-white/40 rounded-lg px-4 py-2"
                 >
                   <span className="font-medium">{c.name}</span>
                   <span className="text-green-600 font-bold">
-                    {c.score_data!.predictive_success}%
+                    {c.score_data.predictive_success}%
                   </span>
                 </li>
               ))}
@@ -191,7 +166,7 @@ export default function AdminDashboard() {
                   (growth, index) => ({
                     name: `Week ${index + 1}`,
                     candidates: growth.applicants,
-                  })
+                  }),
                 )}
               >
                 <CartesianGrid strokeDasharray="3 3" />

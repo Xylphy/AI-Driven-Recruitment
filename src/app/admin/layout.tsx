@@ -1,30 +1,27 @@
 "use client";
 
+import { AnimatePresence, motion } from "framer-motion";
+import { Bell } from "lucide-react";
+import type { Route } from "next";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import {
-  MdSettings,
-  MdLogout,
   MdArrowBack,
-  MdNotifications,
-} from "react-icons/md";
-import Link from "next/link";
-import { Bell } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { auth } from "@/lib/firebase/client";
-
-import { usePathname } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  MdMenu,
   MdClose,
-  MdWork,
-  MdPeople,
   MdCompareArrows,
   MdDashboard,
   MdError,
+  MdInsights,
+  MdLogout,
+  MdMenu,
+  MdNotifications,
+  MdPeople,
+  MdSettings,
+  MdWork,
 } from "react-icons/md";
+import { auth } from "@/lib/firebase/client";
 import { trpc } from "@/lib/trpc/client";
-import useAuth from "@/hooks/useAuth";
 
 export default function AdminLayout({
   children,
@@ -35,13 +32,8 @@ export default function AdminLayout({
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const pathName = usePathname();
   const jwtDecoded = trpc.auth.decodeJWT.useQuery();
-  const {} = useAuth(); // For logout functionality
 
-  if (
-    jwtDecoded.isLoading ||
-    !jwtDecoded.isSuccess ||
-    jwtDecoded.data.user.role === "User"
-  ) {
+  if (jwtDecoded.isLoading || !jwtDecoded.isSuccess || !jwtDecoded.data) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-100">
         <div className="bg-white p-8 rounded shadow text-center">
@@ -143,12 +135,21 @@ export default function AdminLayout({
                   </Link>
 
                   <Link
-                    href="/admin/users"
+                    href={{ pathname: "/admin/kpi_metrics" }}
                     className={`flex items-center gap-3 hover:bg-white/20 px-3 py-2 rounded-md transition ${
-                      pathName === "/admin/users" ? "bg-white/30" : ""
+                      pathName === "/admin/kpi_metrics" ? "bg-white/30" : ""
                     }`}
                   >
-                    <MdPeople /> Users
+                    <MdInsights /> KPI Metrics
+                  </Link>
+
+                  <Link
+                    href={"/admin/staffs" as Route}
+                    className={`flex items-center gap-3 hover:bg-white/20 px-3 py-2 rounded-md transition ${
+                      pathName === "/admin/staffs" ? "bg-white/30" : ""
+                    }`}
+                  >
+                    <MdPeople /> Staffs
                   </Link>
 
                   <Link
@@ -165,23 +166,20 @@ export default function AdminLayout({
               <div className="flex gap-4 justify-center">
                 <MdSettings className="cursor-pointer hover:text-red-300" />
                 <MdLogout
-                  onClick={() => auth.signOut()}
+                  onClick={() => {
+                    auth.signOut();
+                    router.push("/login");
+                  }}
                   className="cursor-pointer hover:text-red-300"
                 />
               </div>
-
-              <button
-                onClick={() => router.push("/profile/edit")}
-                className="text-white font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-300"
-              >
-                EDIT PROFILE
-              </button>
             </nav>
           </motion.aside>
         )}
         <div className="flex-1 flex flex-col">
           <header className="bg-white shadow p-4 flex justify-between items-center">
             <button
+              type="button"
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
               className="flex items-center gap-2 text-[#E30022] font-bold"
             >
@@ -202,12 +200,6 @@ export default function AdminLayout({
               </Link>
 
               <Bell className="w-6 h-6 text-gray-600 hover:text-red-600 cursor-pointer" />
-
-              <Link href="/profile">
-                <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-red-500 hover:border-black transition-all duration-300 cursor-pointer">
-                  {/* Profile Image */}
-                </div>
-              </Link>
             </div>
           </header>
 

@@ -1,6 +1,6 @@
 "use client";
-import React from "react";
-import { SocialLink } from "@/types/types";
+
+import type { SocialLink } from "@/types/types";
 
 export default function SocialLinks({
   update,
@@ -27,6 +27,7 @@ export default function SocialLinks({
             required
           />
           <button
+            type="button"
             onClick={() => deleteLink(link.id)}
             className="bg-red-500 text-white px-2 py-1 rounded"
           >
@@ -34,12 +35,13 @@ export default function SocialLinks({
           </button>
         </div>
       ))}
-      <p
+      <button
+        type="button"
         onClick={add}
-        className="text-green-500 cursor-pointer hover:underline mb-4"
+        className="text-green-500 cursor-pointer hover:underline mb-4 bg-transparent border-none p-0"
       >
         Add Social Link
-      </p>
+      </button>
     </div>
   );
 }

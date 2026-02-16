@@ -2,35 +2,38 @@
  * Router for job listing related procedures (mostly for users)
  */
 
+import { TRPCError } from "@trpc/server";
+import { z } from "zod";
+import admin, { db } from "@/lib/firebase/admin";
+import { deleteDocument } from "@/lib/mongodb/action";
+import mongoDb_client from "@/lib/mongodb/mongodb";
+import { jobListingSchema, userSchema } from "@/lib/schemas";
+import {
+  deleteRow,
+  find,
+  findWithJoin,
+  insertTable,
+  updateTable,
+} from "@/lib/supabase/action";
+import { createClientServer } from "@/lib/supabase/supabase";
+import type {
+  Applicants,
+  AuditLog,
+  Changes,
+  JobListing,
+  JobListingQualifications,
+  JobListingRequirements,
+  JobTags,
+  Tags,
+} from "@/types/schema";
+import type { Notification } from "@/types/types";
 import {
   adminProcedure,
   authorizedProcedure,
   createTRPCRouter,
   rateLimitedProcedure,
 } from "../init";
-import { z } from "zod";
-import { createClientServer } from "@/lib/supabase/supabase";
-import {
-  find,
-  findWithJoin,
-  deleteRow,
-  insertTable,
-  updateTable,
-} from "@/lib/supabase/action";
-import { TRPCError } from "@trpc/server";
-import mongoDb_client from "@/lib/mongodb/mongodb";
-import { deleteDocument } from "@/lib/mongodb/action";
-import {
-  JobListing,
-  JobListingQualifications,
-  JobListingRequirements,
-  JobApplicant,
-  JobTags,
-  Changes,
-} from "@/types/schema";
-import { jobListingSchema } from "@/lib/schemas";
-import type { Notification } from "@/types/types";
-import admin, { db } from "@/lib/firebase/admin";
+import { moveFile } from "@/lib/cloudinary/cloudinary";
 
 const jobListingRouter = createTRPCRouter({
   joblistings: authorizedProcedure
@@ -40,14 +43,14 @@ const jobListingRouter = createTRPCRouter({
           limit: z.number().min(1).max(100).optional().default(10),
           page: z.number().min(1).optional().default(1),
         })
-        .optional()
+        .optional(),
     )
     .query(async ({ ctx }) => {
-      const userId = ctx.userJWT!.id;
+      const userId = ctx.userJWT?.id ?? "";
       const supabase = await createClientServer(1, true);
 
       const { data: appliedData, error: appliedError } = await findWithJoin<
-        JobApplicant & { job_listings: JobListing }
+        Applicants & { job_listings: JobListing }
       >(supabase, "job_applicants", [
         {
           foreignTable: "job_listings",
@@ -85,19 +88,13 @@ const jobListingRouter = createTRPCRouter({
       z.object({
         joblistingId: z.uuid(),
         officer_id: z.string().optional(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
-      if (ctx.userJWT!.role === "User") {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You are not authorized to access this resource.",
-        });
-      }
-
       if (
-        input.officer_id !== ctx.userJWT!.id &&
-        ctx.userJWT!.role !== "Admin"
+        input.officer_id !== ctx.userJWT?.id &&
+        ctx.userJWT?.role !== "Admin" &&
+        ctx.userJWT?.role !== "SuperAdmin"
       ) {
         throw new TRPCError({
           code: "FORBIDDEN",
@@ -110,7 +107,7 @@ const jobListingRouter = createTRPCRouter({
         supabase,
         "job_listings",
         "id",
-        input.joblistingId
+        input.joblistingId,
       );
 
       if (error) {
@@ -131,15 +128,15 @@ const jobListingRouter = createTRPCRouter({
         supabase,
         "audit_logs",
         {
-          actor_type: ctx.userJWT!.role,
-          actor_id: ctx.userJWT!.id,
+          actor_type: ctx.userJWT?.role,
+          actor_id: ctx.userJWT?.id,
           action: "delete",
           event_type: "Joblisting deleted",
           entity_type: "Job Listing",
           entity_id: input.joblistingId,
           changes: {},
           details: `Job listing with ID ${input.joblistingId} was deleted.`,
-        }
+        } as AuditLog,
       );
 
       if (insertLogError) {
@@ -154,9 +151,9 @@ const jobListingRouter = createTRPCRouter({
     .input(
       z.object({
         jobId: z.uuid(),
-      })
+      }),
     )
-    .query(async ({ input, ctx }) => {
+    .query(async ({ input }) => {
       const supabase = await createClientServer(1, true);
 
       const { data: jobListing, error: errorJobListing } =
@@ -175,7 +172,7 @@ const jobListingRouter = createTRPCRouter({
       const qualificationsPromise = find<JobListingQualifications>(
         supabase,
         "jl_qualifications",
-        [{ column: "joblisting_id", value: input.jobId }]
+        [{ column: "joblisting_id", value: input.jobId }],
       )
         .many()
         .execute();
@@ -183,7 +180,7 @@ const jobListingRouter = createTRPCRouter({
       const requirementsPromise = find<JobListingRequirements>(
         supabase,
         "jl_requirements",
-        [{ column: "joblisting_id", value: input.jobId }]
+        [{ column: "joblisting_id", value: input.jobId }],
       )
         .many()
         .execute();
@@ -197,24 +194,16 @@ const jobListingRouter = createTRPCRouter({
             foreignKey: "tag_id",
             fields: "id, name",
           },
-        ]
+        ],
       )
         .many([{ column: "joblisting_id", value: input.jobId }])
         .execute();
 
-      const userJWT = ctx.userJWT;
-      let applicantCheckPromise;
-
-      if (userJWT) {
-        applicantCheckPromise = find<JobApplicant>(supabase, "job_applicants", [
-          { column: "joblisting_id", value: input.jobId },
-          { column: "user_id", value: userJWT.id },
-        ]).single();
-      }
-
-      const qualifications = await qualificationsPromise;
-      const requirements = await requirementsPromise;
-      const tags = await tagsPromise;
+      const [qualifications, requirements, tags] = await Promise.all([
+        qualificationsPromise,
+        requirementsPromise,
+        tagsPromise,
+      ]);
 
       if (qualifications.error || requirements.error || tags.error) {
         console.error("Error fetching job details:", {
@@ -228,85 +217,86 @@ const jobListingRouter = createTRPCRouter({
         });
       }
 
-      const applicantCheck = await applicantCheckPromise;
-
       return {
         ...jobListing,
         requirements: requirements.data?.map((item) => item.requirement) || [],
         qualifications:
           qualifications.data?.map((item) => item.qualification) || [],
-        status: applicantCheck?.data?.status || null,
-        isApplicant: !!applicantCheck?.data,
         tags: (tags.data || []).map((item) => item.tags.name),
-        notify: applicantCheck?.data?.notify || false,
         users: undefined,
       };
     }),
   applyForJob: rateLimitedProcedure
     .input(
-      z.object({
-        jobId: z.uuid(),
-      })
+      z
+        .object({
+          jobId: z.uuid(),
+          resumeURL: z.string(),
+          transcriptURL: z.string(),
+        })
+        .extend(userSchema.shape),
     )
-    .mutation(async ({ input, ctx }) => {
-      if (ctx.userJWT!.role !== "User") {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Admins cannot apply for jobs",
-        });
-      }
-
+    .mutation(async ({ input }) => {
       const supabaseClient = await createClientServer(1, true);
 
-      const { data: existingApplicant, error: existingError } =
-        await find<JobApplicant>(
-          supabaseClient,
-          "job_applicants",
-          [
-            { column: "user_id", value: input.jobId },
-            { column: "joblisting_id", value: input.jobId },
-          ],
-          "*"
-        )
-          .many()
-          .execute();
+      const [resumePublicId, transcriptPublicId] = await Promise.all([
+        moveFile(input.resumeURL),
+        moveFile(input.transcriptURL),
+      ]);
 
-      if (existingError) {
-        console.error("Failed to check existing applications", existingError);
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to check existing applications",
-        });
-      }
-
-      if (existingApplicant && existingApplicant.length > 0) {
-        throw new TRPCError({
-          code: "CONFLICT",
-          message: "You have already applied for this job",
-        });
-      }
-
-      const { data: applicantsID, error } = await insertTable(
+      const { data: applicantsID, error: applicantsError } = await insertTable(
         supabaseClient,
-        "job_applicants",
+        "applicants",
         {
-          user_id: ctx.userJWT!.id,
           joblisting_id: input.jobId,
-        }
+          first_name: input.firstName,
+          last_name: input.lastName,
+          email: input.email,
+          contact_number: input.contactNumber,
+          street: input.street,
+          zip: input.zip,
+          city: input.city,
+          state: input.state,
+          resume_id: resumePublicId,
+          transcript_id: transcriptPublicId,
+        } as unknown as Applicants,
       );
 
-      if (error) {
-        console.error("Error submitting application", error);
+      if (!applicantsID || applicantsError) {
+        console.error("Error inserting applicant data:", applicantsError);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to submit application",
+          message: "Failed to apply for job",
+        });
+      }
+
+      const { error: applicantSkillsError } = await supabaseClient
+        .from("applicant_skills")
+        .insert(
+          input.skills.map((tag) => ({
+            applicant_id: applicantsID[0].id,
+            tag_id: tag.id,
+            rating: tag.rating || 0,
+          })),
+        );
+
+      if (applicantSkillsError) {
+        await deleteRow(supabaseClient, "applicants", "id", applicantsID[0].id);
+        console.error(
+          "Error inserting applicant skills:",
+          applicantSkillsError,
+        );
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to apply for job",
         });
       }
 
       const scoreAPI = new URL("http://localhost:8000/score/");
       scoreAPI.searchParams.set("job_id", input.jobId);
-      scoreAPI.searchParams.set("user_id", ctx.userJWT!.id);
       scoreAPI.searchParams.set("applicant_id", applicantsID[0].id);
+      scoreAPI.searchParams.set("resume_public_id", resumePublicId);
+      scoreAPI.searchParams.set("transcript_public_id", transcriptPublicId);
 
       fetch(scoreAPI.toString(), {
         method: "POST",
@@ -319,17 +309,16 @@ const jobListingRouter = createTRPCRouter({
         supabaseClient,
         "audit_logs",
         {
-          actor_type: ctx.userJWT!.role,
-          actor_id: ctx.userJWT!.id,
+          actor_type: "Applicant",
           action: "create",
           event_type: "Applied for job",
           entity_type: "Job Applicant",
           entity_id: applicantsID[0].id,
           changes: {},
-          details: `User with ID ${
-            ctx.userJWT!.id
+          details: `Applicant with ID ${
+            applicantsID[0].id
           } applied for job listing with ID ${input.jobId}.`,
-        }
+        } as AuditLog,
       );
 
       if (insertLogError) {
@@ -345,15 +334,9 @@ const jobListingRouter = createTRPCRouter({
     .input(
       jobListingSchema.extend({
         jobId: z.uuid(),
-      })
+      }),
     )
     .mutation(async ({ input, ctx }) => {
-      if (ctx.userJWT!.role === "User") {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You are not authorized to access this resource.",
-        });
-      }
       const supabase = await createClientServer(1, true);
       const { data: oldJoblisting, error: oldJoblistingError } =
         await find<JobListing>(supabase, "job_listings", [
@@ -368,10 +351,10 @@ const jobListingRouter = createTRPCRouter({
         });
       }
       if (
-        ctx.userJWT!.role !== "Admin" &&
-        ctx.userJWT!.id !== "SuperAdmin" &&
+        ctx.userJWT?.role !== "Admin" &&
+        ctx.userJWT?.id !== "SuperAdmin" &&
         oldJoblisting.officer_id &&
-        oldJoblisting.officer_id !== ctx.userJWT!.id
+        oldJoblisting.officer_id !== ctx.userJWT?.id
       ) {
         throw new TRPCError({
           code: "FORBIDDEN",
@@ -391,9 +374,9 @@ const jobListingRouter = createTRPCRouter({
           Array.from(new Set(input.tags?.map((tag) => tag.title))).map(
             (name) => ({
               name,
-            })
+            }),
           ),
-          { onConflict: "slug" }
+          { onConflict: "slug" },
         )
         .select("id, name");
 
@@ -409,7 +392,7 @@ const jobListingRouter = createTRPCRouter({
         tagRows.map((t) => ({
           joblisting_id: input.jobId,
           tag_id: t.id,
-        }))
+        })),
       );
 
       if (errorLink) {
@@ -429,19 +412,19 @@ const jobListingRouter = createTRPCRouter({
             location: input.location,
             is_fulltime: input.isFullTime,
           },
-          [{ column: "id", value: input.jobId }]
+          [{ column: "id", value: input.jobId }],
         ),
         ...(input.qualifications || []).map((qualification) =>
           insertTable(supabase, "jl_qualifications", {
             joblisting_id: input.jobId,
             qualification: qualification.title,
-          })
+          }),
         ),
         ...(input.requirements || []).map((requirement) =>
           insertTable(supabase, "jl_requirements", {
             joblisting_id: input.jobId,
             requirement: requirement.title,
-          })
+          }),
         ),
       ]);
 
@@ -484,15 +467,15 @@ const jobListingRouter = createTRPCRouter({
         supabase,
         "audit_logs",
         {
-          actor_type: ctx.userJWT!.role,
-          actor_id: ctx.userJWT!.id,
+          actor_type: ctx.userJWT?.role,
+          actor_id: ctx.userJWT?.id,
           action: "update",
           event_type: "Joblisting modified",
           entity_type: "Job Listing",
           entity_id: input.jobId,
           changes,
           details: `Job listing with ID ${input.jobId} was updated.`,
-        }
+        } as AuditLog,
       );
 
       if (insertLogError) {
@@ -510,9 +493,9 @@ const jobListingRouter = createTRPCRouter({
         .from("tags")
         .upsert(
           Array.from(new Set(input.tags?.map((tag) => tag.title))).map(
-            (name) => ({ name })
+            (name) => ({ name }),
           ),
-          { onConflict: "slug" }
+          { onConflict: "slug" },
         )
         .select("id, name");
 
@@ -530,10 +513,10 @@ const jobListingRouter = createTRPCRouter({
         {
           title: input.title,
           location: input.location,
-          created_by: ctx.userJWT!.id,
+          created_by: ctx.userJWT?.id,
           is_fulltime: input.isFullTime,
           officer_id: input.hrOfficerId || null,
-        }
+        },
       );
 
       if (insertedError) {
@@ -548,7 +531,7 @@ const jobListingRouter = createTRPCRouter({
         tagRows.map((t) => ({
           joblisting_id: insertedData[0].id,
           tag_id: t.id,
-        }))
+        })),
       );
 
       if (errorLink) {
@@ -565,20 +548,20 @@ const jobListingRouter = createTRPCRouter({
           insertTable(supabase, "jl_qualifications", {
             joblisting_id: insertedData[0].id,
             qualification: qualification.title,
-          })
+          }),
         ),
         ...(input.requirements || []).map((requirement) =>
           insertTable(supabase, "jl_requirements", {
             joblisting_id: insertedData[0].id,
             requirement: requirement.title,
-          })
+          }),
         ),
       ]);
 
       if (results.some((result) => result.error)) {
         console.error(
           "Error inserting qualifications/requirements",
-          results.find((r) => r.error)
+          results.find((r) => r.error),
         );
         await Promise.all([
           deleteRow(supabase, "job_listings", "id", insertedData[0].id),
@@ -587,13 +570,13 @@ const jobListingRouter = createTRPCRouter({
             supabase,
             "jl_qualifications",
             "joblisting_id",
-            insertedData[0].id
+            insertedData[0].id,
           ),
           deleteRow(
             supabase,
             "jl_requirements",
             "joblisting_id",
-            insertedData[0].id
+            insertedData[0].id,
           ),
         ]);
         throw new TRPCError({
@@ -606,7 +589,7 @@ const jobListingRouter = createTRPCRouter({
         "get_similar_job_applicants",
         {
           new_job_id: insertedData[0].id,
-        }
+        },
       );
 
       if (usersError) {
@@ -627,23 +610,23 @@ const jobListingRouter = createTRPCRouter({
             .collection("users")
             .doc(user.user_id)
             .collection("notifications")
-            .add(notification)
-        )
+            .add(notification),
+        ),
       );
 
       const { error: insertLogError } = await insertTable(
         supabase,
         "audit_logs",
         {
-          actor_type: ctx.userJWT!.role,
-          actor_id: ctx.userJWT!.id,
+          actor_type: ctx.userJWT?.role,
+          actor_id: ctx.userJWT?.id,
           action: "create",
           event_type: "Created joblisting",
           entity_type: "Job Listing",
           entity_id: insertedData[0].id,
           changes: {},
           details: `Job listing with ID ${insertedData[0].id} was created.`,
-        }
+        } as AuditLog,
       );
 
       if (insertLogError) {
@@ -656,7 +639,7 @@ const jobListingRouter = createTRPCRouter({
     .input(
       z.object({
         searchQuery: z.string().optional(),
-      })
+      }),
     )
     .query(async ({ input }) => {
       const supabaseClient = await createClientServer(1, true);
@@ -687,72 +670,40 @@ const jobListingRouter = createTRPCRouter({
         })),
       };
     }),
-  notify: rateLimitedProcedure
+  fetchTags: rateLimitedProcedure
     .input(
       z.object({
         jobId: z.uuid(),
-        notify: z.boolean(),
-      })
+      }),
     )
-    .mutation(async ({ input, ctx }) => {
-      if (ctx.userJWT!.role !== "User") {
+    .query(async ({ input }) => {
+      const supabaseClient = await createClientServer(1, true);
+
+      const tags = await findWithJoin<JobTags & { tags: Tags }>(
+        supabaseClient,
+        "job_tags",
+        [
+          {
+            foreignTable: "tags",
+            foreignKey: "tag_id",
+            fields: "id, name",
+          },
+        ],
+      )
+        .many([{ column: "joblisting_id", value: input.jobId }])
+        .execute();
+
+      if (tags.error) {
+        console.error("Error fetching tags:", tags.error);
         throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Only users can set notifications",
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch tags",
         });
       }
 
-      const supabase = await createClientServer(1, true);
-
-      await updateTable(
-        supabase,
-        "job_applicants",
-        {
-          notify: input.notify,
-        },
-        [
-          { column: "user_id", value: ctx.userJWT!.id },
-          { column: "joblisting_id", value: input.jobId },
-        ]
-      );
-
-      const changes: Record<string, Changes> = {
-        notify: {
-          before: (!input.notify).toString(),
-          after: input.notify.toString(),
-        },
+      return {
+        tags: (tags.data || []).map((item) => item.tags),
       };
-
-      const details = input.notify
-        ? `User with ID ${
-            ctx.userJWT!.id
-          } subscribed to job alerts for job listing with ID ${input.jobId}.`
-        : `User with ID ${
-            ctx.userJWT!.id
-          } unsubscribed from job alerts for job listing with ID ${
-            input.jobId
-          }.`;
-
-      const { error: insertLogError } = await insertTable(
-        supabase,
-        "audit_logs",
-        {
-          actor_type: ctx.userJWT!.role,
-          actor_id: ctx.userJWT!.id,
-          action: "update",
-          event_type: "Changed job alerts",
-          entity_type: "Job Applicant",
-          entity_id: input.jobId,
-          changes,
-          details,
-        }
-      );
-
-      if (insertLogError) {
-        console.error("Error inserting audit log:", insertLogError);
-      }
-
-      return { success: true, message: "You will be notified for updates" };
     }),
 });
 

@@ -2,23 +2,23 @@
  * Router for admin-related procedures
  */
 
-import { adminProcedure, createTRPCRouter } from "../init";
 import { TRPCError } from "@trpc/server";
-import { createClientServer } from "@/lib/supabase/supabase";
+import { z } from "zod";
+import { EVENT_TYPES, USER_ROLES } from "@/lib/constants";
+import { auth } from "@/lib/firebase/admin";
+import mongoDb_client from "@/lib/mongodb/mongodb";
 import { countTable, find, insertTable } from "@/lib/supabase/action";
-import {
+import { createClientServer } from "@/lib/supabase/supabase";
+import type { ScoredCandidateDoc } from "@/types/mongo_db/schema";
+import type {
   ActiveJob,
   AuditLog,
   JobListing,
-  User,
+  Staff,
   WeeklyCumulativeApplicants,
 } from "@/types/schema";
-import { z } from "zod";
-import { auth } from "@/lib/firebase/admin";
-import { BottleneckPercentileRow } from "@/types/types";
-import { USER_ACTION_EVENT_TYPES, USER_ROLES } from "@/lib/constants";
-import mongoDb_client from "@/lib/mongodb/mongodb";
-import { ScoredCandidateDoc } from "@/types/mongo_db/schema";
+import type { BottleneckPercentileRow } from "@/types/types";
+import { adminProcedure, createTRPCRouter } from "../init";
 
 const adminRouter = createTRPCRouter({
   fetchStats: adminProcedure.query(async () => {
@@ -43,7 +43,7 @@ const adminRouter = createTRPCRouter({
       ]),
       find<WeeklyCumulativeApplicants>(
         supabase,
-        "weekly_applicants_last_4_weeks"
+        "weekly_applicants_last_4_weeks",
       )
         .many()
         .execute(),
@@ -68,7 +68,7 @@ const adminRouter = createTRPCRouter({
     if (countFinalInterviewCandidatesError) {
       console.error(
         "Error fetching final interview candidates",
-        countFinalInterviewCandidatesError
+        countFinalInterviewCandidatesError,
       );
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
@@ -88,7 +88,7 @@ const adminRouter = createTRPCRouter({
     if (numberCandidateStatusesError) {
       console.error(
         "Error fetching candidate statuses",
-        numberCandidateStatusesError
+        numberCandidateStatusesError,
       );
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
@@ -99,8 +99,8 @@ const adminRouter = createTRPCRouter({
     }
 
     return {
-      activeJobs: dailyActiveJobs!.at(-1)?.jobs || 0,
-      totalJobs: dailyActiveJobs!.at(-1)?.jobs || 0,
+      activeJobs: dailyActiveJobs?.at(-1)?.jobs || 0,
+      totalJobs: dailyActiveJobs?.at(-1)?.jobs || 0,
       totalCandidates: totalCandidates || 0,
       jobActivity: dailyActiveJobs,
       candidateGrowth: weeklyApplicants,
@@ -112,7 +112,7 @@ const adminRouter = createTRPCRouter({
         }) => ({
           stage: row.status,
           value: Number(row.applicants_count ?? 0),
-        })
+        }),
       ),
     };
   }),
@@ -120,7 +120,7 @@ const adminRouter = createTRPCRouter({
     .input(
       z.object({
         limit: z.number().min(1).max(100).optional().default(10),
-      })
+      }),
     )
     .query(async ({ input }) => {
       await mongoDb_client.connect();
@@ -155,11 +155,11 @@ const adminRouter = createTRPCRouter({
       const userIds = Array.from(new Set(topCandidates.map((c) => c.user_id)));
 
       const { data: users, error: usersError } = userIds.length
-        ? await find<Pick<User, "id" | "first_name" | "last_name">>(
+        ? await find<Pick<Staff, "id" | "first_name" | "last_name">>(
             supabaseClient,
             "users",
             [{ column: "id", value: userIds }],
-            "id, first_name, last_name"
+            "id, first_name, last_name",
           )
             .many()
             .execute()
@@ -168,7 +168,7 @@ const adminRouter = createTRPCRouter({
       if (usersError) {
         console.error(
           "Error fetching user names for top candidates",
-          usersError
+          usersError,
         );
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
@@ -203,18 +203,12 @@ const adminRouter = createTRPCRouter({
         })[],
       };
     }),
-  fetchAllJobs: adminProcedure.query(async ({ ctx }) => {
-    if (ctx.userJWT!.role === "User") {
-      throw new TRPCError({
-        code: "FORBIDDEN",
-        message: "You do not have permission to access this resource",
-      });
-    }
+  fetchAllJobs: adminProcedure.query(async () => {
     const supabase = await createClientServer(1, true);
 
     const { data: jobs, error: jobsError } = await find<JobListing>(
       supabase,
-      "job_listings"
+      "job_listings",
     )
       .many()
       .execute();
@@ -236,16 +230,9 @@ const adminRouter = createTRPCRouter({
       z.object({
         applicantIdA: z.uuid(),
         applicantIdB: z.uuid(),
-      })
+      }),
     )
-    .query(async ({ ctx, input }) => {
-      if (ctx.userJWT!.role === "User") {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You do not have permission to access this resource",
-        });
-      }
-
+    .query(async ({ input }) => {
       const compareAPI = new URL("http://localhost:8000/score/");
       compareAPI.searchParams.set("applicant1_id", input.applicantIdA);
       compareAPI.searchParams.set("applicant2_id", input.applicantIdB);
@@ -258,21 +245,14 @@ const adminRouter = createTRPCRouter({
     .input(
       z.object({
         query: z.string().optional(),
-        category: z.enum([...USER_ACTION_EVENT_TYPES, "All"]),
+        category: z.enum([...EVENT_TYPES, "All"]),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
         limit: z.number().optional().default(20),
         cursor: z.string().optional(),
-      })
+      }),
     )
-    .query(async ({ ctx, input }) => {
-      if (ctx.userJWT!.role === "User") {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You do not have permission to access this resource",
-        });
-      }
-
+    .query(async ({ input }) => {
       const supabase = await createClientServer(1, true);
       let query = supabase.from("audit_logs").select("*").order("created_at", {
         ascending: false,
@@ -320,10 +300,10 @@ const adminRouter = createTRPCRouter({
     .input(
       z.object({
         searchQuery: z.string().optional(),
-      })
+      }),
     )
     .query(async ({ ctx, input }) => {
-      if (ctx.userJWT!.role !== "SuperAdmin") {
+      if (ctx.userJWT?.role !== "SuperAdmin") {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "You do not have permission to access this resource",
@@ -331,12 +311,12 @@ const adminRouter = createTRPCRouter({
       }
       const supabase = await createClientServer(1, true);
 
-      let query = supabase.from("users").select("*").neq("role", "SuperAdmin");
+      let query = supabase.from("staff").select("*").neq("role", "SuperAdmin");
 
       // No results when search query is empty or undefined
       if (input.searchQuery && input.searchQuery.trim() !== "") {
         query = query.or(
-          `first_name.ilike.%${input.searchQuery}%,last_name.ilike.%${input.searchQuery}%,role.ilike.%${input.searchQuery}%`
+          `first_name.ilike.%${input.searchQuery}%,last_name.ilike.%${input.searchQuery}%,role.ilike.%${input.searchQuery}%`,
         );
       }
 
@@ -359,13 +339,13 @@ const adminRouter = createTRPCRouter({
 
       if (firebaseUids.length > 0) {
         const firebaseUsersResult = await auth.getUsers(
-          firebaseUids.map((uid) => ({ uid }))
+          firebaseUids.map((uid) => ({ uid })),
         );
         firebaseUserByUid = new Map(
           firebaseUsersResult.users.map((userRecord) => [
             userRecord.uid,
             { email: userRecord.email || "" },
-          ])
+          ]),
         );
       }
 
@@ -376,7 +356,7 @@ const adminRouter = createTRPCRouter({
       }));
 
       return {
-        users: usersWithEmail as (User & { email: string })[],
+        users: usersWithEmail as (Staff & { email: string })[],
       };
     }),
   changeUserRole: adminProcedure
@@ -384,10 +364,10 @@ const adminRouter = createTRPCRouter({
       z.object({
         userId: z.string(),
         newRole: z.enum(USER_ROLES.filter((role) => role !== "SuperAdmin")),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
-      if (ctx.userJWT!.role !== "SuperAdmin") {
+      if (ctx.userJWT?.role !== "SuperAdmin") {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "You do not have permission to access this resource",
@@ -396,7 +376,7 @@ const adminRouter = createTRPCRouter({
 
       const supabase = await createClientServer(1, true);
 
-      const { data: user, error: userError } = await find<User>(
+      const { data: user, error: userError } = await find<Staff>(
         supabase,
         "users",
         [
@@ -404,7 +384,7 @@ const adminRouter = createTRPCRouter({
             column: "id",
             value: input.userId,
           },
-        ]
+        ],
       ).single();
 
       if (userError || !user) {
@@ -437,21 +417,21 @@ const adminRouter = createTRPCRouter({
         supabase,
         "audit_logs",
         {
-          actor_type: ctx.userJWT!.role,
-          actor_id: ctx.userJWT!.id,
+          actor_type: ctx.userJWT?.role,
+          actor_id: ctx.userJWT?.id,
           action: "update",
           event_type: "Changed user role",
           entity_type: "User",
           entity_id: input.userId,
           changes,
           details,
-        }
+        },
       );
 
       if (insertLogError) {
         console.error(
           "Error inserting audit log for role change",
-          insertLogError
+          insertLogError,
         );
       }
 
@@ -465,7 +445,7 @@ const adminRouter = createTRPCRouter({
       z.object({
         fromDate: z.string(), // string not date since Date objects are not serializable to JSON
         toDate: z.string(),
-      })
+      }),
     )
     .query(async ({ input }) => {
       const supabase = await createClientServer(1, true);
@@ -495,12 +475,12 @@ const adminRouter = createTRPCRouter({
       z.object({
         query: z.string().optional(),
         currentHRId: z.uuid().optional(),
-      })
+      }),
     )
     .query(async ({ input }) => {
       const supabase = await createClientServer(1, true);
 
-      let query = supabase.from("users").select("*").eq("role", "HR Officer");
+      let query = supabase.from("staff").select("*").eq("role", "HR Officer");
 
       if (input.currentHRId) {
         query = query.neq("id", input.currentHRId);
@@ -535,15 +515,15 @@ const adminRouter = createTRPCRouter({
 
       if (firebaseUids.length > 0) {
         firebaseUsersResult = await auth.getUsers(
-          firebaseUids.map((uid) => ({ uid }))
+          firebaseUids.map((uid) => ({ uid })),
         );
       }
 
-      const jobsAssignedPromises = hrOfficers!.map((officer: User) =>
+      const jobsAssignedPromises = hrOfficers?.map((officer: Staff) =>
         supabase
           .from("job_listings")
           .select("title")
-          .eq("officer_id", officer.id)
+          .eq("officer_id", officer.id),
       );
 
       firebaseUsersResult?.users?.forEach((userRecord) => {
@@ -553,7 +533,7 @@ const adminRouter = createTRPCRouter({
       const jobsAssignedResults = await Promise.all(jobsAssignedPromises);
 
       return {
-        hrOfficers: hrOfficers!.map((officer: User, index: number) => ({
+        hrOfficers: hrOfficers?.map((officer: Staff, index: number) => ({
           ...officer,
           email: userMap.get(officer.firebase_uid)?.email || "",
           jobsAssigned:
@@ -565,14 +545,14 @@ const adminRouter = createTRPCRouter({
     .input(
       z.object({
         searchQuery: z.string().optional(),
-      })
+      }),
     )
     .query(async ({ input }) => {
       const supabaseClient = await createClientServer(1, true);
       let query = supabaseClient
         .from("job_listings")
         .select(
-          "*, job_applicants(id), officer:users!job_listings_officer_id_fkey(first_name, last_name)"
+          "*, applicants(id), officer:staff!job_listings_officer_id_fkey(first_name, last_name)",
         );
 
       if (input.searchQuery) {

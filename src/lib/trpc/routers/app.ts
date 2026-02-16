@@ -1,12 +1,12 @@
 import { createTRPCRouter } from "@/lib/trpc/init";
 import {
+  adminRouter,
   authRouter,
-  jobListingRouter,
-  userRouter,
   candidateRouter,
   hrOfficer,
-  adminRouter,
+  jobListingRouter,
   staffRouter,
+  userRouter,
 } from ".";
 
 export const appRouter = createTRPCRouter({

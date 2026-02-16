@@ -1,26 +1,26 @@
-import z from "zod";
-import { adminProcedure, authorizedProcedure, createTRPCRouter } from "../init";
 import { TRPCError } from "@trpc/server";
-import { createClientServer } from "@/lib/supabase/supabase";
-import {
-  find,
-  updateTable,
-  insertTable,
-  QueryFilter,
-} from "@/lib/supabase/action";
+import { ObjectId } from "mongodb";
+import z from "zod";
+import { CANDIDATE_STATUSES } from "@/lib/constants";
+import admin, { db } from "@/lib/firebase/admin";
 import { findOne } from "@/lib/mongodb/action";
 import mongoDb_client from "@/lib/mongodb/mongodb";
 import {
+  find,
+  insertTable,
+  type QueryFilter,
+  updateTable,
+} from "@/lib/supabase/action";
+import { createClientServer } from "@/lib/supabase/supabase";
+import type {
   AdminFeedback,
+  Applicants,
   AuditLog,
   Changes,
-  JobApplicant,
-  User,
+  Staff,
 } from "@/types/schema";
-import admin, { auth, db } from "@/lib/firebase/admin";
-import { ObjectId } from "mongodb";
-import { Notification } from "@/types/types";
-import { CANDIDATE_STATUSES } from "@/lib/constants";
+import type { Notification } from "@/types/types";
+import { adminProcedure, authorizedProcedure, createTRPCRouter } from "../init";
 
 type AICompareRes = {
   better_candidate: string;
@@ -30,32 +30,25 @@ type AICompareRes = {
 };
 
 const candidateRouter = createTRPCRouter({
-  getCandidateFromJob: authorizedProcedure
+  getCandidatesFromJob: authorizedProcedure
     .input(
       z.object({
         jobId: z.uuid().optional(),
         searchQuery: z.string().optional(),
-      })
+      }),
     )
     .query(async ({ input, ctx }) => {
-      if (ctx.userJWT!.role === "User") {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You are not authorized to access this resource.",
-        });
-      }
-
       const supabaseClient = await createClientServer(1, true);
 
-      let jobListingIds: string[] | undefined = undefined;
+      let jobListingIds: string[] | undefined;
 
       // If HR Officer, limit to their job listings
-      if (ctx.userJWT!.role === "HR Officer") {
+      if (ctx.userJWT?.role === "HR Officer") {
         // Fetch job listings for this officer
         const { data: listings, error: listingsError } = await supabaseClient
           .from("job_listings")
           .select("id")
-          .eq("officer_id", ctx.userJWT!.id);
+          .eq("officer_id", ctx.userJWT?.id);
 
         if (listingsError) {
           throw new TRPCError({
@@ -82,8 +75,8 @@ const candidateRouter = createTRPCRouter({
 
       // Fetch applicants with joins
       let baseQuery = supabaseClient
-        .from("job_applicants_with_user")
-        .select("*");
+        .from("applicants")
+        .select("*, job_title: job_listings(title)");
 
       // let queryBuilder = baseQuery.many(filters);
       filters.forEach(({ column, value }) => {
@@ -97,7 +90,7 @@ const candidateRouter = createTRPCRouter({
       if (input.searchQuery) {
         const search = `%${input.searchQuery}%`;
         baseQuery = baseQuery.or(
-          `first_name.ilike.${search},last_name.ilike.${search},job_title.ilike.${search},status_text.ilike.${search}`
+          `first_name.ilike.${search},last_name.ilike.${search},job_title.ilike.${search},status_text.ilike.${search}`,
         );
         if (input.jobId) {
           baseQuery = baseQuery.eq("joblisting_id", input.jobId);
@@ -105,8 +98,7 @@ const candidateRouter = createTRPCRouter({
           baseQuery = baseQuery.in("joblisting_id", jobListingIds);
         }
       }
-      const { data: applicantsWithUsers, error: errorApplicants } =
-        await baseQuery;
+      const { data: applicants, error: errorApplicants } = await baseQuery;
 
       if (errorApplicants) {
         console.error("Error fetching applicants:", errorApplicants);
@@ -122,7 +114,7 @@ const candidateRouter = createTRPCRouter({
           "scored_candidates",
           {
             user_id: userId,
-          }
+          },
         );
 
         return candidateMatch?.score_data?.predictive_success || 0;
@@ -131,37 +123,23 @@ const candidateRouter = createTRPCRouter({
       await mongoDb_client.connect();
 
       // Batch fetch Firebase users
-      const applicantsArr = (applicantsWithUsers || []) as Array<
-        JobApplicant &
-          Pick<
-            User,
-            "first_name" | "last_name" | "firebase_uid" | "prefix" | "resume_id"
-          > & { job_title: string }
+      const applicantsArr = (applicants || []) as Array<
+        Applicants & {
+          job_title?: { title: string };
+        }
       >;
 
-      const firebaseUidToApplicant = new Map<
-        string,
-        (typeof applicantsArr)[number]
-      >();
       const userIdToApplicant = new Map<
         string,
         (typeof applicantsArr)[number]
       >();
 
-      const firebaseUids: string[] = [];
       const userIds: string[] = [];
 
       for (const applicant of applicantsArr) {
-        firebaseUidToApplicant.set(applicant.firebase_uid, applicant);
         userIdToApplicant.set(applicant.id, applicant);
-        firebaseUids.push(applicant.firebase_uid);
-        userIds.push(applicant.user_id);
+        userIds.push(applicant.id);
       }
-
-      // Batch fetch Firebase users
-      const firebaseUsersPromise = auth.getUsers(
-        firebaseUids.map((uid) => ({ uid }))
-      );
 
       const candidateMatchPromises = userIds.map(async (userId) => {
         const candidateMatch = await getCandidateMatch(userId);
@@ -169,17 +147,7 @@ const candidateRouter = createTRPCRouter({
       });
       const candidateMatchesPromise = Promise.all(candidateMatchPromises);
 
-      const [firebaseUsersResult, candidateMatches] = await Promise.all([
-        firebaseUsersPromise,
-        candidateMatchesPromise,
-      ]);
-
-      const firebaseUserByUid = new Map<string, { email: string }>();
-      for (const userRecord of firebaseUsersResult.users) {
-        firebaseUserByUid.set(userRecord.uid, {
-          email: userRecord.email || "",
-        });
-      }
+      const candidateMatches = await candidateMatchesPromise;
 
       const candidateMatchByUserId = new Map<string, number>();
       for (const { userId, candidateMatch } of candidateMatches) {
@@ -188,13 +156,10 @@ const candidateRouter = createTRPCRouter({
 
       // Merge all data
       const applicantWithEmail = applicantsArr.map((applicant) => {
-        const firebaseUser = firebaseUserByUid.get(applicant.firebase_uid);
-        const candidateMatch =
-          candidateMatchByUserId.get(applicant.user_id) || 0;
+        const candidateMatch = candidateMatchByUserId.get(applicant.id) || 0;
         return {
           applicantId: applicant.id,
           ...applicant,
-          email: firebaseUser?.email || "",
           candidateMatch,
         };
       });
@@ -205,17 +170,17 @@ const candidateRouter = createTRPCRouter({
         applicants: applicantWithEmail
           .map((applicant) => ({
             id: applicant.id,
-            user_id: applicant.user_id,
-            name: applicant.first_name + " " + applicant.last_name,
-            email: applicant.email,
+            user_id: applicant.id,
+            name: `${applicant.first_name} ${applicant.last_name}`,
             predictiveSuccess: applicant.candidateMatch,
             status: applicant.status,
-            jobTitle: applicant.job_title ?? "",
             resumeId: applicant.resume_id,
+            jobTitle: applicant.job_title?.title || "N/A",
+            email: applicant.email || "N/A",
           }))
           .sort(
             (applicantA, applicantB) =>
-              applicantB.predictiveSuccess - applicantA.predictiveSuccess
+              applicantB.predictiveSuccess - applicantA.predictiveSuccess,
           ),
       };
     }),
@@ -231,20 +196,13 @@ const candidateRouter = createTRPCRouter({
         fetchTranscribed: z.boolean().optional().default(false),
         fetchResume: z.boolean().optional().default(false),
         candidateId: z.string(),
-      })
+      }),
     )
-    .query(async ({ input, ctx }) => {
-      if (ctx.userJWT!.role === "User") {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You are not authorized to access this resource.",
-        });
-      }
-
+    .query(async ({ input }) => {
       const supabaseClient = await createClientServer(1, true);
 
       const { data: jobApplicant, error: jobApplicantError } =
-        await find<JobApplicant>(supabaseClient, "job_applicants", [
+        await find<Applicants>(supabaseClient, "applicants", [
           { column: "id", value: input.candidateId },
         ]).single();
 
@@ -261,18 +219,18 @@ const candidateRouter = createTRPCRouter({
       const [parsedResume, score, transcribed, userData] = await Promise.all([
         input.fetchResume &&
           findOne("ai-driven-recruitment", "parsed_resume", {
-            user_id: jobApplicant!.user_id,
+            user_id: jobApplicant?.id,
           }),
         input.fetchScore &&
           findOne("ai-driven-recruitment", "scored_candidates", {
-            _id: ObjectId.createFromHexString(jobApplicant!.score_id),
+            _id: ObjectId.createFromHexString(jobApplicant?.id || ""),
           }),
         input.fetchTranscribed &&
           findOne("ai-driven-recruitment", "transcribed", {
-            user_id: jobApplicant!.user_id,
+            user_id: jobApplicant?.id,
           }),
-        find<User>(supabaseClient, "users", [
-          { column: "id", value: jobApplicant!.user_id },
+        find<Staff>(supabaseClient, "users", [
+          { column: "id", value: jobApplicant?.id || "" },
         ]).single(),
       ]);
 
@@ -294,22 +252,15 @@ const candidateRouter = createTRPCRouter({
       z.object({
         applicantId: z.string(),
         newStatus: z.enum(CANDIDATE_STATUSES).nullable(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
-      if (ctx.userJWT!.role === "User") {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You are not authorized to access this resource.",
-        });
-      }
-
       const supabase = await createClientServer(1, true);
 
-      const { data: oldData, error: oldDataError } = await find<JobApplicant>(
+      const { data: oldData, error: oldDataError } = await find<Applicants>(
         supabase,
-        "job_applicants",
-        [{ column: "id", value: input.applicantId }]
+        "applicants",
+        [{ column: "id", value: input.applicantId }],
       ).single();
 
       if (oldDataError) {
@@ -322,12 +273,12 @@ const candidateRouter = createTRPCRouter({
 
       const { data, error } = await updateTable(
         supabase,
-        "job_applicants",
+        "applicants",
         {
           status: input.newStatus,
         },
         [{ column: "id", value: input.applicantId }],
-        "user_id, joblisting_id"
+        "id, joblisting_id",
       );
 
       if (error) {
@@ -343,8 +294,8 @@ const candidateRouter = createTRPCRouter({
         : (data as unknown as Record<string, unknown>);
 
       const userId =
-        typeof updatedRow?.user_id === "string"
-          ? (updatedRow.user_id as string)
+        typeof updatedRow?.id === "string"
+          ? (updatedRow.id as string)
           : undefined;
       const joblistingId =
         typeof updatedRow?.joblisting_id === "string"
@@ -356,7 +307,7 @@ const candidateRouter = createTRPCRouter({
 
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Updated row missing user_id",
+          message: "Updated row missing id",
         });
       }
       if (!joblistingId) {
@@ -389,9 +340,9 @@ const candidateRouter = createTRPCRouter({
 
       const changes: Record<string, Changes> = {};
 
-      if (oldData!.status !== input.newStatus) {
-        changes["status"] = {
-          before: oldData!.status || "null",
+      if (oldData?.status !== input.newStatus) {
+        changes.status = {
+          before: oldData?.status || "null",
           after: input.newStatus || "null",
         };
       }
@@ -402,15 +353,15 @@ const candidateRouter = createTRPCRouter({
         supabase,
         "audit_logs",
         {
-          actor_type: ctx.userJWT!.role,
-          actor_id: ctx.userJWT!.id,
+          actor_type: ctx.userJWT?.role,
+          actor_id: ctx.userJWT?.id,
           action: "update",
           event_type: "Changed candidate status",
           entity_type: "Job Applicant",
           entity_id: input.applicantId,
           changes,
           details,
-        } as AuditLog
+        } as AuditLog,
       );
 
       if (insertLogError) {
@@ -427,7 +378,7 @@ const candidateRouter = createTRPCRouter({
       z.object({
         candidateId: z.uuid(),
         feedback: z.string(),
-      })
+      }),
     )
     .mutation(async ({ input }) => {
       const { error } = await updateTable(
@@ -436,7 +387,7 @@ const candidateRouter = createTRPCRouter({
         {
           admin_feedback: input.feedback,
         },
-        [{ column: "id", value: input.candidateId }]
+        [{ column: "id", value: input.candidateId }],
       );
 
       if (error) {
@@ -455,14 +406,14 @@ const candidateRouter = createTRPCRouter({
     .input(
       z.object({
         candidateId: z.uuid(),
-      })
+      }),
     )
     .query(async ({ input }) => {
       const { data: adminFeedback, error: jobApplicantError } =
         await find<AdminFeedback>(
           await createClientServer(1, true),
           "admin_feedback",
-          [{ column: "applicant_id", value: input.candidateId }]
+          [{ column: "applicant_id", value: input.candidateId }],
         )
           .many()
           .execute();
@@ -485,7 +436,7 @@ const candidateRouter = createTRPCRouter({
         userId_A: z.uuid(),
         userId_B: z.uuid(),
         jobId: z.uuid(),
-      })
+      }),
     )
     .query(async ({ input }) => {
       const compareAPI = new URL("http://localhost:8000/compare_candidate/");
@@ -512,7 +463,7 @@ const candidateRouter = createTRPCRouter({
       z.object({
         candidateId: z.uuid(),
         feedback: z.string(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const supabase = await createClientServer(1, true);
@@ -521,7 +472,7 @@ const candidateRouter = createTRPCRouter({
         applicant_id: input.candidateId,
         feedback: input.feedback,
         created_at: new Date().toISOString(),
-        admin_id: ctx.userJWT!.id,
+        admin_id: ctx.userJWT?.id,
       } as Omit<AdminFeedback, "id">);
 
       if (error) {
@@ -536,15 +487,15 @@ const candidateRouter = createTRPCRouter({
         supabase,
         "audit_logs",
         {
-          actor_type: ctx.userJWT!.role,
-          actor_id: ctx.userJWT!.id,
+          actor_type: ctx.userJWT?.role,
+          actor_id: ctx.userJWT?.id,
           action: "create",
           event_type: "Admin feedback created",
           entity_type: "Admin Feedback",
           entity_id: input.candidateId,
           changes: {},
           details: `Created admin feedback for candidate ID ${input.candidateId}`,
-        } as AuditLog
+        } as AuditLog,
       );
 
       if (insertLogError) {
@@ -560,7 +511,7 @@ const candidateRouter = createTRPCRouter({
       z.object({
         candidateAId: z.uuid(), // Applicant ID, not the user ID
         candidateBId: z.uuid(), // Applicant ID, not the user ID
-      })
+      }),
     )
     .query(async ({ input }) => {
       const supabase = await createClientServer(1, true);
@@ -568,7 +519,7 @@ const candidateRouter = createTRPCRouter({
       const { data, error } = await supabase
         .from("admin_feedback")
         .select(
-          "*, admin:users!admin_id(first_name, last_name), applicant:job_applicants!applicant_id(user:users!user_id(first_name, last_name)))"
+          "*, admin:users!admin_id(first_name, last_name), applicant:job_applicants!applicant_id(user:users!user_id(first_name, last_name)))",
         )
         .in("applicant_id", [input.candidateAId, input.candidateBId]);
 
@@ -600,7 +551,7 @@ const candidateRouter = createTRPCRouter({
       z.object({
         feedbackId: z.uuid(),
         newFeedback: z.string(),
-      })
+      }),
     )
     .mutation(async ({ input, ctx }) => {
       const supabase = await createClientServer(1, true);
@@ -608,7 +559,7 @@ const candidateRouter = createTRPCRouter({
       const { data: oldData, error: oldDataError } = await find<AdminFeedback>(
         supabase,
         "admin_feedback",
-        [{ column: "id", value: input.feedbackId }]
+        [{ column: "id", value: input.feedbackId }],
       ).single();
 
       if (oldDataError) {
@@ -625,7 +576,7 @@ const candidateRouter = createTRPCRouter({
         {
           feedback: input.newFeedback,
         },
-        [{ column: "id", value: input.feedbackId }]
+        [{ column: "id", value: input.feedbackId }],
       );
 
       if (error) {
@@ -638,9 +589,9 @@ const candidateRouter = createTRPCRouter({
 
       const changes: Record<string, Changes> = {};
 
-      if (oldData!.feedback !== input.newFeedback) {
-        changes["feedback"] = {
-          before: oldData!.feedback,
+      if (oldData?.feedback !== input.newFeedback) {
+        changes.feedback = {
+          before: oldData?.feedback || "null",
           after: input.newFeedback,
         };
       }
@@ -649,15 +600,15 @@ const candidateRouter = createTRPCRouter({
         supabase,
         "audit_logs",
         {
-          actor_type: ctx.userJWT!.role,
-          actor_id: ctx.userJWT!.id,
+          actor_type: ctx.userJWT?.role,
+          actor_id: ctx.userJWT?.id,
           action: "update",
           event_type: "Admin feedback updated",
           entity_type: "Admin Feedback",
           entity_id: input.feedbackId,
           changes,
           details: `Admin feedback updated with ID ${input.feedbackId}`,
-        } as AuditLog
+        } as AuditLog,
       );
 
       if (insertLogError) {
@@ -672,7 +623,7 @@ const candidateRouter = createTRPCRouter({
     .input(
       z.object({
         feedbackId: z.uuid(),
-      })
+      }),
     )
     .mutation(async ({ input, ctx }) => {
       const supabase = await createClientServer(1, true);
@@ -694,21 +645,21 @@ const candidateRouter = createTRPCRouter({
         supabase,
         "audit_logs",
         {
-          actor_type: ctx.userJWT!.role,
-          actor_id: ctx.userJWT!.id,
+          actor_type: ctx.userJWT?.role,
+          actor_id: ctx.userJWT?.id,
           action: "delete",
           event_type: "Admin feedback deleted",
           entity_type: "Admin Feedback",
           entity_id: input.feedbackId,
           changes: {},
           details: `Deleted admin feedback with ID ${input.feedbackId}`,
-        } as AuditLog
+        } as AuditLog,
       );
 
       if (insertLogError) {
         console.error(
           "Error inserting audit log for deleting admin feedback",
-          insertLogError
+          insertLogError,
         );
       }
 
