@@ -128,7 +128,7 @@ export default function KPIMetrics() {
 
   return (
     <div className="min-h-screen p-8 bg-white relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-red-100 via-white to-red-50 opacity-40 pointer-events-none" />
+      <div className="absolute inset-0 bg-linear-to-br from-red-100 via-white to-red-50 opacity-40 pointer-events-none" />
 
       <div className="relative z-10 space-y-8">
         <h2 className="text-3xl font-bold text-red-600">
@@ -178,8 +178,9 @@ export default function KPIMetrics() {
           </div>
 
           <button
+            type="button"
             onClick={handleDownloadReport}
-            className="bg-gradient-to-r from-red-600 to-red-500
+            className="bg-linear-to-r from-red-600 to-red-500
             text-white font-bold px-6 py-2 rounded-xl
             shadow-lg hover:opacity-90 transition"
           >

@@ -1,21 +1,28 @@
 "use client";
 
+import type { Route } from "next";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { z } from "zod";
 import { ApplicationForm } from "@/components/common/ApplicationForm";
 import { getCsrfToken } from "@/lib/library";
-import type {
-  EducationalDetail,
-  JobExperience,
-  SocialLink,
-} from "@/types/types";
+import type { SocialLink } from "@/types/types";
+
+const applicationSchema = z.object({
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  email: z.email("Invalid email address"),
+  mobileNumber: z.string(),
+});
 
 export default function ApplicationPage() {
+  const router = useRouter();
+  const { id: jobId } = useParams();
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
-  const [educationalDetails, setEducationalDetails] = useState<
-    EducationalDetail[]
-  >([]);
-  const [jobExperiences, setJobExperience] = useState<JobExperience[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedTranscript, setSelectedTranscript] = useState<File | null>(
+    null,
+  );
   const [response, setResponse] = useState<{
     success?: boolean;
     message?: string;
@@ -28,6 +35,7 @@ export default function ApplicationPage() {
   >();
 
   const handleTranscriptSelect = (file: File | null) => {
+    setSelectedTranscript(file);
     setTranscriptFileName(file ? file.name : undefined);
   };
 
@@ -46,6 +54,37 @@ export default function ApplicationPage() {
     e.preventDefault();
     const form = e.currentTarget;
 
+    const validationResult = applicationSchema.safeParse(
+      Object.fromEntries(new FormData(form).entries()),
+    );
+
+    if (!validationResult.success) {
+      const errorMessages = validationResult.error.issues
+        .map((issue) => issue.message)
+        .join(", ");
+      setResponse({
+        success: false,
+        message: errorMessages,
+      });
+      return;
+    }
+    // Validate required files
+    if (!selectedFile) {
+      setResponse({
+        success: false,
+        message: "Please select a resume file.",
+      });
+      return;
+    }
+
+    if (!selectedTranscript) {
+      setResponse({
+        success: false,
+        message: "Please select an interview video.",
+      });
+      return;
+    }
+
     if (!csrfToken) {
       setResponse({
         success: false,
@@ -58,16 +97,54 @@ export default function ApplicationPage() {
 
     try {
       const formData = new FormData(form);
+      const basicFields = Object.fromEntries(
+        Array.from(formData.entries())
+          .filter(([, value]) => typeof value === "string")
+          .map(([key, value]) => [key, value as string]),
+      );
 
-      formData.set("educationalDetails", JSON.stringify(educationalDetails));
-      formData.set("socialLinks", JSON.stringify(socialLinks));
-      formData.set("jobExperiences", JSON.stringify(jobExperiences));
-
+      const uploadData = new FormData();
       if (selectedFile) {
-        formData.set("resume", selectedFile);
+        uploadData.append("resume", selectedFile);
+      }
+      if (selectedTranscript) {
+        uploadData.append("transcript", selectedTranscript);
+      }
+      const { resumeURL, transcriptURL } = await fetch("/api/uploadFiles", {
+        method: "POST",
+        headers: {
+          "X-CSRF-Token": csrfToken,
+        },
+        body: uploadData,
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (!data.success) {
+            throw new Error(data.message || "File upload failed");
+          }
+          return data;
+        });
+
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem(
+          `applicationDraft:${jobId as string}`,
+          JSON.stringify({
+            basicFields,
+            socialLinks,
+            resumeURL,
+            transcriptURL,
+          }),
+        );
       }
 
-      formData.set("csrfToken", csrfToken);
+      setResponse({
+        success: true,
+        message: "Application details saved. Continue with skill assessment.",
+      });
+
+      router.push(
+        `/joblisting/${jobId as string}/application/skill-assessment` as Route,
+      );
     } catch (error) {
       setResponse({
         success: false,
@@ -98,11 +175,7 @@ export default function ApplicationPage() {
             <div className="flex-1 h-0.5 mx-6 bg-gray-300 rounded-full" />
 
             <div className="flex items-center">
-              <div
-                className="w-12 h-12 flex items-center justify-center 
-        rounded-full text-sm font-bold
-        bg-gray-200 text-gray-500"
-              >
+              <div className="w-12 h-12 flex items-center justify-center rounded-full text-sm font-bold bg-gray-200 text-gray-500">
                 2
               </div>
 

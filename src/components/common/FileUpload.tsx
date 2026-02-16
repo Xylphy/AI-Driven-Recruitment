@@ -6,13 +6,16 @@ export default function FileUpload({
   onFileSelect,
   defaultFileName = "No file selected",
   labelName,
+  required = false,
 }: {
   onFileSelect: (file: File | null) => void;
   defaultFileName?: string;
   labelName: string;
+  required?: boolean;
 }) {
   const [fileName, setFileName] = useState(defaultFileName);
   const [isDragging, setIsDragging] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const openFileDialog = () => inputRef.current?.click();
@@ -20,6 +23,7 @@ export default function FileUpload({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] ?? null;
     setFileName(file?.name ?? defaultFileName);
+    if (file) setError(null);
     onFileSelect(file);
   };
 
@@ -38,6 +42,7 @@ export default function FileUpload({
 
     const file = e.dataTransfer.files?.[0] ?? null;
     setFileName(file?.name ?? defaultFileName);
+    if (file) setError(null);
     onFileSelect(file);
   };
 
@@ -45,7 +50,7 @@ export default function FileUpload({
     <div>
       {/* Accessible label for the hidden input */}
       <label htmlFor={labelName} className="sr-only">
-        {`Upload ${labelName}`}
+        {`Upload ${labelName}${required ? " (required)" : ""}`}
       </label>
 
       <input
@@ -56,14 +61,20 @@ export default function FileUpload({
         accept=".doc,.docx,.pdf,.odt,.rtf"
         className="sr-only"
         onChange={handleFileChange}
+        required={required}
       />
 
       <button
         type="button"
         className={`mt-1 flex w-full justify-center px-6 pt-5 pb-6 border-2 ${
-          isDragging ? "border-blue-500" : "border-gray-300"
+          isDragging
+            ? "border-blue-500"
+            : error
+              ? "border-red-500"
+              : "border-gray-300"
         } border-dashed rounded-md`}
         aria-label="File upload. Click to choose a file or drag and drop."
+        aria-invalid={error ? "true" : "false"}
         onClick={openFileDialog}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {

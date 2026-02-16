@@ -21,15 +21,14 @@ const publicPathToken = [
     path: "/api/csrf",
     acceptedMethods: ["GET"],
   },
+  {
+    path: "/api/uploadFiles",
+    acceptedMethods: ["POST"],
+  },
 ];
 
 // Paths that do not require CSRF token
-const publicPathCsrf = [
-  "/api/auth/refresh",
-  "/api/auth/jwt",
-  "/api/csrf",
-  "/api/admin/stats",
-];
+const publicPathCsrf = ["/api/auth/refresh", "/api/auth/jwt", "/api/csrf"];
 
 const allowedOrigins =
   process.env.NODE_ENV === "development"

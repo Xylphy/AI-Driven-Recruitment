@@ -1,35 +1,13 @@
 import { z } from "zod";
-import { dateRangeSchema } from "./common";
 
 export const userSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
   email: z.email("Invalid email address"),
-  prefix: z.string().optional().default(""),
-  mobileNumber: z.string(),
-  countryCode: z.enum(["+63", "+1", "+44", "+91"]).optional().default("+1"),
+  contactNumber: z.string(),
   street: z.string().optional().default(""),
   zip: z.string().optional().default(""),
-  country: z
-    .enum(["PH", "US", "CA", "GB", "AU", "IN", ""])
-    .optional()
-    .default(""),
   city: z.string().optional().default(""),
-  jobTitle: z.string().optional().default(""),
-  educationalDetails: z
-    .array(
-      z.intersection(
-        z.object({
-          degree: z.string().optional().default(""),
-          institute: z.string().optional().default(""),
-          currentlyPursuing: z.boolean(),
-          major: z.string().optional().default(""),
-        }),
-        dateRangeSchema,
-      ),
-    )
-    .optional()
-    .default([]),
   socialLinks: z
     .array(
       z.object({
@@ -38,49 +16,26 @@ export const userSchema = z.object({
     )
     .optional()
     .default([]),
-  jobExperiences: z
-    .array(
-      z.intersection(
-        z.object({
-          title: z.string().optional().default(""),
-          company: z.string(),
-          summary: z.string().optional().default(""),
-          currentlyWorking: z.boolean(),
-        }),
-        dateRangeSchema,
-      ),
-    )
-    .optional()
-    .default([]),
-  resume: z
-    .instanceof(File)
-    .optional()
-    .refine(
-      (file) => !file || file.size <= 10 * 1024 * 1024,
-      "Resume file must be smaller than 10MB",
-    )
-    .refine(
-      (file) =>
-        !file ||
-        [
-          "application/pdf",
-          "application/msword",
-          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-          "application/octet-stream",
-        ].includes(file.type),
-      "Resume must be a PDF or Word document",
-    ),
   state: z.string().optional().default(""),
-  video: z
-    .instanceof(File)
-    .optional()
+  skills: z.array(
+    z.object({
+      id: z.number(),
+      rating: z.number().min(0).max(5).default(0),
+    }),
+  ),
+});
+
+export const filesSchema = z.object({
+  transcript: z
+    .custom<File>((file) => file instanceof File, {
+      message: "Invalid input",
+    })
     .refine(
-      (file) => !file || file.size <= 90 * 1024 * 1024,
-      "Video file must be smaller than 90MB",
+      (file) => file.size <= 90 * 1024 * 1024,
+      "Transcript file must be smaller than 90MB",
     )
     .refine(
       (file) =>
-        !file ||
         [
           "video/mp4",
           "video/webm",
@@ -89,5 +44,17 @@ export const userSchema = z.object({
           "video/quicktime",
         ].includes(file.type),
       "Video must be in MP4, WebM, OGG, AVI, or MOV format",
+    ),
+  resume: z
+    .custom<File>((file) => file instanceof File, {
+      message: "Invalid input",
+    })
+    .refine(
+      (file) => file.size <= 10 * 1024 * 1024,
+      "Resume file must be smaller than 10MB",
+    )
+    .refine(
+      (file) => ["application/pdf"].includes(file.type),
+      "Resume must be a PDF or Word document",
     ),
 });

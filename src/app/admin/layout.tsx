@@ -12,13 +12,13 @@ import {
   MdCompareArrows,
   MdDashboard,
   MdError,
+  MdInsights,
   MdLogout,
   MdMenu,
   MdNotifications,
   MdPeople,
   MdSettings,
   MdWork,
-  MdInsights,
 } from "react-icons/md";
 import { auth } from "@/lib/firebase/client";
 import { trpc } from "@/lib/trpc/client";

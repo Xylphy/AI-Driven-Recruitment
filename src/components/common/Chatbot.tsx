@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
-import { MdChat, MdClose, MdSend, MdAdd } from "react-icons/md";
+import { MdAdd, MdChat, MdClose, MdSend } from "react-icons/md";
 
 type Message = {
   id?: string;

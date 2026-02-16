@@ -22,22 +22,20 @@ export interface Staff extends IdentifiableItem {
 
 export interface Applicants extends IdentifiableItem {
   joblisting_id: string;
-  email?: string;
   first_name: string;
   last_name: string;
   resume_id: string;
-  country_code: string;
   street?: string;
   zip?: string;
   city?: string;
   state?: string;
-  country?: string;
   parsed_resume_id?: string;
   transcript_id: string;
   transcribed_id?: string;
-  birthday: string;
-  status: (typeof CANDIDATE_STATUSES)[number] | null;
+  status?: (typeof CANDIDATE_STATUSES)[number] | null;
   created_at: string;
+  email?: string;
+  contact_number?: string;
 }
 
 export interface JobListing extends IdentifiableItem, Title {
@@ -128,4 +126,11 @@ export interface KeyHighlights extends IdentifiableItem {
   created_at: string;
   report_id: string;
   highlight: string;
+}
+
+// Table name: applicant_skills
+export interface ApplicantSkills extends IdentifiableItem {
+  applicant_id: string;
+  skill_id: string;
+  rating: number;
 }
