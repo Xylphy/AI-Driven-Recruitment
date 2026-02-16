@@ -68,7 +68,6 @@ export default function ApplicationTrackPage() {
                 <Search className="absolute left-4 top-3.5 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="e.g. APP-2025-042"
                   value={applicationId}
                   onChange={(e) => setApplicationId(e.target.value)}
                   className="w-full rounded-xl bg-white/80 backdrop-blur border border-gray-300 px-12 py-3 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500"

@@ -162,7 +162,7 @@ export default function Navbar() {
           ) : (
             <Link
               href={"/track" as Route}
-              className="bg-[#E30022] text-white font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-500 hover:border-red-500"
+              className="bg-linear-to-r from-red-600 to-rose-500 text-white font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:scale-[1.01] hover:opacity-90 transition"
             >
               Track Application
             </Link>

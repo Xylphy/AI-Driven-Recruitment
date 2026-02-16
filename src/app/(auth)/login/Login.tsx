@@ -131,7 +131,7 @@ export default function LoginPage() {
             <Button
               type="submit"
               disabled={isAuthLoading}
-              className="flex mb-5 justify-center items-center w-full bg-red-600 text-white font-bold px-4 py-3 rounded-md border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-500 hover:border-red-500"
+              className="flex mb-5 justify-center items-center w-full bg-linear-to-r from-red-600 to-rose-500 text-white font-bold px-4 py-3 rounded-md hover:scale-[1.01] hover:opacity-90 transition"
             >
               {isAuthLoading ? "Signing in..." : "Sign in"}
             </Button>
