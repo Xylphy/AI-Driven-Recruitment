@@ -105,17 +105,22 @@ export async function getFileInfo(publicIdOrUrl: string) {
 
 export async function moveFile(publicIdOrUrl: string) {
   const fileInfo = await getFileInfo(publicIdOrUrl);
-  const newFolder = fileInfo.resourceType === "video" ? "transcripts" : "resumes";
+  const newFolder =
+    fileInfo.resourceType === "video" ? "transcripts" : "resumes";
 
   const fileName = fileInfo.publicId.split("/").pop();
   const newPublicId = `${newFolder}/${fileName}`;
 
-  const result = await cloudinary.uploader.rename(fileInfo.publicId, newPublicId, {
-    resource_type: fileInfo.resourceType,
-    type: "upload",
-    overwrite: false,
-    invalidate: true,
-  });
+  const result = await cloudinary.uploader.rename(
+    fileInfo.publicId,
+    newPublicId,
+    {
+      resource_type: fileInfo.resourceType,
+      type: "upload",
+      overwrite: false,
+      invalidate: true,
+    },
+  );
 
   await cloudinary.uploader.explicit(result.public_id, {
     resource_type: fileInfo.resourceType,

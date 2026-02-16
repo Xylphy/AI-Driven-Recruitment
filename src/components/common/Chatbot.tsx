@@ -156,9 +156,7 @@ export default function ChatbotWidget() {
             shadow-2xl"
           >
             <div
-              className="p-4 flex items-center justify-between
-  bg-linear-to-r from-red-800 via-red-600 to-red-500
-  text-white"
+              className="p-4 flex items-center justify-between bg-linear-to-r from-red-800 via-red-600 to-red-500 text-white"
             >
               <div>
                 <h3 className="font-semibold text-sm tracking-wide">
@@ -172,11 +170,7 @@ export default function ChatbotWidget() {
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  className="flex items-center gap-1 px-3 py-1.5
-      text-xs font-medium
-      bg-white/20 hover:bg-white/30
-      backdrop-blur-md
-      rounded-full transition-all duration-200"
+                  className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full transition-all duration-200"
                 >
                   <MdAdd className="text-sm" />
                   New Chat

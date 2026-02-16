@@ -4,6 +4,7 @@
 
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import { moveFile } from "@/lib/cloudinary/cloudinary";
 import admin, { db } from "@/lib/firebase/admin";
 import { deleteDocument } from "@/lib/mongodb/action";
 import mongoDb_client from "@/lib/mongodb/mongodb";
@@ -33,7 +34,7 @@ import {
   createTRPCRouter,
   rateLimitedProcedure,
 } from "../init";
-import { moveFile } from "@/lib/cloudinary/cloudinary";
+import { CANDIDATE_STATUSES } from "@/lib/constants";
 
 const jobListingRouter = createTRPCRouter({
   joblistings: authorizedProcedure
@@ -328,6 +329,7 @@ const jobListingRouter = createTRPCRouter({
       return {
         success: true,
         message: "Application submitted successfully",
+        trackingId: applicantsID[0].id,
       };
     }),
   updateJoblisting: authorizedProcedure
@@ -703,6 +705,52 @@ const jobListingRouter = createTRPCRouter({
 
       return {
         tags: (tags.data || []).map((item) => item.tags),
+      };
+    }),
+  fetchApplication: rateLimitedProcedure
+    .input(
+      z.object({
+        applicantId: z.string(),
+      }),
+    )
+    .query(async ({ input }) => {
+      const supabaseClient = await createClientServer(1, true);
+
+      const { data, error } = await supabaseClient
+        .from("applicants")
+        .select(
+          "id, status, scheduled_at, platform, meeting_url, job_listings(title)",
+        )
+        .eq("id", input.applicantId)
+        .single()
+      if (error || !data) {
+        console.error("Error fetching tracking ID:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch tracking ID",
+        });
+      }
+
+      const typedData = data as unknown as {
+        id: string;
+        status: (typeof CANDIDATE_STATUSES)[number];
+        scheduled_at: string | null;
+        platform: string | null;
+        meeting_url: string | null;
+        job_listings: { title: string } | null;
+      };
+
+      const responseData = {
+        id: typedData.id,
+        status: typedData.status,
+        scheduledAt: typedData.scheduled_at,
+        platform: typedData.platform,
+        meetingURL: typedData.meeting_url,
+        jobTitle: typedData.job_listings?.title ?? null,
+      };
+
+      return {
+        data: responseData,
       };
     }),
 });

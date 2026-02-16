@@ -87,7 +87,7 @@ export default function SkillAssessmentPage() {
     const { basicFields, resumeURL, transcriptURL, socialLinks } =
       applicationDraft;
 
-    await applyForJob.mutateAsync({
+    const trackingId = await applyForJob.mutateAsync({
       jobId: jobId as string,
       resumeURL,
       transcriptURL,
@@ -113,7 +113,7 @@ export default function SkillAssessmentPage() {
 
       swalSuccess(
         "Application Submitted",
-        "Your application has been submitted successfully.",
+        `Your application has been submitted successfully. Tracking ID: ${trackingId}`,
         () => router.push(`/joblisting/${jobId as string}` as Route),
       );
     } catch (error) {
