@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { MdAdd, MdChat, MdClose, MdSend } from "react-icons/md";
+import { trpc } from "@/lib/trpc/client";
 
 type Message = {
   id?: string;
@@ -11,23 +12,7 @@ type Message = {
   created_at?: string;
 };
 
-type ConversationCreatedResponse = {
-  conversation_id: string;
-  message: string; // Success message from the server
-};
-
-const initialMessages: Message[] = [
-  {
-    id: "f3ac1c09-d1c2-480c-8c23-883d6c656090", // Dummy ID (not from database)
-    message: "👋 Hi! I’m your AI assistant.",
-    role: "assistant",
-  },
-  {
-    id: "f1b1e2bc-ee73-41a2-af47-569c99160789",
-    message: "Ask me about jobs, applications, or your profile.",
-    role: "assistant",
-  },
-];
+const initialMessages: Message[] = [];
 
 export default function ChatbotWidget() {
   const [open, setOpen] = useState(false);
@@ -40,75 +25,101 @@ export default function ChatbotWidget() {
 
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
+  const createNewConversation = trpc.chatbot.createNewConversation.useQuery(
+    undefined,
+    {
+      enabled: false,
+    },
+  );
+
+  const getConversationHistory = trpc.chatbot.getConversationHistory.useQuery(
+    // biome-ignore lint/style/noNonNullAssertion: conversationId is guaranteed to be non-null due to the enabled condition
+    { conversationId: conversationId! },
+    {
+      enabled: !!conversationId,
+    },
+  );
+
+  const sendMessage = trpc.chatbot.sendMessage.useMutation();
+
   useEffect(() => {
+    setConversationId(window.sessionStorage.getItem("conversationId") || null);
     setMounted(true);
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, []);
+    if (getConversationHistory.data) {
+      setMessages(getConversationHistory.data);
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [getConversationHistory.data]);
 
   if (!mounted) return null;
 
   const handleSend = () => {
-    if (!message.trim()) return;
-
-    const userMessage = {
-      user_input: message,
-    };
-
-    const chatbotAPI = new URL(
-      `http://localhost:8000/chatbot/use/${conversationId}`,
-    );
+    if (!message.trim() || !conversationId) {
+      return;
+    }
 
     setMessages((prev) => [
       ...prev,
       { message, role: "user", id: prev.length.toString() },
     ]);
 
+    sendMessage.mutate(
+      {
+        // biome-ignore lint/style/noNonNullAssertion: conversationId is guaranteed to be non-null due early return condition
+        conversationId: conversationId!,
+        message: message,
+      },
+      {
+        onSuccess: (data) => {
+          setMessages((prev) => [
+            ...prev,
+            {
+              message: data.reply,
+              role: "assistant",
+              id: prev.length.toString(),
+            },
+          ]);
+        },
+      },
+    );
+
     // Show typing animation
     setIsTyping(true);
-
-    fetch(chatbotAPI.toString(), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(userMessage),
-    })
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(`Server error: ${res.statusText}`);
-        }
-        return res.json();
-      })
-      .then((data: { reply: string }) => {
-        setMessages((prev) => [
-          ...prev,
-          {
-            message: data.reply,
-            role: "assistant",
-            id: prev.length.toString(),
-          },
-        ]);
-      })
-      .catch((err) => alert(`Error sending message: ${err}`))
-      .finally(() => setIsTyping(false));
 
     setMessage("");
   };
 
-  const handleOpen = () => {
-    fetch("http://localhost:8000/chatbot/new_conv", {
-      method: "POST",
-    })
-      .then((res) => res.json())
-      .then((data: ConversationCreatedResponse) => {
-        setConversationId(data.conversation_id);
-        setOpen(true);
-        setMessages(initialMessages); // Reset to initial messages on new conversation
-      })
-      .catch((err) => alert(`Error starting conversation:${err}`));
+  const handleNewChat = () => {
+    setMessages(initialMessages);
+    window.sessionStorage.removeItem("conversationId");
+
+    createNewConversation.refetch().then((res) => {
+      if (res.data?.conversationId) {
+        setConversationId(res.data.conversationId);
+        getConversationHistory.refetch();
+        window.sessionStorage.setItem(
+          "conversationId",
+          res.data.conversationId,
+        );
+      }
+    });
+  };
+
+  const handleOpen = async () => {
+    if (!conversationId) {
+      await createNewConversation.refetch().then((res) => {
+        if (res.data?.conversationId) {
+          setConversationId(res.data.conversationId);
+          setOpen(true);
+        }
+      });
+    } else {
+      setOpen(true);
+    }
   };
 
   const handleClose = () => {
@@ -155,9 +166,7 @@ export default function ChatbotWidget() {
             border border-red-100
             shadow-2xl"
           >
-            <div
-              className="p-4 flex items-center justify-between bg-linear-to-r from-red-800 via-red-600 to-red-500 text-white"
-            >
+            <div className="p-4 flex items-center justify-between bg-linear-to-r from-red-800 via-red-600 to-red-500 text-white">
               <div>
                 <h3 className="font-semibold text-sm tracking-wide">
                   AI Assistant
@@ -171,6 +180,7 @@ export default function ChatbotWidget() {
                 <button
                   type="button"
                   className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full transition-all duration-200"
+                  onClick={handleNewChat}
                 >
                   <MdAdd className="text-sm" />
                   New Chat

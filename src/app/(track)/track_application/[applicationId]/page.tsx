@@ -9,7 +9,6 @@ import {
   FileText,
   Users,
 } from "lucide-react";
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import { CANDIDATE_STATUSES } from "@/lib/constants";
 import { trpc } from "@/lib/trpc/client";

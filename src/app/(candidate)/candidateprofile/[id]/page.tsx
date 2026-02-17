@@ -1,13 +1,11 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { startTransition, useEffect, useMemo, useState } from "react";
 import { FaFacebook, FaInstagram } from "react-icons/fa";
-import { FiEdit2, FiTrash2 } from "react-icons/fi";
+import { FiEdit2, FiTrash2, FiUser } from "react-icons/fi";
 import { MdArrowBack, MdEmail, MdPhone } from "react-icons/md";
-import { FiUser } from "react-icons/fi";
 import {
   PolarAngleAxis,
   PolarGrid,
@@ -285,7 +283,7 @@ export default function Page() {
             overflow-hidden
           "
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-red-100/40 via-white/10 to-red-50/30 pointer-events-none" />
+          <div className="absolute inset-0 bg-linear-to-br from-red-100/40 via-white/10 to-red-50/30 pointer-events-none" />
           <div
             className="relative w-36 h-36 flex items-center justify-center rounded-full 
             bg-white/30 backdrop-blur-2xl 
@@ -298,7 +296,7 @@ export default function Page() {
             <FiUser className="text-red-600 w-16 h-16 opacity-90" />
           </div>
 
-          <h2 className="text-3xl font-bold bg-gradient-to-r from-red-600 to-red-400 bg-clip-text text-transparent">
+          <h2 className="text-3xl font-bold bg-linear-to-r from-red-600 to-red-400 bg-clip-text text-transparent">
             {candidate
               ? `${candidate.user.firstName} ${candidate.user.lastName}`
               : "Loading..."}
@@ -308,18 +306,7 @@ export default function Page() {
             {[MdEmail, FaFacebook, FaInstagram, MdPhone].map((Icon, idx) => (
               <div
                 key={idx}
-                className="
-        p-3 
-        rounded-xl 
-        bg-white/40 
-        backdrop-blur-md 
-        border border-white/40 
-        shadow-sm 
-        hover:bg-red-600 
-        hover:text-white 
-        transition-all duration-300 
-        cursor-pointer
-      "
+                className="p-3 rounded-xl bg-white/40 backdrop-blur-md  border border-white/40 shadow-sm hover:bg-red-600 hover:text-white transition-all duration-300 cursor-pointer"
               >
                 <Icon className="w-5 h-5" />
               </div>
@@ -363,7 +350,7 @@ export default function Page() {
             <button
               className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold transition ${
                 activeTab === "evaluation"
-                  ? "bg-gradient-to-r from-red-600 to-red-500 text-white shadow-lg"
+                  ? "bg-linear-to-r from-red-600 to-red-500 text-white shadow-lg"
                   : "bg-gray-200 text-gray-700 hover:bg-gray-300"
               }`}
               onClick={() => setActiveTab("evaluation")}
@@ -374,7 +361,7 @@ export default function Page() {
             <button
               className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold transition ${
                 activeTab === "resume"
-                  ? "bg-gradient-to-r from-red-600 to-red-500 text-white shadow-lg"
+                  ? "bg-linear-to-r from-red-600 to-red-500 text-white shadow-lg"
                   : "bg-gray-200 text-gray-700 hover:bg-gray-300"
               }`}
               onClick={() => setActiveTab("resume")}
@@ -441,7 +428,7 @@ export default function Page() {
                         overflow-hidden
                       "
                     >
-                      <div className="absolute inset-0 bg-gradient-to-br from-red-100/40 via-white/10 to-red-50/30 pointer-events-none" />
+                      <div className="absolute inset-0 bg-linear-to-br from-red-100/40 via-white/10 to-red-50/30 pointer-events-none" />
 
                       <h2 className="text-xl font-bold mb-4 text-gray-800">
                         Schedule Details — {pendingStatus}
@@ -627,6 +614,7 @@ export default function Page() {
                                     fill="currentColor"
                                     viewBox="0 0 20 20"
                                   >
+                                    <title>Authentication Required</title>
                                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.184 3.642a1 1 0 00.95.69h3.813c.969 0 1.371 1.24.588 1.81l-3.087 2.243a1 1 0 00-.364 1.118l1.184 3.642c.3.921-.755 1.688-1.54 1.118L10 13.347l-3.087 2.243c-.785.57-1.84-.197-1.54-1.118l1.184-3.642a1 1 0 00-.364-1.118L3.106 9.07c-.783-.57-.38-1.81.588-1.81h3.813a1 1 0 00.95-.69l1.184-3.642z" />
                                   </svg>
                                 );
@@ -782,7 +770,7 @@ export default function Page() {
                                   onClick={handleSaveEdit}
                                   className="
                                     px-4 py-2 
-                                    bg-gradient-to-r 
+                                    bg-linear-to-r 
                                     from-red-600 
                                     to-red-500 
                                     text-white 
@@ -829,7 +817,7 @@ export default function Page() {
                   overflow-hidden
                 "
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-red-100/40 via-white/10 to-red-50/30 pointer-events-none" />
+                <div className="absolute inset-0 bg-linear-to-br from-red-100/40 via-white/10 to-red-50/30 pointer-events-none" />
 
                 <CandidateResume
                   candidateProfile={candidateProfileQuery.data}
@@ -852,7 +840,7 @@ export default function Page() {
                   overflow-hidden
                 "
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-red-100/40 via-white/10 to-red-50/30 pointer-events-none" />
+                <div className="absolute inset-0 bg-linear-to-br from-red-100/40 via-white/10 to-red-50/30 pointer-events-none" />
 
                 <h2 className="text-2xl font-bold mb-6">
                   <span className="text-red-600">Tech</span> Stack

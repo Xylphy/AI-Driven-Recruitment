@@ -3,6 +3,7 @@ import {
   adminRouter,
   authRouter,
   candidateRouter,
+  chatbotRouter,
   hrOfficer,
   jobListingRouter,
   staffRouter,
@@ -17,6 +18,7 @@ export const appRouter = createTRPCRouter({
   admin: adminRouter,
   hrOfficer: hrOfficer,
   staff: staffRouter,
+  chatbot: chatbotRouter,
 });
 
 // export type definition of API

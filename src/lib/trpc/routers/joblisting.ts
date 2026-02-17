@@ -5,6 +5,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { moveFile } from "@/lib/cloudinary/cloudinary";
+import type { CANDIDATE_STATUSES } from "@/lib/constants";
 import admin, { db } from "@/lib/firebase/admin";
 import { deleteDocument } from "@/lib/mongodb/action";
 import mongoDb_client from "@/lib/mongodb/mongodb";
@@ -34,7 +35,6 @@ import {
   createTRPCRouter,
   rateLimitedProcedure,
 } from "../init";
-import { CANDIDATE_STATUSES } from "@/lib/constants";
 
 const jobListingRouter = createTRPCRouter({
   joblistings: authorizedProcedure
@@ -722,7 +722,7 @@ const jobListingRouter = createTRPCRouter({
           "id, status, scheduled_at, platform, meeting_url, job_listings(title)",
         )
         .eq("id", input.applicantId)
-        .single()
+        .single();
       if (error || !data) {
         console.error("Error fetching tracking ID:", error);
         throw new TRPCError({
