@@ -9,6 +9,7 @@ import {
   FileText,
   Users,
 } from "lucide-react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { CANDIDATE_STATUSES } from "@/lib/constants";
 import { trpc } from "@/lib/trpc/client";
@@ -168,8 +169,57 @@ export default function ApplicationTrackingPage() {
           <h2 className="text-xl font-semibold text-gray-700 mb-4">
             Current Stage Details
           </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {Object.entries(
+              application?.status ? getStageDetails(application.status) : {},
+            ).map(([key, value]) => {
+              const isMeetingLink =
+                key === "platform" &&
+                typeof value === "string" &&
+                /^(https?:\/\/|www\.)/i.test(value);
 
-          {(() => {
+              return (
+                <div
+                  key={key}
+                  className="bg-white/70 backdrop-blur border border-gray-200 rounded-xl p-4 text-center shadow-sm"
+                >
+                  <p className="text-sm text-gray-500 capitalize mb-2">{key}</p>
+
+                  {isMeetingLink ? (
+                    <a
+                      href={
+                        value.startsWith("http") ? value : `https://${value}`
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="
+                        inline-flex items-center gap-2
+                        px-4 py-2
+                        rounded-lg
+                        bg-white/40
+                        backdrop-blur-md
+                        border border-white/60
+                        shadow-md
+                        text-red-600 font-semibold
+                        transition-all duration-300
+                        hover:bg-red-600 hover:text-white
+                        hover:shadow-lg
+                        active:scale-95
+                      "
+                    >
+                      🔗 Join Meeting Here
+                    </a>
+                  ) : (
+                    <p className="text-gray-500 text-center">
+                      No additional details available for this stage.
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* {(() => {
             const currentDetails = application?.status
               ? getStageDetails(application.status)
               : {};
@@ -191,12 +241,13 @@ export default function ApplicationTrackingPage() {
               </p>
             );
           })()}
-        </div>
+        </div> */}
 
-        <p className="text-center text-xs text-gray-400">
-          Please monitor this page regularly for updates regarding your
-          application.
-        </p>
+          <p className="text-center text-xs text-gray-400">
+            Please monitor this page regularly for updates regarding your
+            application.
+          </p>
+        </div>
       </div>
     </div>
   );
