@@ -19,6 +19,7 @@ import {
   MdPeople,
   MdSettings,
   MdWork,
+  MdPsychology,
 } from "react-icons/md";
 import { auth } from "@/lib/firebase/client";
 import { trpc } from "@/lib/trpc/client";
@@ -141,6 +142,15 @@ export default function AdminLayout({
                     }`}
                   >
                     <MdInsights /> KPI Metrics
+                  </Link>
+
+                  <Link
+                    href={{ pathname: "/admin/ai_metrics" }}
+                    className={`flex items-center gap-3 hover:bg-white/20 px-3 py-2 rounded-md transition ${
+                      pathName === "/admin/ai_metrics" ? "bg-white/30" : ""
+                    }`}
+                  >
+                    <MdPsychology /> AI Metrics
                   </Link>
 
                   <Link
