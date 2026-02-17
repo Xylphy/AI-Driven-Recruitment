@@ -140,7 +140,7 @@ const adminRouter = createTRPCRouter({
           { $limit: input.limit },
           {
             $project: {
-              user_id: 1,
+              applicant_id: 1,
               job_id: 1,
               overall_score: 1,
               score_data: 1,
@@ -152,12 +152,14 @@ const adminRouter = createTRPCRouter({
 
       const supabaseClient = await createClientServer(1, true);
 
-      const userIds = Array.from(new Set(topCandidates.map((c) => c.user_id)));
+      const userIds = Array.from(
+        new Set(topCandidates.map((c) => c.applicant_id)),
+      );
 
       const { data: users, error: usersError } = userIds.length
         ? await find<Pick<Staff, "id" | "first_name" | "last_name">>(
             supabaseClient,
-            "users",
+            "applicants",
             [{ column: "id", value: userIds }],
             "id, first_name, last_name",
           )
@@ -191,8 +193,8 @@ const adminRouter = createTRPCRouter({
 
       const topCandidatesWithNames = topCandidates.map((c) => ({
         ...c,
-        name: `${userMap.get(c.user_id)?.first_name || "N/A"} ${
-          userMap.get(c.user_id)?.last_name || "N/A"
+        name: `${userMap.get(c.applicant_id)?.first_name || "N/A"} ${
+          userMap.get(c.applicant_id)?.last_name || "N/A"
         }`,
       }));
 

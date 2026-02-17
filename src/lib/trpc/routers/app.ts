@@ -7,13 +7,11 @@ import {
   hrOfficer,
   jobListingRouter,
   staffRouter,
-  userRouter,
 } from ".";
 
 export const appRouter = createTRPCRouter({
   auth: authRouter,
   joblisting: jobListingRouter,
-  user: userRouter,
   candidate: candidateRouter,
   admin: adminRouter,
   hrOfficer: hrOfficer,
