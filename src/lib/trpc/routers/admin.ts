@@ -585,6 +585,43 @@ const adminRouter = createTRPCRouter({
         })),
       };
     }),
+  fetchKpiMetrics: adminProcedure
+    .input(
+      z.object({
+        fromDate: z.string(), // string not date since Date objects are not serializable to JSON
+        toDate: z.string(),
+      }),
+    )
+    .query(async ({ input }) => {
+      const supabase = await createClientServer(1, true);
+
+      const { data: kpiMetrics, error: kpiError } = await supabase.rpc(
+        "get_hiring_kpis",
+        {
+          from_ts: input.fromDate,
+          to_ts: input.toDate,
+        },
+      );
+
+      if (kpiError) {
+        console.error("Error fetching KPI metrics", kpiError);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: kpiError?.message || "Failed to fetch KPI metrics",
+        });
+      }
+
+      return {
+        kpis: kpiMetrics as Array<{
+          metric_type: string;
+          status_or_stage: string | null;
+          value: number;
+          p50: number | null;
+          p75: number | null;
+          p90: number | null;
+        }>,
+      };
+    }),
 });
 
 export default adminRouter;
