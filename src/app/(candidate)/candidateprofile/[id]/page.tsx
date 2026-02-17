@@ -7,6 +7,7 @@ import { startTransition, useEffect, useMemo, useState } from "react";
 import { FaFacebook, FaInstagram } from "react-icons/fa";
 import { FiEdit2, FiTrash2 } from "react-icons/fi";
 import { MdArrowBack, MdEmail, MdPhone } from "react-icons/md";
+import { FiUser } from "react-icons/fi";
 import {
   PolarAngleAxis,
   PolarGrid,
@@ -33,8 +34,6 @@ const CandidateResume = dynamic(
   () => import("@/components/admin/candidateProfile/CandidateResume"),
   { ssr: false },
 );
-const glassCard =
-  "bg-white/40 backdrop-blur-xl border border-white/30 shadow-xl rounded-2xl";
 
 const INTERVIEW_STATUSES: CandidateStatus[] = [
   "Exam",
@@ -270,28 +269,61 @@ export default function Page() {
           <MdArrowBack className="text-xl" />
           <span>Back to Candidate List</span>
         </button>
-        <div className={`${glassCard} p-6 flex flex-col items-center gap-4`}>
-          <div className="relative w-32 h-32 rounded-full overflow-hidden ring-4 ring-red-500/30">
-            <Image
-              src="/logo.png"
-              alt="Profile"
-              width={128}
-              height={128}
-              className="object-cover w-full h-full"
-            />
+        <div
+          className="
+            relative
+            bg-white/40 
+            backdrop-blur-2xl 
+            border border-white/30 
+            shadow-[0_10px_40px_rgba(0,0,0,0.08)] 
+            rounded-3xl 
+            p-8 
+            flex 
+            flex-col 
+            items-center 
+            gap-6
+            overflow-hidden
+          "
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-red-100/40 via-white/10 to-red-50/30 pointer-events-none" />
+          <div
+            className="relative w-36 h-36 flex items-center justify-center rounded-full 
+            bg-white/30 backdrop-blur-2xl 
+            border border-white/40 
+            shadow-[0_8px_30px_rgba(227,0,34,0.25)] 
+            ring-4 ring-red-500/20
+            transition-all duration-300
+            hover:scale-105"
+          >
+            <FiUser className="text-red-600 w-16 h-16 opacity-90" />
           </div>
 
-          <h2 className="text-2xl font-bold text-gray-800">
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-red-600 to-red-400 bg-clip-text text-transparent">
             {candidate
               ? `${candidate.user.firstName} ${candidate.user.lastName}`
               : "Loading..."}
           </h2>
 
-          <div className="flex gap-4 text-red-600">
-            <MdEmail className="w-6 h-6" />
-            <FaFacebook className="w-5 h-5" />
-            <FaInstagram className="w-5 h-5" />
-            <MdPhone className="w-6 h-6" />
+          <div className="flex gap-4 text-red-500">
+            {[MdEmail, FaFacebook, FaInstagram, MdPhone].map((Icon, idx) => (
+              <div
+                key={idx}
+                className="
+        p-3 
+        rounded-xl 
+        bg-white/40 
+        backdrop-blur-md 
+        border border-white/40 
+        shadow-sm 
+        hover:bg-red-600 
+        hover:text-white 
+        transition-all duration-300 
+        cursor-pointer
+      "
+              >
+                <Icon className="w-5 h-5" />
+              </div>
+            ))}
           </div>
 
           <div className="w-full max-w-sm">
@@ -299,7 +331,21 @@ export default function Page() {
               <select
                 value={selectedStatus || ""}
                 onChange={handleStatusChange}
-                className="bg-red-100 text-red-700 font-semibold px-3 py-1.5 rounded border border-red-200 transition-all hover:bg-red-200 hover:text-red-800 w-48 text-sm focus:outline-none focus:ring-2 focus:ring-red-300"
+                className="
+                  bg-white/40 
+                  backdrop-blur-xl 
+                  border border-white/40 
+                  shadow-md
+                  text-red-700 
+                  font-semibold 
+                  px-4 py-2 
+                  rounded-xl 
+                  transition-all 
+                  hover:shadow-lg
+                  focus:outline-none 
+                  focus:ring-2 
+                  focus:ring-red-400
+                "
               >
                 <option value="">Select Status</option>
                 {CANDIDATE_STATUSES.map((status) => (
@@ -315,9 +361,9 @@ export default function Page() {
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="flex justify-center gap-4 mb-6">
             <button
-              className={`px-4 py-2 rounded font-semibold transition ${
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold transition ${
                 activeTab === "evaluation"
-                  ? "bg-red-600 text-white"
+                  ? "bg-gradient-to-r from-red-600 to-red-500 text-white shadow-lg"
                   : "bg-gray-200 text-gray-700 hover:bg-gray-300"
               }`}
               onClick={() => setActiveTab("evaluation")}
@@ -326,9 +372,9 @@ export default function Page() {
               Candidate Evaluation
             </button>
             <button
-              className={`px-4 py-2 rounded font-semibold transition ${
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold transition ${
                 activeTab === "resume"
-                  ? "bg-red-600 text-white"
+                  ? "bg-gradient-to-r from-red-600 to-red-500 text-white shadow-lg"
                   : "bg-gray-200 text-gray-700 hover:bg-gray-300"
               }`}
               onClick={() => setActiveTab("resume")}
@@ -337,7 +383,6 @@ export default function Page() {
               Resume
             </button>
           </div>
-
           {activeTab === "evaluation" ? (
             <div className="grid md:grid-cols-2 gap-6">
               <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 h-full overflow-auto">
@@ -380,7 +425,24 @@ export default function Page() {
                 </div>
                 {showScheduleModal && (
                   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-                    <div className={`${glassCard} w-full max-w-md p-6`}>
+                    <div
+                      className="
+                        relative
+                        bg-white/40 
+                        backdrop-blur-2xl 
+                        border border-white/30 
+                        shadow-[0_10px_40px_rgba(0,0,0,0.08)] 
+                        rounded-3xl 
+                        p-8 
+                        flex 
+                        flex-col 
+                        items-center 
+                        gap-6
+                        overflow-hidden
+                      "
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-br from-red-100/40 via-white/10 to-red-50/30 pointer-events-none" />
+
                       <h2 className="text-xl font-bold mb-4 text-gray-800">
                         Schedule Details — {pendingStatus}
                       </h2>
@@ -482,7 +544,22 @@ export default function Page() {
                     {hrReportsData.map((report, idx) => (
                       <div
                         key={report.id}
-                        className="bg-white p-4 rounded-lg shadow-md border border-gray-200 w-full relative flex flex-col gap-2"
+                        className="
+                          relative
+                          bg-white/40 
+                          backdrop-blur-xl 
+                          border border-white/30 
+                          shadow-[0_10px_35px_rgba(0,0,0,0.08)]
+                          rounded-2xl 
+                          p-6 
+                          w-full 
+                          flex 
+                          flex-col 
+                          gap-4 
+                          transition-all 
+                          duration-300
+                          hover:shadow-[0_15px_45px_rgba(227,0,34,0.15)]
+                        "
                       >
                         <div className="absolute top-2 right-2 flex gap-2">
                           {report.staff_id === userId && (
@@ -490,7 +567,17 @@ export default function Page() {
                               <button
                                 type="button"
                                 onClick={() => handleEditReport(idx)}
-                                className="text-blue-600 hover:text-blue-800"
+                                className="
+                                  p-2 
+                                  rounded-lg 
+                                  bg-white/40 
+                                  backdrop-blur-md 
+                                  border border-white/40 
+                                  text-blue-600 
+                                  hover:bg-blue-600 
+                                  hover:text-white 
+                                  transition-all
+                                "
                                 aria-label="Edit HR evaluation"
                                 title="Edit"
                               >
@@ -499,7 +586,17 @@ export default function Page() {
                               <button
                                 type="button"
                                 onClick={() => handleDeleteReport(report.id)}
-                                className="text-red-600 hover:text-red-800"
+                                className="
+                                  p-2 
+                                  rounded-lg 
+                                  bg-white/40 
+                                  backdrop-blur-md 
+                                  border border-white/40 
+                                  text-red-600 
+                                  hover:bg-red-600 
+                                  hover:text-white 
+                                  transition-all
+                                "
                                 aria-label="Delete HR evaluation"
                                 title="Delete"
                               >
@@ -509,54 +606,77 @@ export default function Page() {
                           )}
                         </div>
 
-                        <p className="flex items-start gap-2">
-                          <span className="font-semibold text-gray-700">
-                            Score:
-                          </span>{" "}
-                          <span className="inline-flex items-center space-x-2 text-red-600 font-bold">
-                            {[...Array(5)].map((_, i) => {
-                              const filled = i < Math.floor(report.score || 0);
-
-                              return (
-                                <svg
-                                  key={`${report.id}-star-${i}`}
-                                  className={`w-5 h-5 ${filled ? "text-yellow-400" : "text-gray-300"}`}
-                                  fill="currentColor"
-                                  viewBox="0 0 20 20"
-                                  role="img"
-                                  aria-label={
-                                    filled
-                                      ? "Filled rating star"
-                                      : "Empty rating star"
-                                  }
-                                >
-                                  <title>
-                                    {filled
-                                      ? "Filled rating star"
-                                      : "Empty rating star"}
-                                  </title>
-                                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.184 3.642a1 1 0 00.95.69h3.813c.969 0 1.371 1.24.588 1.81l-3.087 2.243a1 1 0 00-.364 1.118l1.184 3.642c.3.921-.755 1.688-1.54 1.118L10 13.347l-3.087 2.243c-.785.57-1.84-.197-1.54-1.118l1.184-3.642a1 1 0 00-.364-1.118L3.106 9.07c-.783-.57-.38-1.81.588-1.81h3.813a1 1 0 00.95-.69l1.184-3.642z" />
-                                </svg>
-                              );
-                            })}
-                            <span className="text-sm text-red-600">
-                              ({report.score || 0}/5)
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
+                              Score
                             </span>
-                          </span>
-                        </p>
+
+                            <div className="flex items-center gap-1">
+                              {[...Array(5)].map((_, i) => {
+                                const filled =
+                                  i < Math.floor(report.score || 0);
+                                return (
+                                  <svg
+                                    key={`${report.id}-star-${i}`}
+                                    className={`w-5 h-5 transition ${
+                                      filled
+                                        ? "text-yellow-400 drop-shadow-sm"
+                                        : "text-gray-300"
+                                    }`}
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                  >
+                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.184 3.642a1 1 0 00.95.69h3.813c.969 0 1.371 1.24.588 1.81l-3.087 2.243a1 1 0 00-.364 1.118l1.184 3.642c.3.921-.755 1.688-1.54 1.118L10 13.347l-3.087 2.243c-.785.57-1.84-.197-1.54-1.118l1.184-3.642a1 1 0 00-.364-1.118L3.106 9.07c-.783-.57-.38-1.81.588-1.81h3.813a1 1 0 00.95-.69l1.184-3.642z" />
+                                  </svg>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          <div className="px-3 py-1 text-sm font-bold bg-red-600/10 text-red-600 rounded-full backdrop-blur-md">
+                            {report.score || 0}/5
+                          </div>
+                        </div>
+
                         <p>
                           <span className="font-semibold text-gray-700">
                             Highlights:
                           </span>{" "}
                           <br />
-                          {report.highlights.join(", ")}
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {report.highlights.map((highlight, i) => (
+                              <span
+                                key={i}
+                                className="
+                                  px-3 py-1 
+                                  text-xs 
+                                  font-medium 
+                                  rounded-full 
+                                  bg-white/50 
+                                  backdrop-blur-md 
+                                  border border-white/40 
+                                  text-gray-700
+                                "
+                              >
+                                {highlight}
+                              </span>
+                            ))}
+                          </div>
                         </p>
                         <p>
                           <span className="font-semibold text-gray-700">
                             Summary:
                           </span>{" "}
                           <br />
-                          {report.summary}
+                          <div>
+                            <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
+                              Summary
+                            </span>
+                            <p className="mt-2 text-gray-700 leading-relaxed">
+                              {report.summary}
+                            </p>
+                          </div>
                         </p>
                         <p className="mt-2 text-sm text-gray-500">
                           <em>
@@ -566,7 +686,17 @@ export default function Page() {
                         </p>
 
                         {editingIndex === idx && report.staff_id === userId && (
-                          <div className="mt-3 p-3 border border-gray-200 rounded bg-gray-50">
+                          <div
+                            className="
+                              mt-4 
+                              p-6 
+                              bg-white/50 
+                              backdrop-blur-xl 
+                              border border-white/40 
+                              rounded-2xl 
+                              shadow-inner
+                            "
+                          >
                             <h4 className="font-semibold mb-3">
                               Edit HR Evaluation
                             </h4>
@@ -634,7 +764,15 @@ export default function Page() {
                                 <button
                                   type="button"
                                   onClick={handleCancelEdit}
-                                  className="px-3 py-2 bg-gray-200 rounded hover:bg-gray-300 transition"
+                                  className="
+                                    px-4 py-2 
+                                    bg-white/40 
+                                    backdrop-blur-md 
+                                    border border-white/40 
+                                    rounded-xl 
+                                    hover:bg-gray-200/50 
+                                    transition
+                                  "
                                   disabled={updateHRReportMutation.isPending}
                                 >
                                   Cancel
@@ -642,7 +780,17 @@ export default function Page() {
                                 <button
                                   type="button"
                                   onClick={handleSaveEdit}
-                                  className="px-3 py-2 bg-red-600 text-white rounded hover:bg-red-500 transition"
+                                  className="
+                                    px-4 py-2 
+                                    bg-gradient-to-r 
+                                    from-red-600 
+                                    to-red-500 
+                                    text-white 
+                                    rounded-xl 
+                                    shadow-md 
+                                    hover:scale-105 
+                                    transition-all
+                                  "
                                   disabled={updateHRReportMutation.isPending}
                                 >
                                   {updateHRReportMutation.isPending
@@ -665,13 +813,47 @@ export default function Page() {
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className={`${glassCard} p-4 h-full overflow-auto`}>
+              <div
+                className="
+                  relative
+                  bg-white/40 
+                  backdrop-blur-2xl 
+                  border border-white/30 
+                  shadow-[0_10px_40px_rgba(0,0,0,0.08)] 
+                  rounded-3xl 
+                  p-8 
+                  flex 
+                  flex-col 
+                  items-center 
+                  gap-6
+                  overflow-hidden
+                "
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-red-100/40 via-white/10 to-red-50/30 pointer-events-none" />
+
                 <CandidateResume
                   candidateProfile={candidateProfileQuery.data}
                 />
               </div>
 
-              <div className={`${glassCard} p-6`}>
+              <div
+                className="
+                  relative
+                  bg-white/40 
+                  backdrop-blur-2xl 
+                  border border-white/30 
+                  shadow-[0_10px_40px_rgba(0,0,0,0.08)] 
+                  rounded-3xl 
+                  p-8 
+                  flex 
+                  flex-col 
+                  items-center 
+                  gap-6
+                  overflow-hidden
+                "
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-red-100/40 via-white/10 to-red-50/30 pointer-events-none" />
+
                 <h2 className="text-2xl font-bold mb-6">
                   <span className="text-red-600">Tech</span> Stack
                 </h2>
