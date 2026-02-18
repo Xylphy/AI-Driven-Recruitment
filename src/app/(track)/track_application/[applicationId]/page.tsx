@@ -126,7 +126,7 @@ export default function ApplicationTrackingPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-8 gap-4">
           {CANDIDATE_STATUSES.map((status, index) => {
             const Icon = STATUS_ICONS[status] || FileText; // Add fallback
             const isCompleted = index < currentStepIndex;
