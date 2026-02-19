@@ -16,6 +16,8 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useState } from "react";
 import { Bar, Pie, Line } from "react-chartjs-2";
+import Select from "react-select";
+import HRReportCard from "@/components/admin/aiMetrics/HRReportCard";
 
 ChartJS.register(
   CategoryScale,
@@ -60,6 +62,11 @@ export default function AIAnalyticsDashboard() {
     },
   ];
 
+  const nameOptions = [
+    { value: "1", label: "John Doe" },
+    { value: "2", label: "Jane Doe" },
+  ];
+
   const performanceTrendData = {
     labels: ["Week 1", "Week 2", "Week 3", "Week 4"],
     datasets: [
@@ -73,18 +80,41 @@ export default function AIAnalyticsDashboard() {
     ],
   };
 
-  const confidenceDistributionData = {
-    labels: ["High Confidence", "Medium Confidence", "Low Confidence"],
-    datasets: [
-      {
-        data: [65, 25, 10],
-        backgroundColor: ["#DC2626", "#F59E0B", "#2563EB"],
-      },
-    ],
-  };
+  const reports = [
+    {
+      id: "1",
+      officerName: "Maria Santos",
+      score: 4.2,
+      keyHighlights: [
+        "Strong Communication",
+        "Confident Presenter",
+        "Team Player",
+      ],
+      summary:
+        "Candidate showed excellent communication skills and strong technical clarity.",
+      createdAt: "January 12, 2026",
+    },
+    {
+      id: "2",
+      officerName: "John Ramirez",
+      score: 3.8,
+      keyHighlights: ["Good Technical Depth", "Quick Learner"],
+      summary:
+        "Solid fundamentals. Slight hesitation in system design questions.",
+      createdAt: "January 13, 2026",
+    },
+    {
+      id: "3",
+      officerName: "Angela Cruz",
+      score: 4.5,
+      keyHighlights: ["Excellent Problem Solving", "Leadership Potential"],
+      summary: "Outstanding analytical thinking and leadership presence.",
+      createdAt: "January 14, 2026",
+    },
+  ];
 
   const efficiencyBarData = {
-    labels: ["Recommendation Speed", "Decision Accuracy", "Bias Reduction"],
+    labels: ["Predictive Success", "Decision Accuracy", "Job Fit"],
     datasets: [
       {
         label: "Efficiency Score (%)",
@@ -138,7 +168,6 @@ export default function AIAnalyticsDashboard() {
 
   return (
     <div className="min-h-screen p-8 bg-white relative overflow-hidden">
-      {/* Background Gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-red-100 via-white to-red-50 opacity-40 pointer-events-none" />
 
       <div className="relative z-10 space-y-8">
@@ -146,29 +175,6 @@ export default function AIAnalyticsDashboard() {
           AI Analytics Dashboard
         </h2>
 
-        {/* KPI CARDS */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {[
-            { title: "Overall Accuracy", value: "92%" },
-            { title: "Recommendation Efficiency", value: "94%" },
-            { title: "Avg AI Response Time", value: "1.3s" },
-            { title: "Bias Reduction Score", value: "89%" },
-          ].map((kpi, i) => (
-            <div
-              key={i}
-              className="backdrop-blur-xl bg-white/60 border border-white/40
-              rounded-2xl shadow-xl p-6 text-center
-              hover:scale-105 transition-transform duration-300"
-            >
-              <p className="text-sm text-gray-600">{kpi.title}</p>
-              <h3 className="text-2xl font-bold text-red-600 mt-2">
-                {kpi.value}
-              </h3>
-            </div>
-          ))}
-        </div>
-
-        {/* DATE FILTER + DOWNLOAD */}
         <div className="flex flex-col md:flex-row md:items-center gap-4 flex-wrap">
           <div className="flex gap-2">
             <input
@@ -201,59 +207,233 @@ export default function AIAnalyticsDashboard() {
           </button>
         </div>
 
-        {/* TABLE */}
-        <div className="backdrop-blur-xl bg-white/70 border border-white/40 shadow-xl rounded-2xl overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-red-50 text-red-600">
-              <tr>
-                <th className="p-4 text-left">Model</th>
-                <th className="p-4 text-center">Accuracy</th>
-                <th className="p-4 text-center">Precision</th>
-                <th className="p-4 text-center">Recall</th>
-                <th className="p-4 text-center">Avg Response</th>
-                <th className="p-4 text-center">Efficiency</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {aiRows.map((row, index) => (
-                <tr key={index} className="hover:bg-red-50/40 transition">
-                  <td className="p-4 font-medium">{row.model}</td>
-                  <td className="p-4 text-center">{row.accuracy}</td>
-                  <td className="p-4 text-center">{row.precision}</td>
-                  <td className="p-4 text-center">{row.recall}</td>
-                  <td className="p-4 text-center">{row.avgResponseTime}</td>
-                  <td className="p-4 text-center font-semibold text-red-600">
-                    {row.recommendationEfficiency}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {[
+            { title: "Overall Accuracy", value: "92%" },
+            { title: "Avg AI Response Time", value: "1.3s" },
+          ].map((kpi, i) => (
+            <div
+              key={i}
+              className="backdrop-blur-xl bg-white/60 border border-white/40
+              rounded-2xl shadow-xl p-6 text-center
+              hover:scale-105 transition-transform duration-300"
+            >
+              <p className="text-sm text-gray-600">{kpi.title}</p>
+              <h3 className="text-2xl font-bold text-red-600 mt-2">
+                {kpi.value}
+              </h3>
+            </div>
+          ))}
         </div>
 
-        {/* CHARTS */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="backdrop-blur-xl bg-white/70 border border-white/40 shadow-xl p-6 rounded-2xl">
             <h3 className="font-semibold mb-4 text-gray-700">
-              Prediction Accuracy Trend
+              Average AI Accuracy Over Time
             </h3>
             <Line data={performanceTrendData} />
           </div>
-
           <div className="backdrop-blur-xl bg-white/70 border border-white/40 shadow-xl p-6 rounded-2xl">
             <h3 className="font-semibold mb-4 text-gray-700">
-              Confidence Distribution
+              Average AI Response Time Over Time
             </h3>
-            <Pie data={confidenceDistributionData} />
+            <Line data={performanceTrendData} />
           </div>
         </div>
 
-        <div className="backdrop-blur-xl bg-white/70 border border-white/40 shadow-xl p-6 rounded-2xl">
-          <h3 className="font-semibold mb-4 text-gray-700">
-            AI Efficiency Breakdown
-          </h3>
-          <Bar data={efficiencyBarData} />
+        <div className="flex flex-col md:flex-row md:items-end gap-6 flex-wrap">
+          <div className="flex flex-col gap-2 w-72">
+            <label className="text-sm font-medium text-gray-600 tracking-wide">
+              Select Candidate
+            </label>
+
+            <Select
+              options={nameOptions}
+              placeholder="Type candidate name..."
+              isSearchable
+              className="text-sm"
+              classNames={{
+                control: ({ isFocused }) =>
+                  `
+                    px-2 py-1
+                    rounded-xl
+                    bg-white/70 backdrop-blur
+                    border ${
+                      isFocused
+                        ? "border-red-500 ring-2 ring-red-500/30"
+                        : "border-red-200"
+                    }
+                    shadow-md
+                    hover:border-red-400
+                    transition-all duration-200
+                  `,
+
+                menu: () =>
+                  `
+                    mt-2
+                    rounded-xl
+                    bg-white/80 backdrop-blur-xl
+                    border border-red-100
+                    shadow-xl
+                    overflow-hidden
+                  `,
+
+                option: ({ isFocused, isSelected }) =>
+                  `
+                    px-4 py-2 text-sm cursor-pointer transition-all duration-150
+                    ${
+                      isSelected
+                        ? "bg-red-600 text-white"
+                        : isFocused
+                          ? "bg-red-50 text-red-600"
+                          : "text-gray-700"
+                    }
+                  `,
+
+                placeholder: () => "text-gray-400",
+
+                singleValue: () => "text-gray-700 font-medium",
+
+                dropdownIndicator: ({ isFocused }) =>
+                  `text-red-500 ${isFocused ? "rotate-180 transition-transform" : ""}`,
+
+                indicatorSeparator: () => "bg-red-200",
+              }}
+            />
+          </div>
+
+          <button
+            type="button"
+            onClick={handleDownloadReport}
+            className="
+              relative overflow-hidden
+              bg-gradient-to-r from-red-600 to-red-500
+              text-white font-bold px-6 py-2 rounded-xl
+              shadow-lg hover:opacity-90 transition 
+            "
+          >
+            <span className="relative z-10 tracking-wide">
+              SEARCH CANDIDATE
+            </span>
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div
+            className="
+              relative
+              group
+              backdrop-blur-2xl
+              bg-white/60
+              border border-white/40
+              shadow-[0_20px_50px_rgba(220,38,38,0.08)]
+              rounded-3xl
+              p-6
+              overflow-hidden
+              transition-all duration-300
+              hover:shadow-[0_25px_60px_rgba(220,38,38,0.15)]
+            "
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-red-100/30 via-transparent to-red-50/30 pointer-events-none rounded-3xl" />
+
+            <div
+              className="
+                relative
+                backdrop-blur-2xl
+                bg-white/60
+                border border-white/40
+                shadow-[0_15px_45px_rgba(220,38,38,0.08)]
+                rounded-3xl
+                p-6
+                overflow-hidden
+              "
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-red-100/30 via-transparent to-red-50/30 pointer-events-none rounded-3xl" />
+
+              <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.2em] text-gray-500">
+                    AI Analytics
+                  </p>
+                  <h3 className="text-2xl font-bold bg-gradient-to-r from-red-600 to-red-400 bg-clip-text text-transparent">
+                    AI Efficiency Breakdown
+                  </h3>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <div
+                    className="
+                      bg-white/70
+                      backdrop-blur-xl
+                      border border-white/40
+                      rounded-2xl
+                      px-6 py-4
+                      min-w-[140px]
+                      text-center
+                      shadow-sm
+                      hover:shadow-md
+                      transition-all duration-300
+                    "
+                  >
+                    <p className="text-xs uppercase tracking-wide text-gray-500">
+                      AI Accuracy
+                    </p>
+                    <p className="text-2xl font-bold text-red-600 mt-1">89%</p>
+                  </div>
+                  <div
+                    className="
+                      bg-white/70
+                      backdrop-blur-xl
+                      border border-white/40
+                      rounded-2xl
+                      px-6 py-4
+                      min-w-[240px]
+                      text-left
+                      shadow-sm
+                      hover:shadow-md
+                      transition-all duration-300
+                    "
+                  >
+                    <p className="text-xs uppercase tracking-wide text-gray-500">
+                      Recommendation
+                    </p>
+                    <p className="text-sm font-medium text-gray-700 mt-2 leading-relaxed">
+                      This is a random sentence for recommendation.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="relative mb-6">
+              <Bar data={efficiencyBarData} />
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-red-600 to-red-400 bg-clip-text text-transparent">
+                HR Officer Reports
+              </h2>
+              <p className="text-sm text-gray-500">
+                Actual HR evaluations for the candidate
+              </p>
+            </div>
+
+            <div
+              className="
+          flex gap-6
+          overflow-x-auto
+          pb-4
+          scrollbar-thin
+          scrollbar-thumb-red-300
+        "
+            >
+              {reports.map((report) => (
+                <HRReportCard key={report.id} report={report} />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>
