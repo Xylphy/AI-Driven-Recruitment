@@ -5,7 +5,11 @@ import { z } from "zod";
 import { deleteRow, find, insertTable } from "@/lib/supabase/action";
 import { createClientServer } from "@/lib/supabase/supabase";
 import type { AuditLog, Changes, HRReport } from "@/types/schema";
-import { createTRPCRouter, hrOfficerProcedure } from "../init";
+import {
+  authorizedProcedure,
+  createTRPCRouter,
+  hrOfficerProcedure,
+} from "../init";
 
 const hrOfficerRouter = createTRPCRouter({
   assignedJobs: hrOfficerProcedure
@@ -47,7 +51,7 @@ const hrOfficerRouter = createTRPCRouter({
         })),
       };
     }),
-  deleteHRReport: hrOfficerProcedure
+  deleteHRReport: authorizedProcedure
     .input(
       z.object({
         reportId: z.uuid(),
@@ -104,7 +108,7 @@ const hrOfficerRouter = createTRPCRouter({
 
       return { success: true };
     }),
-  editHRReport: hrOfficerProcedure
+  editHRReport: authorizedProcedure
     .input(
       z.object({
         reportId: z.uuid(),

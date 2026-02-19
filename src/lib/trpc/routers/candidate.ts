@@ -219,17 +219,17 @@ const candidateRouter = createTRPCRouter({
       const [parsedResume, score, transcribed, userData] = await Promise.all([
         input.fetchResume &&
           findOne("ai-driven-recruitment", "parsed_resume", {
-            user_id: jobApplicant?.id,
+            applicant_id: jobApplicant?.id,
           }),
         input.fetchScore &&
           findOne("ai-driven-recruitment", "scored_candidates", {
-            _id: ObjectId.createFromHexString(jobApplicant?.id || ""),
+            applicant_id: jobApplicant?.id,
           }),
         input.fetchTranscribed &&
           findOne("ai-driven-recruitment", "transcribed", {
-            user_id: jobApplicant?.id,
+            applicant_id: jobApplicant?.id,
           }),
-        find<Staff>(supabaseClient, "users", [
+        find<Applicants>(supabaseClient, "applicants", [
           { column: "id", value: jobApplicant?.id || "" },
         ]).single(),
       ]);

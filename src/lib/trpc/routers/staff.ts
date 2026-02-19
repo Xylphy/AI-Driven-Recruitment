@@ -210,12 +210,12 @@ const staffRouter = createTRPCRouter({
 
       const { data: hrReports, error: hrReportsError } = await findWithJoin<
         HRReport & {
-          users: Pick<Staff, "first_name" | "last_name">;
+          staff: Pick<Staff, "first_name" | "last_name">;
           key_highlights: Pick<KeyHighlights, "highlight">[];
         }
       >(supabase, "hr_reports", [
         {
-          foreignTable: "users",
+          foreignTable: "staff",
           foreignKey: "staff_id",
           fields: "first_name, last_name",
         },
@@ -238,8 +238,8 @@ const staffRouter = createTRPCRouter({
 
       return (hrReports ?? []).map((report) => ({
         ...report,
-        staff_name: report.users
-          ? `${report.users.first_name} ${report.users.last_name}`
+        staff_name: report.staff
+          ? `${report.staff.first_name} ${report.staff.last_name}`
           : "Unknown Staff",
         highlights: (report.key_highlights ?? []).map((h) => h.highlight),
         staff: undefined,

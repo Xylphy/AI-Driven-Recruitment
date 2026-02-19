@@ -17,9 +17,9 @@ import {
   MdMenu,
   MdNotifications,
   MdPeople,
+  MdPsychology,
   MdSettings,
   MdWork,
-  MdPsychology,
 } from "react-icons/md";
 import { auth } from "@/lib/firebase/client";
 import { trpc } from "@/lib/trpc/client";

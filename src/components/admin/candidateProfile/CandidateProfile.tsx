@@ -20,7 +20,7 @@ export default function CandidateProfile({
                   className={`w-5 h-5 ${
                     i <
                     Math.floor(
-                      candidateProfile?.score?.score_data.raw_score || 0,
+                      candidateProfile?.score?.score_data.job_fit_stars || 0,
                     )
                       ? "text-yellow-400"
                       : "text-gray-300"
@@ -32,8 +32,8 @@ export default function CandidateProfile({
                   <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.184 3.642a1 1 0 00.95.69h3.813c.969 0 1.371 1.24.588 1.81l-3.087 2.243a1 1 0 00-.364 1.118l1.184 3.642c.3.921-.755 1.688-1.54 1.118L10 13.347l-3.087 2.243c-.785.57-1.84-.197-1.54-1.118l1.184-3.642a1 1 0 00-.364-1.118L3.106 9.07c-.783-.57-.38-1.81.588-1.81h3.813a1 1 0 00.95-.69l1.184-3.642z" />
                 </svg>
               ))}
-              <span className="text-sm text-gray-600">
-                ({candidateProfile?.score?.score_data?.raw_score || 0}/5)
+              <span className="text-sm text-gray-600">https://static.xx.fbcdn.net/images/emoji.php/v9/t8e/1/32/1f606.png
+                ({candidateProfile?.score?.score_data?.job_fit_stars || 0}/5)
               </span>
             </div>
           </div>

@@ -7,15 +7,15 @@ import {
   Chart as ChartJS,
   Legend,
   LinearScale,
-  Title,
-  Tooltip,
   LineElement,
   PointElement,
+  Title,
+  Tooltip,
 } from "chart.js";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useState } from "react";
-import { Bar, Pie, Line } from "react-chartjs-2";
+import { Bar, Line } from "react-chartjs-2";
 import Select from "react-select";
 import HRReportCard from "@/components/admin/aiMetrics/HRReportCard";
 
@@ -168,7 +168,7 @@ export default function AIAnalyticsDashboard() {
 
   return (
     <div className="min-h-screen p-8 bg-white relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-red-100 via-white to-red-50 opacity-40 pointer-events-none" />
+      <div className="absolute inset-0 bg-linear-to-br from-red-100 via-white to-red-50 opacity-40 pointer-events-none" />
 
       <div className="relative z-10 space-y-8">
         <h2 className="text-3xl font-bold text-red-600">
@@ -199,7 +199,7 @@ export default function AIAnalyticsDashboard() {
           <button
             type="button"
             onClick={handleDownloadReport}
-            className="bg-gradient-to-r from-red-600 to-red-500
+            className="bg-linear-to-r from-red-600 to-red-500
             text-white font-bold px-6 py-2 rounded-xl
             shadow-lg hover:opacity-90 transition"
           >
@@ -243,11 +243,15 @@ export default function AIAnalyticsDashboard() {
 
         <div className="flex flex-col md:flex-row md:items-end gap-6 flex-wrap">
           <div className="flex flex-col gap-2 w-72">
-            <label className="text-sm font-medium text-gray-600 tracking-wide">
+            <label
+              htmlFor="candidate-select"
+              className="text-sm font-medium text-gray-600 tracking-wide"
+            >
               Select Candidate
             </label>
 
             <Select
+              inputId="candidate-select"
               options={nameOptions}
               placeholder="Type candidate name..."
               isSearchable
@@ -307,7 +311,7 @@ export default function AIAnalyticsDashboard() {
             onClick={handleDownloadReport}
             className="
               relative overflow-hidden
-              bg-gradient-to-r from-red-600 to-red-500
+              bg-linear-to-r from-red-600 to-red-500
               text-white font-bold px-6 py-2 rounded-xl
               shadow-lg hover:opacity-90 transition 
             "
@@ -334,7 +338,7 @@ export default function AIAnalyticsDashboard() {
               hover:shadow-[0_25px_60px_rgba(220,38,38,0.15)]
             "
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-red-100/30 via-transparent to-red-50/30 pointer-events-none rounded-3xl" />
+            <div className="absolute inset-0 bg-linear-to-br from-red-100/30 via-transparent to-red-50/30 pointer-events-none rounded-3xl" />
 
             <div
               className="
@@ -348,14 +352,14 @@ export default function AIAnalyticsDashboard() {
                 overflow-hidden
               "
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-red-100/30 via-transparent to-red-50/30 pointer-events-none rounded-3xl" />
+              <div className="absolute inset-0 bg-linear-to-br from-red-100/30 via-transparent to-red-50/30 pointer-events-none rounded-3xl" />
 
               <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
                 <div>
                   <p className="text-xs uppercase tracking-[0.2em] text-gray-500">
                     AI Analytics
                   </p>
-                  <h3 className="text-2xl font-bold bg-gradient-to-r from-red-600 to-red-400 bg-clip-text text-transparent">
+                  <h3 className="text-2xl font-bold bg-linear-to-r from-red-600 to-red-400 bg-clip-text text-transparent">
                     AI Efficiency Breakdown
                   </h3>
                 </div>
@@ -368,7 +372,7 @@ export default function AIAnalyticsDashboard() {
                       border border-white/40
                       rounded-2xl
                       px-6 py-4
-                      min-w-[140px]
+                      min-w-35
                       text-center
                       shadow-sm
                       hover:shadow-md
@@ -387,7 +391,7 @@ export default function AIAnalyticsDashboard() {
                       border border-white/40
                       rounded-2xl
                       px-6 py-4
-                      min-w-[240px]
+                      min-w-60
                       text-left
                       shadow-sm
                       hover:shadow-md
@@ -412,7 +416,7 @@ export default function AIAnalyticsDashboard() {
 
           <div className="space-y-6">
             <div className="text-center">
-              <h2 className="text-2xl font-bold bg-gradient-to-r from-red-600 to-red-400 bg-clip-text text-transparent">
+              <h2 className="text-2xl font-bold bg-linear-to-r from-red-600 to-red-400 bg-clip-text text-transparent">
                 HR Officer Reports
               </h2>
               <p className="text-sm text-gray-500">
