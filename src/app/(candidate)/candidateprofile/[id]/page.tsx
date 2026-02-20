@@ -305,7 +305,7 @@ export default function Page() {
           <div className="flex gap-4 text-red-500">
             {[MdEmail, FaFacebook, FaInstagram, MdPhone].map((Icon, idx) => (
               <div
-                key={idx}
+                key={Icon.name || `icon-${idx}`}
                 className="p-3 rounded-xl bg-white/40 backdrop-blur-md  border border-white/40 shadow-sm hover:bg-red-600 hover:text-white transition-all duration-300 cursor-pointer"
               >
                 <Icon className="w-5 h-5" />
@@ -600,7 +600,7 @@ export default function Page() {
                             </span>
 
                             <div className="flex items-center gap-1">
-                              {[...Array(5)].map((_, i) => {
+                              {Array(5).map((_, i) => {
                                 const filled =
                                   i < Math.floor(report.score || 0);
                                 return (
@@ -635,7 +635,7 @@ export default function Page() {
                           <div className="flex flex-wrap gap-2 mt-2">
                             {report.highlights.map((highlight, i) => (
                               <span
-                                key={i}
+                                key={`${report.id}-highlight-${highlight}-${i}`}
                                 className="
                                   px-3 py-1 
                                   text-xs 

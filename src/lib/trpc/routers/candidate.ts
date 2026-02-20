@@ -1,5 +1,4 @@
 import { TRPCError } from "@trpc/server";
-import { ObjectId } from "mongodb";
 import z from "zod";
 import { CANDIDATE_STATUSES } from "@/lib/constants";
 import admin, { db } from "@/lib/firebase/admin";
@@ -17,7 +16,6 @@ import type {
   Applicants,
   AuditLog,
   Changes,
-  Staff,
 } from "@/types/schema";
 import type { Notification } from "@/types/types";
 import { adminProcedure, authorizedProcedure, createTRPCRouter } from "../init";
