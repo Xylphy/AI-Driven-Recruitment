@@ -198,9 +198,7 @@ export default function ComparePage() {
 
   return (
     <div className="min-h-screen p-8 bg-white relative overflow-hidden">
-      {/* soft gradient backdrop */}
       <div className="absolute inset-0 bg-linear-to-br from-red-100 via-white to-red-50 opacity-40 pointer-events-none" />
-      {/* subtle glow blobs */}
       <div className="absolute -top-24 -right-24 h-80 w-80 rounded-full bg-red-200/30 blur-3xl pointer-events-none" />
       <div className="absolute -bottom-24 -left-24 h-80 w-80 rounded-full bg-red-200/20 blur-3xl pointer-events-none" />
 
@@ -235,133 +233,159 @@ export default function ComparePage() {
                   <span className="text-sm text-gray-600">Loading jobs...</span>
                 </div>
               ) : (
-                <div className="rounded-2xl bg-white/50 backdrop-blur-xl border border-white/40 shadow-md p-2">
-                  <Select
-                    inputId={jobSelectId}
-                    instanceId={jobSelectId}
-                    options={fetchJobsQuery.data?.jobs?.map((job) => ({
-                      value: job.id,
-                      label: job.title,
-                    }))}
-                    value={
-                      selectedJobId
-                        ? {
-                            value: selectedJobId,
-                            label: fetchJobsQuery.data?.jobs?.find(
-                              (j) => j.id === selectedJobId,
-                            )?.title,
-                          }
-                        : null
-                    }
-                    onChange={(option) => setSelectedJobId(option?.value || "")}
-                    placeholder="-- Select Job --"
-                    isClearable
-                    className="w-full"
-                    styles={{
-                      control: (provided) => ({
-                        ...provided,
-                        borderColor: "rgba(0,0,0,0.2)",
-                        backgroundColor: "rgba(255,255,255,0.6)",
-                        backdropFilter: "blur(8px)",
-                        color: "#333",
-                      }),
-                      singleValue: (provided) => ({
-                        ...provided,
-                        color: "#333",
-                      }),
-                      menu: (provided) => ({
-                        ...provided,
-                        backgroundColor: "rgba(255,255,255,0.6)",
-                        backdropFilter: "blur(8px)",
-                        color: "#333",
-                      }),
-                    }}
-                  />
+                <div
+                  className="
+    sticky top-0 z-[999]
+    bg-white/75 backdrop-blur-2xl
+    border border-white/40
+    rounded-3xl
+    shadow-[0_20px_60px_rgba(0,0,0,0.10)]
+    p-6
+  "
+                >
+                  <div className="rounded-2xl bg-white/50 backdrop-blur-xl border border-white/40 shadow-md p-2">
+                    <Select
+                      inputId={jobSelectId}
+                      instanceId={jobSelectId}
+                      options={fetchJobsQuery.data?.jobs?.map((job) => ({
+                        value: job.id,
+                        label: job.title,
+                      }))}
+                      value={
+                        selectedJobId
+                          ? {
+                              value: selectedJobId,
+                              label: fetchJobsQuery.data?.jobs?.find(
+                                (j) => j.id === selectedJobId,
+                              )?.title,
+                            }
+                          : null
+                      }
+                      onChange={(option) =>
+                        setSelectedJobId(option?.value || "")
+                      }
+                      placeholder="-- Select Job --"
+                      isClearable
+                      className="w-full"
+                      styles={{
+                        control: (provided) => ({
+                          ...provided,
+                          borderColor: "rgba(0,0,0,0.2)",
+                          backgroundColor: "rgba(255,255,255,0.6)",
+                          backdropFilter: "blur(8px)",
+                          color: "#333",
+                        }),
+                        singleValue: (provided) => ({
+                          ...provided,
+                          color: "#333",
+                        }),
+                        menu: (provided) => ({
+                          ...provided,
+                          backgroundColor: "rgba(255,255,255,0.6)",
+                          backdropFilter: "blur(8px)",
+                          color: "#333",
+                        }),
+                      }}
+                    />
+                  </div>
                 </div>
               )}
             </div>
 
             {selectedJobId && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {candidatesQuery.isLoading || candidatesQuery.isFetching ? (
-                  <div className="md:col-span-2 text-center text-gray-600 bg-white/50 backdrop-blur-xl border border-white/40 rounded-2xl shadow-md p-6">
-                    Loading candidates...
-                  </div>
-                ) : (
-                  <>
-                    <div className="space-y-3">
-                      <label
-                        htmlFor={candidateASelectId}
-                        className="block text-sm font-medium text-gray-700"
-                      >
-                        Candidate A
-                      </label>
-                      <div className="rounded-2xl bg-white/50 backdrop-blur-xl border border-white/40 shadow-md p-2">
-                        <Select
-                          inputId={candidateASelectId}
-                          instanceId={candidateASelectId}
-                          options={candidatesQuery.data?.applicants.map(
-                            (c) => ({
-                              value: { userId: c.user_id, applicantId: c.id },
-                              label: c.name,
-                            }),
-                          )}
-                          value={
-                            candidateA.userId
-                              ? {
-                                  value: candidateA,
-                                  label: candidatesQuery.data?.applicants.find(
-                                    (c) => c.user_id === candidateA.userId,
-                                  )?.name,
-                                }
-                              : null
-                          }
-                          onChange={(option) =>
-                            setCandidateA(option?.value ?? {})
-                          }
-                          placeholder="-- Select Candidate A --"
-                          isClearable
-                        />
-                      </div>
+              <div
+                className="
+                  sticky top-0 z-50
+                  bg-white/70 backdrop-blur-xl
+                  border border-white/40
+                  rounded-3xl
+                  shadow-[0_20px_60px_rgba(0,0,0,0.08)]
+                  p-4 md:p-6
+                "
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {candidatesQuery.isLoading || candidatesQuery.isFetching ? (
+                    <div className="md:col-span-2 text-center text-gray-600 bg-white/50 backdrop-blur-xl border border-white/40 rounded-2xl shadow-md p-6">
+                      Loading candidates...
                     </div>
+                  ) : (
+                    <>
+                      <div className="space-y-3">
+                        <label
+                          htmlFor={candidateASelectId}
+                          className="block text-sm font-medium text-gray-700"
+                        >
+                          Candidate A
+                        </label>
+                        <div className="rounded-2xl bg-white/50 backdrop-blur-xl border border-white/40 shadow-md p-2">
+                          <Select
+                            inputId={candidateASelectId}
+                            instanceId={candidateASelectId}
+                            options={candidatesQuery.data?.applicants.map(
+                              (c) => ({
+                                value: { userId: c.user_id, applicantId: c.id },
+                                label: c.name,
+                              }),
+                            )}
+                            value={
+                              candidateA.userId
+                                ? {
+                                    value: candidateA,
+                                    label:
+                                      candidatesQuery.data?.applicants.find(
+                                        (c) => c.user_id === candidateA.userId,
+                                      )?.name,
+                                  }
+                                : null
+                            }
+                            onChange={(option) =>
+                              setCandidateA(option?.value ?? {})
+                            }
+                            placeholder="-- Select Candidate A --"
+                            isClearable
+                          />
+                        </div>
+                      </div>
 
-                    <div className="space-y-3">
-                      <label
-                        htmlFor={candidateBSelectId}
-                        className="block text-sm font-medium text-gray-700"
-                      >
-                        Candidate B
-                      </label>
-                      <div className="rounded-2xl bg-white/50 backdrop-blur-xl border border-white/40 shadow-md p-2">
-                        <Select
-                          inputId={candidateBSelectId}
-                          instanceId={candidateBSelectId}
-                          options={candidatesQuery.data?.applicants.map(
-                            (c) => ({
-                              value: { userId: c.user_id, applicantId: c.id },
-                              label: c.name,
-                            }),
-                          )}
-                          value={
-                            candidateB.userId
-                              ? {
-                                  value: candidateB,
-                                  label: candidatesQuery.data?.applicants.find(
-                                    (c) => c.user_id === candidateB.userId,
-                                  )?.name,
-                                }
-                              : null
-                          }
-                          onChange={(option) =>
-                            setCandidateB(option?.value ?? {})
-                          }
-                          placeholder="-- Select Candidate B --"
-                          isClearable
-                        />
+                      <div className="space-y-3">
+                        <label
+                          htmlFor={candidateBSelectId}
+                          className="block text-sm font-medium text-gray-700"
+                        >
+                          Candidate B
+                        </label>
+                        <div className="rounded-2xl bg-white/50 backdrop-blur-xl border border-white/40 shadow-md p-2">
+                          <Select
+                            inputId={candidateBSelectId}
+                            instanceId={candidateBSelectId}
+                            options={candidatesQuery.data?.applicants.map(
+                              (c) => ({
+                                value: { userId: c.user_id, applicantId: c.id },
+                                label: c.name,
+                              }),
+                            )}
+                            value={
+                              candidateB.userId
+                                ? {
+                                    value: candidateB,
+                                    label:
+                                      candidatesQuery.data?.applicants.find(
+                                        (c) => c.user_id === candidateB.userId,
+                                      )?.name,
+                                  }
+                                : null
+                            }
+                            onChange={(option) =>
+                              setCandidateB(option?.value ?? {})
+                            }
+                            placeholder="-- Select Candidate B --"
+                            isClearable
+                          />
+                        </div>
                       </div>
-                    </div>
-                  </>
-                )}
+                    </>
+                  )}
+                </div>
               </div>
             )}
 
@@ -575,228 +599,222 @@ export default function ComparePage() {
             )}
 
             <div className="space-y-8">
-              <div className="p-6 rounded-2xl bg-white/60 backdrop-blur-xl border border-white/40 shadow-xl">
-                <div className="flex items-center justify-between gap-4 mb-4">
-                  <div>
-                    <div className="text-sm font-medium text-gray-700">
-                      AI Feedback
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      Generated summary once both candidates are selected.
+              {candidateA.applicantId && candidateB.applicantId && (
+                <div className="p-6 rounded-2xl bg-white/60 backdrop-blur-xl border border-white/40 shadow-xl">
+                  <div className="flex items-center justify-between gap-4 mb-4">
+                    <div>
+                      <div className="text-sm font-medium text-gray-700">
+                        AI Feedback
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Generated summary once both candidates are selected.
+                      </div>
                     </div>
                   </div>
+
+                  {AIQuery.isLoading || AIQuery.isFetching ? (
+                    <div className="animate-pulse space-y-3">
+                      <div className="h-6 bg-red-100/70 rounded w-1/2 mb-2" />
+                      <div className="h-4 bg-red-100/70 rounded w-1/3 mb-2" />
+                      <div className="h-20 bg-red-100/70 rounded mb-2" />
+                      <div className="h-4 bg-red-100/70 rounded w-1/4 mb-2" />
+                      <div className="h-10 bg-red-100/70 rounded mb-2" />
+                      <div className="h-4 bg-red-100/70 rounded w-1/4 mb-2" />
+                      <div className="h-12 bg-red-100/70 rounded" />
+                    </div>
+                  ) : AIQuery.data ? (
+                    <div className="space-y-4">
+                      <h1 className="text-xl">
+                        Better Candidate:{" "}
+                        <b className="text-red-600">
+                          {AIQuery.data.better_candidate}
+                        </b>
+                      </h1>
+
+                      <div className="space-y-2">
+                        <h3 className="text-sm font-semibold text-gray-800">
+                          Reason
+                        </h3>
+                        <textarea
+                          readOnly
+                          value={AIQuery.data.reason}
+                          className="w-full p-4 rounded-2xl bg-white/55 backdrop-blur-xl border border-white/40 shadow-sm
+            text-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500/60"
+                          rows={4}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <h3 className="text-sm font-semibold text-gray-800">
+                          Highlights
+                        </h3>
+                        <textarea
+                          readOnly
+                          value={AIQuery.data.highlights}
+                          className="w-full p-4 rounded-2xl bg-white/55 backdrop-blur-xl border border-white/40 shadow-sm
+            text-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500/60"
+                          rows={2}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-gray-500 bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4">
+                      No AI feedback available.
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {candidateA.userId && candidateB.userId && (
+              <div className="flex items-center justify-between gap-4">
+                <button
+                  className="flex items-center gap-2
+                    px-6 py-2.5
+                    rounded-xl
+                    bg-gradient-to-r from-red-600 to-red-500
+                    text-white font-semibold
+                    shadow-lg
+                    hover:scale-105
+                    transition-all duration-200"
+                  onClick={() => setShowAdminFeedbackFields((prev) => !prev)}
+                  type="button"
+                >
+                  {showAdminFeedbackFields
+                    ? "Hide Admin Feedback"
+                    : "Add Admin Feedback"}
+                </button>
+              </div>
+            )}
+
+            {showAdminFeedbackFields && (
+              <div className="p-6 rounded-2xl bg-white/60 backdrop-blur-xl border border-white/40 shadow-xl">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <textarea
+                    value={adminFeedbackA}
+                    onChange={(e) => setAdminFeedbackA(e.target.value)}
+                    placeholder="Enter feedback for Candidate A"
+                    className="w-full p-4 rounded-2xl bg-white/55 backdrop-blur-xl border border-white/40 shadow-sm
+                    text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500/60"
+                    rows={4}
+                  />
+                  <textarea
+                    value={adminFeedbackB}
+                    onChange={(e) => setAdminFeedbackB(e.target.value)}
+                    placeholder="Enter feedback for Candidate B"
+                    className="w-full p-4 rounded-2xl bg-white/55 backdrop-blur-xl border border-white/40 shadow-sm
+                    text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500/60"
+                    rows={4}
+                  />
                 </div>
 
-                {AIQuery.isLoading || AIQuery.isFetching ? (
-                  <div className="animate-pulse space-y-3">
-                    <div className="h-6 bg-red-100/70 rounded w-1/2 mb-2" />
-                    <div className="h-4 bg-red-100/70 rounded w-1/3 mb-2" />
-                    <div className="h-20 bg-red-100/70 rounded mb-2" />
-                    <div className="h-4 bg-red-100/70 rounded w-1/4 mb-2" />
-                    <div className="h-10 bg-red-100/70 rounded mb-2" />
-                    <div className="h-4 bg-red-100/70 rounded w-1/4 mb-2" />
-                    <div className="h-12 bg-red-100/70 rounded" />
-                  </div>
-                ) : AIQuery.data ? (
-                  <div className="space-y-4">
-                    <h1 className="text-xl">
-                      Better Candidate:{" "}
-                      <b className="text-red-600">
-                        {AIQuery.data.better_candidate}
-                      </b>
-                    </h1>
-
-                    <div className="space-y-2">
-                      <h3 className="text-sm font-semibold text-gray-800">
-                        Reason
-                      </h3>
-                      <textarea
-                        readOnly
-                        value={AIQuery.data.reason}
-                        className="w-full p-4 rounded-2xl bg-white/55 backdrop-blur-xl border border-white/40 shadow-sm
-                      text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500/60"
-                        rows={4}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <h3 className="text-sm font-semibold text-gray-800">
-                        Highlights
-                      </h3>
-                      <textarea
-                        readOnly
-                        value={AIQuery.data.highlights}
-                        className="w-full p-4 rounded-2xl bg-white/55 backdrop-blur-xl border border-white/40 shadow-sm
-                      text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500/60"
-                        rows={2}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <h3 className="text-sm font-semibold text-gray-800">
-                        Recommendations
-                      </h3>
-                      <textarea
-                        readOnly
-                        value={AIQuery.data.recommendations}
-                        className="w-full p-4 rounded-2xl bg-white/55 backdrop-blur-xl border border-white/40 shadow-sm
-                      text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500/60"
-                        rows={3}
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-gray-500 bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4">
-                    No AI feedback available.
-                  </div>
-                )}
-              </div>
-
-              {candidateA.userId && candidateB.userId && (
-                <div className="flex items-center justify-between gap-4">
+                <div className="mt-4">
                   <button
-                    className="bg-white/55 backdrop-blur-xl border border-white/40 shadow-md
-                  text-gray-800 font-semibold px-6 py-2 rounded-2xl
-                  hover:shadow-lg hover:scale-[1.01] transition"
-                    onClick={() => setShowAdminFeedbackFields((prev) => !prev)}
+                    className="bg-linear-to-r from-red-600 to-red-500 text-white font-bold
+                    px-6 py-2 rounded-2xl shadow-lg hover:opacity-90 transition"
+                    onClick={handleSubmitFeedback}
                     type="button"
                   >
-                    {showAdminFeedbackFields
-                      ? "Hide Admin Feedback"
-                      : "Add Admin Feedback"}
+                    Submit Feedback
                   </button>
                 </div>
-              )}
+              </div>
+            )}
 
-              {showAdminFeedbackFields && (
-                <div className="p-6 rounded-2xl bg-white/60 backdrop-blur-xl border border-white/40 shadow-xl">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <textarea
-                      value={adminFeedbackA}
-                      onChange={(e) => setAdminFeedbackA(e.target.value)}
-                      placeholder="Enter feedback for Candidate A"
-                      className="w-full p-4 rounded-2xl bg-white/55 backdrop-blur-xl border border-white/40 shadow-sm
-                    text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500/60"
-                      rows={4}
-                    />
-                    <textarea
-                      value={adminFeedbackB}
-                      onChange={(e) => setAdminFeedbackB(e.target.value)}
-                      placeholder="Enter feedback for Candidate B"
-                      className="w-full p-4 rounded-2xl bg-white/55 backdrop-blur-xl border border-white/40 shadow-sm
-                    text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500/60"
-                      rows={4}
-                    />
-                  </div>
+            <div className="space-y-4">
+              {adminFeedbacksQuery.data?.adminFeedbacks.map(
+                (
+                  post: AdminFeedback & {
+                    admin: { last_name: string; first_name: string };
+                    applicant: {
+                      user: { last_name: string; first_name: string };
+                    };
+                  },
+                ) => (
+                  <div
+                    key={crypto.randomUUID()}
+                    className="p-5 bg-white/60 backdrop-blur-xl border border-white/40 rounded-2xl shadow-lg"
+                  >
+                    <div className="flex justify-between text-sm text-gray-600 mb-3">
+                      <span className="font-medium">
+                        {post.admin.first_name} {post.admin.last_name}
+                      </span>
+                      <span className="text-gray-500">
+                        {formatDate(post.created_at)}
+                      </span>
+                    </div>
 
-                  <div className="mt-4">
-                    <button
-                      className="bg-linear-to-r from-red-600 to-red-500 text-white font-bold
-                    px-6 py-2 rounded-2xl shadow-lg hover:opacity-90 transition"
-                      onClick={handleSubmitFeedback}
-                      type="button"
-                    >
-                      Submit Feedback
-                    </button>
-                  </div>
-                </div>
-              )}
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <strong className="text-sm text-gray-800">
+                          Candidate {post.applicant.user.first_name}{" "}
+                          {post.applicant.user.last_name}:
+                        </strong>
 
-              <div className="space-y-4">
-                {adminFeedbacksQuery.data?.adminFeedbacks.map(
-                  (
-                    post: AdminFeedback & {
-                      admin: { last_name: string; first_name: string };
-                      applicant: {
-                        user: { last_name: string; first_name: string };
-                      };
-                    },
-                  ) => (
-                    <div
-                      key={crypto.randomUUID()}
-                      className="p-5 bg-white/60 backdrop-blur-xl border border-white/40 rounded-2xl shadow-lg"
-                    >
-                      <div className="flex justify-between text-sm text-gray-600 mb-3">
-                        <span className="font-medium">
-                          {post.admin.first_name} {post.admin.last_name}
-                        </span>
-                        <span className="text-gray-500">
-                          {formatDate(post.created_at)}
-                        </span>
+                        {editingFeedbackId === post.id ? (
+                          <div className="mt-3 space-y-2">
+                            <textarea
+                              value={editedFeedback}
+                              onChange={(e) =>
+                                setEditedFeedback(e.target.value)
+                              }
+                              className="w-full p-4 rounded-2xl bg-white/55 backdrop-blur-xl border border-white/40 shadow-sm
+                              text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/60"
+                              rows={3}
+                            />
+                            <div className="flex gap-2 mt-2">
+                              <button
+                                className="px-4 py-2 rounded-xl text-white text-xs font-semibold
+                                bg-linear-to-r from-red-600 to-red-500 shadow-md hover:opacity-90 transition"
+                                onClick={() => handleSaveEdit(post.id)}
+                                type="button"
+                              >
+                                Save
+                              </button>
+                              <button
+                                className="px-4 py-2 rounded-xl text-gray-800 text-xs font-semibold
+                                bg-white/55 backdrop-blur-xl border border-white/40 shadow-sm hover:shadow-md transition"
+                                onClick={() => {
+                                  setEditingFeedbackId(null);
+                                  setEditedFeedback("");
+                                }}
+                                type="button"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-gray-700 mt-2 text-sm leading-relaxed">
+                            {post.feedback}
+                          </p>
+                        )}
                       </div>
 
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1">
-                          <strong className="text-sm text-gray-800">
-                            Candidate {post.applicant.user.first_name}{" "}
-                            {post.applicant.user.last_name}:
-                          </strong>
-
-                          {editingFeedbackId === post.id ? (
-                            <div className="mt-3 space-y-2">
-                              <textarea
-                                value={editedFeedback}
-                                onChange={(e) =>
-                                  setEditedFeedback(e.target.value)
-                                }
-                                className="w-full p-4 rounded-2xl bg-white/55 backdrop-blur-xl border border-white/40 shadow-sm
-                              text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/60"
-                                rows={3}
-                              />
-                              <div className="flex gap-2 mt-2">
-                                <button
-                                  className="px-4 py-2 rounded-xl text-white text-xs font-semibold
-                                bg-linear-to-r from-red-600 to-red-500 shadow-md hover:opacity-90 transition"
-                                  onClick={() => handleSaveEdit(post.id)}
-                                  type="button"
-                                >
-                                  Save
-                                </button>
-                                <button
-                                  className="px-4 py-2 rounded-xl text-gray-800 text-xs font-semibold
-                                bg-white/55 backdrop-blur-xl border border-white/40 shadow-sm hover:shadow-md transition"
-                                  onClick={() => {
-                                    setEditingFeedbackId(null);
-                                    setEditedFeedback("");
-                                  }}
-                                  type="button"
-                                >
-                                  Cancel
-                                </button>
-                              </div>
-                            </div>
-                          ) : (
-                            <p className="text-gray-700 mt-2 text-sm leading-relaxed">
-                              {post.feedback}
-                            </p>
-                          )}
-                        </div>
-
-                        <div className="flex items-center gap-2 shrink-0">
-                          <button
-                            className="p-2 rounded-xl bg-white/40 backdrop-blur border border-white/40
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          className="p-2 rounded-xl bg-white/40 backdrop-blur border border-white/40
                           hover:bg-red-50/60 transition"
-                            onClick={() => handleEditClick(post)}
-                            title="Edit feedback"
-                            type="button"
-                          >
-                            <Pencil className="w-4 h-4 text-red-500" />
-                          </button>
-                          <button
-                            className="p-2 rounded-xl bg-white/40 backdrop-blur border border-white/40
+                          onClick={() => handleEditClick(post)}
+                          title="Edit feedback"
+                          type="button"
+                        >
+                          <Pencil className="w-4 h-4 text-red-500" />
+                        </button>
+                        <button
+                          className="p-2 rounded-xl bg-white/40 backdrop-blur border border-white/40
                           hover:bg-red-50/60 transition"
-                            onClick={() => handleDeleteFeedback(post.id)}
-                            title="Delete feedback"
-                            type="button"
-                          >
-                            <Trash2 className="w-4 h-4 text-red-500" />
-                          </button>
-                        </div>
+                          onClick={() => handleDeleteFeedback(post.id)}
+                          title="Delete feedback"
+                          type="button"
+                        >
+                          <Trash2 className="w-4 h-4 text-red-500" />
+                        </button>
                       </div>
                     </div>
-                  ),
-                )}
-              </div>
+                  </div>
+                ),
+              )}
             </div>
           </div>
         </div>
