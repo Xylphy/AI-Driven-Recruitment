@@ -17,6 +17,7 @@ import {
 import Swal from "sweetalert2";
 import HRReport from "@/components/admin/candidateProfile/HRReport";
 import useAuth from "@/hooks/useAuth";
+import Link from "next/link";
 import { CANDIDATE_STATUSES } from "@/lib/constants";
 import { formatDate } from "@/lib/library";
 import { trpc } from "@/lib/trpc/client";
@@ -296,23 +297,38 @@ export default function Page() {
               ))}
             </div>
           </div>
-          <div className="relative flex justify-end">
+          <div className="relative flex flex-col items-end gap-2">
+            <button
+              type="button"
+              onClick={() => router.push("/admin/applicants")}
+              className="
+                flex items-center gap-2
+                text-gray-700
+                hover:text-red-600
+                transition-all
+                font-medium
+              "
+            >
+              <MdArrowBack className="text-lg" />
+              <span>Back to Candidates Page</span>
+            </button>
+
             <select
               value={selectedStatus || ""}
               onChange={handleStatusChange}
               className="
-                bg-white/40 
-                backdrop-blur-xl 
-                border border-white/40 
+                bg-white/40
+                backdrop-blur-xl
+                border border-white/40
                 shadow-md
-                text-red-700 
-                font-semibold 
-                px-4 py-2 
-                rounded-xl 
-                transition-all 
+                text-red-700
+                font-semibold
+                px-4 py-2
+                rounded-xl
+                transition-all
                 hover:shadow-lg
-                focus:outline-none 
-                focus:ring-2 
+                focus:outline-none
+                focus:ring-2
                 focus:ring-red-400
               "
             >
