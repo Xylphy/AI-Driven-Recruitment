@@ -827,51 +827,78 @@ export default function Page() {
                 />
               </div>
 
-              <div
-                className="
-                  relative
-                  bg-white/40 
-                  backdrop-blur-2xl 
-                  border border-white/30 
-                  shadow-[0_10px_40px_rgba(0,0,0,0.08)] 
-                  rounded-3xl 
-                  p-8 
-                  flex 
-                  flex-col 
-                  items-center 
-                  gap-6
-                  overflow-hidden
-                "
-              >
-                <div className="absolute inset-0 bg-linear-to-br from-red-100/40 via-white/10 to-red-50/30 pointer-events-none" />
-
-                <h2 className="text-2xl font-bold mb-6">
-                  <span className="text-red-600">Tech</span> Stack
-                </h2>
-
-                <div className="w-full h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RadarChart data={languageRadarData}>
-                      <PolarGrid stroke="rgba(0,0,0,0.15)" />
-                      <PolarAngleAxis
-                        dataKey="language"
-                        tick={{ fill: "#374151", fontSize: 12 }}
-                      />
-                      <PolarRadiusAxis
-                        angle={30}
-                        domain={[0, 100]}
-                        tick={{ fontSize: 10 }}
-                      />
-                      <Radar
-                        name="Proficiency"
-                        dataKey="level"
-                        stroke="#E30022"
-                        fill="#E30022"
-                        fillOpacity={0.35}
-                      />
-                    </RadarChart>
-                  </ResponsiveContainer>
+              <div className="w-full max-w-3xl">
+                <div className="flex items-center justify-between mb-4">
+                  <p className="text-xs uppercase tracking-widest text-gray-500">
+                    Scored Skills
+                  </p>
+                  <div className="px-3 py-1 rounded-full bg-white/50 backdrop-blur-md border border-white/40 text-xs font-semibold text-gray-700">
+                    Out of 5
+                  </div>
                 </div>
+
+                {[
+                  { skill: "Communication", score: 4.6 },
+                  { skill: "Problem Solving", score: 4.2 },
+                  { skill: "Leadership", score: 4.0 },
+                  { skill: "Collaboration", score: 3.8 },
+                  { skill: "Adaptability", score: 4.4 },
+                  { skill: "Technical Depth", score: 3.9 },
+                ].map((item) => {
+                  const pct = Math.max(
+                    0,
+                    Math.min(100, (item.score / 5) * 100),
+                  );
+
+                  return (
+                    <div
+                      key={item.skill}
+                      className="
+                        mb-3
+                        rounded-2xl
+                        bg-white/45
+                        backdrop-blur-xl
+                        border border-white/40
+                        shadow-[0_10px_30px_rgba(227,0,34,0.10)]
+                        p-4
+                        transition
+                        hover:bg-white/60
+                      "
+                    >
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-gray-800 truncate">
+                            {item.skill}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Applicant Self-Assessment Score
+                          </p>
+                        </div>
+
+                        <div className="shrink-0 flex items-center gap-3">
+                          <div className="px-3 py-1 rounded-full bg-red-600/10 text-red-600 text-sm font-bold border border-white/30 whitespace-nowrap">
+                            {item.score.toFixed(1)} / 5
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-3">
+                        <div className="h-2 rounded-full bg-white/50 border border-white/40 overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-gradient-to-r from-red-600 to-red-400"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+
+                        <div className="mt-2 flex items-center justify-between text-[11px] text-gray-500">
+                          <span>0</span>
+                          <span>2.5</span>
+                          <span>5</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
