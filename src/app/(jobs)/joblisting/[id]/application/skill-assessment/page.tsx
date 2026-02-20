@@ -113,7 +113,7 @@ export default function SkillAssessmentPage() {
 
       swalSuccess(
         "Application Submitted",
-        `Your application has been submitted successfully. Tracking ID: ${trackingId}`,
+        `Your application has been submitted successfully. Tracking ID: ${trackingId.trackingId}`,
         () => router.push(`/joblisting/${jobId as string}` as Route),
       );
     } catch (error) {

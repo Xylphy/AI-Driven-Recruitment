@@ -8,6 +8,7 @@ import useAuth from "@/hooks/useAuth";
 import { formatDate } from "@/lib/library";
 import { trpc } from "@/lib/trpc/client";
 import type { AdminFeedback } from "@/types/schema";
+import type { FetchCandidateProfileOutput } from "@/types/types";
 
 interface WorkExperience {
   company: string;
@@ -17,7 +18,6 @@ interface WorkExperience {
 }
 
 interface CandidateID {
-  userId?: string;
   applicantId?: string;
 }
 
@@ -37,23 +37,20 @@ export default function ComparePage() {
 
   const { isAuthenticated } = useAuth();
 
-  if (!isAuthenticated) {
-    alert("You are not authorized to access this page.");
-    router.push("/login");
-  }
-
   const fetchJobsQuery = trpc.admin.fetchAllJobs.useQuery(undefined, {
     enabled: isAuthenticated,
   });
 
   const AIQuery = trpc.candidate.fetchAICompare.useQuery(
     {
-      userId_A: candidateA.userId ?? "",
-      userId_B: candidateB.userId ?? "",
+      // biome-ignore lint/style/noNonNullAssertion: We check for existence in the enabled condition
+      userId_A: candidateA.applicantId!,
+      // biome-ignore lint/style/noNonNullAssertion: We check for existence in the enabled condition
+      userId_B: candidateB.applicantId!,
       jobId: selectedJobId,
     },
     {
-      enabled: !!candidateA.userId && !!candidateB.userId,
+      enabled: !!candidateA.applicantId && !!candidateB.applicantId,
     },
   );
 
@@ -93,13 +90,13 @@ export default function ComparePage() {
   const candidateAData = candidateDataA.data;
   const candidateBData = candidateDataB.data;
 
-  const getExperienceCount = (data: any) =>
+  const getExperienceCount = (data: FetchCandidateProfileOutput | undefined) =>
     data?.parsedResume?.raw_output?.work_experience?.length || 0;
 
-  const getSkillsCount = (data: any) =>
+  const getSkillsCount = (data: FetchCandidateProfileOutput | undefined) =>
     data?.parsedResume?.raw_output?.soft_skills?.length || 0;
 
-  const getMatchScore = (data: any) =>
+  const getMatchScore = (data: FetchCandidateProfileOutput | undefined) =>
     data?.score?.score_data?.predictive_success || 0;
 
   const compareMetric = (a: number, b: number) => {
@@ -172,7 +169,7 @@ export default function ComparePage() {
   const handleEditClick = (
     post: AdminFeedback & {
       admin: { last_name: string; first_name: string };
-      applicant: { user: { last_name: string; first_name: string } };
+      applicant: { applicant: { last_name: string; first_name: string } };
     },
   ) => {
     setEditingFeedbackId(post.id);
@@ -300,18 +297,18 @@ export default function ComparePage() {
                         <Select
                           inputId={candidateASelectId}
                           instanceId={candidateASelectId}
-                          options={candidatesQuery.data?.applicants.map(
-                            (c) => ({
-                              value: { userId: c.user_id, applicantId: c.id },
+                          options={candidatesQuery.data?.applicants
+                            .filter((c) => c.id !== candidateB.applicantId)
+                            .map((c) => ({
+                              value: { applicantId: c.id },
                               label: c.name,
-                            }),
-                          )}
+                            }))}
                           value={
-                            candidateA.userId
+                            candidateA.applicantId
                               ? {
                                   value: candidateA,
                                   label: candidatesQuery.data?.applicants.find(
-                                    (c) => c.user_id === candidateA.userId,
+                                    (c) => c.id === candidateA.applicantId,
                                   )?.name,
                                 }
                               : null
@@ -336,18 +333,18 @@ export default function ComparePage() {
                         <Select
                           inputId={candidateBSelectId}
                           instanceId={candidateBSelectId}
-                          options={candidatesQuery.data?.applicants.map(
-                            (c) => ({
-                              value: { userId: c.user_id, applicantId: c.id },
+                          options={candidatesQuery.data?.applicants
+                            .filter((c) => c.id !== candidateA.applicantId)
+                            .map((c) => ({
+                              value: { applicantId: c.id },
                               label: c.name,
-                            }),
-                          )}
+                            }))}
                           value={
-                            candidateB.userId
+                            candidateB.applicantId
                               ? {
                                   value: candidateB,
                                   label: candidatesQuery.data?.applicants.find(
-                                    (c) => c.user_id === candidateB.userId,
+                                    (c) => c.id === candidateB.applicantId,
                                   )?.name,
                                 }
                               : null
@@ -652,7 +649,7 @@ export default function ComparePage() {
                 )}
               </div>
 
-              {candidateA.userId && candidateB.userId && (
+              {candidateA.applicantId && candidateB.applicantId && (
                 <div className="flex items-center justify-between gap-4">
                   <button
                     className="bg-white/55 backdrop-blur-xl border border-white/40 shadow-md
@@ -708,7 +705,7 @@ export default function ComparePage() {
                     post: AdminFeedback & {
                       admin: { last_name: string; first_name: string };
                       applicant: {
-                        user: { last_name: string; first_name: string };
+                        applicant: { last_name: string; first_name: string };
                       };
                     },
                   ) => (
@@ -728,8 +725,8 @@ export default function ComparePage() {
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
                           <strong className="text-sm text-gray-800">
-                            Candidate {post.applicant.user.first_name}{" "}
-                            {post.applicant.user.last_name}:
+                            Candidate {post.applicant.applicant.first_name}{" "}
+                            {post.applicant.applicant.last_name}:
                           </strong>
 
                           {editingFeedbackId === post.id ? (

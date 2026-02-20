@@ -71,13 +71,12 @@ function normalizeToPublicId(value: string) {
 }
 
 export async function getFileInfo(publicIdOrUrl: string) {
-  const resourceTypes = ["raw", "image", "video"] as const;
   const normalized = normalizeToPublicId(publicIdOrUrl);
   const withoutExt = normalized.replace(/\.[^/.]+$/, "");
   const candidates = Array.from(new Set([normalized, withoutExt]));
 
   for (const candidate of candidates) {
-    for (const resourceType of resourceTypes) {
+    for (const resourceType of ["raw", "image", "video"]) {
       try {
         const result = await cloudinary.api.resource(candidate, {
           resource_type: resourceType,
