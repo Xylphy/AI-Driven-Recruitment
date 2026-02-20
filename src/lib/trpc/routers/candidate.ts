@@ -113,7 +113,7 @@ const candidateRouter = createTRPCRouter({
           "ai-driven-recruitment",
           "scored_candidates",
           {
-            user_id: userId,
+            applicant_id: userId,
           },
         );
 

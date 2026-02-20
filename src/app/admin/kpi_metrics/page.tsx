@@ -14,6 +14,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useState } from "react";
 import { Bar, Pie } from "react-chartjs-2";
+import { trpc } from "@/lib/trpc/client";
 
 ChartJS.register(
   CategoryScale,
@@ -24,6 +25,35 @@ ChartJS.register(
   Tooltip,
   Legend,
 );
+
+// Add this helper function
+function formatDuration(seconds: number): string {
+  if (seconds === 0) return "0s";
+
+  const weeks = Math.floor(seconds / 604800);
+  const days = Math.floor((seconds % 604800) / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = Math.floor(seconds % 60);
+
+  const parts: string[] = [];
+  if (weeks > 0) parts.push(`${weeks}w`);
+  if (days > 0) parts.push(`${days}d`);
+  if (hours > 0) parts.push(`${hours}h`);
+  if (minutes > 0) parts.push(`${minutes}m`);
+  if (secs > 0 && parts.length === 0) parts.push(`${secs}s`);
+
+  return parts.slice(0, 2).join(" "); // Show top 2 units
+}
+
+type KpiMetric = {
+  metric_type: string;
+  status_or_stage: string | null;
+  value: number | null;
+  p50: number | null;
+  p75: number | null;
+  p90: number | null;
+};
 
 export default function KPIMetrics() {
   const today = new Date();
@@ -36,46 +66,74 @@ export default function KPIMetrics() {
     new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString(),
   );
 
-  const kpiRows = [
-    {
-      role: "Software Engineer",
-      totalApplicants: 120,
-      interviewed: 40,
-      offers: 10,
-      hired: 6,
-      avgTimeToHire: "14d",
-      timeToFill: "21d",
-      successRate: "5%",
-    },
-    {
-      role: "UI/UX Designer",
-      totalApplicants: 80,
-      interviewed: 30,
-      offers: 8,
-      hired: 4,
-      avgTimeToHire: "12d",
-      timeToFill: "18d",
-      successRate: "5%",
-    },
-  ];
+  const kpiData = trpc.admin.fetchKpiMetrics.useQuery({
+    fromDate: fromDate.toString(),
+    toDate: toDate.toString(),
+  });
 
+  const metrics: KpiMetric[] = (kpiData.data?.kpis as KpiMetric[]) ?? [];
+  const byType = (type: string) =>
+    metrics.filter((m) => m.metric_type === type);
+  const one = (type: string) => metrics.find((m) => m.metric_type === type);
+
+  const totalApplicants = Number(one("total_applicants")?.value ?? 0);
+  const avgTimeToHireDays = Number(one("avg_time_to_hire_days")?.value ?? 0);
+  const successRatePct = Number(one("success_rate_pct")?.value ?? 0);
+
+  const bottlenecks = byType("bottleneck");
+  const timeToFillSeconds = bottlenecks.length
+    ? Math.max(...bottlenecks.map((b) => Number(b.p75 ?? b.p50 ?? 0)))
+    : 0;
+
+  const perRole = byType("per_role");
+  const perRoleTimes = byType("per_role_times");
+  const roleTimesMap = new Map(
+    perRoleTimes.map((r) => [r.status_or_stage ?? "", r]),
+  );
+
+  const kpiRows = perRole.map((r) => {
+    const roleName = r.status_or_stage ?? "Unknown";
+    const roleTimes = roleTimesMap.get(roleName);
+
+    return {
+      role: roleName,
+      totalApplicants: Number(r.value ?? 0),
+      interviewed: "-",
+      offers: "-",
+      hired: "-",
+      avgTimeToHire:
+        roleTimes?.p50 != null ? formatDuration(Number(roleTimes.p50)) : "-",
+      timeToFill:
+        roleTimes?.p75 != null ? formatDuration(Number(roleTimes.p75)) : "-",
+      successRate: `${successRatePct.toFixed(1)}%`,
+    };
+  });
+
+  const funnel = byType("funnel");
   const barData = {
-    labels: ["Time to Hire", "Time to Fill"],
+    labels: ["Time to Hire", "Longest Time to Fill"],
     datasets: [
       {
         label: "Average Days",
-        data: [14, 21],
+        data: [avgTimeToHireDays, timeToFillSeconds / 86400],
         backgroundColor: "rgba(220, 38, 38, 0.8)",
       },
     ],
   };
 
   const pieData = {
-    labels: ["Applicants", "Interviewed", "Offers", "Hired"],
+    labels: funnel.map((f) => f.status_or_stage ?? "Unknown"),
     datasets: [
       {
-        data: [200, 70, 18, 10],
-        backgroundColor: ["#DC2626", "#F59E0B", "#2563EB", "#16A34A"],
+        data: funnel.map((f) => Number(f.value ?? 0)),
+        backgroundColor: [
+          "#DC2626",
+          "#F59E0B",
+          "#2563EB",
+          "#16A34A",
+          "#7C3AED",
+          "#0891B2",
+        ],
       },
     ],
   };
@@ -137,13 +195,22 @@ export default function KPIMetrics() {
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {[
-            { title: "Total Applicants", value: "200" },
-            { title: "Avg Time to Hire", value: "14 Days" },
-            { title: "Time to Fill", value: "21 Days" },
-            { title: "Hiring Success Rate", value: "5%" },
-          ].map((kpi, i) => (
+            { title: "Total Applicants", value: String(totalApplicants) },
+            {
+              title: "Avg Time to Hire",
+              value: `${avgTimeToHireDays.toFixed(1)} Days`,
+            },
+            {
+              title: "Longest Time to Fill",
+              value: formatDuration(timeToFillSeconds),
+            },
+            {
+              title: "Hiring Success Rate",
+              value: `${successRatePct.toFixed(1)}%`,
+            },
+          ].map((kpi) => (
             <div
-              key={i}
+              key={kpi.title}
               className="backdrop-blur-xl bg-white/60 border border-white/40
               rounded-2xl shadow-xl p-6 text-center
               hover:scale-105 transition-transform duration-300"
@@ -192,7 +259,7 @@ export default function KPIMetrics() {
           <table className="w-full text-sm">
             <thead className="bg-red-50 text-red-600">
               <tr>
-                <th className="p-4 text-left">Role</th>
+                <th className="p-4 text-left">Job Title</th>
                 <th className="p-4 text-center">Applicants</th>
                 <th className="p-4 text-center">Interviewed</th>
                 <th className="p-4 text-center">Offers</th>
@@ -204,8 +271,8 @@ export default function KPIMetrics() {
             </thead>
 
             <tbody>
-              {kpiRows.map((row, index) => (
-                <tr key={index} className="hover:bg-red-50/40 transition">
+              {kpiRows.map((row) => (
+                <tr key={row.role} className="hover:bg-red-50/40 transition">
                   <td className="p-4 font-medium">{row.role}</td>
                   <td className="p-4 text-center">{row.totalApplicants}</td>
                   <td className="p-4 text-center">{row.interviewed}</td>

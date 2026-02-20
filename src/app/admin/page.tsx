@@ -104,9 +104,18 @@ export default function AdminDashboard() {
             },
             {
               label: "Hiring Success Rate",
-              value: statsQuery.data?.candidatesForFinalInterview,
+              value: statsQuery.data?.hiringSuccess_timeToHire?.find(
+                (item) => item.metric_type === "success_rate_pct",
+              )?.value,
             },
-            { label: "Avg Time-to-Hire", value: "21 days" },
+            {
+              label: "Avg Time-to-Hire",
+              value: `${(
+                statsQuery.data?.hiringSuccess_timeToHire?.find(
+                  (item) => item.metric_type === "avg_time_to_hire_days",
+                )?.value ?? 0
+              ).toFixed(1)} Days`,
+            },
           ].map((item) => (
             <GlassCard key={item.label} title={item.label}>
               <p className="text-3xl font-bold text-red-600">{item.value}</p>

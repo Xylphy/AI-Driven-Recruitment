@@ -27,7 +27,7 @@ export default function ApplicantsPage() {
 
           <button
             onClick={() => router.refresh()}
-            className="mt-6 px-5 py-2 rounded-xl bg-gradient-to-r from-red-600 to-red-500 text-white shadow-md hover:scale-105 transition-all duration-300"
+            className="mt-6 px-5 py-2 rounded-xl bg-linear-to-r from-red-600 to-red-500 text-white shadow-md hover:scale-105 transition-all duration-300"
             type="button"
           >
             Retry
@@ -39,11 +39,11 @@ export default function ApplicantsPage() {
 
   return (
     <div className="min-h-screen p-8 bg-white relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-red-100 via-white to-red-50 opacity-40 pointer-events-none" />
+      <div className="absolute inset-0 bg-linear-to-br from-red-100 via-white to-red-50 opacity-40 pointer-events-none" />
 
       <div className="relative z-10 space-y-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <h2 className="text-3xl font-bold bg-gradient-to-r from-red-600 to-red-600 bg-clip-text text-transparent">
+          <h2 className="text-3xl font-bold bg-linear-to-r from-red-600 to-red-600 bg-clip-text text-transparent">
             Candidate Management
           </h2>
 
@@ -126,7 +126,7 @@ export default function ApplicantsPage() {
                     <td className="py-4 px-6 text-center">
                       <div className="flex justify-center gap-3">
                         <button
-                          className="px-4 py-1 text-xs font-semibold rounded-xl bg-gradient-to-r from-red-600 to-red-500 text-white shadow-md hover:scale-105 transition-all"
+                          className="px-4 py-1 text-xs font-semibold rounded-xl bg-linear-to-r from-red-600 to-red-500 text-white shadow-md hover:scale-105 transition-all"
                           onClick={() =>
                             router.push(`/candidateprofile/${candidate.id}`)
                           }

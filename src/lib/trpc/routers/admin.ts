@@ -20,6 +20,15 @@ import type {
 import type { BottleneckPercentileRow } from "@/types/types";
 import { adminProcedure, createTRPCRouter } from "../init";
 
+type HiringTimelineStatistics = {
+  metric_type: string;
+  status_or_stage: string | null;
+  value: number;
+  p50: number | null;
+  p75: number | null;
+  p90: number | null;
+};
+
 const adminRouter = createTRPCRouter({
   fetchStats: adminProcedure.query(async () => {
     const supabase = await createClientServer(1, true);
@@ -28,7 +37,7 @@ const adminRouter = createTRPCRouter({
       { data: dailyActiveJobs, error: dailyActiveJobsError },
       { data: totalCandidates, error: totalCandidatesError },
       {
-        data: countFinalInterviewCandidates,
+        data: hiringSuccess_timeToHire,
         error: countFinalInterviewCandidatesError,
       },
       { data: weeklyApplicants, error: weeklyApplicantsError },
@@ -37,10 +46,8 @@ const adminRouter = createTRPCRouter({
       find<ActiveJob>(supabase, "daily_active_jobs_last_7_days")
         .many()
         .execute(),
-      countTable(supabase, "job_applicants"),
-      countTable(supabase, "job_applicants", [
-        { column: "status", value: "Final Interview" },
-      ]),
+      countTable(supabase, "applicants"),
+      supabase.rpc("compute_hiring_success_and_time_to_hire"),
       find<WeeklyCumulativeApplicants>(
         supabase,
         "weekly_applicants_last_4_weeks",
@@ -100,11 +107,8 @@ const adminRouter = createTRPCRouter({
 
     return {
       activeJobs: dailyActiveJobs?.at(-1)?.jobs || 0,
-      totalJobs: dailyActiveJobs?.at(-1)?.jobs || 0,
       totalCandidates: totalCandidates || 0,
-      jobActivity: dailyActiveJobs,
       candidateGrowth: weeklyApplicants,
-      candidatesForFinalInterview: countFinalInterviewCandidates || 0,
       candidateStatuses: (numberCandidateStatuses ?? []).map(
         (row: {
           status: string;
@@ -114,6 +118,8 @@ const adminRouter = createTRPCRouter({
           value: Number(row.applicants_count ?? 0),
         }),
       ),
+      hiringSuccess_timeToHire:
+        hiringSuccess_timeToHire as Array<HiringTimelineStatistics>,
     };
   }),
   topCandidates: adminProcedure
@@ -583,6 +589,36 @@ const adminRouter = createTRPCRouter({
             ? `${item.officer.first_name} ${item.officer.last_name}`
             : undefined,
         })),
+      };
+    }),
+  fetchKpiMetrics: adminProcedure
+    .input(
+      z.object({
+        fromDate: z.string(), // string not date since Date objects are not serializable to JSON
+        toDate: z.string(),
+      }),
+    )
+    .query(async ({ input }) => {
+      const supabase = await createClientServer(1, true);
+
+      const { data: kpiMetrics, error: kpiError } = await supabase.rpc(
+        "get_hiring_kpis",
+        {
+          from_ts: input.fromDate,
+          to_ts: input.toDate,
+        },
+      );
+
+      if (kpiError) {
+        console.error("Error fetching KPI metrics", kpiError);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: kpiError?.message || "Failed to fetch KPI metrics",
+        });
+      }
+
+      return {
+        kpis: kpiMetrics as Array<HiringTimelineStatistics>,
       };
     }),
 });
