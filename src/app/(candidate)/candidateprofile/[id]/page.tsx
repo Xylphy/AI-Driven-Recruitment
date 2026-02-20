@@ -259,14 +259,6 @@ export default function Page() {
   return (
     <main className="bg-gray-50 min-h-screen p-6">
       <div className="container mx-auto max-w-6xl space-y-6">
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-2 text-gray-600 hover:text-red-600 cursor-pointer"
-          type="button"
-        >
-          <MdArrowBack className="text-xl" />
-          <span>Back to Candidate List</span>
-        </button>
         <div
           className="
             relative
@@ -277,73 +269,178 @@ export default function Page() {
             rounded-3xl 
             p-8 
             flex 
-            flex-col 
+            flex-row 
             items-center 
+            justify-between
             gap-6
             overflow-hidden
           "
         >
           <div className="absolute inset-0 bg-linear-to-br from-red-100/40 via-white/10 to-red-50/30 pointer-events-none" />
-          <div
-            className="relative w-36 h-36 flex items-center justify-center rounded-full 
-            bg-white/30 backdrop-blur-2xl 
-            border border-white/40 
-            shadow-[0_8px_30px_rgba(227,0,34,0.25)] 
-            ring-4 ring-red-500/20
-            transition-all duration-300
-            hover:scale-105"
-          >
-            <FiUser className="text-red-600 w-16 h-16 opacity-90" />
-          </div>
 
-          <h2 className="text-3xl font-bold bg-linear-to-r from-red-600 to-red-400 bg-clip-text text-transparent">
-            {candidate
-              ? `${candidate.user.firstName} ${candidate.user.lastName}`
-              : "Loading..."}
-          </h2>
+          <div className="relative flex-1">
+            <h2 className="text-3xl font-bold bg-linear-to-r from-red-600 to-red-400 bg-clip-text text-transparent">
+              {candidate
+                ? `${candidate.user.firstName} ${candidate.user.lastName}`
+                : "Loading..."}
+            </h2>
 
-          <div className="flex gap-4 text-red-500">
-            {[MdEmail, FaFacebook, FaInstagram, MdPhone].map((Icon, idx) => (
-              <div
-                key={idx}
-                className="p-3 rounded-xl bg-white/40 backdrop-blur-md  border border-white/40 shadow-sm hover:bg-red-600 hover:text-white transition-all duration-300 cursor-pointer"
-              >
-                <Icon className="w-5 h-5" />
-              </div>
-            ))}
-          </div>
-
-          <div className="w-full max-w-sm">
-            <div className="flex justify-center mt-4">
-              <select
-                value={selectedStatus || ""}
-                onChange={handleStatusChange}
-                className="
-                  bg-white/40 
-                  backdrop-blur-xl 
-                  border border-white/40 
-                  shadow-md
-                  text-red-700 
-                  font-semibold 
-                  px-4 py-2 
-                  rounded-xl 
-                  transition-all 
-                  hover:shadow-lg
-                  focus:outline-none 
-                  focus:ring-2 
-                  focus:ring-red-400
-                "
-              >
-                <option value="">Select Status</option>
-                {CANDIDATE_STATUSES.map((status) => (
-                  <option key={status} value={status}>
-                    {status}
-                  </option>
-                ))}
-              </select>
+            <div className="flex gap-2 text-red-500">
+              {[MdEmail, FaFacebook, FaInstagram, MdPhone].map((Icon, idx) => (
+                <div
+                  key={idx}
+                  className="p-1 rounded-xl mt-1 bg-white/40 backdrop-blur-md border border-white/40 shadow-sm hover:bg-red-600 hover:text-white transition-all duration-300 cursor-pointer"
+                >
+                  <Icon className="w-5 h-5" />
+                </div>
+              ))}
             </div>
           </div>
+          <div className="relative flex justify-end">
+            <select
+              value={selectedStatus || ""}
+              onChange={handleStatusChange}
+              className="
+                bg-white/40 
+                backdrop-blur-xl 
+                border border-white/40 
+                shadow-md
+                text-red-700 
+                font-semibold 
+                px-4 py-2 
+                rounded-xl 
+                transition-all 
+                hover:shadow-lg
+                focus:outline-none 
+                focus:ring-2 
+                focus:ring-red-400
+              "
+            >
+              <option value="">Select Status</option>
+              {CANDIDATE_STATUSES.map((status) => (
+                <option key={status} value={status}>
+                  {status}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
+
+        {showScheduleModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div
+              className="
+                        relative
+                        bg-white/40 
+                        backdrop-blur-2xl 
+                        border border-white/30 
+                        shadow-[0_10px_40px_rgba(0,0,0,0.08)] 
+                        rounded-3xl 
+                        p-8 
+                        flex 
+                        flex-col 
+                        items-center 
+                        gap-6
+                        overflow-hidden
+                      "
+            >
+              <div className="absolute inset-0 bg-linear-to-br from-red-100/40 via-white/10 to-red-50/30 pointer-events-none" />
+
+              <h2 className="text-xl font-bold mb-4 text-gray-800">
+                Schedule Details — {pendingStatus}
+              </h2>
+
+              <div className="space-y-4">
+                <input
+                  type="date"
+                  className="w-full rounded-lg border border-white/40 bg-white/60 px-4 py-2 focus:outline-none"
+                  value={scheduleData.date}
+                  onChange={(e) =>
+                    setScheduleData({
+                      ...scheduleData,
+                      date: e.target.value,
+                    })
+                  }
+                />
+
+                <input
+                  type="time"
+                  className="w-full rounded-lg border border-white/40 bg-white/60 px-4 py-2 focus:outline-none"
+                  value={scheduleData.time}
+                  onChange={(e) =>
+                    setScheduleData({
+                      ...scheduleData,
+                      time: e.target.value,
+                    })
+                  }
+                />
+
+                <input
+                  type="text"
+                  placeholder="Location / Meeting Link"
+                  className="w-full rounded-lg border border-white/40 bg-white/60 px-4 py-2 focus:outline-none"
+                  value={scheduleData.location}
+                  onChange={(e) =>
+                    setScheduleData({
+                      ...scheduleData,
+                      location: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 transition"
+                  onClick={() => {
+                    setShowScheduleModal(false);
+                    setScheduleData({
+                      date: "",
+                      time: "",
+                      location: "",
+                    });
+                  }}
+                  type="button"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={async () => {
+                    setShowScheduleModal(false);
+
+                    await updateCandidateStatusMutation.mutateAsync({
+                      applicantId: candidateId,
+                      newStatus: pendingStatus,
+                    });
+
+                    Swal.fire({
+                      icon: "success",
+                      title: "Scheduled Successfully",
+                      html: `
+																		<strong>Status:</strong> ${pendingStatus}<br/>
+																		<strong>Date:</strong> ${scheduleData.date}<br/>
+																		<strong>Time:</strong> ${scheduleData.time}<br/>
+																		<strong>Location:</strong> ${scheduleData.location}
+																	`,
+                      confirmButtonColor: "#E30022",
+                    });
+
+                    setScheduleData({
+                      date: "",
+                      time: "",
+                      location: "",
+                    });
+                  }}
+                  className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-500 transition"
+                  type="button"
+                >
+                  Save & Update
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="flex justify-center gap-4 mb-6">
@@ -371,8 +468,8 @@ export default function Page() {
             </button>
           </div>
           {activeTab === "evaluation" ? (
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 h-full overflow-auto">
+            <div className="grid md:grid-rows-2 gap-6">
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 h-full">
                 <h3 className="font-semibold mb-2">AI Generated Report</h3>
                 {candidateProfileQuery.data ? (
                   <CandidateProfile
@@ -383,7 +480,21 @@ export default function Page() {
                 )}
               </div>
 
-              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 h-full flex flex-col gap-4">
+              <div
+                className="
+                  scroll-smooth
+                  scrollbar-hide
+                  bg-gray-50
+                  p-4
+                  rounded-lg
+                  border border-gray-200
+                  h-full
+                  flex flex-col
+                  gap-4
+                  w-full
+                  overflow-hidden
+                "
+              >
                 <h3 className="font-semibold mb-2">HR Officer Report</h3>
                 <div className="w-full flex justify-center mb-4">
                   <HRReport
@@ -410,240 +521,108 @@ export default function Page() {
                     }}
                   />
                 </div>
-                {showScheduleModal && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-                    <div
-                      className="
-                        relative
-                        bg-white/40 
-                        backdrop-blur-2xl 
-                        border border-white/30 
-                        shadow-[0_10px_40px_rgba(0,0,0,0.08)] 
-                        rounded-3xl 
-                        p-8 
-                        flex 
-                        flex-col 
-                        items-center 
-                        gap-6
-                        overflow-hidden
-                      "
-                    >
-                      <div className="absolute inset-0 bg-linear-to-br from-red-100/40 via-white/10 to-red-50/30 pointer-events-none" />
-
-                      <h2 className="text-xl font-bold mb-4 text-gray-800">
-                        Schedule Details — {pendingStatus}
-                      </h2>
-
-                      <div className="space-y-4">
-                        <input
-                          type="date"
-                          className="w-full rounded-lg border border-white/40 bg-white/60 px-4 py-2 focus:outline-none"
-                          value={scheduleData.date}
-                          onChange={(e) =>
-                            setScheduleData({
-                              ...scheduleData,
-                              date: e.target.value,
-                            })
-                          }
-                        />
-
-                        <input
-                          type="time"
-                          className="w-full rounded-lg border border-white/40 bg-white/60 px-4 py-2 focus:outline-none"
-                          value={scheduleData.time}
-                          onChange={(e) =>
-                            setScheduleData({
-                              ...scheduleData,
-                              time: e.target.value,
-                            })
-                          }
-                        />
-
-                        <input
-                          type="text"
-                          placeholder="Location / Meeting Link"
-                          className="w-full rounded-lg border border-white/40 bg-white/60 px-4 py-2 focus:outline-none"
-                          value={scheduleData.location}
-                          onChange={(e) =>
-                            setScheduleData({
-                              ...scheduleData,
-                              location: e.target.value,
-                            })
-                          }
-                        />
-                      </div>
-
-                      <div className="flex justify-end gap-3 mt-6">
-                        <button
-                          className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 transition"
-                          onClick={() => {
-                            setShowScheduleModal(false);
-                            setScheduleData({
-                              date: "",
-                              time: "",
-                              location: "",
-                            });
-                          }}
-                          type="button"
-                        >
-                          Cancel
-                        </button>
-
-                        <button
-                          onClick={async () => {
-                            setShowScheduleModal(false);
-
-                            await updateCandidateStatusMutation.mutateAsync({
-                              applicantId: candidateId,
-                              newStatus: pendingStatus,
-                            });
-
-                            Swal.fire({
-                              icon: "success",
-                              title: "Scheduled Successfully",
-                              html: `
-																		<strong>Status:</strong> ${pendingStatus}<br/>
-																		<strong>Date:</strong> ${scheduleData.date}<br/>
-																		<strong>Time:</strong> ${scheduleData.time}<br/>
-																		<strong>Location:</strong> ${scheduleData.location}
-																	`,
-                              confirmButtonColor: "#E30022",
-                            });
-
-                            setScheduleData({
-                              date: "",
-                              time: "",
-                              location: "",
-                            });
-                          }}
-                          className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-500 transition"
-                          type="button"
-                        >
-                          Save & Update
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
 
                 {hrReportsData.length > 0 ? (
-                  <div className="flex flex-col gap-4 w-full overflow-auto">
+                  <div className="grid grid-cols-2 gap-6 w-full overflow-y-auto pr-2 max-h-full">
                     {hrReportsData.map((report, idx) => (
                       <div
                         key={report.id}
                         className="
                           relative
-                          bg-white/40 
-                          backdrop-blur-xl 
-                          border border-white/30 
-                          shadow-[0_10px_35px_rgba(0,0,0,0.08)]
-                          rounded-2xl 
-                          p-6 
-                          w-full 
-                          flex 
-                          flex-col 
-                          gap-4 
-                          transition-all 
-                          duration-300
-                          hover:shadow-[0_15px_45px_rgba(227,0,34,0.15)]
+                          bg-white/60
+                          backdrop-blur-2xl
+                          border border-white/40
+                          rounded-3xl
+                          shadow-[0_20px_60px_rgba(220,38,38,0.10)]
+                          p-6
+                          transition-all duration-300
+                          hover:shadow-[0_25px_70px_rgba(220,38,38,0.18)]
                         "
                       >
-                        <div className="absolute top-2 right-2 flex gap-2">
-                          {report.staff_id === userId && (
-                            <>
-                              <button
-                                type="button"
-                                onClick={() => handleEditReport(idx)}
-                                className="
-                                  p-2 
-                                  rounded-lg 
-                                  bg-white/40 
-                                  backdrop-blur-md 
-                                  border border-white/40 
-                                  text-blue-600 
-                                  hover:bg-blue-600 
-                                  hover:text-white 
-                                  transition-all
-                                "
-                                aria-label="Edit HR evaluation"
-                                title="Edit"
-                              >
-                                <FiEdit2 size={18} />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteReport(report.id)}
-                                className="
-                                  p-2 
-                                  rounded-lg 
-                                  bg-white/40 
-                                  backdrop-blur-md 
-                                  border border-white/40 
-                                  text-red-600 
-                                  hover:bg-red-600 
-                                  hover:text-white 
-                                  transition-all
-                                "
-                                aria-label="Delete HR evaluation"
-                                title="Delete"
-                              >
-                                <FiTrash2 size={18} />
-                              </button>
-                            </>
-                          )}
-                        </div>
+                        <div className="absolute inset-0 bg-gradient-to-br from-red-100/30 via-transparent to-red-50/30 rounded-3xl pointer-events-none" />
 
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
-                              Score
-                            </span>
+                        <div className="relative flex items-start justify-between gap-4 mb-4">
+                          <div className="min-w-0">
+                            <p className="text-xs uppercase tracking-widest text-gray-500">
+                              HR Officer
+                            </p>
+                            <h3 className="text-lg font-semibold text-gray-800 truncate">
+                              {report.staff_name}
+                            </h3>
+                          </div>
 
-                            <div className="flex items-center gap-1">
-                              {[...Array(5)].map((_, i) => {
-                                const filled =
-                                  i < Math.floor(report.score || 0);
-                                return (
-                                  <svg
-                                    key={`${report.id}-star-${i}`}
-                                    className={`w-5 h-5 transition ${
-                                      filled
-                                        ? "text-yellow-400 drop-shadow-sm"
-                                        : "text-gray-300"
-                                    }`}
-                                    fill="currentColor"
-                                    viewBox="0 0 20 20"
-                                  >
-                                    <title>Authentication Required</title>
-                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.184 3.642a1 1 0 00.95.69h3.813c.969 0 1.371 1.24.588 1.81l-3.087 2.243a1 1 0 00-.364 1.118l1.184 3.642c.3.921-.755 1.688-1.54 1.118L10 13.347l-3.087 2.243c-.785.57-1.84-.197-1.54-1.118l1.184-3.642a1 1 0 00-.364-1.118L3.106 9.07c-.783-.57-.38-1.81.588-1.81h3.813a1 1 0 00.95-.69l1.184-3.642z" />
-                                  </svg>
-                                );
-                              })}
+                          <div className="flex items-center gap-3 shrink-0">
+                            <div className="px-3 py-1 bg-red-600/10 text-red-600 text-sm font-semibold rounded-full whitespace-nowrap">
+                              {(report.score || 0).toFixed(1)} / 5
                             </div>
-                          </div>
 
-                          <div className="px-3 py-1 text-sm font-bold bg-red-600/10 text-red-600 rounded-full backdrop-blur-md">
-                            {report.score || 0}/5
+                            {report.staff_id === userId && (
+                              <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => handleEditReport(idx)}
+                                  className="
+                                    p-2 rounded-xl
+                                    bg-white/70 backdrop-blur-md
+                                    border border-white/40
+                                    text-blue-600
+                                    hover:bg-blue-600 hover:text-white
+                                    transition-all duration-200
+                                  "
+                                >
+                                  <FiEdit2 size={16} />
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteReport(report.id)}
+                                  className="
+                                    p-2 rounded-xl
+                                    bg-white/70 backdrop-blur-md
+                                    border border-white/40
+                                    text-red-600
+                                    hover:bg-red-600 hover:text-white
+                                    transition-all duration-200
+                                  "
+                                >
+                                  <FiTrash2 size={16} />
+                                </button>
+                              </div>
+                            )}
                           </div>
                         </div>
 
-                        <p>
-                          <span className="font-semibold text-gray-700">
-                            Highlights:
-                          </span>{" "}
-                          <br />
-                          <div className="flex flex-wrap gap-2 mt-2">
+                        <div className="relative flex gap-1 mb-4">
+                          {[...Array(5)].map((_, i) => (
+                            <svg
+                              key={`${report.id}-star-${i}`}
+                              className={`w-5 h-5 ${
+                                i < Math.round(report.score || 0)
+                                  ? "text-yellow-400 drop-shadow-sm"
+                                  : "text-gray-300"
+                              }`}
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <title>Star Rating</title>
+                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.184 3.642a1 1 0 00.95.69h3.813c.969 0 1.371 1.24.588 1.81l-3.087 2.243a1 1 0 00-.364 1.118l1.184 3.642c.3.921-.755 1.688-1.54 1.118L10 13.347l-3.087 2.243c-.785.57-1.84-.197-1.54-1.118l1.184-3.642a1 1 0 00-.364-1.118L3.106 9.07c-.783-.57-.38-1.81.588-1.81h3.813a1 1 0 00.95-.69l1.184-3.642z" />
+                            </svg>
+                          ))}
+                        </div>
+                        <div className="relative mb-5">
+                          <p className="text-xs uppercase tracking-widest text-gray-500 mb-3">
+                            Key Highlights
+                          </p>
+
+                          <div className="flex flex-wrap gap-2">
                             {report.highlights.map((highlight, i) => (
                               <span
                                 key={i}
                                 className="
-                                  px-3 py-1 
-                                  text-xs 
-                                  font-medium 
-                                  rounded-full 
-                                  bg-white/50 
-                                  backdrop-blur-md 
-                                  border border-white/40 
+                                  px-3 py-1.5 text-xs font-medium
+                                  rounded-full
+                                  bg-white/70 backdrop-blur-md
+                                  border border-white/40
                                   text-gray-700
                                 "
                               >
@@ -651,132 +630,156 @@ export default function Page() {
                               </span>
                             ))}
                           </div>
-                        </p>
-                        <p>
-                          <span className="font-semibold text-gray-700">
-                            Summary:
-                          </span>{" "}
-                          <br />
-                          <div>
-                            <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
-                              Summary
-                            </span>
-                            <p className="mt-2 text-gray-700 leading-relaxed">
-                              {report.summary}
-                            </p>
-                          </div>
-                        </p>
-                        <p className="mt-2 text-sm text-gray-500">
-                          <em>
-                            Report by {report.staff_name} on{" "}
-                            {formatDate(report.created_at)}
-                          </em>
-                        </p>
+                        </div>
+
+                        <div className="relative mb-4">
+                          <p className="text-xs uppercase tracking-widest text-gray-500 mb-2">
+                            Summary
+                          </p>
+                          <p className="text-sm text-gray-700 leading-relaxed">
+                            {report.summary}
+                          </p>
+                        </div>
+
+                        <div className="relative text-xs text-gray-400 pt-3 border-t border-white/30">
+                          Submitted on {formatDate(report.created_at)}
+                        </div>
 
                         {editingIndex === idx && report.staff_id === userId && (
                           <div
                             className="
-                              mt-4 
-                              p-6 
-                              bg-white/50 
-                              backdrop-blur-xl 
-                              border border-white/40 
-                              rounded-2xl 
+                              mt-6 p-6
+                              bg-white/70 backdrop-blur-xl
+                              border border-white/40
+                              rounded-2xl
                               shadow-inner
                             "
                           >
-                            <h4 className="font-semibold mb-3">
+                            <h4 className="font-semibold mb-4 text-gray-800">
                               Edit HR Evaluation
                             </h4>
 
-                            <div className="grid gap-3">
+                            <div className="grid gap-4">
                               <div>
-                                <label
-                                  htmlFor="score"
-                                  className="block text-sm font-semibold mb-1"
-                                >
-                                  Score (out of 5)
+                                <label className="block text-sm font-semibold mb-2">
+                                  Score (1.0 - 5.0)
                                 </label>
                                 <input
                                   id="score"
-                                  type="number"
-                                  min={0}
-                                  max={5}
-                                  step={0.1}
-                                  value={editScore}
-                                  onChange={(e) =>
-                                    setEditScore(parseFloat(e.target.value))
-                                  }
-                                  className="w-full border rounded px-3 py-2"
+                                  type="text"
+                                  inputMode="decimal"
+                                  value={editScore === 0 ? "" : editScore}
+                                  onChange={(e) => {
+                                    let value = e.target.value;
+
+                                    if (value === "") {
+                                      setEditScore(0);
+                                      return;
+                                    }
+
+                                    if (!/^\d*\.?\d*$/.test(value)) return;
+
+                                    const numericValue = Number(value);
+
+                                    if (value.endsWith(".")) {
+                                      setEditScore(value as unknown as number);
+                                      return;
+                                    }
+
+                                    if (
+                                      numericValue >= 1 &&
+                                      numericValue <= 5
+                                    ) {
+                                      setEditScore(numericValue);
+                                    }
+                                  }}
+                                  onBlur={() => {
+                                    if (typeof editScore === "number") {
+                                      if (editScore < 1) setEditScore(1);
+                                      if (editScore > 5) setEditScore(5);
+                                    }
+                                  }}
+                                  className="
+                        w-full
+                        px-4 py-2.5
+                        rounded-xl
+                        bg-white/60
+                        backdrop-blur-md
+                        border border-white/40
+                        focus:outline-none
+                        focus:ring-2 focus:ring-red-400/50
+                        transition
+                      "
                                 />
                               </div>
 
                               <div>
-                                <label
-                                  htmlFor="highlights"
-                                  className="block text-sm font-semibold mb-1"
-                                >
+                                <label className="block text-sm font-semibold mb-2">
                                   Key Highlights
                                 </label>
                                 <textarea
-                                  id="highlights"
                                   value={editHighlights}
                                   onChange={(e) =>
                                     setEditHighlights(e.target.value)
                                   }
-                                  className="w-full border rounded px-3 py-2"
                                   rows={3}
-                                  placeholder="e.g. Communication, Leadership, React"
+                                  className="
+                                    w-full
+                                    px-4 py-2 rounded-xl
+                                    bg-white/80 backdrop-blur-md
+                                    border border-red-200
+                                    focus:ring-2 focus:ring-red-400/40
+                                    transition
+                                  "
                                 />
                               </div>
 
                               <div>
-                                <label
-                                  htmlFor="summary"
-                                  className="block text-sm font-semibold mb-1"
-                                >
+                                <label className="block text-sm font-semibold mb-2">
                                   Summary Evaluation
                                 </label>
                                 <textarea
-                                  id="summary"
                                   value={editSummary}
                                   onChange={(e) =>
                                     setEditSummary(e.target.value)
                                   }
-                                  className="w-full border rounded px-3 py-2"
                                   rows={3}
+                                  className="
+                                    w-full
+                                    px-4 py-2 rounded-xl
+                                    bg-white/80 backdrop-blur-md
+                                    border border-red-200
+                                    focus:ring-2 focus:ring-red-400/40
+                                    transition
+                                  "
                                 />
                               </div>
 
-                              <div className="flex justify-end gap-2">
+                              <div className="flex justify-end gap-3">
                                 <button
                                   type="button"
                                   onClick={handleCancelEdit}
                                   className="
-                                    px-4 py-2 
-                                    bg-white/40 
-                                    backdrop-blur-md 
-                                    border border-white/40 
-                                    rounded-xl 
-                                    hover:bg-gray-200/50 
+                                    px-5 py-2 rounded-xl
+                                    bg-white/70 backdrop-blur-md
+                                    border border-white/40
+                                    hover:bg-gray-200/50
                                     transition
                                   "
                                   disabled={updateHRReportMutation.isPending}
                                 >
                                   Cancel
                                 </button>
+
                                 <button
                                   type="button"
                                   onClick={handleSaveEdit}
                                   className="
-                                    px-4 py-2 
-                                    bg-linear-to-r 
-                                    from-red-600 
-                                    to-red-500 
-                                    text-white 
-                                    rounded-xl 
-                                    shadow-md 
-                                    hover:scale-105 
+                                    px-6 py-2 rounded-xl
+                                    bg-gradient-to-r from-red-600 to-red-500
+                                    text-white font-semibold
+                                    shadow-md
+                                    hover:scale-105
                                     transition-all
                                   "
                                   disabled={updateHRReportMutation.isPending}
