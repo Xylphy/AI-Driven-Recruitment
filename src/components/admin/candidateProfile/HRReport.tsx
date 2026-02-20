@@ -125,7 +125,6 @@ export default function HRReport({
                 </DialogTitle>
 
                 <div className="space-y-6">
-                  {/* Score */}
                   <div>
                     <label
                       htmlFor="score"
@@ -135,14 +134,36 @@ export default function HRReport({
                     </label>
                     <input
                       id="score"
-                      type="number"
-                      min={0}
-                      max={5}
-                      step={0.1}
-                      value={score}
-                      onChange={(e) =>
-                        setScore(parseFloat(e.target.value) || 0)
-                      }
+                      type="text"
+                      inputMode="decimal"
+                      value={score === 0 ? "" : score}
+                      onChange={(e) => {
+                        let value = e.target.value;
+
+                        if (value === "") {
+                          setScore(0);
+                          return;
+                        }
+
+                        if (!/^\d*\.?\d*$/.test(value)) return;
+
+                        const numericValue = Number(value);
+
+                        if (value.endsWith(".")) {
+                          setScore(value as unknown as number);
+                          return;
+                        }
+
+                        if (numericValue >= 1 && numericValue <= 5) {
+                          setScore(numericValue);
+                        }
+                      }}
+                      onBlur={() => {
+                        if (typeof score === "number") {
+                          if (score < 1) setScore(1);
+                          if (score > 5) setScore(5);
+                        }
+                      }}
                       className="
                         w-full
                         px-4 py-2.5
