@@ -184,7 +184,9 @@ export default function UsersPage() {
 
       {isAddOpen && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-          <div
+          <button
+            type="button"
+            aria-label="Close modal"
             className="absolute inset-0 bg-black/30 backdrop-blur-sm"
             onClick={() => setIsAddOpen(false)}
           />
