@@ -8,6 +8,7 @@ import useAuth from "@/hooks/useAuth";
 import { formatDate } from "@/lib/library";
 import { trpc } from "@/lib/trpc/client";
 import type { AdminFeedback } from "@/types/schema";
+import type { FetchCandidateProfileOutput } from "@/types/types";
 
 interface WorkExperience {
   company: string;
@@ -93,13 +94,13 @@ export default function ComparePage() {
   const candidateAData = candidateDataA.data;
   const candidateBData = candidateDataB.data;
 
-  const getExperienceCount = (data: any) =>
+  const getExperienceCount = (data: FetchCandidateProfileOutput | undefined) =>
     data?.parsedResume?.raw_output?.work_experience?.length || 0;
 
-  const getSkillsCount = (data: any) =>
+  const getSkillsCount = (data: FetchCandidateProfileOutput | undefined) =>
     data?.parsedResume?.raw_output?.soft_skills?.length || 0;
 
-  const getMatchScore = (data: any) =>
+  const getMatchScore = (data: FetchCandidateProfileOutput | undefined) =>
     data?.score?.score_data?.predictive_success || 0;
 
   const compareMetric = (a: number, b: number) => {
@@ -235,13 +236,13 @@ export default function ComparePage() {
               ) : (
                 <div
                   className="
-    sticky top-0 z-[999]
-    bg-white/75 backdrop-blur-2xl
-    border border-white/40
-    rounded-3xl
-    shadow-[0_20px_60px_rgba(0,0,0,0.10)]
-    p-6
-  "
+                    sticky top-0 z-999
+                    bg-white/75 backdrop-blur-2xl
+                    border border-white/40
+                    rounded-3xl
+                    shadow-[0_20px_60px_rgba(0,0,0,0.10)]
+                    p-6
+                  "
                 >
                   <div className="rounded-2xl bg-white/50 backdrop-blur-xl border border-white/40 shadow-md p-2">
                     <Select
@@ -672,7 +673,7 @@ export default function ComparePage() {
                   className="flex items-center gap-2
                     px-6 py-2.5
                     rounded-xl
-                    bg-gradient-to-r from-red-600 to-red-500
+                    bg-linear-to-r from-red-600 to-red-500
                     text-white font-semibold
                     shadow-lg
                     hover:scale-105

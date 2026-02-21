@@ -5,12 +5,17 @@ export type ScoredCandidateScoreData = {
   predictive_success: number;
   phrases: string[];
   skill_gaps_recommendations: string;
+  soft_skill_score: number;
+  transcription_score: number;
+  transcription_cultural_fit_score: number;
+  cultural_fit_score: number;
+  job_fit_score: number;
+  job_fit_stars: number;
 };
 
 export type ScoredCandidateDoc = {
   _id: ObjectId;
-  user_id: string; // UUID
+  applicant_id: string; // UUID
   job_id: string; // UUID
   score_data: ScoredCandidateScoreData;
-  overall_score?: number; // optional since it may not exist in the stored doc
 };

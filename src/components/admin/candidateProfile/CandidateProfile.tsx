@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { FetchCandidateProfileOutput } from "@/types/types";
 import { swalInfo } from "@/lib/swal";
+import type { FetchCandidateProfileOutput } from "@/types/types";
 
 type TabKey =
   | "sentiment"
@@ -53,11 +53,11 @@ export default function CandidateProfile({
     "bg-white/40 text-slate-700 border-white/60 hover:bg-white/60 hover:border-white/80";
 
   return (
-    <div className="w-full h-full relative overflow-hidden bg-gradient-to-br from-red-50 via-white to-red-100">
+    <div className="w-full h-full relative overflow-hidden bg-linear-to-br from-red-50 via-white to-red-100">
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute -top-24 -left-24 h-80 w-80 rounded-full bg-red-300/25 blur-3xl" />
         <div className="absolute top-28 -right-24 h-96 w-96 rounded-full bg-red-200/25 blur-3xl" />
-        <div className="absolute -bottom-28 left-1/3 h-[28rem] w-[28rem] rounded-full bg-rose-400/15 blur-3xl" />
+        <div className="absolute -bottom-28 left-1/3 h-112 w-md rounded-full bg-rose-400/15 blur-3xl" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.75),transparent_55%)]" />
       </div>
 
@@ -116,7 +116,7 @@ export default function CandidateProfile({
 
                 <div className="w-full bg-white/55 border border-white/70 h-3.5 rounded-full overflow-hidden shadow-inner">
                   <div
-                    className="h-3.5 rounded-full bg-gradient-to-r from-[#E30022] to-red-400 shadow-[0_10px_25px_rgba(227,0,34,0.35)]"
+                    className="h-3.5 rounded-full bg-linear-to-r from-[#E30022] to-red-400 shadow-[0_10px_25px_rgba(227,0,34,0.35)]"
                     style={{
                       width: `${
                         candidateProfile?.score?.score_data

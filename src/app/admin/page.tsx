@@ -1,5 +1,7 @@
 "use client";
 
+import type { Route } from "next";
+import { useRouter } from "next/navigation";
 import {
   Bar,
   BarChart,
@@ -29,6 +31,7 @@ const GlassCard = ({
 );
 
 export default function AdminDashboard() {
+  const router = useRouter();
   const statsQuery = trpc.admin.fetchStats.useQuery();
   const { role } = trpc.auth.decodeJWT.useQuery().data?.user || {};
   const auditLogsQuery = trpc.admin.auditLogs.useQuery({
@@ -138,15 +141,19 @@ export default function AdminDashboard() {
           <GlassCard title="Top Talent (AI Match >80%)">
             <ul className="space-y-3">
               {topTalentQuery.data?.topCandidates.map((c) => (
-                <li
+                <button
                   key={crypto.randomUUID()}
-                  className="flex justify-between items-center bg-white/40 rounded-lg px-4 py-2"
+                  className="flex justify-between items-center bg-white/40 rounded-lg px-4 py-2 cursor-pointer w-full text-left hover:bg-white/60 transition-colors"
+                  onClick={() =>
+                    router.push(`/candidateprofile/${c.applicant_id}` as Route)
+                  }
+                  type="button"
                 >
                   <span className="font-medium">{c.name}</span>
                   <span className="text-green-600 font-bold">
                     {c.score_data.predictive_success}%
                   </span>
-                </li>
+                </button>
               ))}
             </ul>
           </GlassCard>

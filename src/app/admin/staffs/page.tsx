@@ -6,6 +6,14 @@ import { trpc } from "@/lib/trpc/client";
 
 type staffRole = "Admin" | "HR Officer";
 
+type Staff = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  role: staffRole;
+};
+
 export default function UsersPage() {
   const [searchInput, setSearchInput] = useState("");
 
@@ -14,7 +22,7 @@ export default function UsersPage() {
   const [newStaffRole, setNewStaffRole] = useState<staffRole>("HR Officer");
   const [newStaffName, setNewStaffName] = useState("");
   const [newStaffEmail, setNewStaffEmail] = useState("");
-  const [localStaff, setLocalStaff] = useState<any[]>([]);
+  const [localStaff, setLocalStaff] = useState<Staff[]>([]);
 
   const usersQuery = trpc.admin.users.useQuery({
     searchQuery: searchInput || undefined,
@@ -74,12 +82,12 @@ export default function UsersPage() {
 
   return (
     <div className="min-h-screen p-8 bg-white relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-red-100 via-white to-red-50 opacity-40 pointer-events-none" />
+      <div className="absolute inset-0 bg-linear-to-br from-red-100 via-white to-red-50 opacity-40 pointer-events-none" />
 
       <div className="relative z-10 space-y-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-3">
-            <h2 className="text-3xl font-bold bg-gradient-to-r from-red-600 to-red-600 bg-clip-text text-transparent">
+            <h2 className="text-3xl font-bold bg-linear-to-r from-red-600 to-red-600 bg-clip-text text-transparent">
               Staff Management
             </h2>
 
@@ -88,7 +96,7 @@ export default function UsersPage() {
               onClick={() => setIsAddOpen(true)}
               className="
                 px-5 py-2 rounded-2xl
-                bg-gradient-to-r from-red-600 to-red-500
+                bg-linear-to-r from-red-600 to-red-500
                 text-white font-semibold
                 shadow-md
                 hover:scale-[1.02]
@@ -183,7 +191,7 @@ export default function UsersPage() {
       </div>
 
       {isAddOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-9999 flex items-center justify-center p-4">
           <button
             type="button"
             aria-label="Close modal"
@@ -223,10 +231,14 @@ export default function UsersPage() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">
+                <label
+                  htmlFor="setNewStaffRole"
+                  className="block text-sm font-semibold text-gray-800 mb-2"
+                >
                   Staff Role
                 </label>
                 <select
+                  id="setNewStaffRole"
                   value={newStaffRole}
                   onChange={(e) => setNewStaffRole(e.target.value as staffRole)}
                   className="
@@ -247,10 +259,14 @@ export default function UsersPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">
+                <label
+                  htmlFor="setNewStaffName"
+                  className="block text-sm font-semibold text-gray-800 mb-2"
+                >
                   Name
                 </label>
                 <input
+                  id="setNewStaffName"
                   value={newStaffName}
                   onChange={(e) => setNewStaffName(e.target.value)}
                   placeholder="e.g., Jane Doe"
@@ -269,10 +285,14 @@ export default function UsersPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">
+                <label
+                  htmlFor="setNewStaffEmail"
+                  className="block text-sm font-semibold text-gray-800 mb-2"
+                >
                   Email
                 </label>
                 <input
+                  id="setNewStaffEmail"
                   value={newStaffEmail}
                   onChange={(e) => setNewStaffEmail(e.target.value)}
                   placeholder="e.g., jane@company.com"
@@ -313,7 +333,7 @@ export default function UsersPage() {
                 disabled={!canAdd}
                 className="
                   px-6 py-2 rounded-2xl
-                  bg-gradient-to-r from-red-600 to-red-500
+                  bg-linear-to-r from-red-600 to-red-500
                   text-white font-semibold
                   shadow-md
                   hover:scale-[1.02]

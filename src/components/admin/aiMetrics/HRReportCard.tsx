@@ -25,10 +25,10 @@ export default function HRReportCard({ report }: HRReportCardProps) {
         shadow-[0_15px_40px_rgba(220,38,38,0.08)]
         p-6
         space-y-4
-        min-w-[340px]
+        min-w-85
       "
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-red-100/30 via-transparent to-red-50/30 rounded-3xl pointer-events-none" />
+      <div className="absolute inset-0 bg-linear-to-br from-red-100/30 via-transparent to-red-50/30 rounded-3xl pointer-events-none" />
 
       <div className="relative flex justify-between items-start">
         <div>
@@ -48,7 +48,7 @@ export default function HRReportCard({ report }: HRReportCardProps) {
       <div className="relative flex gap-1">
         {[...Array(5)].map((_, i) => (
           <svg
-            key={i}
+            key={`star-${report.id}-${i}`}
             className={`w-5 h-5 ${
               i < Math.round(report.score) ? "text-yellow-400" : "text-gray-300"
             }`}
@@ -69,7 +69,7 @@ export default function HRReportCard({ report }: HRReportCardProps) {
         <div className="flex flex-wrap gap-2">
           {report.keyHighlights.map((item, index) => (
             <span
-              key={index}
+              key={`${report.id}-highlight-${index}`}
               className="
                 px-3 py-1.5 text-xs font-medium
                 rounded-full

@@ -138,7 +138,7 @@ export default function HRReport({
                       inputMode="decimal"
                       value={score === 0 ? "" : score}
                       onChange={(e) => {
-                        let value = e.target.value;
+                        const value = e.target.value;
 
                         if (value === "") {
                           setScore(0);

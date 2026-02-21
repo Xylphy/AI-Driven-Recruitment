@@ -4,20 +4,11 @@ import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
 import { startTransition, useEffect, useMemo, useState } from "react";
 import { FaFacebook, FaInstagram } from "react-icons/fa";
-import { FiEdit2, FiTrash2, FiUser } from "react-icons/fi";
+import { FiEdit2, FiTrash2 } from "react-icons/fi";
 import { MdArrowBack, MdEmail, MdPhone } from "react-icons/md";
-import {
-  PolarAngleAxis,
-  PolarGrid,
-  PolarRadiusAxis,
-  Radar,
-  RadarChart,
-  ResponsiveContainer,
-} from "recharts";
 import Swal from "sweetalert2";
 import HRReport from "@/components/admin/candidateProfile/HRReport";
 import useAuth from "@/hooks/useAuth";
-import Link from "next/link";
 import { CANDIDATE_STATUSES } from "@/lib/constants";
 import { formatDate } from "@/lib/library";
 import { trpc } from "@/lib/trpc/client";
@@ -287,9 +278,9 @@ export default function Page() {
             </h2>
 
             <div className="flex gap-2 text-red-500">
-              {[MdEmail, FaFacebook, FaInstagram, MdPhone].map((Icon, idx) => (
+              {[MdEmail, FaFacebook, FaInstagram, MdPhone].map((Icon) => (
                 <div
-                  key={idx}
+                  key={Icon.name}
                   className="p-1 rounded-xl mt-1 bg-white/40 backdrop-blur-md border border-white/40 shadow-sm hover:bg-red-600 hover:text-white transition-all duration-300 cursor-pointer"
                 >
                   <Icon className="w-5 h-5" />
@@ -555,7 +546,7 @@ export default function Page() {
                           hover:shadow-[0_25px_70px_rgba(220,38,38,0.18)]
                         "
                       >
-                        <div className="absolute inset-0 bg-gradient-to-br from-red-100/30 via-transparent to-red-50/30 rounded-3xl pointer-events-none" />
+                        {/* <div className="absolute inset-0 bg-linear-to-br from-red-100/30 via-transparent to-red-50/30 rounded-3xl pointer-events-none" /> */}
 
                         <div className="relative flex items-start justify-between gap-4 mb-4">
                           <div className="min-w-0">
@@ -633,7 +624,7 @@ export default function Page() {
                           <div className="flex flex-wrap gap-2">
                             {report.highlights.map((highlight, i) => (
                               <span
-                                key={i}
+                                key={`${report.id}-highlight-${i}`}
                                 className="
                                   px-3 py-1.5 text-xs font-medium
                                   rounded-full
@@ -677,7 +668,10 @@ export default function Page() {
 
                             <div className="grid gap-4">
                               <div>
-                                <label className="block text-sm font-semibold mb-2">
+                                <label
+                                  htmlFor="score"
+                                  className="block text-sm font-semibold mb-2"
+                                >
                                   Score (1.0 - 5.0)
                                 </label>
                                 <input
@@ -686,7 +680,7 @@ export default function Page() {
                                   inputMode="decimal"
                                   value={editScore === 0 ? "" : editScore}
                                   onChange={(e) => {
-                                    let value = e.target.value;
+                                    const value = e.target.value;
 
                                     if (value === "") {
                                       setEditScore(0);
@@ -716,24 +710,28 @@ export default function Page() {
                                     }
                                   }}
                                   className="
-                        w-full
-                        px-4 py-2.5
-                        rounded-xl
-                        bg-white/60
-                        backdrop-blur-md
-                        border border-white/40
-                        focus:outline-none
-                        focus:ring-2 focus:ring-red-400/50
-                        transition
-                      "
+                                    w-full
+                                    px-4 py-2.5
+                                    rounded-xl
+                                    bg-white/60
+                                    backdrop-blur-md
+                                    border border-white/40
+                                    focus:outline-none
+                                    focus:ring-2 focus:ring-red-400/50
+                                    transition
+                                  "
                                 />
                               </div>
 
                               <div>
-                                <label className="block text-sm font-semibold mb-2">
+                                <label
+                                  htmlFor="highlights"
+                                  className="block text-sm font-semibold mb-2"
+                                >
                                   Key Highlights
                                 </label>
                                 <textarea
+                                  id="highlights"
                                   value={editHighlights}
                                   onChange={(e) =>
                                     setEditHighlights(e.target.value)
@@ -751,10 +749,14 @@ export default function Page() {
                               </div>
 
                               <div>
-                                <label className="block text-sm font-semibold mb-2">
+                                <label
+                                  htmlFor="summary"
+                                  className="block text-sm font-semibold mb-2"
+                                >
                                   Summary Evaluation
                                 </label>
                                 <textarea
+                                  id="summary"
                                   value={editSummary}
                                   onChange={(e) =>
                                     setEditSummary(e.target.value)
@@ -792,7 +794,7 @@ export default function Page() {
                                   onClick={handleSaveEdit}
                                   className="
                                     px-6 py-2 rounded-xl
-                                    bg-gradient-to-r from-red-600 to-red-500
+                                    bg-linear-to-r from-red-600 to-red-500
                                     text-white font-semibold
                                     shadow-md
                                     hover:scale-105
@@ -901,7 +903,7 @@ export default function Page() {
                       <div className="mt-3">
                         <div className="h-2 rounded-full bg-white/50 border border-white/40 overflow-hidden">
                           <div
-                            className="h-full rounded-full bg-gradient-to-r from-red-600 to-red-400"
+                            className="h-full rounded-full bg-linear-to-r from-red-600 to-red-400"
                             style={{ width: `${pct}%` }}
                           />
                         </div>

@@ -211,9 +211,9 @@ export default function AIAnalyticsDashboard() {
           {[
             { title: "Overall Accuracy", value: "92%" },
             { title: "Avg AI Response Time", value: "1.3s" },
-          ].map((kpi, i) => (
+          ].map((kpi) => (
             <div
-              key={i}
+              key={kpi.title}
               className="backdrop-blur-xl bg-white/60 border border-white/40
               rounded-2xl shadow-xl p-6 text-center
               hover:scale-105 transition-transform duration-300"
