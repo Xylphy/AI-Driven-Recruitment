@@ -600,7 +600,7 @@ export default function Page() {
                             </span>
 
                             <div className="flex items-center gap-1">
-                              {Array(5).map((_, i) => {
+                              {Array.from({ length: 5 }).map((_, i) => {
                                 const filled =
                                   i < Math.floor(report.score || 0);
                                 return (

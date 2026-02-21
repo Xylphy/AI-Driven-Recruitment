@@ -14,7 +14,7 @@ export default function CandidateProfile({
               Raw Score:
             </span>
             <div className="flex items-center space-x-2">
-              {Array(5).map((_, i) => (
+              {Array.from({ length: 5 }).map((_, i) => (
                 <svg
                   key={crypto.randomUUID()}
                   className={`w-5 h-5 ${
