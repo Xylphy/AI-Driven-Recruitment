@@ -151,7 +151,7 @@ export default function AdminDashboard() {
                 >
                   <span className="font-medium">{c.name}</span>
                   <span className="text-green-600 font-bold">
-                    {c.score_data.predictive_success}%
+                    {c.score_data.job_fit_score}%
                   </span>
                 </button>
               ))}
