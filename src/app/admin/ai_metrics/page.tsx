@@ -59,13 +59,11 @@ export default function AIAnalyticsDashboard() {
 
   const { isAuthenticated } = useAuth();
 
-  const [fromDate, setFromDate] = useState(
-    toLocalDateInput(new Date(today.getFullYear(), today.getMonth(), 1)),
-  );
+  const [fromYear, setFromYear] = useState<number>(today.getFullYear());
+  const [fromMonth, setFromMonth] = useState<number>(today.getMonth() + 1);
 
-  const [toDate, setToDate] = useState(
-    toLocalDateInput(new Date(today.getFullYear(), today.getMonth() + 1, 0)),
-  );
+  const [toYear, setToYear] = useState<number>(today.getFullYear());
+  const [toMonth, setToMonth] = useState<number>(today.getMonth() + 1);
 
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(
     null,
@@ -123,8 +121,23 @@ export default function AIAnalyticsDashboard() {
       format: "a4",
     });
 
-    const from = fromDate.slice(0, 10);
-    const to = toDate.slice(0, 10);
+    const monthNames = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+
+    const from = `${monthNames[fromMonth - 1]} ${fromYear}`;
+    const to = `${monthNames[toMonth - 1]} ${toYear}`;
 
     doc.setFontSize(16);
     doc.text("AI Performance & Accuracy Report", 40, 40);
@@ -168,22 +181,28 @@ export default function AIAnalyticsDashboard() {
         </h2>
 
         <div className="flex flex-col md:flex-row md:items-center gap-4 flex-wrap">
-          <div className="flex gap-2">
+          <div className="flex gap-3 items-center">
             <input
-              type="date"
-              value={fromDate.slice(0, 10)}
-              onChange={(e) =>
-                setFromDate(new Date(e.target.value).toISOString())
-              }
+              type="month"
+              value={`${fromYear}-${String(fromMonth).padStart(2, "0")}`}
+              onChange={(e) => {
+                const [year, month] = e.target.value.split("-");
+                setFromYear(Number(year));
+                setFromMonth(Number(month));
+              }}
               className="px-4 py-2 rounded-xl bg-white/70 backdrop-blur border border-red-200 focus:ring-2 focus:ring-red-500"
             />
-            <span className="self-center text-gray-600">to</span>
+
+            <span className="text-gray-600 font-medium">to</span>
+
             <input
-              type="date"
-              value={toDate.slice(0, 10)}
-              onChange={(e) =>
-                setToDate(new Date(e.target.value).toISOString())
-              }
+              type="month"
+              value={`${toYear}-${String(toMonth).padStart(2, "0")}`}
+              onChange={(e) => {
+                const [year, month] = e.target.value.split("-");
+                setToYear(Number(year));
+                setToMonth(Number(month));
+              }}
               className="px-4 py-2 rounded-xl bg-white/70 backdrop-blur border border-red-200 focus:ring-2 focus:ring-red-500"
             />
           </div>
