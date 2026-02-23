@@ -168,7 +168,6 @@ const candidateRouter = createTRPCRouter({
         applicants: applicantWithEmail
           .map((applicant) => ({
             id: applicant.id,
-            user_id: applicant.id,
             name: `${applicant.first_name} ${applicant.last_name}`,
             predictiveSuccess: applicant.candidateMatch,
             status: applicant.status,
@@ -517,7 +516,7 @@ const candidateRouter = createTRPCRouter({
       const { data, error } = await supabase
         .from("admin_feedback")
         .select(
-          "*, admin:users!admin_id(first_name, last_name), applicant:job_applicants!applicant_id(user:users!user_id(first_name, last_name)))",
+          "*, admin:staff!admin_id(first_name, last_name), applicant:applicants!applicant_id(first_name, last_name)",
         )
         .in("applicant_id", [input.candidateAId, input.candidateBId]);
 
@@ -536,10 +535,8 @@ const candidateRouter = createTRPCRouter({
             first_name: string;
           };
           applicant: {
-            user: {
-              last_name: string;
-              first_name: string;
-            };
+            last_name: string;
+            first_name: string;
           };
         })[],
       };

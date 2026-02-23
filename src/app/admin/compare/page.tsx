@@ -18,7 +18,6 @@ interface WorkExperience {
 }
 
 interface CandidateID {
-  userId?: string;
   applicantId?: string;
 }
 
@@ -38,23 +37,20 @@ export default function ComparePage() {
 
   const { isAuthenticated } = useAuth();
 
-  if (!isAuthenticated) {
-    alert("You are not authorized to access this page.");
-    router.push("/login");
-  }
-
   const fetchJobsQuery = trpc.admin.fetchAllJobs.useQuery(undefined, {
     enabled: isAuthenticated,
   });
 
   const AIQuery = trpc.candidate.fetchAICompare.useQuery(
     {
-      userId_A: candidateA.userId ?? "",
-      userId_B: candidateB.userId ?? "",
+      // biome-ignore lint/style/noNonNullAssertion: We check for applicantId existence before enabling this query
+      userId_A: candidateA.applicantId!,
+      // biome-ignore lint/style/noNonNullAssertion: We check for applicantId existence before enabling this query
+      userId_B: candidateB.applicantId!,
       jobId: selectedJobId,
     },
     {
-      enabled: !!candidateA.userId && !!candidateB.userId,
+      enabled: !!candidateA.applicantId && !!candidateB.applicantId,
     },
   );
 
@@ -173,7 +169,7 @@ export default function ComparePage() {
   const handleEditClick = (
     post: AdminFeedback & {
       admin: { last_name: string; first_name: string };
-      applicant: { user: { last_name: string; first_name: string } };
+      applicant: { last_name: string; first_name: string };
     },
   ) => {
     setEditingFeedbackId(post.id);
@@ -324,17 +320,17 @@ export default function ComparePage() {
                             instanceId={candidateASelectId}
                             options={candidatesQuery.data?.applicants.map(
                               (c) => ({
-                                value: { userId: c.user_id, applicantId: c.id },
+                                value: { applicantId: c.id },
                                 label: c.name,
                               }),
                             )}
                             value={
-                              candidateA.userId
+                              candidateA.applicantId
                                 ? {
                                     value: candidateA,
                                     label:
                                       candidatesQuery.data?.applicants.find(
-                                        (c) => c.user_id === candidateA.userId,
+                                        (c) => c.id === candidateA.applicantId,
                                       )?.name,
                                   }
                                 : null
@@ -361,17 +357,17 @@ export default function ComparePage() {
                             instanceId={candidateBSelectId}
                             options={candidatesQuery.data?.applicants.map(
                               (c) => ({
-                                value: { userId: c.user_id, applicantId: c.id },
+                                value: { applicantId: c.id },
                                 label: c.name,
                               }),
                             )}
                             value={
-                              candidateB.userId
+                              candidateB.applicantId
                                 ? {
                                     value: candidateB,
                                     label:
                                       candidatesQuery.data?.applicants.find(
-                                        (c) => c.user_id === candidateB.userId,
+                                        (c) => c.id === candidateB.applicantId,
                                       )?.name,
                                   }
                                 : null
@@ -667,7 +663,7 @@ export default function ComparePage() {
               )}
             </div>
 
-            {candidateA.userId && candidateB.userId && (
+            {candidateA.applicantId && candidateB.applicantId && (
               <div className="flex items-center justify-between gap-4">
                 <button
                   className="flex items-center gap-2
@@ -728,7 +724,8 @@ export default function ComparePage() {
                   post: AdminFeedback & {
                     admin: { last_name: string; first_name: string };
                     applicant: {
-                      user: { last_name: string; first_name: string };
+                      last_name: string;
+                      first_name: string;
                     };
                   },
                 ) => (
@@ -748,8 +745,8 @@ export default function ComparePage() {
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
                         <strong className="text-sm text-gray-800">
-                          Candidate {post.applicant.user.first_name}{" "}
-                          {post.applicant.user.last_name}:
+                          Candidate {post.applicant.first_name}{" "}
+                          {post.applicant.last_name}:
                         </strong>
 
                         {editingFeedbackId === post.id ? (
