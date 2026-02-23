@@ -333,10 +333,10 @@ export default function AIAnalyticsDashboard() {
             </span>
           </button>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div
-            className="
+        {selectedCandidateId ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-5">
+            <div
+              className="
               relative
               group
               backdrop-blur-2xl
@@ -349,11 +349,11 @@ export default function AIAnalyticsDashboard() {
               transition-all duration-300
               hover:shadow-[0_25px_60px_rgba(220,38,38,0.15)]
             "
-          >
-            <div className="absolute inset-0 bg-linear-to-br from-red-100/30 via-transparent to-red-50/30 pointer-events-none rounded-3xl" />
+            >
+              <div className="absolute inset-0 bg-linear-to-br from-red-100/30 via-transparent to-red-50/30 pointer-events-none rounded-3xl" />
 
-            <div
-              className="
+              <div
+                className="
                 relative
                 backdrop-blur-2xl
                 bg-white/60
@@ -363,22 +363,22 @@ export default function AIAnalyticsDashboard() {
                 p-6
                 overflow-hidden
               "
-            >
-              <div className="absolute inset-0 bg-linear-to-br from-red-100/30 via-transparent to-red-50/30 pointer-events-none rounded-3xl" />
+              >
+                <div className="absolute inset-0 bg-linear-to-br from-red-100/30 via-transparent to-red-50/30 pointer-events-none rounded-3xl" />
 
-              <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-gray-500">
-                    AI Analytics
-                  </p>
-                  <h3 className="text-2xl font-bold bg-linear-to-r from-red-600 to-red-400 bg-clip-text text-transparent">
-                    AI Efficiency Breakdown
-                  </h3>
-                </div>
+                <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.2em] text-gray-500">
+                      AI Analytics
+                    </p>
+                    <h3 className="text-2xl font-bold bg-linear-to-r from-red-600 to-red-400 bg-clip-text text-transparent">
+                      AI Efficiency Breakdown
+                    </h3>
+                  </div>
 
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <div
-                    className="
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <div
+                      className="
                       bg-white/70
                       backdrop-blur-xl
                       border border-white/40
@@ -390,16 +390,18 @@ export default function AIAnalyticsDashboard() {
                       hover:shadow-md
                       transition-all duration-300
                     "
-                  >
-                    <p className="text-xs uppercase tracking-wide text-gray-500">
-                      AI Accuracy
-                    </p>
-                    <p className="text-2xl font-bold text-red-600 mt-1">
-                      {candidateReportQuery.data?.candidate.job_fit_score || 0}%
-                    </p>
-                  </div>
-                  <div
-                    className="
+                    >
+                      <p className="text-xs uppercase tracking-wide text-gray-500">
+                        AI Accuracy
+                      </p>
+                      <p className="text-2xl font-bold text-red-600 mt-1">
+                        {candidateReportQuery.data?.candidate.job_fit_score ||
+                          0}
+                        %
+                      </p>
+                    </div>
+                    <div
+                      className="
                       bg-white/70
                       backdrop-blur-xl
                       border border-white/40
@@ -411,50 +413,64 @@ export default function AIAnalyticsDashboard() {
                       hover:shadow-md
                       transition-all duration-300
                     "
-                  >
-                    <p className="text-xs uppercase tracking-wide text-gray-500">
-                      Recommendation
-                    </p>
-                    <p className="text-sm font-medium text-gray-700 mt-2 leading-relaxed">
-                      {candidateReportQuery.data?.candidate
-                        .skill_gaps_recommendations ||
-                        "No recommendation available."}
-                    </p>
+                    >
+                      <p className="text-xs uppercase tracking-wide text-gray-500">
+                        Recommendation
+                      </p>
+                      <p className="text-sm font-medium text-gray-700 mt-2 leading-relaxed">
+                        {candidateReportQuery.data?.candidate
+                          .skill_gaps_recommendations ||
+                          "No recommendation available."}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
+
+              <div className="relative mb-6">
+                <Bar data={efficiencyBarData} />
+              </div>
             </div>
 
-            <div className="relative mb-6">
-              <Bar data={efficiencyBarData} />
-            </div>
-          </div>
+            <div className="space-y-6">
+              <div className="text-center">
+                <h2 className="text-2xl font-bold bg-linear-to-r from-red-600 to-red-400 bg-clip-text text-transparent">
+                  HR Officer Reports
+                </h2>
+                <p className="text-sm text-gray-500">
+                  Actual HR evaluations for the candidate
+                </p>
+              </div>
 
-          <div className="space-y-6">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold bg-linear-to-r from-red-600 to-red-400 bg-clip-text text-transparent">
-                HR Officer Reports
-              </h2>
-              <p className="text-sm text-gray-500">
-                Actual HR evaluations for the candidate
-              </p>
-            </div>
-
-            <div
-              className="
+              <div
+                className="
                 flex gap-6
                 overflow-x-auto
                 pb-4
                 scrollbar-thin
                 scrollbar-thumb-red-300
               "
-            >
-              {hrReports.data?.map((report) => (
-                <HRReportCard key={report.id} report={report} />
-              ))}
+              >
+                {hrReports.data?.map((report) => (
+                  <HRReportCard key={report.id} report={report} />
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="rounded-3xl border border-white/30 bg-white/50 backdrop-blur-2xl p-8 shadow-[0_20px_60px_rgba(0,0,0,0.08)]">
+            <p className="text-xs uppercase tracking-[0.2em] text-gray-500">
+              Waiting for selection
+            </p>
+            <h3 className="mt-2 text-xl font-bold bg-linear-to-r from-red-600 to-red-400 bg-clip-text text-transparent">
+              Select a candidate to view reports
+            </h3>
+            <p className="mt-2 text-sm text-gray-600">
+              Pick a candidate from the dropdown above to load specific AI
+              analytics and HR evaluations.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
