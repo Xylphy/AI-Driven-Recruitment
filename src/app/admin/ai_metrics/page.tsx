@@ -202,7 +202,7 @@ export default function AIAnalyticsDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {[
             {
-              title: "Overall Accuracy",
+              title: "Average Job Fit Score",
               value: aiMetrics.data?.overall.avg_job_fit_score,
             },
             {
