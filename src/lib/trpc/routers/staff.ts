@@ -4,6 +4,7 @@
 
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import { getMongoDb } from "@/lib/mongodb/mongodb";
 import {
   deleteRow,
   find,
@@ -245,6 +246,135 @@ const staffRouter = createTRPCRouter({
         staff: undefined,
         key_highlights: undefined,
       }));
+    }),
+  fetchAIMetrics: authorizedProcedure
+    .input(
+      z.object({
+        year: z.number().int().min(1970).max(2100),
+        month: z.number().int().min(1).max(12),
+      }),
+    )
+    .query(async ({ input }) => {
+      const monthStartMs = Date.UTC(input.year, input.month - 1, 1, 0, 0, 0, 0);
+      const monthEndMs = Date.UTC(input.year, input.month, 1, 0, 0, 0, 0) - 1;
+
+      const fromTs = monthStartMs / 1000;
+      const toTs = monthEndMs / 1000;
+
+      const db = await getMongoDb();
+
+      const [result] = await db
+        .collection("scored_candidates")
+        .aggregate([
+          {
+            $match: {
+              created_at: { $gte: fromTs, $lte: toTs },
+              "score_data.job_fit_score": { $ne: null },
+              "score_data.response_time": { $ne: null },
+            },
+          },
+          {
+            $addFields: {
+              createdAtDate: {
+                $toDate: { $multiply: ["$created_at", 1000] },
+              },
+            },
+          },
+          {
+            $addFields: {
+              dayOfMonth: { $dayOfMonth: "$createdAtDate" },
+              weekOfMonth: {
+                $min: [
+                  4,
+                  {
+                    $add: [
+                      1,
+                      {
+                        $floor: {
+                          $divide: [{ $subtract: ["$dayOfMonth", 1] }, 7],
+                        },
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
+          },
+          {
+            $facet: {
+              overall: [
+                {
+                  $group: {
+                    _id: null,
+                    avg_job_fit_score: { $avg: "$score_data.job_fit_score" },
+                    avg_response_time: { $avg: "$score_data.response_time" },
+                  },
+                },
+                {
+                  $project: {
+                    _id: 0,
+                    avg_job_fit_score: { $ifNull: ["$avg_job_fit_score", 0] },
+                    avg_response_time: { $ifNull: ["$avg_response_time", 0] },
+                  },
+                },
+              ],
+              weekly: [
+                {
+                  $group: {
+                    _id: "$weekOfMonth",
+                    avg_job_fit_score: { $avg: "$score_data.job_fit_score" },
+                    avg_response_time: { $avg: "$score_data.response_time" },
+                  },
+                },
+                { $sort: { _id: 1 } },
+                {
+                  $project: {
+                    _id: 0,
+                    week: "$_id",
+                    avg_job_fit_score: { $ifNull: ["$avg_job_fit_score", 0] },
+                    avg_response_time: { $ifNull: ["$avg_response_time", 0] },
+                  },
+                },
+              ],
+            },
+          },
+        ])
+        .toArray();
+
+      const weeklyRaw =
+        (result?.weekly as Array<{
+          week: number;
+          avg_job_fit_score: number;
+          avg_response_time: number;
+        }>) ?? [];
+
+      const weekly = [1, 2, 3, 4].map((w) => {
+        const hit = weeklyRaw.find((x) => x.week === w);
+        return (
+          hit ?? {
+            week: w,
+            avg_job_fit_score: 0,
+            avg_response_time: 0,
+          }
+        );
+      });
+
+      return {
+        overall:
+          result?.overall?.[0] ??
+          ({
+            avg_job_fit_score: 0,
+            avg_response_time: 0,
+          } as {
+            avg_job_fit_score: number;
+            avg_response_time: number;
+          }),
+        weekly: weekly as Array<{
+          week: number;
+          avg_job_fit_score: number;
+          avg_response_time: number;
+        }>,
+      };
     }),
 });
 

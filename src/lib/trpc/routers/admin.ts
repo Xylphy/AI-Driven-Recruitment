@@ -6,7 +6,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { EVENT_TYPES, USER_ROLES } from "@/lib/constants";
 import { auth } from "@/lib/firebase/admin";
-import mongoDb_client from "@/lib/mongodb/mongodb";
+import { getMongoDb } from "@/lib/mongodb/mongodb";
 import { countTable, find, insertTable } from "@/lib/supabase/action";
 import { createClientServer } from "@/lib/supabase/supabase";
 import type { ScoredCandidateDoc } from "@/types/mongo_db/schema";
@@ -129,10 +129,8 @@ const adminRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input }) => {
-      await mongoDb_client.connect();
-
-      const topCandidates = await mongoDb_client
-        .db("ai-driven-recruitment")
+      const db = await getMongoDb();
+      const topCandidates = await db
         .collection("scored_candidates")
         .aggregate([
           {
@@ -204,7 +202,6 @@ const adminRouter = createTRPCRouter({
         }`,
       }));
 
-      await mongoDb_client.close();
       return {
         topCandidates: topCandidatesWithNames as (ScoredCandidateDoc & {
           name: string;

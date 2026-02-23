@@ -15,6 +15,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useState } from "react";
 import { Bar, Pie } from "react-chartjs-2";
+import useAuth from "@/hooks/useAuth";
 import { trpc } from "@/lib/trpc/client";
 import type { BottleneckPercentileRow } from "@/types/types";
 
@@ -48,6 +49,7 @@ const barOptions = {
 };
 
 export default function JobsPage() {
+  const { isAuthenticated } = useAuth();
   const today = new Date();
 
   const [fromDate, setFromDate] = useState(
@@ -58,10 +60,15 @@ export default function JobsPage() {
     new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString(),
   );
 
-  const bottleNecksQuery = trpc.admin.getBottlenecks.useQuery({
-    fromDate,
-    toDate,
-  });
+  const bottleNecksQuery = trpc.admin.getBottlenecks.useQuery(
+    {
+      fromDate,
+      toDate,
+    },
+    {
+      enabled: isAuthenticated,
+    },
+  );
 
   const bottlenecks: BottleneckPercentileRow[] = Array.isArray(
     bottleNecksQuery.data,

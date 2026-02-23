@@ -14,6 +14,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useState } from "react";
 import { Bar, Pie } from "react-chartjs-2";
+import useAuth from "@/hooks/useAuth";
 import { trpc } from "@/lib/trpc/client";
 
 ChartJS.register(
@@ -57,6 +58,7 @@ type KpiMetric = {
 
 export default function KPIMetrics() {
   const today = new Date();
+  const { isAuthenticated } = useAuth();
 
   const [fromDate, setFromDate] = useState(
     new Date(today.getFullYear(), today.getMonth(), 1).toISOString(),
@@ -66,10 +68,15 @@ export default function KPIMetrics() {
     new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString(),
   );
 
-  const kpiData = trpc.admin.fetchKpiMetrics.useQuery({
-    fromDate: fromDate.toString(),
-    toDate: toDate.toString(),
-  });
+  const kpiData = trpc.admin.fetchKpiMetrics.useQuery(
+    {
+      fromDate: fromDate.toString(),
+      toDate: toDate.toString(),
+    },
+    {
+      enabled: isAuthenticated,
+    },
+  );
 
   const metrics: KpiMetric[] = (kpiData.data?.kpis as KpiMetric[]) ?? [];
   const byType = (type: string) =>

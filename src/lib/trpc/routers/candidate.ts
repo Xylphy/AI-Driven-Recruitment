@@ -3,7 +3,6 @@ import z from "zod";
 import { CANDIDATE_STATUSES } from "@/lib/constants";
 import admin, { db } from "@/lib/firebase/admin";
 import { findOne } from "@/lib/mongodb/action";
-import mongoDb_client from "@/lib/mongodb/mongodb";
 import {
   find,
   insertTable,
@@ -11,6 +10,7 @@ import {
   updateTable,
 } from "@/lib/supabase/action";
 import { createClientServer } from "@/lib/supabase/supabase";
+import type { ScoredCandidateScoreData } from "@/types/mongo_db/schema";
 import type {
   AdminFeedback,
   Applicants,
@@ -27,7 +27,13 @@ type AICompareRes = {
   recommendations: string;
 };
 
+type Name = {
+  first_name: string;
+  last_name: string;
+};
+
 const candidateRouter = createTRPCRouter({
+  // This route is only useful for /admin/applicants page and must be avoided since this route is heavy.
   getCandidatesFromJob: authorizedProcedure
     .input(
       z.object({
@@ -76,7 +82,6 @@ const candidateRouter = createTRPCRouter({
         .from("applicants")
         .select("*, job_title: job_listings(title)");
 
-      // let queryBuilder = baseQuery.many(filters);
       filters.forEach(({ column, value }) => {
         if (Array.isArray(value)) {
           baseQuery.in(column, value);
@@ -90,11 +95,6 @@ const candidateRouter = createTRPCRouter({
         baseQuery = baseQuery.or(
           `first_name.ilike.${search},last_name.ilike.${search},job_title.ilike.${search},status_text.ilike.${search}`,
         );
-        if (input.jobId) {
-          baseQuery = baseQuery.eq("joblisting_id", input.jobId);
-        } else if (jobListingIds && jobListingIds.length > 0) {
-          baseQuery = baseQuery.in("joblisting_id", jobListingIds);
-        }
       }
       const { data: applicants, error: errorApplicants } = await baseQuery;
 
@@ -117,8 +117,6 @@ const candidateRouter = createTRPCRouter({
 
         return candidateMatch?.score_data?.predictive_success || 0;
       }
-
-      await mongoDb_client.connect();
 
       // Batch fetch Firebase users
       const applicantsArr = (applicants || []) as Array<
@@ -161,8 +159,6 @@ const candidateRouter = createTRPCRouter({
           candidateMatch,
         };
       });
-
-      await mongoDb_client.close();
 
       return {
         applicants: applicantWithEmail
@@ -211,8 +207,6 @@ const candidateRouter = createTRPCRouter({
         });
       }
 
-      await mongoDb_client.connect();
-
       const [parsedResume, score, transcribed, userData] = await Promise.all([
         input.fetchResume &&
           findOne("ai-driven-recruitment", "parsed_resume", {
@@ -230,8 +224,6 @@ const candidateRouter = createTRPCRouter({
           { column: "id", value: jobApplicant?.id || "" },
         ]).single(),
       ]);
-
-      await mongoDb_client.close();
 
       return {
         parsedResume: parsedResume || null,
@@ -529,16 +521,12 @@ const candidateRouter = createTRPCRouter({
       }
 
       return {
-        adminFeedbacks: (data || []) as unknown as (AdminFeedback & {
-          admin: {
-            last_name: string;
-            first_name: string;
-          };
-          applicant: {
-            last_name: string;
-            first_name: string;
-          };
-        })[],
+        adminFeedbacks: (data || []) as unknown as Array<
+          AdminFeedback & {
+            admin: Name;
+            applicant: Name;
+          }
+        >,
       };
     }),
   updateAdminFeedback: adminProcedure
@@ -660,6 +648,88 @@ const candidateRouter = createTRPCRouter({
 
       return {
         message: "Admin feedback deleted successfully",
+      };
+    }),
+  // This route is only useful for /admin/ai_metrics
+  getCandidates: authorizedProcedure
+    .input(
+      z.object({
+        searchQuery: z.string().optional(),
+      }),
+    )
+    .query(async ({ input, ctx }) => {
+      const supabaseClient = await createClientServer(1, true);
+
+      let jobListingIds: string[] | undefined;
+
+      // If HR Officer, limit to their job listings
+      if (ctx.userJWT?.role === "HR Officer") {
+        // Fetch job listings for this officer
+        const { data: listings, error: listingsError } = await supabaseClient
+          .from("job_listings")
+          .select("id")
+          .eq("officer_id", ctx.userJWT?.id);
+
+        if (listingsError) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to fetch job listings for officer",
+          });
+        }
+        jobListingIds = (listings || []).map((l: { id: string }) => l.id);
+      }
+
+      // Fetch applicants with joins
+      let baseQuery = supabaseClient
+        .from("applicants")
+        .select("id, first_name, last_name");
+
+      if (jobListingIds && jobListingIds.length > 0) {
+        baseQuery = baseQuery.in("joblisting_id", jobListingIds);
+      }
+
+      if (input.searchQuery) {
+        const search = `%${input.searchQuery}%`;
+        baseQuery = baseQuery.or(
+          `first_name.ilike.${search},last_name.ilike.${search}`,
+        );
+      }
+
+      const { data: applicants, error: errorApplicants } = await baseQuery;
+      if (errorApplicants) {
+        console.error("Error fetching applicants:", errorApplicants);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch applicants",
+        });
+      }
+
+      return applicants;
+    }),
+  candidateAIBreakdown: authorizedProcedure
+    .input(
+      z.object({
+        candidateId: z.uuid(),
+      }),
+    )
+    .query(async ({ input }) => {
+      const candidateMatch = await findOne(
+        "ai-driven-recruitment",
+        "scored_candidates",
+        {
+          applicant_id: input.candidateId,
+        },
+      );
+
+      if (!candidateMatch) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Candidate match data not found",
+        });
+      }
+
+      return {
+        candidate: candidateMatch.score_data as ScoredCandidateScoreData,
       };
     }),
 });

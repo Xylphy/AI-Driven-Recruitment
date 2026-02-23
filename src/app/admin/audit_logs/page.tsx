@@ -3,6 +3,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useEffect, useRef, useState } from "react";
+import useAuth from "@/hooks/useAuth";
 import { EVENT_TYPES } from "@/lib/constants";
 import { formatDate } from "@/lib/library";
 import { trpc } from "@/lib/trpc/client";
@@ -11,6 +12,7 @@ import type { UserActionEventType } from "@/types/types";
 const PAGE_SIZE = 15;
 
 export default function JobsPage() {
+  const { isAuthenticated } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<
     "All" | UserActionEventType
@@ -30,6 +32,7 @@ export default function JobsPage() {
     },
     {
       getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+      enabled: isAuthenticated,
     },
   );
 

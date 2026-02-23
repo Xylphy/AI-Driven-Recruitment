@@ -119,3 +119,7 @@ export type UserRoles = (typeof USER_ROLES)[number];
 export type FetchCandidateProfileOutput = inferProcedureOutput<
   AppRouter["candidate"]["fetchCandidateProfile"]
 >;
+
+export type HRReport = inferProcedureOutput<
+  AppRouter["staff"]["fetchHRReports"]
+>[number];

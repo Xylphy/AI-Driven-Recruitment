@@ -21,6 +21,29 @@ interface CandidateID {
   applicantId?: string;
 }
 
+function getExperienceCount(data: FetchCandidateProfileOutput | undefined) {
+  return data?.parsedResume?.raw_output?.work_experience?.length || 0;
+}
+
+function getSkillsCount(data: FetchCandidateProfileOutput | undefined) {
+  return data?.parsedResume?.raw_output?.soft_skills?.length || 0;
+}
+
+function getMatchScore(data: FetchCandidateProfileOutput | undefined) {
+  return data?.score?.score_data?.predictive_success || 0;
+}
+
+function compareMetric(a: number, b: number) {
+  if (a > b * 1.1) return "A"; // Candidate A is significantly better
+  if (b > a * 1.1) return "B"; // Candidate B is significantly better
+  return "tie"; // Metrics are close enough to be considered a tie
+}
+
+// Add stable ids to associate labels with react-select inputs
+const jobSelectId = "job-select";
+const candidateASelectId = "candidate-a-select";
+const candidateBSelectId = "candidate-b-select";
+
 export default function ComparePage() {
   const router = useRouter();
   const [selectedJobId, setSelectedJobId] = useState<string>("");
@@ -89,21 +112,6 @@ export default function ComparePage() {
 
   const candidateAData = candidateDataA.data;
   const candidateBData = candidateDataB.data;
-
-  const getExperienceCount = (data: FetchCandidateProfileOutput | undefined) =>
-    data?.parsedResume?.raw_output?.work_experience?.length || 0;
-
-  const getSkillsCount = (data: FetchCandidateProfileOutput | undefined) =>
-    data?.parsedResume?.raw_output?.soft_skills?.length || 0;
-
-  const getMatchScore = (data: FetchCandidateProfileOutput | undefined) =>
-    data?.score?.score_data?.predictive_success || 0;
-
-  const compareMetric = (a: number, b: number) => {
-    if (a > b) return "A";
-    if (b > a) return "B";
-    return "tie";
-  };
 
   const adminFeedbacksQuery = trpc.candidate.fetchAdminFeedbacks.useQuery(
     {
@@ -187,11 +195,6 @@ export default function ComparePage() {
       newFeedback: editedFeedback.trim(),
     });
   };
-
-  // Add stable ids to associate labels with react-select inputs
-  const jobSelectId = "job-select";
-  const candidateASelectId = "candidate-a-select";
-  const candidateBSelectId = "candidate-b-select";
 
   return (
     <div className="min-h-screen p-8 bg-white relative overflow-hidden">

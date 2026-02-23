@@ -8,7 +8,6 @@ import { moveFile } from "@/lib/cloudinary/cloudinary";
 import type { CANDIDATE_STATUSES } from "@/lib/constants";
 import admin, { db } from "@/lib/firebase/admin";
 import { deleteDocument } from "@/lib/mongodb/action";
-import mongoDb_client from "@/lib/mongodb/mongodb";
 import { jobListingSchema, userSchema } from "@/lib/schemas";
 import {
   deleteRow,
@@ -119,11 +118,9 @@ const jobListingRouter = createTRPCRouter({
         });
       }
 
-      await mongoDb_client.connect();
       await deleteDocument("ai-driven-recruitment", "scored_candidates", {
         job_id: input.joblistingId,
       }).many();
-      await mongoDb_client.close();
 
       const { error: insertLogError } = await insertTable(
         supabase,

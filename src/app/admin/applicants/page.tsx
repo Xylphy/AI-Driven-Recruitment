@@ -2,15 +2,22 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import useAuth from "@/hooks/useAuth";
 import { trpc } from "@/lib/trpc/client";
 
 export default function ApplicantsPage() {
   const router = useRouter();
   const [searchInput, setSearchInput] = useState("");
+  const { isAuthenticated } = useAuth();
 
-  const applicantsQuery = trpc.candidate.getCandidatesFromJob.useQuery({
-    searchQuery: searchInput,
-  });
+  const applicantsQuery = trpc.candidate.getCandidatesFromJob.useQuery(
+    {
+      searchQuery: searchInput,
+    },
+    {
+      enabled: isAuthenticated,
+    },
+  );
 
   const filteredApplicants = applicantsQuery.data?.applicants || [];
 

@@ -18,6 +18,8 @@ import { useState } from "react";
 import { Bar, Line } from "react-chartjs-2";
 import Select from "react-select";
 import HRReportCard from "@/components/admin/aiMetrics/HRReportCard";
+import useAuth from "@/hooks/useAuth";
+import { trpc } from "@/lib/trpc/client";
 
 ChartJS.register(
   CategoryScale,
@@ -31,94 +33,84 @@ ChartJS.register(
   Legend,
 );
 
-export default function AIAnalyticsDashboard() {
-  const today = new Date();
+function toLocalDateInput(d: Date) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
 
-  const [fromDate, setFromDate] = useState(
-    new Date(today.getFullYear(), today.getMonth(), 1).toISOString(),
-  );
-
-  const [toDate, setToDate] = useState(
-    new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString(),
-  );
-
-  // Sample AI Metrics
-  const aiRows = [
-    {
-      model: "Candidate Fit Predictor",
-      accuracy: "92%",
-      precision: "89%",
-      recall: "87%",
-      avgResponseTime: "1.2s",
-      recommendationEfficiency: "94%",
-    },
-    {
-      model: "Interview Scoring AI",
-      accuracy: "88%",
-      precision: "85%",
-      recall: "83%",
-      avgResponseTime: "1.6s",
-      recommendationEfficiency: "90%",
-    },
-  ];
-
-  const nameOptions = [
-    { value: "1", label: "John Doe" },
-    { value: "2", label: "Jane Doe" },
-  ];
-
-  const performanceTrendData = {
+function weeklyData(data: Array<number>) {
+  return {
     labels: ["Week 1", "Week 2", "Week 3", "Week 4"],
     datasets: [
       {
         label: "Prediction Accuracy (%)",
-        data: [85, 88, 91, 92],
+        data,
         borderColor: "rgb(220, 38, 38)",
         backgroundColor: "rgba(220, 38, 38, 0.2)",
         tension: 0.4,
       },
     ],
   };
+}
+export default function AIAnalyticsDashboard() {
+  const today = new Date();
 
-  const reports = [
+  const { isAuthenticated } = useAuth();
+
+  const [fromDate, setFromDate] = useState(
+    toLocalDateInput(new Date(today.getFullYear(), today.getMonth(), 1)),
+  );
+
+  const [toDate, setToDate] = useState(
+    toLocalDateInput(new Date(today.getFullYear(), today.getMonth() + 1, 0)),
+  );
+
+  const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(
+    null,
+  );
+
+  const candidateReportQuery = trpc.candidate.candidateAIBreakdown.useQuery(
     {
-      id: "1",
-      officerName: "Maria Santos",
-      score: 4.2,
-      keyHighlights: [
-        "Strong Communication",
-        "Confident Presenter",
-        "Team Player",
-      ],
-      summary:
-        "Candidate showed excellent communication skills and strong technical clarity.",
-      createdAt: "January 12, 2026",
+      // biome-ignore lint/style/noNonNullAssertion: This is safe because the query is disabled when selectedCandidateId is null.
+      candidateId: selectedCandidateId!,
     },
     {
-      id: "2",
-      officerName: "John Ramirez",
-      score: 3.8,
-      keyHighlights: ["Good Technical Depth", "Quick Learner"],
-      summary:
-        "Solid fundamentals. Slight hesitation in system design questions.",
-      createdAt: "January 13, 2026",
+      enabled: !!selectedCandidateId && isAuthenticated,
+    },
+  );
+
+  const aiMetrics = trpc.staff.fetchAIMetrics.useQuery({
+    // this should be dynamic based on user input.
+    year: 2026,
+    month: 2,
+  });
+
+  const candidates = trpc.candidate.getCandidates.useQuery(
+    {
+      searchQuery: "",
     },
     {
-      id: "3",
-      officerName: "Angela Cruz",
-      score: 4.5,
-      keyHighlights: ["Excellent Problem Solving", "Leadership Potential"],
-      summary: "Outstanding analytical thinking and leadership presence.",
-      createdAt: "January 14, 2026",
+      enabled: isAuthenticated,
     },
-  ];
+  );
+  const hrReports = trpc.staff.fetchHRReports.useQuery(
+    {
+      // biome-ignore lint/style/noNonNullAssertion: This is safe because the query is disabled when selectedCandidateId is null.
+      applicantId: selectedCandidateId!,
+    },
+    {
+      enabled: !!selectedCandidateId && isAuthenticated,
+    },
+  );
 
   const efficiencyBarData = {
     labels: ["Predictive Success", "Decision Accuracy", "Job Fit"],
     datasets: [
       {
         label: "Efficiency Score (%)",
-        data: [94, 92, 89],
+        data: [candidateReportQuery.data?.candidate.job_fit_score || 0, 92, 89],
         backgroundColor: "rgba(220, 38, 38, 0.8)",
       },
     ],
@@ -151,14 +143,14 @@ export default function AIAnalyticsDashboard() {
           "Recommendation Efficiency",
         ],
       ],
-      body: aiRows.map((r) => [
-        r.model,
-        r.accuracy,
-        r.precision,
-        r.recall,
-        r.avgResponseTime,
-        r.recommendationEfficiency,
-      ]),
+      // body: aiRows.map((r) => [
+      //   r.model,
+      //   r.accuracy,
+      //   r.precision,
+      //   r.recall,
+      //   r.avgResponseTime,
+      //   r.recommendationEfficiency,
+      // ]),
       startY: 90,
       headStyles: { fillColor: [220, 38, 38] },
     });
@@ -209,8 +201,14 @@ export default function AIAnalyticsDashboard() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {[
-            { title: "Overall Accuracy", value: "92%" },
-            { title: "Avg AI Response Time", value: "1.3s" },
+            {
+              title: "Overall Accuracy",
+              value: aiMetrics.data?.overall.avg_job_fit_score,
+            },
+            {
+              title: "Avg AI Response Time",
+              value: `${aiMetrics.data?.overall.avg_response_time}s`,
+            },
           ].map((kpi) => (
             <div
               key={kpi.title}
@@ -231,13 +229,21 @@ export default function AIAnalyticsDashboard() {
             <h3 className="font-semibold mb-4 text-gray-700">
               Average AI Accuracy Over Time
             </h3>
-            <Line data={performanceTrendData} />
+            <Line
+              data={weeklyData(
+                aiMetrics.data?.weekly.map((w) => w.avg_job_fit_score) || [],
+              )}
+            />
           </div>
           <div className="backdrop-blur-xl bg-white/70 border border-white/40 shadow-xl p-6 rounded-2xl">
             <h3 className="font-semibold mb-4 text-gray-700">
               Average AI Response Time Over Time
             </h3>
-            <Line data={performanceTrendData} />
+            <Line
+              data={weeklyData(
+                aiMetrics.data?.weekly.map((w) => w.avg_response_time) || [],
+              )}
+            />
           </div>
         </div>
 
@@ -252,10 +258,16 @@ export default function AIAnalyticsDashboard() {
 
             <Select
               inputId="candidate-select"
-              options={nameOptions}
+              options={candidates.data?.map((c) => ({
+                value: c.id,
+                label: `${c.first_name} ${c.last_name}`,
+              }))}
               placeholder="Type candidate name..."
               isSearchable
               className="text-sm"
+              onChange={(option) =>
+                setSelectedCandidateId(option?.value || null)
+              }
               classNames={{
                 control: ({ isFocused }) =>
                   `
@@ -382,7 +394,9 @@ export default function AIAnalyticsDashboard() {
                     <p className="text-xs uppercase tracking-wide text-gray-500">
                       AI Accuracy
                     </p>
-                    <p className="text-2xl font-bold text-red-600 mt-1">89%</p>
+                    <p className="text-2xl font-bold text-red-600 mt-1">
+                      {candidateReportQuery.data?.candidate.job_fit_score || 0}%
+                    </p>
                   </div>
                   <div
                     className="
@@ -402,7 +416,9 @@ export default function AIAnalyticsDashboard() {
                       Recommendation
                     </p>
                     <p className="text-sm font-medium text-gray-700 mt-2 leading-relaxed">
-                      This is a random sentence for recommendation.
+                      {candidateReportQuery.data?.candidate
+                        .skill_gaps_recommendations ||
+                        "No recommendation available."}
                     </p>
                   </div>
                 </div>
@@ -426,14 +442,14 @@ export default function AIAnalyticsDashboard() {
 
             <div
               className="
-          flex gap-6
-          overflow-x-auto
-          pb-4
-          scrollbar-thin
-          scrollbar-thumb-red-300
-        "
+                flex gap-6
+                overflow-x-auto
+                pb-4
+                scrollbar-thin
+                scrollbar-thumb-red-300
+              "
             >
-              {reports.map((report) => (
+              {hrReports.data?.map((report) => (
                 <HRReportCard key={report.id} report={report} />
               ))}
             </div>

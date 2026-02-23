@@ -1,21 +1,28 @@
 "use client";
 
 import { useState } from "react";
+import useAuth from "@/hooks/useAuth";
 import { trpc } from "@/lib/trpc/client";
 
 export default function HROfficersPage() {
+  const { isAuthenticated } = useAuth();
   const [searchInput, setSearchInput] = useState("");
 
-  const hrOfficersQuery = trpc.admin.fetchHrOfficers.useQuery({
-    query: searchInput || undefined,
-  });
+  const hrOfficersQuery = trpc.admin.fetchHrOfficers.useQuery(
+    {
+      query: searchInput || undefined,
+    },
+    {
+      enabled: isAuthenticated,
+    },
+  );
 
   return (
     <div className="min-h-screen p-8 bg-white relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-red-100 via-white to-red-50 opacity-40 pointer-events-none" />
+      <div className="absolute inset-0 bg-linear-to-br from-red-100 via-white to-red-50 opacity-40 pointer-events-none" />
       <div className="relative z-10 space-y-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <h2 className="text-3xl font-bold bg-gradient-to-r from-red-600 to-red-600 bg-clip-text text-transparent">
+          <h2 className="text-3xl font-bold bg-linear-to-r from-red-600 to-red-600 bg-clip-text text-transparent">
             HR Officers
           </h2>
 

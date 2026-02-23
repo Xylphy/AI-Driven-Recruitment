@@ -1,18 +1,11 @@
 "use client";
 
-interface HRReport {
-  id: string;
-  officerName: string;
-  score: number;
-  keyHighlights: string[];
-  summary: string;
-  createdAt: string;
-}
+import { formatDate } from "@/lib/library";
+import type { HRReport } from "@/types/types";
 
 interface HRReportCardProps {
   report: HRReport;
 }
-
 export default function HRReportCard({ report }: HRReportCardProps) {
   return (
     <div
@@ -36,7 +29,7 @@ export default function HRReportCard({ report }: HRReportCardProps) {
             HR Officer
           </p>
           <h3 className="text-lg font-semibold text-gray-800">
-            {report.officerName}
+            {report.staff_name}
           </h3>
         </div>
 
@@ -67,7 +60,7 @@ export default function HRReportCard({ report }: HRReportCardProps) {
         </p>
 
         <div className="flex flex-wrap gap-2">
-          {report.keyHighlights.map((item, index) => (
+          {report.highlights.map((item, index) => (
             <span
               key={`${report.id}-highlight-${index}`}
               className="
@@ -94,7 +87,7 @@ export default function HRReportCard({ report }: HRReportCardProps) {
       </div>
 
       <div className="relative text-xs text-gray-400 pt-2 border-t border-white/30">
-        Submitted on {report.createdAt}
+        Submitted on {formatDate(report.created_at)}
       </div>
     </div>
   );
