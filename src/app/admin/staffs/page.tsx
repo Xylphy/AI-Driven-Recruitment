@@ -17,7 +17,6 @@ type Staff = {
 export default function UsersPage() {
   const [searchInput, setSearchInput] = useState("");
 
-  // ✅ Add Staff modal state (PLACEHOLDER ONLY - no trpc create yet)
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [newStaffRole, setNewStaffRole] = useState<staffRole>("HR Officer");
   const [newStaffName, setNewStaffName] = useState("");
@@ -216,7 +215,7 @@ export default function UsersPage() {
               <div>
                 <h3 className="text-xl font-bold text-gray-900">Add Staff</h3>
                 <p className="text-sm text-gray-600 mt-1">
-                  Create a new staff profile (placeholder only for now).
+                  Create a new staff profile
                 </p>
               </div>
 
@@ -263,13 +262,39 @@ export default function UsersPage() {
                   htmlFor="setNewStaffName"
                   className="block text-sm font-semibold text-gray-800 mb-2"
                 >
-                  Name
+                  First Name
                 </label>
                 <input
                   id="setNewStaffName"
                   value={newStaffName}
                   onChange={(e) => setNewStaffName(e.target.value)}
-                  placeholder="e.g., Jane Doe"
+                  placeholder="e.g., Jane"
+                  className="
+                    w-full
+                    px-4 py-3
+                    rounded-2xl
+                    bg-white/60
+                    border border-white/40
+                    backdrop-blur-xl
+                    shadow-inner
+                    focus:outline-none
+                    focus:ring-2 focus:ring-red-400/50
+                  "
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="setNewStaffName"
+                  className="block text-sm font-semibold text-gray-800 mb-2"
+                >
+                  Last Name
+                </label>
+                <input
+                  id="setNewStaffName"
+                  value={newStaffName}
+                  onChange={(e) => setNewStaffName(e.target.value)}
+                  placeholder="e.g., Doe"
                   className="
                     w-full
                     px-4 py-3
@@ -297,6 +322,30 @@ export default function UsersPage() {
                   onChange={(e) => setNewStaffEmail(e.target.value)}
                   placeholder="e.g., jane@company.com"
                   type="email"
+                  className="
+                    w-full
+                    px-4 py-3
+                    rounded-2xl
+                    bg-white/60
+                    border border-white/40
+                    backdrop-blur-xl
+                    shadow-inner
+                    focus:outline-none
+                    focus:ring-2 focus:ring-red-400/50
+                  "
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="setNewStaffPassword"
+                  className="block text-sm font-semibold text-gray-800 mb-2"
+                >
+                  Password
+                </label>
+                <input
+                  id="setNewStaffPassword"
+                  type="password"
                   className="
                     w-full
                     px-4 py-3
