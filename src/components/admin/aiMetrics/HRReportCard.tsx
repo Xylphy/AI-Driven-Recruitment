@@ -34,7 +34,10 @@ export default function HRReportCard({ report }: HRReportCardProps) {
         </div>
 
         <div className="px-3 py-1 bg-red-600/10 text-red-600 text-sm font-semibold rounded-full">
-          {report.score.toFixed(1)} / 5
+          {Number.isInteger(report.score)
+            ? report.score
+            : report.score.toFixed(1)}{" "}
+          / 5
         </div>
       </div>
 
