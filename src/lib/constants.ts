@@ -48,6 +48,7 @@ export const EVENT_TYPES = [
   "Created HR Report",
   "Deleted HR Report",
   "Updated HR Report",
+  "Created staff account",
 ] as const;
 
 export const ENTITIES = [
@@ -55,4 +56,9 @@ export const ENTITIES = [
   "Job Listing",
   "Admin Feedback",
   "HR Report",
+  "Staff",
 ] as const;
+
+export const REGULAR_STAFF_ROLES = ["Admin", "HR Officer"] as const;
+
+export const ALL_STAFF_ROLES = [...REGULAR_STAFF_ROLES, "SuperAdmin"] as const;

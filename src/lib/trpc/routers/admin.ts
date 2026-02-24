@@ -4,9 +4,11 @@
 
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { EVENT_TYPES, USER_ROLES } from "@/lib/constants";
+import { EVENT_TYPES, REGULAR_STAFF_ROLES } from "@/lib/constants";
+import { createUserWithEmailAndPassword } from "@/lib/firebase/action";
 import { auth } from "@/lib/firebase/admin";
 import { getMongoDb } from "@/lib/mongodb/mongodb";
+import { addStaffSchema } from "@/lib/schemas";
 import { countTable, find, insertTable } from "@/lib/supabase/action";
 import { createClientServer } from "@/lib/supabase/supabase";
 import type { ScoredCandidateDoc } from "@/types/mongo_db/schema";
@@ -18,7 +20,7 @@ import type {
   WeeklyCumulativeApplicants,
 } from "@/types/schema";
 import type { BottleneckPercentileRow } from "@/types/types";
-import { adminProcedure, createTRPCRouter } from "../init";
+import { adminProcedure, createTRPCRouter, superAdminProcedure } from "../init";
 
 type HiringTimelineStatistics = {
   metric_type: string;
@@ -301,34 +303,59 @@ const adminRouter = createTRPCRouter({
         nextCursor,
       };
     }),
-  users: adminProcedure
+  staffs: superAdminProcedure
     .input(
       z.object({
         searchQuery: z.string().optional(),
+        limit: z.number().optional().default(20),
       }),
     )
-    .query(async ({ ctx, input }) => {
-      if (ctx.userJWT?.role !== "SuperAdmin") {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You do not have permission to access this resource",
-        });
-      }
+    .query(async ({ input }) => {
       const supabase = await createClientServer(1, true);
 
-      let query = supabase.from("staff").select("*").neq("role", "SuperAdmin");
+      const q = input.searchQuery?.trim();
+      let users: Staff[] = [];
+      let usersError: { message?: string } | null = null;
 
-      // No results when search query is empty or undefined
-      if (input.searchQuery && input.searchQuery.trim() !== "") {
-        query = query.or(
-          `first_name.ilike.%${input.searchQuery}%,last_name.ilike.%${input.searchQuery}%,role.ilike.%${input.searchQuery}%`,
+      if (!q) {
+        const { data, error } = await supabase
+          .from("staff")
+          .select("*")
+          .neq("role", "SuperAdmin")
+          .limit(input.limit);
+
+        users = (data || []) as Staff[];
+        usersError = error;
+      } else {
+        const matchingRoles = REGULAR_STAFF_ROLES.filter((role) =>
+          role.toLowerCase().includes(q.toLowerCase()),
         );
+
+        const [nameResult, roleResult] = await Promise.all([
+          supabase
+            .from("staff")
+            .select("*")
+            .neq("role", "SuperAdmin")
+            .or(`first_name.ilike.%${q}%,last_name.ilike.%${q}%`)
+            .limit(input.limit),
+          matchingRoles.length > 0
+            ? supabase
+                .from("staff")
+                .select("*")
+                .neq("role", "SuperAdmin")
+                .in("role", matchingRoles)
+                .limit(input.limit)
+            : Promise.resolve({ data: [], error: null }),
+        ]);
+
+        usersError = nameResult.error || roleResult.error;
+        const merged = [...(nameResult.data || []), ...(roleResult.data || [])];
+        const uniqueById = new Map(merged.map((u) => [u.id, u]));
+        users = Array.from(uniqueById.values()).slice(0, input.limit) as Staff[];
       }
 
-      const { data: users, error: usersError } = await query;
-
       if (usersError) {
-        console.error("Error fetching users", usersError);
+        console.error("Error fetching staffs", usersError);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: usersError?.message || "Failed to fetch users",
@@ -354,36 +381,28 @@ const adminRouter = createTRPCRouter({
         );
       }
 
-      // Merge Firebase email into users
       const usersWithEmail = (users || []).map((user) => ({
         ...user,
         email: firebaseUserByUid.get(user.firebase_uid)?.email || "",
       }));
 
       return {
-        users: usersWithEmail as (Staff & { email: string })[],
+        staffs: usersWithEmail as Array<Staff & { email: string }>,
       };
     }),
-  changeUserRole: adminProcedure
+  changeStaffRole: superAdminProcedure
     .input(
       z.object({
         userId: z.string(),
-        newRole: z.enum(USER_ROLES.filter((role) => role !== "SuperAdmin")),
+        newRole: z.enum(REGULAR_STAFF_ROLES),
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      if (ctx.userJWT?.role !== "SuperAdmin") {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You do not have permission to access this resource",
-        });
-      }
-
       const supabase = await createClientServer(1, true);
 
-      const { data: user, error: userError } = await find<Staff>(
+      const { data: staff, error: staffError } = await find<Staff>(
         supabase,
-        "users",
+        "staff",
         [
           {
             column: "id",
@@ -392,16 +411,16 @@ const adminRouter = createTRPCRouter({
         ],
       ).single();
 
-      if (userError || !user) {
-        console.error("Error fetching user for role change", userError);
+      if (staffError || !staff) {
+        console.error("Error fetching user for role change", staffError);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: userError?.message || "Failed to fetch user",
+          message: staffError?.message || "Failed to fetch user",
         });
       }
 
       const { error: updateError } = await supabase
-        .from("users")
+        .from("staff")
         .update({ role: input.newRole })
         .eq("id", input.userId);
 
@@ -414,9 +433,9 @@ const adminRouter = createTRPCRouter({
       }
 
       const changes = {
-        role: { from: user.role, to: input.newRole },
+        role: { before: staff.role, after: input.newRole },
       };
-      const details = `Changed role of user ${user.first_name} ${user.last_name} (ID: ${user.id}) from ${user.role} to ${input.newRole}.`;
+      const details = `Changed role of staff ${staff.first_name} ${staff.last_name} (ID: ${staff.id}) from ${staff.role} to ${input.newRole}.`;
 
       const { error: insertLogError } = await insertTable(
         supabase,
@@ -426,11 +445,11 @@ const adminRouter = createTRPCRouter({
           actor_id: ctx.userJWT?.id,
           action: "update",
           event_type: "Changed user role",
-          entity_type: "User",
+          entity_type: "Staff",
           entity_id: input.userId,
           changes,
           details,
-        },
+        } as AuditLog,
       );
 
       if (insertLogError) {
@@ -617,6 +636,55 @@ const adminRouter = createTRPCRouter({
       return {
         kpis: kpiMetrics as Array<HiringTimelineStatistics>,
       };
+    }),
+  addStaff: superAdminProcedure
+    .input(addStaffSchema)
+    .mutation(async ({ input, ctx }) => {
+      const supabase = await createClientServer(1, true);
+
+      const createdUser = await createUserWithEmailAndPassword(
+        input.email,
+        input.password,
+      );
+
+      const { data: newStaff, error } = await insertTable(supabase, "staff", {
+        first_name: input.firstName,
+        last_name: input.lastName,
+        role: input.role,
+        firebase_uid: createdUser.uid,
+      } as Omit<Staff, "id">);
+
+      if (error || !newStaff) {
+        console.error("Error creating new staff:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create new staff member",
+        });
+      }
+
+      const { error: insertLogError } = await insertTable(
+        supabase,
+        "audit_logs",
+        {
+          actor_type: ctx.userJWT?.role,
+          actor_id: ctx.userJWT?.id,
+          action: "create",
+          event_type: "Created staff account",
+          entity_type: "Staff",
+          entity_id: newStaff[0]?.id,
+          changes: {},
+          details: `Staff member ${input.firstName} ${input.lastName} created with role ${input.role}`,
+        } as AuditLog,
+      );
+
+      if (insertLogError) {
+        console.error(
+          "Error inserting audit log for staff creation:",
+          insertLogError,
+        );
+      }
+
+      return newStaff[0] as Staff;
     }),
 });
 

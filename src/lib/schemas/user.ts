@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { REGULAR_STAFF_ROLES } from "../constants";
 
 export const userSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -57,4 +58,12 @@ export const filesSchema = z.object({
       (file) => ["application/pdf"].includes(file.type),
       "Resume must be a PDF or Word document",
     ),
+});
+
+export const addStaffSchema = z.object({
+  email: z.email(),
+  firstName: z.string().min(1),
+  lastName: z.string().min(1),
+  role: z.enum(REGULAR_STAFF_ROLES),
+  password: z.string().min(8),
 });

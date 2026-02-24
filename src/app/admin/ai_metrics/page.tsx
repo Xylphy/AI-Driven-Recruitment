@@ -19,6 +19,7 @@ import { Bar, Line } from "react-chartjs-2";
 import Select from "react-select";
 import HRReportCard from "@/components/admin/aiMetrics/HRReportCard";
 import useAuth from "@/hooks/useAuth";
+import { MONTHS } from "@/lib/constants";
 import { trpc } from "@/lib/trpc/client";
 
 ChartJS.register(
@@ -47,6 +48,7 @@ function weeklyData(data: Array<number>) {
     ],
   };
 }
+
 export default function AIAnalyticsDashboard() {
   const today = new Date();
 
@@ -114,23 +116,8 @@ export default function AIAnalyticsDashboard() {
       format: "a4",
     });
 
-    const monthNames = [
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
-    ];
-
-    const from = `${monthNames[fromMonth - 1]} ${fromYear}`;
-    const to = `${monthNames[toMonth - 1]} ${toYear}`;
+    const from = `${MONTHS[fromMonth - 1]} ${fromYear}`;
+    const to = `${MONTHS[toMonth - 1]} ${toYear}`;
 
     doc.setFontSize(16);
     doc.text("AI Performance & Accuracy Report", 40, 40);
@@ -295,7 +282,6 @@ export default function AIAnalyticsDashboard() {
                     hover:border-red-400
                     transition-all duration-200
                   `,
-
                 menu: () =>
                   `
                     mt-2
@@ -305,7 +291,6 @@ export default function AIAnalyticsDashboard() {
                     shadow-xl
                     overflow-hidden
                   `,
-
                 option: ({ isFocused, isSelected }) =>
                   `
                     px-4 py-2 text-sm cursor-pointer transition-all duration-150
@@ -317,33 +302,14 @@ export default function AIAnalyticsDashboard() {
                           : "text-gray-700"
                     }
                   `,
-
                 placeholder: () => "text-gray-400",
-
                 singleValue: () => "text-gray-700 font-medium",
-
                 dropdownIndicator: ({ isFocused }) =>
                   `text-red-500 ${isFocused ? "rotate-180 transition-transform" : ""}`,
-
                 indicatorSeparator: () => "bg-red-200",
               }}
             />
           </div>
-
-          <button
-            type="button"
-            onClick={handleDownloadReport}
-            className="
-              relative overflow-hidden
-              bg-linear-to-r from-red-600 to-red-500
-              text-white font-bold px-6 py-2 rounded-xl
-              shadow-lg hover:opacity-90 transition 
-            "
-          >
-            <span className="relative z-10 tracking-wide">
-              SEARCH CANDIDATE
-            </span>
-          </button>
         </div>
         {selectedCandidateId ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-5">

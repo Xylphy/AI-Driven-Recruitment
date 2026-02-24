@@ -4,7 +4,13 @@
 import type { inferProcedureOutput } from "@trpc/server";
 import type { FieldValue, Timestamp } from "firebase/firestore";
 import type { JwtPayload } from "jsonwebtoken";
-import type { ENTITIES, EVENT_TYPES, USER_ROLES } from "@/lib/constants";
+import type {
+  ALL_STAFF_ROLES,
+  ENTITIES,
+  EVENT_TYPES,
+  REGULAR_STAFF_ROLES,
+  USER_ROLES,
+} from "@/lib/constants";
 import type { AppRouter } from "@/lib/trpc/routers/app";
 
 export interface IdentifiableItem {
@@ -49,7 +55,7 @@ export interface JobListing extends Title {
 
 export interface JWT extends JwtPayload {
   id: string;
-  role: (typeof USER_ROLES)[number];
+  role: UserRoles;
 }
 
 interface Tag extends IdentifiableItem {
@@ -85,6 +91,10 @@ export type UserActionEventType = (typeof EVENT_TYPES)[number];
 export type EntityTypes = (typeof ENTITIES)[number];
 
 export type UserRoles = (typeof USER_ROLES)[number];
+
+export type RegularStaffRoles = (typeof REGULAR_STAFF_ROLES)[number];
+
+export type AllStaffRoles = (typeof ALL_STAFF_ROLES)[number];
 
 export type FetchCandidateProfileOutput = inferProcedureOutput<
   AppRouter["candidate"]["fetchCandidateProfile"]

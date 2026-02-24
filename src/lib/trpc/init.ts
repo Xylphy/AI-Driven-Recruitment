@@ -122,3 +122,15 @@ export const hrOfficerProcedure = authorizedProcedure.use(
     return next();
   },
 );
+export const superAdminProcedure = authorizedProcedure.use(
+  async ({ ctx, next }) => {
+    if (ctx.userJWT?.role !== "SuperAdmin") {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "Access restricted to super admin users",
+      });
+    }
+
+    return next();
+  },
+);

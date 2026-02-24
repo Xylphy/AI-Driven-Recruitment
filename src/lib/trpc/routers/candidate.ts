@@ -655,6 +655,7 @@ const candidateRouter = createTRPCRouter({
     .input(
       z.object({
         searchQuery: z.string().optional(),
+        limit: z.number().optional().default(10),
       }),
     )
     .query(async ({ input, ctx }) => {
@@ -695,7 +696,8 @@ const candidateRouter = createTRPCRouter({
         );
       }
 
-      const { data: applicants, error: errorApplicants } = await baseQuery;
+      const { data: applicants, error: errorApplicants } =
+        await baseQuery.limit(input.limit);
       if (errorApplicants) {
         console.error("Error fetching applicants:", errorApplicants);
         throw new TRPCError({

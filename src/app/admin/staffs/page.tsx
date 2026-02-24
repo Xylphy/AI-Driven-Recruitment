@@ -1,39 +1,57 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { USER_ROLES } from "@/lib/constants";
+import { useState } from "react";
+import { treeifyError } from "zod";
+import useAuth from "@/hooks/useAuth";
+import { REGULAR_STAFF_ROLES } from "@/lib/constants";
+import { addStaffSchema } from "@/lib/schemas";
 import { trpc } from "@/lib/trpc/client";
-
-type staffRole = "Admin" | "HR Officer";
-
-type Staff = {
-  id: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-  role: staffRole;
-};
+import type { RegularStaffRoles } from "@/types/types";
 
 export default function UsersPage() {
+  const { isAuthenticated } = useAuth();
   const [searchInput, setSearchInput] = useState("");
 
   const [isAddOpen, setIsAddOpen] = useState(false);
-  const [newStaffRole, setNewStaffRole] = useState<staffRole>("HR Officer");
-  const [newStaffName, setNewStaffName] = useState("");
-  const [newStaffEmail, setNewStaffEmail] = useState("");
-  const [localStaff, setLocalStaff] = useState<Staff[]>([]);
+  const [newStaffRole, setNewStaffRole] =
+    useState<RegularStaffRoles>("HR Officer");
+  const [staffFirstName, setStaffFirstName] = useState("");
+  const [staffLastName, setStaffLastName] = useState("");
+  const [staffPassword, setStaffPassword] = useState("");
+  const [staffEmail, setStaffEmail] = useState("");
 
-  const usersQuery = trpc.admin.users.useQuery({
-    searchQuery: searchInput || undefined,
+  const staffsQuery = trpc.admin.staffs.useQuery(
+    {
+      searchQuery: searchInput || undefined,
+    },
+    {
+      enabled: isAuthenticated,
+    },
+  );
+
+  const staffs = staffsQuery.data?.staffs || [];
+
+  const addStaffMutation = trpc.admin.addStaff.useMutation();
+  const changeRoleMutation = trpc.admin.changeStaffRole.useMutation();
+
+  const {
+    success: isStaffValid,
+    error: staffError,
+    data: staffData,
+  } = addStaffSchema.safeParse({
+    email: staffEmail.trim(),
+    firstName: staffFirstName.trim(),
+    lastName: staffLastName.trim(),
+    role: newStaffRole,
+    password: staffPassword,
   });
-  const changeRoleMutation = trpc.admin.changeUserRole.useMutation();
 
-  const handleRoleChange = async (userId: string, newRole: staffRole) =>
+  const handleRoleChange = async (userId: string, newRole: RegularStaffRoles) =>
     await changeRoleMutation.mutateAsync(
       { userId, newRole },
       {
         onSuccess: () => {
-          usersQuery.refetch();
+          staffsQuery.refetch();
         },
         onError: (error) => {
           alert(`Failed to change user role: ${error.message}`);
@@ -41,43 +59,38 @@ export default function UsersPage() {
       },
     );
 
-  const canAdd = useMemo(() => {
-    return newStaffName.trim().length > 0 && newStaffEmail.trim().length > 0;
-  }, [newStaffName, newStaffEmail]);
-
   // ✅ Placeholder add (local only)
   const handleAddStaff = () => {
-    if (!canAdd) return;
+    if (!isStaffValid) {
+      alert(treeifyError(staffError));
+      return;
+    }
 
-    const name = newStaffName.trim().replace(/\s+/g, " ");
-    const parts = name.split(" ");
-    const first_name = parts[0] ?? "";
-    const last_name = parts.slice(1).join(" ") || "";
-
-    setLocalStaff((prev) => [
+    addStaffMutation.mutate(
       {
-        id: crypto.randomUUID(),
-        first_name,
-        last_name,
-        email: newStaffEmail.trim(),
-        role: newStaffRole,
+        email: staffData.email,
+        firstName: staffData.firstName,
+        lastName: staffData.lastName,
+        role: staffData.role,
+        password: staffData.password,
       },
-      ...prev,
-    ]);
-
-    setNewStaffRole("HR Officer");
-    setNewStaffName("");
-    setNewStaffEmail("");
-    setIsAddOpen(false);
+      {
+        onSuccess: () => {
+          alert("Staff added successfully!");
+          staffsQuery.refetch();
+          setIsAddOpen(false);
+          setNewStaffRole("HR Officer");
+          setStaffFirstName("");
+          setStaffLastName("");
+          setStaffEmail("");
+          setStaffPassword("");
+        },
+        onError: (error) => {
+          alert(`Failed to add staff: ${error.message}`);
+        },
+      },
+    );
   };
-
-  // Combine backend users + placeholder local staff
-  const combinedUsers = useMemo(() => {
-    const backendUsers = Array.isArray(usersQuery.data?.users)
-      ? usersQuery.data.users
-      : [];
-    return [...localStaff, ...backendUsers];
-  }, [localStaff, usersQuery.data?.users]);
 
   return (
     <div className="min-h-screen p-8 bg-white relative overflow-hidden">
@@ -127,49 +140,43 @@ export default function UsersPage() {
             </thead>
 
             <tbody className="text-gray-700">
-              {combinedUsers.length > 0 ? (
-                combinedUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50 transition">
+              {staffs.length > 0 ? (
+                staffs.map((staff) => (
+                  <tr key={staff.id} className="hover:bg-gray-50 transition">
                     <td className="py-3 px-4 font-medium">
-                      {user.first_name} {user.last_name}
+                      {staff.first_name} {staff.last_name}
                     </td>
 
-                    <td className="py-3 px-4">{user.email}</td>
+                    <td className="py-3 px-4">{staff.email}</td>
 
                     <td className="py-3 px-4">
                       <span
                         className={`px-3 py-1 text-sm font-semibold rounded-full ${
-                          user.role === "Admin"
+                          staff.role === "Admin"
                             ? "bg-green-100 text-green-700"
                             : "bg-gray-100 text-gray-700"
                         }`}
                       >
-                        {user.role}
+                        {staff.role}
                       </span>
                     </td>
 
                     <td className="py-3 px-4 text-center">
                       <select
-                        value={user.role}
+                        value={staff.role}
                         onChange={(e) =>
-                          handleRoleChange(user.id, e.target.value as staffRole)
+                          handleRoleChange(
+                            staff.id,
+                            e.target.value as RegularStaffRoles,
+                          )
                         }
                         className="border rounded px-2 py-1 text-sm focus:ring-1 focus:ring-red-500 focus:outline-none"
-                        // optional: disable role change for locally-added placeholder items
-                        disabled={localStaff.some((s) => s.id === user.id)}
-                        title={
-                          localStaff.some((s) => s.id === user.id)
-                            ? "Placeholder row (wire create endpoint to enable)"
-                            : ""
-                        }
                       >
-                        {USER_ROLES.filter((role) => role !== "SuperAdmin").map(
-                          (role) => (
-                            <option key={role} value={role}>
-                              {role}
-                            </option>
-                          ),
-                        )}
+                        {REGULAR_STAFF_ROLES.map((role) => (
+                          <option key={role} value={role}>
+                            {role}
+                          </option>
+                        ))}
                       </select>
                     </td>
                   </tr>
@@ -239,7 +246,9 @@ export default function UsersPage() {
                 <select
                   id="setNewStaffRole"
                   value={newStaffRole}
-                  onChange={(e) => setNewStaffRole(e.target.value as staffRole)}
+                  onChange={(e) =>
+                    setNewStaffRole(e.target.value as RegularStaffRoles)
+                  }
                   className="
                     w-full
                     px-4 py-3
@@ -252,22 +261,25 @@ export default function UsersPage() {
                     focus:ring-2 focus:ring-red-400/50
                   "
                 >
-                  <option value="HR Officer">HR Officer</option>
-                  <option value="Admin">Admin</option>
+                  {REGULAR_STAFF_ROLES.map((role) => (
+                    <option key={role} value={role}>
+                      {role}
+                    </option>
+                  ))}
                 </select>
               </div>
 
               <div>
                 <label
-                  htmlFor="setNewStaffName"
+                  htmlFor="staffFirstName"
                   className="block text-sm font-semibold text-gray-800 mb-2"
                 >
                   First Name
                 </label>
                 <input
-                  id="setNewStaffName"
-                  value={newStaffName}
-                  onChange={(e) => setNewStaffName(e.target.value)}
+                  id="staffFirstName"
+                  value={staffFirstName}
+                  onChange={(e) => setStaffFirstName(e.target.value)}
                   placeholder="e.g., Jane"
                   className="
                     w-full
@@ -285,15 +297,15 @@ export default function UsersPage() {
 
               <div>
                 <label
-                  htmlFor="setNewStaffName"
+                  htmlFor="staffLastName"
                   className="block text-sm font-semibold text-gray-800 mb-2"
                 >
                   Last Name
                 </label>
                 <input
-                  id="setNewStaffName"
-                  value={newStaffName}
-                  onChange={(e) => setNewStaffName(e.target.value)}
+                  id="staffLastName"
+                  value={staffLastName}
+                  onChange={(e) => setStaffLastName(e.target.value)}
                   placeholder="e.g., Doe"
                   className="
                     w-full
@@ -318,8 +330,8 @@ export default function UsersPage() {
                 </label>
                 <input
                   id="setNewStaffEmail"
-                  value={newStaffEmail}
-                  onChange={(e) => setNewStaffEmail(e.target.value)}
+                  value={staffEmail}
+                  onChange={(e) => setStaffEmail(e.target.value)}
                   placeholder="e.g., jane@company.com"
                   type="email"
                   className="
@@ -357,6 +369,9 @@ export default function UsersPage() {
                     focus:outline-none
                     focus:ring-2 focus:ring-red-400/50
                   "
+                  value={staffPassword}
+                  onChange={(e) => setStaffPassword(e.target.value)}
+                  placeholder="Enter a strong password"
                 />
               </div>
             </div>
@@ -379,7 +394,7 @@ export default function UsersPage() {
               <button
                 type="button"
                 onClick={handleAddStaff}
-                disabled={!canAdd}
+                disabled={!isStaffValid}
                 className="
                   px-6 py-2 rounded-2xl
                   bg-linear-to-r from-red-600 to-red-500

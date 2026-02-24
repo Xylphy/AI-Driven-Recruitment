@@ -152,6 +152,9 @@ export default function Page() {
         text: `Candidate moved to ${newStatus}`,
         confirmButtonColor: "#E30022",
       });
+
+      // No need to refetch entire profile, just update status locally. Reduce unnecessary network request and UI flicker.
+      setSelectedStatus(newStatus);
     } catch (err) {
       Swal.fire({
         icon: "error",

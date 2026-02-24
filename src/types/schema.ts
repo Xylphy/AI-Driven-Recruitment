@@ -1,5 +1,6 @@
-import type { CANDIDATE_STATUSES, USER_ROLES } from "@/lib/constants";
+import type { CANDIDATE_STATUSES } from "@/lib/constants";
 import type {
+  AllStaffRoles,
   EntityTypes,
   Title,
   UserActionEventType,
@@ -17,7 +18,7 @@ export interface Staff extends IdentifiableItem {
   first_name: string;
   last_name: string;
   firebase_uid: string;
-  role: (typeof USER_ROLES)[number];
+  role: AllStaffRoles;
 }
 
 export interface Applicants extends IdentifiableItem {

@@ -178,12 +178,12 @@ export default function AdminDashboard() {
           <GlassCard title="Candidate Growth">
             <ResponsiveContainer width="100%" height={250}>
               <LineChart
-                data={statsQuery.data?.candidateGrowth?.map(
-                  (growth, index) => ({
+                data={
+                  statsQuery.data?.candidateGrowth?.map((growth, index) => ({
                     name: `Week ${index + 1}`,
                     candidates: growth.applicants,
-                  }),
-                )}
+                  })) || []
+                }
               >
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
