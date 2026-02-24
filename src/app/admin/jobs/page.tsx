@@ -16,7 +16,7 @@ type Job = {
 };
 
 export default function JobsPage() {
-  const _ = useAuth();
+  useAuth();
   const router = useRouter();
   const [searchInput, setSearchInput] = useState("");
   const userInfo = trpc.auth.decodeJWT.useQuery();

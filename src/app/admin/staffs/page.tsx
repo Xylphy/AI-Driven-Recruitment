@@ -180,7 +180,7 @@ export default function UsersPage() {
                     colSpan={4}
                     className="text-center p-6 text-gray-500 italic"
                   >
-                    No users found.
+                    No staffs found.
                   </td>
                 </tr>
               )}

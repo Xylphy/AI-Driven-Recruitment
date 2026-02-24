@@ -272,14 +272,19 @@ const jobListingRouter = createTRPCRouter({
         .from("applicant_skills")
         .insert(
           input.skills.map((tag) => ({
-            applicant_id: applicantsID[0].id,
+            applicant_id: applicantsID[0]?.id,
             tag_id: tag.id,
             rating: tag.rating || 0,
           })),
         );
 
       if (applicantSkillsError) {
-        await deleteRow(supabaseClient, "applicants", "id", applicantsID[0].id);
+        await deleteRow(
+          supabaseClient,
+          "applicants",
+          "id",
+          applicantsID[0]?.id,
+        );
         console.error(
           "Error inserting applicant skills:",
           applicantSkillsError,
@@ -292,7 +297,7 @@ const jobListingRouter = createTRPCRouter({
 
       const scoreAPI = new URL("http://localhost:8000/score/");
       scoreAPI.searchParams.set("job_id", input.jobId);
-      scoreAPI.searchParams.set("applicant_id", applicantsID[0].id);
+      scoreAPI.searchParams.set("applicant_id", applicantsID[0]?.id);
       scoreAPI.searchParams.set("resume_public_id", resumePublicId);
       scoreAPI.searchParams.set("transcript_public_id", transcriptPublicId);
 
@@ -311,10 +316,10 @@ const jobListingRouter = createTRPCRouter({
           action: "create",
           event_type: "Applied for job",
           entity_type: "Job Applicant",
-          entity_id: applicantsID[0].id,
+          entity_id: applicantsID[0]?.id,
           changes: {},
           details: `Applicant with ID ${
-            applicantsID[0].id
+            applicantsID[0]?.id
           } applied for job listing with ID ${input.jobId}.`,
         } as AuditLog,
       );
@@ -326,7 +331,7 @@ const jobListingRouter = createTRPCRouter({
       return {
         success: true,
         message: "Application submitted successfully",
-        trackingId: applicantsID[0].id,
+        trackingId: applicantsID[0]?.id,
       };
     }),
   updateJoblisting: authorizedProcedure
@@ -528,14 +533,14 @@ const jobListingRouter = createTRPCRouter({
 
       const { error: errorLink } = await supabase.from("job_tags").insert(
         tagRows.map((t) => ({
-          joblisting_id: insertedData[0].id,
+          joblisting_id: insertedData[0]?.id,
           tag_id: t.id,
         })),
       );
 
       if (errorLink) {
         console.error("Error inserting tags", errorLink);
-        await deleteRow(supabase, "job_listings", "id", insertedData[0].id);
+        await deleteRow(supabase, "job_listings", "id", insertedData[0]?.id);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to create job listings",
@@ -545,13 +550,13 @@ const jobListingRouter = createTRPCRouter({
       const results = await Promise.all([
         ...(input.qualifications || []).map((qualification) =>
           insertTable(supabase, "jl_qualifications", {
-            joblisting_id: insertedData[0].id,
+            joblisting_id: insertedData[0]?.id,
             qualification: qualification.title,
           }),
         ),
         ...(input.requirements || []).map((requirement) =>
           insertTable(supabase, "jl_requirements", {
-            joblisting_id: insertedData[0].id,
+            joblisting_id: insertedData[0]?.id,
             requirement: requirement.title,
           }),
         ),
@@ -563,19 +568,19 @@ const jobListingRouter = createTRPCRouter({
           results.find((r) => r.error),
         );
         await Promise.all([
-          deleteRow(supabase, "job_listings", "id", insertedData[0].id),
-          deleteRow(supabase, "job_tags", "joblisting_id", insertedData[0].id),
+          deleteRow(supabase, "job_listings", "id", insertedData[0]?.id),
+          deleteRow(supabase, "job_tags", "joblisting_id", insertedData[0]?.id),
           deleteRow(
             supabase,
             "jl_qualifications",
             "joblisting_id",
-            insertedData[0].id,
+            insertedData[0]?.id,
           ),
           deleteRow(
             supabase,
             "jl_requirements",
             "joblisting_id",
-            insertedData[0].id,
+            insertedData[0]?.id,
           ),
         ]);
         throw new TRPCError({
@@ -587,7 +592,7 @@ const jobListingRouter = createTRPCRouter({
       const { data: usersToNotify, error: usersError } = await supabase.rpc(
         "get_similar_job_applicants",
         {
-          new_job_id: insertedData[0].id,
+          new_job_id: insertedData[0]?.id,
         },
       );
 
@@ -600,7 +605,7 @@ const jobListingRouter = createTRPCRouter({
         body: `A new job listing "${input.title}" has been posted that's similar to your applied jobs before. Check it out!`,
         isRead: false,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        link: `/joblisting/${insertedData[0].id}`,
+        link: `/joblisting/${insertedData[0]?.id}`,
       };
 
       await Promise.all(
@@ -622,9 +627,9 @@ const jobListingRouter = createTRPCRouter({
           action: "create",
           event_type: "Created joblisting",
           entity_type: "Job Listing",
-          entity_id: insertedData[0].id,
+          entity_id: insertedData[0]?.id,
           changes: {},
-          details: `Job listing with ID ${insertedData[0].id} was created.`,
+          details: `Job listing with ID ${insertedData[0]?.id} was created.`,
         } as AuditLog,
       );
 

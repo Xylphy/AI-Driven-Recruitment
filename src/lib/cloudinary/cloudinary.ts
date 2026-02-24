@@ -1,11 +1,22 @@
 import { randomUUID } from "node:crypto";
 import { v2 as cloudinary } from "cloudinary";
+import { z } from "zod";
 
-cloudinary.config({
-  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+const cloudinaryConfigSchema = z.object({
+  cloud_name: z
+    .string()
+    .min(1, "NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME is required"),
+  api_key: z.string().min(1, "NEXT_PUBLIC_CLOUDINARY_API_KEY is required"),
+  api_secret: z.string().min(1, "CLOUDINARY_API_SECRET is required"),
 });
+
+cloudinary.config(
+  cloudinaryConfigSchema.parse({
+    cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+  }),
+);
 
 export async function uploadFile(file: File, folder: string) {
   let resourceType: "auto" | "image" | "video" | "raw" = "raw";

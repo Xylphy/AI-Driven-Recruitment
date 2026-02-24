@@ -103,12 +103,13 @@ const staffRouter = createTRPCRouter({
       const joblistingResponse: (typeof jobListing)[0] & {
         officer_name?: string;
       } = {
-        ...jobListing[0],
+        // biome-ignore lint/style/noNonNullAssertion: We check for jobListing existence above, so this is safe
+        ...jobListing[0]!,
       };
 
-      joblistingResponse.officer_name = jobListing[0].users
+      joblistingResponse.officer_name = jobListing[0]?.users
         ? `${jobListing[0].users.first_name} ${jobListing[0].users.last_name}`
-        : undefined;
+        : "Unknown Officer";
 
       return {
         ...joblistingResponse,
@@ -159,14 +160,14 @@ const staffRouter = createTRPCRouter({
             .map((h) => h.trim())
             .filter(Boolean)
             .map((highlight) => ({
-              report_id: hrReport[0].id,
+              report_id: hrReport[0]?.id,
               highlight,
             })),
         );
 
       if (keyHighlightError || !keyHighlight) {
         console.error("Error inserting Key Highlights:", keyHighlightError);
-        await deleteRow(supabase, "hr_reports", "id", hrReport[0].id);
+        await deleteRow(supabase, "hr_reports", "id", hrReport[0]?.id);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to submit key highlights",
@@ -182,7 +183,7 @@ const staffRouter = createTRPCRouter({
           action: "create",
           event_type: "Created HR Report",
           entity_type: "HR Report",
-          entity_id: hrReport[0].id,
+          entity_id: hrReport[0]?.id,
           changes: {},
           details: `HR Report created with score ${input.score}`,
         } as AuditLog,

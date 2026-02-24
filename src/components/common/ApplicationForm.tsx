@@ -13,9 +13,7 @@ export function ApplicationForm({
   response,
   description,
   title,
-  fileName,
   handleTranscriptSelect,
-  transcriptFileName,
 }: {
   socialLinksInfo: {
     socialLinks: SocialLink[];
@@ -34,9 +32,7 @@ export function ApplicationForm({
   handleFileSelect: (file: File | null) => void;
   title: string;
   description: string;
-  fileName?: string;
   handleTranscriptSelect?: (file: File | null) => void;
-  transcriptFileName?: string;
 }) {
   const inputStyle =
     "w-full px-4 py-3 rounded-xl bg-white border border-gray-300 shadow-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition";
@@ -68,7 +64,6 @@ export function ApplicationForm({
           <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
             <FileUpload
               onFileSelect={handleFileSelect}
-              defaultFileName={fileName}
               labelName="Upload Resume"
               required
             />
@@ -211,7 +206,6 @@ export function ApplicationForm({
             {handleTranscriptSelect && (
               <FileUpload
                 onFileSelect={handleTranscriptSelect}
-                defaultFileName={transcriptFileName}
                 labelName="Upload Interview Video"
                 required
               />

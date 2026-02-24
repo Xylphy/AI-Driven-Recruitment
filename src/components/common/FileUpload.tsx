@@ -9,7 +9,7 @@ export default function FileUpload({
   required = false,
 }: {
   onFileSelect: (file: File | null) => void;
-  defaultFileName?: string;
+  defaultFileName?: string | undefined;
   labelName: string;
   required?: boolean;
 }) {

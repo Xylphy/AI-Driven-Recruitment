@@ -18,8 +18,17 @@ export async function GET(request: NextRequest) {
     }
     const supabase = await createClientServer(1, true);
 
+    const authToken = authHeader.split(" ")[1];
+
+    if (!authToken) {
+      return NextResponse.json(
+        { error: "Token is missing from Authorization header" },
+        { status: 401 },
+      );
+    }
+
     const { data: userData, error } = await find<Staff>(supabase, "staff", [
-      { column: "firebase_uid", value: authHeader.split(" ")[1] },
+      { column: "firebase_uid", value: authToken },
     ]).single();
 
     if (error || !userData) {

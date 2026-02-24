@@ -1,4 +1,4 @@
-import { createBrowserClient, createServerClient } from "@supabase/ssr";
+import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
 const database1 = {
@@ -12,17 +12,6 @@ const database2 = {
   key: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY_2 || "",
   serviceKey: process.env.SUPABASE_SERVICE_ROLE_KEY_2, // used to bypass RLS (administrative tasks)
 };
-
-export function createClient(database: number) {
-  switch (database) {
-    case 1:
-      return createBrowserClient(database1.url, database1.key);
-    case 2:
-      return createBrowserClient(database2.url, database2.key);
-    default:
-      throw new Error("Invalid database number");
-  }
-}
 
 export async function createClientServer(
   database: number,

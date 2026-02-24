@@ -30,13 +30,8 @@ export default function ApplicationPage() {
 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [csrfToken, setCsrfToken] = useState<string | null>(null);
-  const [transcriptFileName, setTranscriptFileName] = useState<
-    string | undefined
-  >();
-
   const handleTranscriptSelect = (file: File | null) => {
     setSelectedTranscript(file);
-    setTranscriptFileName(file ? file.name : undefined);
   };
 
   useEffect(() => {
@@ -195,7 +190,6 @@ export default function ApplicationPage() {
           description="Complete your application details to proceed to the skill assessment."
           title="APPLICATION"
           handleTranscriptSelect={handleTranscriptSelect}
-          transcriptFileName={transcriptFileName}
         />
       </div>
     </div>

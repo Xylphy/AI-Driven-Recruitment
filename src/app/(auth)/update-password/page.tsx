@@ -1,11 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import Link from "next/link";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useMemo, useState } from "react";
 
 export default function UpdatePasswordPage() {
-  const router = useRouter();
+  // const router = useRouter();
   const searchParams = useSearchParams();
 
   // Admin-provided link could include something like ?token=abc123
@@ -17,10 +17,11 @@ export default function UpdatePasswordPage() {
   const [showConfirm, setShowConfirm] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
-  const [message, setMessage] = useState<string>("");
+  // const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
+  // const [message, setMessage] = useState<string>("");
 
-  const { passwordValid, confirmValid, canSubmit, hint } = useMemo(() => {
+  // const { passwordValid, confirmValid, canSubmit,  } = useMemo(() => {
+  const { passwordValid, confirmValid, canSubmit } = useMemo(() => {
     const minLen = password.length >= 8;
     const hasUpper = /[A-Z]/.test(password);
     const hasLower = /[a-z]/.test(password);
@@ -49,14 +50,14 @@ export default function UpdatePasswordPage() {
     };
   }, [password, confirm, token, isSubmitting]);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.SyntheticEvent) {
     e.preventDefault();
-    setStatus("idle");
-    setMessage("");
+    // setStatus("idle");
+    // setMessage("");
 
     if (!canSubmit) {
-      setStatus("error");
-      setMessage(hint || "Please complete the form.");
+      // setStatus("error");
+      // setMessage(hint || "Please complete the form.");
       return;
     }
 
@@ -72,21 +73,21 @@ export default function UpdatePasswordPage() {
       await new Promise((r) => setTimeout(r, 600));
       // ============================
 
-      setStatus("success");
-      setMessage("Password updated successfully. You may now log in.");
+      // setStatus("success");
+      // setMessage("Password updated successfully. You may now log in.");
 
       // Optional: auto-redirect after a short moment
       // setTimeout(() => router.push("/login"), 1200);
-    } catch (err) {
-      setStatus("error");
-      setMessage("Update failed. Please request a new link from your admin.");
+    } catch {
+      // setStatus("error");
+      // setMessage("Update failed. Please request a new link from your admin.");
     } finally {
       setIsSubmitting(false);
     }
   }
 
   return (
-    <div className="relative overflow-hidden bg-gradient-to-br from-white via-white to-red-50 px-6 py-14">
+    <div className="relative overflow-hidden bg-linear-to-br from-white via-white to-red-50 px-6 py-14">
       <div className="relative mx-auto w-full max-w-md sm:max-w-xl lg:max-w-2xl">
         <div className="relative overflow-hidden rounded-3xl border border-red-200/60 bg-white/65 p-7 shadow-[0_35px_120px_rgba(220,38,38,0.12)] backdrop-blur-2xl">
           <div className="relative">
@@ -102,12 +103,16 @@ export default function UpdatePasswordPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* New Password */}
               <div className="space-y-2">
-                <label className="text-xs font-extrabold uppercase tracking-[0.18em] text-red-700">
+                <label
+                  htmlFor="newPassword"
+                  className="text-xs font-extrabold uppercase tracking-[0.18em] text-red-700"
+                >
                   New Password
                 </label>
 
                 <div className="relative">
                   <input
+                    id="newPassword"
                     type={showPass ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -148,12 +153,16 @@ export default function UpdatePasswordPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-extrabold uppercase tracking-[0.18em] text-red-700">
+                <label
+                  htmlFor="confirmPassword"
+                  className="text-xs font-extrabold uppercase tracking-[0.18em] text-red-700"
+                >
                   Confirm Password
                 </label>
 
                 <div className="relative">
                   <input
+                    id="confirmPassword"
                     type={showConfirm ? "text" : "password"}
                     value={confirm}
                     onChange={(e) => setConfirm(e.target.value)}
@@ -189,7 +198,7 @@ export default function UpdatePasswordPage() {
                   "font-extrabold uppercase tracking-[0.16em]",
                   "shadow-[0_25px_90px_rgba(220,38,38,0.18)] transition",
                   canSubmit
-                    ? "bg-gradient-to-r from-red-600 to-red-500 text-white hover:opacity-95"
+                    ? "bg-linear-to-r from-red-600 to-red-500 text-white hover:opacity-95"
                     : "bg-white/70 text-red-700/60 border border-red-200/60 cursor-not-allowed",
                 ].join(" ")}
               >

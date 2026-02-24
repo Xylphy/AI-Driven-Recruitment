@@ -542,7 +542,7 @@ const adminRouter = createTRPCRouter({
           ...officer,
           email: userMap.get(officer.firebase_uid)?.email || "",
           jobsAssigned:
-            jobsAssignedResults[index].data?.map((job) => job.title) || [],
+            jobsAssignedResults[index]?.data?.map((job) => job.title) || [],
         })),
       };
     }),

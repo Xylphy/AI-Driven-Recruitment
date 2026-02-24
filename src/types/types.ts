@@ -11,13 +11,6 @@ export interface IdentifiableItem {
   id: number;
 }
 
-export interface DateRange {
-  startMonth: string;
-  startYear: number;
-  endMonth: string;
-  endYear: number;
-}
-
 export interface Title {
   title: string;
 }
@@ -41,27 +34,8 @@ export interface User {
   transcriptId?: string;
 }
 
-export interface RegisterState extends User {
-  educationalDetails: Omit<EducationalDetail, "id">[];
-  socialLinks: Omit<SocialLink, "id">[];
-  jobExperiences: Omit<JobExperience, "id">[];
-}
-
 export interface SocialLink extends IdentifiableItem {
   value: string;
-}
-
-export interface EducationalDetail extends DateRange, IdentifiableItem {
-  institute: string;
-  major: string;
-  degree: string;
-  currentlyPursuing: boolean;
-}
-
-export interface JobExperience extends DateRange, IdentifiableItem, Title {
-  company: string;
-  summary: string;
-  currentlyWorking: boolean;
 }
 
 export interface IdentifiableTitle extends IdentifiableItem, Title {}
@@ -71,10 +45,6 @@ export interface JobListing extends Title {
   requirements: IdentifiableTitle[];
   location: "Cebu City" | "Manila" | "Tokyo";
   isFullTime: boolean;
-}
-
-export interface DbIdentification {
-  db_id: string;
 }
 
 export interface JWT extends JwtPayload {

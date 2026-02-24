@@ -33,13 +33,6 @@ ChartJS.register(
   Legend,
 );
 
-function toLocalDateInput(d: Date) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
 function weeklyData(data: Array<number>) {
   return {
     labels: ["Week 1", "Week 2", "Week 3", "Week 4"],
