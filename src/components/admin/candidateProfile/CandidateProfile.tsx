@@ -76,36 +76,71 @@ export default function CandidateProfile({
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-white/60 bg-white/35 backdrop-blur-xl shadow-md p-5">
-                <span className="block text-sm font-semibold text-slate-700 mb-2">
-                  Raw Score
-                </span>
+              <div
+                className="
+                  rounded-2xl
+                  border border-white/60
+                  bg-white/40
+                  backdrop-blur-2xl
+                  shadow-[0_15px_40px_rgba(227,0,34,0.08)]
+                  p-5
+                "
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <span className="block text-sm font-semibold text-slate-700 mb-3">
+                      Raw Score
+                    </span>
 
-                <div className="flex items-center gap-2">
-                  {[...Array(5)].map((_, i) => (
-                    <svg
-                      key={crypto.randomUUID()}
-                      className={`w-5 h-5 drop-shadow-sm ${
-                        i <
-                        Math.floor(
-                          candidateProfile?.score?.score_data.job_fit_stars ||
-                            0,
-                        )
-                          ? "text-[#E30022]"
-                          : "text-red-200"
-                      }`}
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <title>Star</title>
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.184 3.642a1 1 0 00.95.69h3.813c.969 0 1.371 1.24.588 1.81l-3.087 2.243a1 1 0 00-.364 1.118l1.184 3.642c.3.921-.755 1.688-1.54 1.118L10 13.347l-3.087 2.243c-.785.57-1.84-.197-1.54-1.118l1.184-3.642a1 1 0 00-.364-1.118L3.106 9.07c-.783-.57-.38-1.81.588-1.81h3.813a1 1 0 00.95-.69l1.184-3.642z" />
-                    </svg>
-                  ))}
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1">
+                        {[...Array(5)].map((_, i) => (
+                          <svg
+                            key={i}
+                            className={`w-5 h-5 drop-shadow-sm transition ${
+                              i <
+                              Math.floor(
+                                candidateProfile?.score?.score_data
+                                  ?.job_fit_stars || 0,
+                              )
+                                ? "text-[#E30022]"
+                                : "text-red-200"
+                            }`}
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <title>Star</title>
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.184 3.642a1 1 0 00.95.69h3.813c.969 0 1.371 1.24.588 1.81l-3.087 2.243a1 1 0 00-.364 1.118l1.184 3.642c.3.921-.755 1.688-1.54 1.118L10 13.347l-3.087 2.243c-.785.57-1.84-.197-1.54-1.118l1.184-3.642a1 1 0 00-.364-1.118L3.106 9.07c-.783-.57-.38-1.81.588-1.81h3.813a1 1 0 00.95-.69l1.184-3.642z" />
+                          </svg>
+                        ))}
+                      </div>
 
-                  <span className="text-sm text-slate-600">
-                    ({candidateProfile?.score?.score_data?.job_fit_stars || 0}
-                    /5)
-                  </span>
+                      <span className="text-sm font-medium text-slate-600">
+                        (
+                        {candidateProfile?.score?.score_data?.job_fit_stars ||
+                          0}
+                        /5)
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="
+                      shrink-0
+                      px-4 py-2
+                      rounded-xl
+                      bg-gradient-to-r from-[#E30022] to-red-500
+                      text-white
+                      text-xs font-semibold
+                      tracking-wide
+                      shadow-lg shadow-red-500/20
+                      hover:opacity-90
+                      transition-all
+                    "
+                  >
+                    RESCORE
+                  </button>
                 </div>
               </div>
 
