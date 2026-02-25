@@ -100,6 +100,8 @@ export default function Page() {
     [getHRReportsQuery.data],
   );
 
+  const hasReports = hrReportsData.length > 0;
+
   const editingReport = useMemo(() => {
     if (editingIndex === null) return null;
     return hrReportsData[editingIndex] ?? null;
@@ -531,188 +533,201 @@ export default function Page() {
                     }}
                   />
                 </div>
-
-                {hrReportsData.length > 0 ? (
-                  <div className="grid grid-cols-2 gap-6 w-full overflow-y-auto pr-2 max-h-full">
-                    {hrReportsData.map((report, idx) => (
-                      <div
-                        key={report.id}
-                        className="
-                          relative
-                          bg-white/60
-                          backdrop-blur-2xl
-                          border border-white/40
-                          rounded-3xl
-                          shadow-[0_20px_60px_rgba(220,38,38,0.10)]
-                          p-6
-                          transition-all duration-300
-                          hover:shadow-[0_25px_70px_rgba(220,38,38,0.18)]
-                        "
-                      >
-                        {/* <div className="absolute inset-0 bg-linear-to-br from-red-100/30 via-transparent to-red-50/30 rounded-3xl pointer-events-none" /> */}
-
-                        <div className="relative flex items-start justify-between gap-4 mb-4">
-                          <div className="min-w-0">
-                            <p className="text-xs uppercase tracking-widest text-gray-500">
-                              HR Officer
-                            </p>
-                            <h3 className="text-lg font-semibold text-gray-800 truncate">
-                              {report.staff_name}
-                            </h3>
-                          </div>
-
-                          <div className="flex items-center gap-3 shrink-0">
-                            <div className="px-3 py-1 bg-red-600/10 text-red-600 text-sm font-semibold rounded-full whitespace-nowrap">
-                              {(report.score || 0).toFixed(1)} / 5
+                <div
+                  className={[
+                    "self-start",
+                    "bg-white/60 backdrop-blur-2xl border border-white/40 rounded-3xl",
+                    "shadow-[0_20px_60px_rgba(220,38,38,0.10)]",
+                    "w-full",
+                    "max-h-[520px] overflow-y-auto",
+                    "p-6",
+                  ].join(" ")}
+                >
+                  {hasReports ? (
+                    <div className="grid gap-4">
+                      {hrReportsData.map((report, idx) => (
+                        <div
+                          key={report.id}
+                          className="
+                            relative
+                            bg-white/60
+                            backdrop-blur-2xl
+                            border border-white/40
+                            rounded-3xl
+                            shadow-[0_20px_60px_rgba(220,38,38,0.10)]
+                            p-6
+                            transition-all duration-300
+                            hover:shadow-[0_25px_70px_rgba(220,38,38,0.18)]
+                          "
+                        >
+                          <div className="relative flex items-start justify-between gap-4 mb-4">
+                            <div className="min-w-0">
+                              <p className="text-xs uppercase tracking-widest text-gray-500">
+                                HR Officer
+                              </p>
+                              <h3 className="text-lg font-semibold text-gray-800 truncate">
+                                {report.staff_name}
+                              </h3>
                             </div>
 
-                            {report.staff_id === userId && (
-                              <div className="flex items-center gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() => handleEditReport(idx)}
-                                  className="
-                                    p-2 rounded-xl
-                                    bg-white/70 backdrop-blur-md
-                                    border border-white/40
-                                    text-blue-600
-                                    hover:bg-blue-600 hover:text-white
-                                    transition-all duration-200
-                                  "
-                                >
-                                  <FiEdit2 size={16} />
-                                </button>
-
-                                <button
-                                  type="button"
-                                  onClick={() => handleDeleteReport(report.id)}
-                                  className="
-                                    p-2 rounded-xl
-                                    bg-white/70 backdrop-blur-md
-                                    border border-white/40
-                                    text-red-600
-                                    hover:bg-red-600 hover:text-white
-                                    transition-all duration-200
-                                  "
-                                >
-                                  <FiTrash2 size={16} />
-                                </button>
+                            <div className="flex items-center gap-3 shrink-0">
+                              <div className="px-3 py-1 bg-red-600/10 text-red-600 text-sm font-semibold rounded-full whitespace-nowrap">
+                                {(report.score || 0).toFixed(1)} / 5
                               </div>
-                            )}
+
+                              {report.staff_id === userId && (
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleEditReport(idx)}
+                                    className="
+                                      p-2 rounded-xl
+                                      bg-white/70 backdrop-blur-md
+                                      border border-white/40
+                                      text-blue-600
+                                      hover:bg-blue-600 hover:text-white
+                                      transition-all duration-200
+                                    "
+                                  >
+                                    <FiEdit2 size={16} />
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleDeleteReport(report.id)
+                                    }
+                                    className="
+                                      p-2 rounded-xl
+                                      bg-white/70 backdrop-blur-md
+                                      border border-white/40
+                                      text-red-600
+                                      hover:bg-red-600 hover:text-white
+                                      transition-all duration-200
+                                    "
+                                  >
+                                    <FiTrash2 size={16} />
+                                  </button>
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        </div>
 
-                        <div className="relative flex gap-1 mb-4">
-                          {[...Array(5)].map((_, i) => (
-                            <svg
-                              key={`${report.id}-star-${i}`}
-                              className={`w-5 h-5 ${
-                                i < Math.round(report.score || 0)
-                                  ? "text-yellow-400 drop-shadow-sm"
-                                  : "text-gray-300"
-                              }`}
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                            >
-                              <title>Star Rating</title>
-                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.184 3.642a1 1 0 00.95.69h3.813c.969 0 1.371 1.24.588 1.81l-3.087 2.243a1 1 0 00-.364 1.118l1.184 3.642c.3.921-.755 1.688-1.54 1.118L10 13.347l-3.087 2.243c-.785.57-1.84-.197-1.54-1.118l1.184-3.642a1 1 0 00-.364-1.118L3.106 9.07c-.783-.57-.38-1.81.588-1.81h3.813a1 1 0 00.95-.69l1.184-3.642z" />
-                            </svg>
-                          ))}
-                        </div>
-                        <div className="relative mb-5">
-                          <p className="text-xs uppercase tracking-widest text-gray-500 mb-3">
-                            Key Highlights
-                          </p>
-
-                          <div className="flex flex-wrap gap-2">
-                            {report.highlights.map((highlight, i) => (
-                              <span
-                                key={`${report.id}-highlight-${i}`}
-                                className="
-                                  px-3 py-1.5 text-xs font-medium
-                                  rounded-full
-                                  bg-white/70 backdrop-blur-md
-                                  border border-white/40
-                                  text-gray-700
-                                "
+                          <div className="relative flex gap-1 mb-4">
+                            {[...Array(5)].map((_, i) => (
+                              <svg
+                                key={`${report.id}-star-${i}`}
+                                className={`w-5 h-5 ${
+                                  i < Math.round(report.score || 0)
+                                    ? "text-yellow-400 drop-shadow-sm"
+                                    : "text-gray-300"
+                                }`}
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
                               >
-                                {highlight}
-                              </span>
+                                <title>Star Rating</title>
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.184 3.642a1 1 0 00.95.69h3.813c.969 0 1.371 1.24.588 1.81l-3.087 2.243a1 1 0 00-.364 1.118l1.184 3.642c.3.921-.755 1.688-1.54 1.118L10 13.347l-3.087 2.243c-.785.57-1.84-.197-1.54-1.118l1.184-3.642a1 1 0 00-.364-1.118L3.106 9.07c-.783-.57-.38-1.81.588-1.81h3.813a1 1 0 00.95-.69l1.184-3.642z" />
+                              </svg>
                             ))}
                           </div>
-                        </div>
 
-                        <div className="relative mb-4">
-                          <p className="text-xs uppercase tracking-widest text-gray-500 mb-2">
-                            Summary
-                          </p>
-                          <p className="text-sm text-gray-700 leading-relaxed">
-                            {report.summary}
-                          </p>
-                        </div>
+                          <div className="relative mb-5">
+                            <p className="text-xs uppercase tracking-widest text-gray-500 mb-3">
+                              Key Highlights
+                            </p>
 
-                        <div className="relative text-xs text-gray-400 pt-3 border-t border-white/30">
-                          Submitted on {formatDate(report.created_at)}
-                        </div>
+                            <div className="flex flex-wrap gap-2">
+                              {report.highlights.map((highlight, i) => (
+                                <span
+                                  key={`${report.id}-highlight-${i}`}
+                                  className="
+                                    px-3 py-1.5 text-xs font-medium
+                                    rounded-full
+                                    bg-white/70 backdrop-blur-md
+                                    border border-white/40
+                                    text-gray-700
+                                  "
+                                >
+                                  {highlight}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
 
-                        {editingIndex === idx && report.staff_id === userId && (
-                          <div
-                            className="
+                          <div className="relative mb-4">
+                            <p className="text-xs uppercase tracking-widest text-gray-500 mb-2">
+                              Summary
+                            </p>
+                            <p className="text-sm text-gray-700 leading-relaxed">
+                              {report.summary}
+                            </p>
+                          </div>
+
+                          <div className="relative text-xs text-gray-400 pt-3 border-t border-white/30">
+                            Submitted on {formatDate(report.created_at)}
+                          </div>
+
+                          {editingIndex === idx &&
+                            report.staff_id === userId && (
+                              <div
+                                className="
                               mt-6 p-6
                               bg-white/70 backdrop-blur-xl
                               border border-white/40
                               rounded-2xl
                               shadow-inner
                             "
-                          >
-                            <h4 className="font-semibold mb-4 text-gray-800">
-                              Edit HR Evaluation
-                            </h4>
+                              >
+                                <h4 className="font-semibold mb-4 text-gray-800">
+                                  Edit HR Evaluation
+                                </h4>
 
-                            <div className="grid gap-4">
-                              <div>
-                                <label
-                                  htmlFor="score"
-                                  className="block text-sm font-semibold mb-2"
-                                >
-                                  Score (1.0 - 5.0)
-                                </label>
-                                <input
-                                  id="score"
-                                  type="text"
-                                  inputMode="decimal"
-                                  value={editScore === 0 ? "" : editScore}
-                                  onChange={(e) => {
-                                    const value = e.target.value;
+                                <div className="grid gap-4">
+                                  <div>
+                                    <label
+                                      htmlFor="score"
+                                      className="block text-sm font-semibold mb-2"
+                                    >
+                                      Score (1.0 - 5.0)
+                                    </label>
+                                    <input
+                                      id="score"
+                                      type="text"
+                                      inputMode="decimal"
+                                      value={editScore === 0 ? "" : editScore}
+                                      onChange={(e) => {
+                                        const value = e.target.value;
 
-                                    if (value === "") {
-                                      setEditScore(0);
-                                      return;
-                                    }
+                                        if (value === "") {
+                                          setEditScore(0);
+                                          return;
+                                        }
 
-                                    if (!/^\d*\.?\d*$/.test(value)) return;
+                                        if (!/^\d*\.?\d*$/.test(value)) return;
 
-                                    const numericValue = Number(value);
+                                        const numericValue = Number(value);
 
-                                    if (value.endsWith(".")) {
-                                      setEditScore(value as unknown as number);
-                                      return;
-                                    }
+                                        if (value.endsWith(".")) {
+                                          setEditScore(
+                                            value as unknown as number,
+                                          );
+                                          return;
+                                        }
 
-                                    if (
-                                      numericValue >= 1 &&
-                                      numericValue <= 5
-                                    ) {
-                                      setEditScore(numericValue);
-                                    }
-                                  }}
-                                  onBlur={() => {
-                                    if (typeof editScore === "number") {
-                                      if (editScore < 1) setEditScore(1);
-                                      if (editScore > 5) setEditScore(5);
-                                    }
-                                  }}
-                                  className="
+                                        if (
+                                          numericValue >= 1 &&
+                                          numericValue <= 5
+                                        ) {
+                                          setEditScore(numericValue);
+                                        }
+                                      }}
+                                      onBlur={() => {
+                                        if (typeof editScore === "number") {
+                                          if (editScore < 1) setEditScore(1);
+                                          if (editScore > 5) setEditScore(5);
+                                        }
+                                      }}
+                                      className="
                                     w-full
                                     px-4 py-2.5
                                     rounded-xl
@@ -723,24 +738,24 @@ export default function Page() {
                                     focus:ring-2 focus:ring-red-400/50
                                     transition
                                   "
-                                />
-                              </div>
+                                    />
+                                  </div>
 
-                              <div>
-                                <label
-                                  htmlFor="highlights"
-                                  className="block text-sm font-semibold mb-2"
-                                >
-                                  Key Highlights
-                                </label>
-                                <textarea
-                                  id="highlights"
-                                  value={editHighlights}
-                                  onChange={(e) =>
-                                    setEditHighlights(e.target.value)
-                                  }
-                                  rows={3}
-                                  className="
+                                  <div>
+                                    <label
+                                      htmlFor="highlights"
+                                      className="block text-sm font-semibold mb-2"
+                                    >
+                                      Key Highlights
+                                    </label>
+                                    <textarea
+                                      id="highlights"
+                                      value={editHighlights}
+                                      onChange={(e) =>
+                                        setEditHighlights(e.target.value)
+                                      }
+                                      rows={3}
+                                      className="
                                     w-full
                                     px-4 py-2 rounded-xl
                                     bg-white/80 backdrop-blur-md
@@ -748,24 +763,24 @@ export default function Page() {
                                     focus:ring-2 focus:ring-red-400/40
                                     transition
                                   "
-                                />
-                              </div>
+                                    />
+                                  </div>
 
-                              <div>
-                                <label
-                                  htmlFor="summary"
-                                  className="block text-sm font-semibold mb-2"
-                                >
-                                  Summary Evaluation
-                                </label>
-                                <textarea
-                                  id="summary"
-                                  value={editSummary}
-                                  onChange={(e) =>
-                                    setEditSummary(e.target.value)
-                                  }
-                                  rows={3}
-                                  className="
+                                  <div>
+                                    <label
+                                      htmlFor="summary"
+                                      className="block text-sm font-semibold mb-2"
+                                    >
+                                      Summary Evaluation
+                                    </label>
+                                    <textarea
+                                      id="summary"
+                                      value={editSummary}
+                                      onChange={(e) =>
+                                        setEditSummary(e.target.value)
+                                      }
+                                      rows={3}
+                                      className="
                                     w-full
                                     px-4 py-2 rounded-xl
                                     bg-white/80 backdrop-blur-md
@@ -773,29 +788,31 @@ export default function Page() {
                                     focus:ring-2 focus:ring-red-400/40
                                     transition
                                   "
-                                />
-                              </div>
+                                    />
+                                  </div>
 
-                              <div className="flex justify-end gap-3">
-                                <button
-                                  type="button"
-                                  onClick={handleCancelEdit}
-                                  className="
+                                  <div className="flex justify-end gap-3">
+                                    <button
+                                      type="button"
+                                      onClick={handleCancelEdit}
+                                      className="
                                     px-5 py-2 rounded-xl
                                     bg-white/70 backdrop-blur-md
                                     border border-white/40
                                     hover:bg-gray-200/50
                                     transition
                                   "
-                                  disabled={updateHRReportMutation.isPending}
-                                >
-                                  Cancel
-                                </button>
+                                      disabled={
+                                        updateHRReportMutation.isPending
+                                      }
+                                    >
+                                      Cancel
+                                    </button>
 
-                                <button
-                                  type="button"
-                                  onClick={handleSaveEdit}
-                                  className="
+                                    <button
+                                      type="button"
+                                      onClick={handleSaveEdit}
+                                      className="
                                     px-6 py-2 rounded-xl
                                     bg-linear-to-r from-red-600 to-red-500
                                     text-white font-semibold
@@ -803,24 +820,27 @@ export default function Page() {
                                     hover:scale-105
                                     transition-all
                                   "
-                                  disabled={updateHRReportMutation.isPending}
-                                >
-                                  {updateHRReportMutation.isPending
-                                    ? "Saving..."
-                                    : "Save"}
-                                </button>
+                                      disabled={
+                                        updateHRReportMutation.isPending
+                                      }
+                                    >
+                                      {updateHRReportMutation.isPending
+                                        ? "Saving..."
+                                        : "Save"}
+                                    </button>
+                                  </div>
+                                </div>
                               </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-gray-500 italic text-center mt-4">
-                    No HR evaluations yet.
-                  </p>
-                )}
+                            )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 italic text-center mt-4">
+                      No HR evaluations yet.
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           ) : (
