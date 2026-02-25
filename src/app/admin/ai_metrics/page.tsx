@@ -231,7 +231,7 @@ export default function AIAnalyticsDashboard() {
           {[
             {
               title: "Average Job Fit Score",
-              value: aiMetrics.data?.overall.avg_job_fit_score,
+              value: `${Number(aiMetrics.data?.overall.avg_job_fit_score ?? 0).toFixed(2)}s`,
             },
             {
               title: "Avg AI Response Time",
