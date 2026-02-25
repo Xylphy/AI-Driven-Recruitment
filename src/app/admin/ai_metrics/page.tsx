@@ -137,7 +137,7 @@ export default function AIAnalyticsDashboard() {
   );
 
   const efficiencyBarData = {
-    labels: ["Predictive Success", "Decision Accuracy", "Job Fit"],
+    labels: ["Soft Skills Score", "Culture Fit", "Transcript Score"],
     datasets: [
       {
         label: "Efficiency Score (%)",
@@ -420,7 +420,7 @@ export default function AIAnalyticsDashboard() {
                     "
                     >
                       <p className="text-xs uppercase tracking-wide text-gray-500">
-                        AI Accuracy
+                        Job Fit Score
                       </p>
                       <p className="text-2xl font-bold text-red-600 mt-1">
                         {candidateReportQuery.data?.candidate.job_fit_score ||
