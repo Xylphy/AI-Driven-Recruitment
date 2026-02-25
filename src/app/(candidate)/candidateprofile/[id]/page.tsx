@@ -539,7 +539,7 @@ export default function Page() {
                     "bg-white/60 backdrop-blur-2xl border border-white/40 rounded-3xl",
                     "shadow-[0_20px_60px_rgba(220,38,38,0.10)]",
                     "w-full",
-                    "max-h-[520px] overflow-y-auto",
+                    "max-h-130 overflow-y-auto",
                     "p-6",
                   ].join(" ")}
                 >
