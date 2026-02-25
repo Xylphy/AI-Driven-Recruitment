@@ -235,7 +235,7 @@ export default function AIAnalyticsDashboard() {
             },
             {
               title: "Avg AI Response Time",
-              value: `${aiMetrics.data?.overall.avg_response_time}s`,
+              value: `${Number(aiMetrics.data?.overall.avg_response_time ?? 0).toFixed(2)}s`,
             },
           ].map((kpi) => (
             <div
