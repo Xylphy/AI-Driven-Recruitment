@@ -23,7 +23,7 @@ const hrOfficerRouter = createTRPCRouter({
 
       const query = supabase
         .from("job_listings")
-        .select("*, job_applicants(id)")
+        .select("*, applicants(id)")
         .eq("officer_id", ctx.userJWT?.id);
 
       if (input.query) {

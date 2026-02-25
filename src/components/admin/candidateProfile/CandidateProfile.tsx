@@ -435,35 +435,10 @@ export default function CandidateProfile({
                         Skill Gaps Recommendations
                       </h3>
                       <p className="text-slate-700 leading-relaxed mt-2">
-                        {candidateProfile?.transcribed?.transcription
+                        {candidateProfile?.score?.score_data
                           ?.skill_gaps_recommendations ||
                           "No skill gaps recommendations available."}
                       </p>
-                    </div>
-
-                    <div className="rounded-2xl border border-white/60 bg-white/35 backdrop-blur-xl shadow-md p-5">
-                      <h3 className="font-bold text-slate-800 tracking-tight">
-                        Skill Gaps Highlights
-                      </h3>
-                      {candidateProfile?.transcribed?.transcription
-                        ?.skill_gaps_recommendations_phrases ? (
-                        <ul className="list-disc ml-6 mt-3 space-y-1.5 marker:text-red-400 text-slate-700">
-                          {candidateProfile.transcribed.transcription.skill_gaps_recommendations_phrases.map(
-                            (recommendation: string) => (
-                              <li
-                                key={crypto.randomUUID()}
-                                className="leading-relaxed"
-                              >
-                                {recommendation}
-                              </li>
-                            ),
-                          )}
-                        </ul>
-                      ) : (
-                        <p className="text-slate-600 mt-2">
-                          No skill gaps highlights available.
-                        </p>
-                      )}
                     </div>
                   </div>
                 )}

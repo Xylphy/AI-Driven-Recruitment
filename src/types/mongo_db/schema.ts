@@ -19,3 +19,21 @@ export type ScoredCandidateDoc = {
   score_data: ScoredCandidateScoreData;
   created_at: number; // Unix timestamp
 };
+
+export type TranscribedDoc = {
+  _id: ObjectId;
+  applicant_id: string;
+  transcription: {
+    transcription: string;
+    sentiment_analysis: string;
+    sentimental_analysis_phrases: Array<string>;
+    personality_traits: string;
+    personality_traits_phrases: Array<string>;
+    communication_style_insights: string;
+    communication_style_insights_phrases: Array<string>;
+    interview_insights: string;
+    interview_insights_phrases: Array<string>;
+    cultural_fit_insights: string;
+    cultural_fit_insights_phrases: Array<string>;
+  };
+};
