@@ -34,12 +34,27 @@ ChartJS.register(
   Legend,
 );
 
-function weeklyData(data: Array<number>) {
+function predictionData(data: Array<number>) {
   return {
     labels: ["Week 1", "Week 2", "Week 3", "Week 4"],
     datasets: [
       {
-        label: "Prediction Accuracy (%)",
+        label: "Job Fit Score (%)",
+        data,
+        borderColor: "rgb(220, 38, 38)",
+        backgroundColor: "rgba(220, 38, 38, 0.2)",
+        tension: 0.4,
+      },
+    ],
+  };
+}
+
+function responseData(data: Array<number>) {
+  return {
+    labels: ["Week 1", "Week 2", "Week 3", "Week 4"],
+    datasets: [
+      {
+        label: "Response Time (%)",
         data,
         borderColor: "rgb(220, 38, 38)",
         backgroundColor: "rgba(220, 38, 38, 0.2)",
@@ -65,6 +80,12 @@ function getThisYM() {
   const m = String(d.getMonth() + 1).padStart(2, "0");
   return `${y}-${m}`;
 }
+
+const formatScore = (value?: number) =>
+  new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(value ?? 0);
 
 export default function AIAnalyticsDashboard() {
   const thisYM = useMemo(() => getThisYM(), []);
@@ -231,11 +252,11 @@ export default function AIAnalyticsDashboard() {
           {[
             {
               title: "Average Job Fit Score",
-              value: `${Number(aiMetrics.data?.overall.avg_job_fit_score ?? 0).toFixed(2)}s`,
+              value: formatScore(aiMetrics.data?.overall.avg_job_fit_score),
             },
             {
               title: "Avg AI Response Time",
-              value: `${Number(aiMetrics.data?.overall.avg_response_time ?? 0).toFixed(2)}s`,
+              value: `${formatScore(aiMetrics.data?.overall.avg_response_time)}s`,
             },
           ].map((kpi) => (
             <div
@@ -255,20 +276,20 @@ export default function AIAnalyticsDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="backdrop-blur-xl bg-white/70 border border-white/40 shadow-xl p-6 rounded-2xl">
             <h3 className="font-semibold mb-4 text-gray-700">
-              Average AI Accuracy Over Time
+              Average Job Fit Score Overtime
             </h3>
             <Line
-              data={weeklyData(
+              data={predictionData(
                 aiMetrics.data?.weekly.map((w) => w.avg_job_fit_score) || [],
               )}
             />
           </div>
           <div className="backdrop-blur-xl bg-white/70 border border-white/40 shadow-xl p-6 rounded-2xl">
             <h3 className="font-semibold mb-4 text-gray-700">
-              Average AI Response Time Over Time
+              Average AI Response Time Overtime
             </h3>
             <Line
-              data={weeklyData(
+              data={responseData(
                 aiMetrics.data?.weekly.map((w) => w.avg_response_time) || [],
               )}
             />
