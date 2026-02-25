@@ -232,17 +232,6 @@ export default function CandidateProfile({
                   <div className="space-y-5">
                     <div className="rounded-2xl border border-white/60 bg-white/35 backdrop-blur-xl shadow-md p-5">
                       <h3 className="font-bold text-slate-800 tracking-tight">
-                        Sentiment Analysis
-                      </h3>
-                      <p className="text-slate-700 leading-relaxed mt-2">
-                        {candidateProfile?.transcribed?.transcription
-                          ?.sentimental_analysis ||
-                          "No sentiment analysis available."}
-                      </p>
-                    </div>
-
-                    <div className="rounded-2xl border border-white/60 bg-white/35 backdrop-blur-xl shadow-md p-5">
-                      <h3 className="font-bold text-slate-800 tracking-tight">
                         Sentiment Highlights
                       </h3>
                       {candidateProfile?.transcribed?.transcription
@@ -265,22 +254,22 @@ export default function CandidateProfile({
                         </p>
                       )}
                     </div>
+
+                    <div className="rounded-2xl border border-white/60 bg-white/35 backdrop-blur-xl shadow-md p-5">
+                      <h3 className="font-bold text-slate-800 tracking-tight">
+                        Sentiment Analysis
+                      </h3>
+                      <p className="text-slate-700 leading-relaxed mt-2">
+                        {candidateProfile?.transcribed?.transcription
+                          ?.sentimental_analysis ||
+                          "No sentiment analysis available."}
+                      </p>
+                    </div>
                   </div>
                 )}
 
                 {activeTab === "personality" && (
                   <div className="space-y-5">
-                    <div className="rounded-2xl border border-white/60 bg-white/35 backdrop-blur-xl shadow-md p-5">
-                      <h3 className="font-bold text-slate-800 tracking-tight">
-                        Personality Traits
-                      </h3>
-                      <p className="text-slate-700 leading-relaxed mt-2">
-                        {candidateProfile?.transcribed?.transcription
-                          ?.personality_traits ||
-                          "No personality traits insights available."}
-                      </p>
-                    </div>
-
                     <div className="rounded-2xl border border-white/60 bg-white/35 backdrop-blur-xl shadow-md p-5">
                       <h3 className="font-bold text-slate-800 tracking-tight">
                         Personality Highlights
@@ -305,22 +294,22 @@ export default function CandidateProfile({
                         </p>
                       )}
                     </div>
+
+                    <div className="rounded-2xl border border-white/60 bg-white/35 backdrop-blur-xl shadow-md p-5">
+                      <h3 className="font-bold text-slate-800 tracking-tight">
+                        Personality Traits
+                      </h3>
+                      <p className="text-slate-700 leading-relaxed mt-2">
+                        {candidateProfile?.transcribed?.transcription
+                          ?.personality_traits ||
+                          "No personality traits insights available."}
+                      </p>
+                    </div>
                   </div>
                 )}
 
                 {activeTab === "communication" && (
                   <div className="space-y-5">
-                    <div className="rounded-2xl border border-white/60 bg-white/35 backdrop-blur-xl shadow-md p-5">
-                      <h3 className="font-bold text-slate-800 tracking-tight">
-                        Communication Style
-                      </h3>
-                      <p className="text-slate-700 leading-relaxed mt-2">
-                        {candidateProfile?.transcribed?.transcription
-                          ?.communication_style_insights ||
-                          "No communication style insights available."}
-                      </p>
-                    </div>
-
                     <div className="rounded-2xl border border-white/60 bg-white/35 backdrop-blur-xl shadow-md p-5">
                       <h3 className="font-bold text-slate-800 tracking-tight">
                         Communication Highlights
@@ -345,22 +334,22 @@ export default function CandidateProfile({
                         </p>
                       )}
                     </div>
+
+                    <div className="rounded-2xl border border-white/60 bg-white/35 backdrop-blur-xl shadow-md p-5">
+                      <h3 className="font-bold text-slate-800 tracking-tight">
+                        Communication Style
+                      </h3>
+                      <p className="text-slate-700 leading-relaxed mt-2">
+                        {candidateProfile?.transcribed?.transcription
+                          ?.communication_style_insights ||
+                          "No communication style insights available."}
+                      </p>
+                    </div>
                   </div>
                 )}
 
                 {activeTab === "interview" && (
                   <div className="space-y-5">
-                    <div className="rounded-2xl border border-white/60 bg-white/35 backdrop-blur-xl shadow-md p-5">
-                      <h3 className="font-bold text-slate-800 tracking-tight">
-                        Interview Insights
-                      </h3>
-                      <p className="text-slate-700 leading-relaxed mt-2">
-                        {candidateProfile?.transcribed?.transcription
-                          ?.interview_insights ||
-                          "No interview insights available."}
-                      </p>
-                    </div>
-
                     <div className="rounded-2xl border border-white/60 bg-white/35 backdrop-blur-xl shadow-md p-5">
                       <h3 className="font-bold text-slate-800 tracking-tight">
                         Interview Highlights
@@ -385,22 +374,21 @@ export default function CandidateProfile({
                         </p>
                       )}
                     </div>
+                    <div className="rounded-2xl border border-white/60 bg-white/35 backdrop-blur-xl shadow-md p-5">
+                      <h3 className="font-bold text-slate-800 tracking-tight">
+                        Interview Insights
+                      </h3>
+                      <p className="text-slate-700 leading-relaxed mt-2">
+                        {candidateProfile?.transcribed?.transcription
+                          ?.interview_insights ||
+                          "No interview insights available."}
+                      </p>
+                    </div>
                   </div>
                 )}
 
                 {activeTab === "cultural" && (
                   <div className="space-y-5">
-                    <div className="rounded-2xl border border-white/60 bg-white/35 backdrop-blur-xl shadow-md p-5">
-                      <h3 className="font-bold text-slate-800 tracking-tight">
-                        Cultural Fit Insights
-                      </h3>
-                      <p className="text-slate-700 leading-relaxed mt-2">
-                        {candidateProfile?.transcribed?.transcription
-                          ?.cultural_fit_insights ||
-                          "No cultural fit insights available."}
-                      </p>
-                    </div>
-
                     <div className="rounded-2xl border border-white/60 bg-white/35 backdrop-blur-xl shadow-md p-5">
                       <h3 className="font-bold text-slate-800 tracking-tight">
                         Cultural Fit Highlights
@@ -424,6 +412,17 @@ export default function CandidateProfile({
                           No cultural fit highlights available.
                         </p>
                       )}
+                    </div>
+
+                    <div className="rounded-2xl border border-white/60 bg-white/35 backdrop-blur-xl shadow-md p-5">
+                      <h3 className="font-bold text-slate-800 tracking-tight">
+                        Cultural Fit Insights
+                      </h3>
+                      <p className="text-slate-700 leading-relaxed mt-2">
+                        {candidateProfile?.transcribed?.transcription
+                          ?.cultural_fit_insights ||
+                          "No cultural fit insights available."}
+                      </p>
                     </div>
                   </div>
                 )}
