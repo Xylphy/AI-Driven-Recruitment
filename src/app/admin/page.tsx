@@ -13,7 +13,6 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import Header from "@/components/admin/Header";
 import { formatDate } from "@/lib/library";
 import { trpc } from "@/lib/trpc/client";
 
@@ -60,8 +59,6 @@ export default function AdminDashboard() {
       <div className="flex min-h-screen bg-gray-50">
         <div className="flex-1 flex flex-col">
           <div className="flex-1 flex flex-col">
-            <Header />
-
             <main className="flex-1 p-6 overflow-y-auto space-y-8">
               <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {[0, 1, 2, 3].map((i) => (
@@ -95,8 +92,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-linear-to-br from-gray-100 via-white to-red-50">
-      <Header />
-
       <main className="p-6 space-y-8">
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
