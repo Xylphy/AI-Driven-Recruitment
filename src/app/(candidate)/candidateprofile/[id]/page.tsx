@@ -25,20 +25,10 @@ const CandidateResume = dynamic(
   { ssr: false },
 );
 
-const INTERVIEW_STATUSES: CandidateStatus[] = [
-  "Exam",
-  "HR Interview",
-  "Technical Interview",
-  "Final Interview",
-];
-
-export const languageRadarData = [
-  { language: "JavaScript", level: 88 },
-  { language: "TypeScript", level: 82 },
-  { language: "Python", level: 76 },
-  { language: "Java", level: 65 },
-  { language: "C++", level: 58 },
-];
+type CandidateSkill = {
+  rating: number;
+  tags: { name: string } | { name: string }[] | null;
+};
 
 export default function Page() {
   const router = useRouter();
@@ -78,6 +68,7 @@ export default function Page() {
       fetchScore: true,
       fetchTranscribed: true,
       fetchResume: true,
+      fetchSkills: true,
     },
     { enabled: isAuthenticated },
   );
@@ -136,7 +127,7 @@ export default function Page() {
 
     if (!newStatus) return;
 
-    if (INTERVIEW_STATUSES.includes(newStatus)) {
+    if (CANDIDATE_STATUSES.includes(newStatus)) {
       setPendingStatus(newStatus);
       setShowScheduleModal(true);
       return;
@@ -878,23 +869,21 @@ export default function Page() {
                   </div>
                 </div>
 
-                {[
-                  { skill: "Communication", score: 4.6 },
-                  { skill: "Problem Solving", score: 4.2 },
-                  { skill: "Leadership", score: 4.0 },
-                  { skill: "Collaboration", score: 3.8 },
-                  { skill: "Adaptability", score: 4.4 },
-                  { skill: "Technical Depth", score: 3.9 },
-                ].map((item) => {
-                  const pct = Math.max(
-                    0,
-                    Math.min(100, (item.score / 5) * 100),
-                  );
+                {candidateProfileQuery.data?.skills?.map(
+                  (item: CandidateSkill) => {
+                    const pct = Math.max(
+                      0,
+                      Math.min(100, (item.rating / 5) * 100),
+                    );
+                    const tag = Array.isArray(item.tags)
+                      ? item.tags[0]
+                      : item.tags;
+                    const tagName = tag?.name ?? "Unknown Skill";
 
-                  return (
-                    <div
-                      key={item.skill}
-                      className="
+                    return (
+                      <div
+                        key={`${tagName}-${item.rating}`}
+                        className="
                         mb-3
                         rounded-2xl
                         bg-white/45
@@ -905,41 +894,42 @@ export default function Page() {
                         transition
                         hover:bg-white/60
                       "
-                    >
-                      <div className="flex items-center justify-between gap-4">
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold text-gray-800 truncate">
-                            {item.skill}
-                          </p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            Applicant Self-Assessment Score
-                          </p>
+                      >
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-gray-800 truncate">
+                              {tagName}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              Applicant Self-Assessment Score
+                            </p>
+                          </div>
+
+                          <div className="shrink-0 flex items-center gap-3">
+                            <div className="px-3 py-1 rounded-full bg-red-600/10 text-red-600 text-sm font-bold border border-white/30 whitespace-nowrap">
+                              {item.rating.toFixed(1)} / 5
+                            </div>
+                          </div>
                         </div>
 
-                        <div className="shrink-0 flex items-center gap-3">
-                          <div className="px-3 py-1 rounded-full bg-red-600/10 text-red-600 text-sm font-bold border border-white/30 whitespace-nowrap">
-                            {item.score.toFixed(1)} / 5
+                        <div className="mt-3">
+                          <div className="h-2 rounded-full bg-white/50 border border-white/40 overflow-hidden">
+                            <div
+                              className="h-full rounded-full bg-linear-to-r from-red-600 to-red-400"
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+
+                          <div className="mt-2 flex items-center justify-between text-[11px] text-gray-500">
+                            <span>0</span>
+                            <span>2.5</span>
+                            <span>5</span>
                           </div>
                         </div>
                       </div>
-
-                      <div className="mt-3">
-                        <div className="h-2 rounded-full bg-white/50 border border-white/40 overflow-hidden">
-                          <div
-                            className="h-full rounded-full bg-linear-to-r from-red-600 to-red-400"
-                            style={{ width: `${pct}%` }}
-                          />
-                        </div>
-
-                        <div className="mt-2 flex items-center justify-between text-[11px] text-gray-500">
-                          <span>0</span>
-                          <span>2.5</span>
-                          <span>5</span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  },
+                )}
               </div>
             </div>
           )}
