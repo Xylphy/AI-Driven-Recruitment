@@ -87,25 +87,63 @@ export default function UpdatePasswordPage() {
   }
 
   return (
-    <div className="relative overflow-hidden bg-linear-to-br from-white via-white to-red-50 px-6 py-14">
-      <div className="relative mx-auto w-full max-w-md sm:max-w-xl lg:max-w-2xl">
-        <div className="relative overflow-hidden rounded-3xl border border-red-200/60 bg-white/65 p-7 shadow-[0_35px_120px_rgba(220,38,38,0.12)] backdrop-blur-2xl">
+    <div
+      className="
+        relative
+        min-h-screen
+        w-full
+        flex
+        items-center
+        justify-center
+        bg-gradient-to-br from-white via-red-50/30 to-white
+        px-4
+      "
+    >
+      <div className="absolute -top-40 -left-40 w-[450px] h-[450px] bg-red-400/20 rounded-full blur-3xl" />
+      <div className="absolute -bottom-40 -right-40 w-[450px] h-[450px] bg-red-500/20 rounded-full blur-3xl" />
+
+      <div
+        className="
+          relative
+          w-full
+          max-w-md
+          sm:max-w-lg
+          lg:max-w-xl
+          xl:max-w-2xl
+        "
+      >
+        <div
+          className="
+          relative
+          rounded-[32px]
+          border border-white/40
+          bg-white/55
+          backdrop-blur-3xl
+          p-10
+          shadow-[0_40px_120px_rgba(220,38,38,0.15)]
+          overflow-hiddenz
+        "
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-red-100/30 pointer-events-none" />
+
           <div className="relative">
-            <div className="mb-6">
-              <p className="text-[11px] font-extrabold uppercase tracking-[0.22em] text-red-700">
+            <div className="mb-8 text-center">
+              <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-red-600">
                 Secure Access
               </p>
-              <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-red-700">
+              <h1 className="mt-3 text-3xl font-extrabold bg-gradient-to-r from-red-600 to-red-400 bg-clip-text text-transparent">
                 Update Password
               </h1>
+              <p className="mt-2 text-sm text-gray-600">
+                Keep your account protected with a strong password.
+              </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* New Password */}
-              <div className="space-y-2">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-3">
                 <label
                   htmlFor="newPassword"
-                  className="text-xs font-extrabold uppercase tracking-[0.18em] text-red-700"
+                  className="text-xs font-bold uppercase tracking-[0.2em] text-red-600"
                 >
                   New Password
                 </label>
@@ -118,32 +156,50 @@ export default function UpdatePasswordPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter new password"
                     className={[
-                      "w-full rounded-2xl border bg-white/70 px-4 py-3 pr-14",
-                      "font-semibold text-red-700 placeholder:text-red-300",
-                      "shadow-[0_18px_60px_rgba(220,38,38,0.10)] backdrop-blur-2xl",
-                      "outline-none transition",
-                      password.length === 0
-                        ? "border-red-200/70"
-                        : passwordValid
-                          ? "border-red-300 ring-2 ring-red-400/25"
-                          : "border-red-300 ring-2 ring-red-500/20",
+                      "w-full rounded-2xl px-5 py-3 pr-16",
+                      "bg-white/70 backdrop-blur-xl",
+                      "border border-white/40",
+                      "text-gray-700 font-semibold placeholder:text-gray-400",
+                      "shadow-[0_15px_50px_rgba(220,38,38,0.08)]",
+                      "focus:ring-2 focus:ring-red-400/40 focus:border-red-300",
+                      "transition-all duration-300 outline-none",
                     ].join(" ")}
                   />
 
                   <button
                     type="button"
                     onClick={() => setShowPass((v) => !v)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xl border border-red-200/60 bg-white/65 px-3 py-2 text-xs font-extrabold uppercase tracking-[0.14em] text-red-700 shadow-[0_12px_40px_rgba(220,38,38,0.10)] backdrop-blur-xl transition hover:bg-white/80"
+                    className="
+                  absolute right-3 top-1/2 -translate-y-1/2
+                  rounded-xl
+                  px-3 py-2
+                  text-xs font-bold uppercase tracking-[0.15em]
+                  bg-white/60 backdrop-blur-md
+                  border border-white/40
+                  text-red-600
+                  shadow-sm
+                  hover:bg-white/80
+                  transition
+                "
                   >
                     {showPass ? "Hide" : "Show"}
                   </button>
                 </div>
 
-                <div className="rounded-2xl border border-red-200/60 bg-white/55 p-3 backdrop-blur-xl">
-                  <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-red-700">
-                    Password rules
+                <div
+                  className="
+              rounded-2xl
+              border border-white/40
+              bg-white/50
+              backdrop-blur-xl
+              p-4
+              shadow-inner
+            "
+                >
+                  <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-red-600">
+                    Password Rules
                   </p>
-                  <ul className="mt-2 space-y-1 text-xs font-semibold text-red-700/80">
+                  <ul className="mt-2 space-y-1 text-sm text-gray-600 font-medium">
                     <li>• At least 8 characters</li>
                     <li>• 1 uppercase letter</li>
                     <li>• 1 lowercase letter</li>
@@ -152,10 +208,10 @@ export default function UpdatePasswordPage() {
                 </div>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <label
                   htmlFor="confirmPassword"
-                  className="text-xs font-extrabold uppercase tracking-[0.18em] text-red-700"
+                  className="text-xs font-bold uppercase tracking-[0.2em] text-red-600"
                 >
                   Confirm Password
                 </label>
@@ -167,23 +223,32 @@ export default function UpdatePasswordPage() {
                     value={confirm}
                     onChange={(e) => setConfirm(e.target.value)}
                     placeholder="Confirm new password"
-                    className={[
-                      "w-full rounded-2xl border bg-white/70 px-4 py-3 pr-14",
-                      "font-semibold text-red-700 placeholder:text-red-300",
-                      "shadow-[0_18px_60px_rgba(220,38,38,0.10)] backdrop-blur-2xl",
-                      "outline-none transition",
-                      confirm.length === 0
-                        ? "border-red-200/70"
-                        : confirmValid
-                          ? "border-red-300 ring-2 ring-red-400/25"
-                          : "border-red-300 ring-2 ring-red-500/20",
-                    ].join(" ")}
+                    className="
+                  w-full rounded-2xl px-5 py-3 pr-16
+                  bg-white/70 backdrop-blur-xl
+                  border border-white/40
+                  text-gray-700 font-semibold placeholder:text-gray-400
+                  shadow-[0_15px_50px_rgba(220,38,38,0.08)]
+                  focus:ring-2 focus:ring-red-400/40 focus:border-red-300
+                  transition-all duration-300 outline-none
+                "
                   />
 
                   <button
                     type="button"
                     onClick={() => setShowConfirm((v) => !v)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xl border border-red-200/60 bg-white/65 px-3 py-2 text-xs font-extrabold uppercase tracking-[0.14em] text-red-700 shadow-[0_12px_40px_rgba(220,38,38,0.10)] backdrop-blur-xl transition hover:bg-white/80"
+                    className="
+                  absolute right-3 top-1/2 -translate-y-1/2
+                  rounded-xl
+                  px-3 py-2
+                  text-xs font-bold uppercase tracking-[0.15em]
+                  bg-white/60 backdrop-blur-md
+                  border border-white/40
+                  text-red-600
+                  shadow-sm
+                  hover:bg-white/80
+                  transition
+                "
                   >
                     {showConfirm ? "Hide" : "Show"}
                   </button>
@@ -194,28 +259,34 @@ export default function UpdatePasswordPage() {
                 type="submit"
                 disabled={!canSubmit}
                 className={[
-                  "relative w-full overflow-hidden rounded-2xl px-5 py-3",
-                  "font-extrabold uppercase tracking-[0.16em]",
-                  "shadow-[0_25px_90px_rgba(220,38,38,0.18)] transition",
+                  "relative w-full rounded-2xl px-6 py-3",
+                  "font-bold uppercase tracking-[0.18em]",
+                  "transition-all duration-300",
                   canSubmit
-                    ? "bg-linear-to-r from-red-600 to-red-500 text-white hover:opacity-95"
-                    : "bg-white/70 text-red-700/60 border border-red-200/60 cursor-not-allowed",
+                    ? "bg-gradient-to-r from-red-600 to-red-500 text-white shadow-[0_25px_80px_rgba(220,38,38,0.25)] hover:scale-[1.02]"
+                    : "bg-white/60 border border-white/40 text-gray-400 cursor-not-allowed",
                 ].join(" ")}
               >
-                <span className="relative z-10">
-                  {isSubmitting ? "Updating…" : "Update Password"}
-                </span>
-                {canSubmit && (
-                  <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.25),transparent_55%)]" />
-                )}
+                {isSubmitting ? "Updating…" : "Update Password"}
               </button>
 
-              <div className="pt-2 text-center">
+              <div className="pt-4 text-center">
                 <Link
                   href="/login"
-                  className="inline-flex items-center justify-center rounded-2xl border border-red-200/60 bg-white/65 px-4 py-2 text-xs font-extrabold uppercase tracking-[0.16em] text-red-700 shadow-[0_18px_60px_rgba(220,38,38,0.10)] backdrop-blur-xl transition hover:bg-white/80"
+                  className="
+                inline-flex items-center justify-center
+                rounded-2xl
+                px-5 py-2
+                text-xs font-bold uppercase tracking-[0.18em]
+                bg-white/60 backdrop-blur-md
+                border border-white/40
+                text-red-600
+                shadow-sm
+                hover:bg-white/80
+                transition
+              "
                 >
-                  Back to Login
+                  Back to Dashboard
                 </Link>
               </div>
             </form>
