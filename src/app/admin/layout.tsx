@@ -78,7 +78,6 @@ export default function AdminLayout({
           overflow-y-auto
         "
           >
-            {/* Sidebar Glow Overlay */}
             <div className="absolute inset-0 bg-gradient-to-br from-red-500/10 via-transparent to-red-300/10 pointer-events-none" />
 
             <div className="relative flex justify-between items-center mb-10">
@@ -127,19 +126,30 @@ export default function AdminLayout({
                 <MdPeople /> Candidates
               </Link>
 
+              <Link
+                href="/admin/compare"
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
+                  pathName === "/admin/compare"
+                    ? "bg-gradient-to-r from-red-600 to-red-500 text-white shadow-lg"
+                    : "hover:bg-white/40 backdrop-blur-md"
+                }`}
+              >
+                <MdCompareArrows /> Compare
+              </Link>
+
+              <Link
+                href="/admin/ai_metrics"
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
+                  pathName === "/admin/ai_metrics"
+                    ? "bg-gradient-to-r from-red-600 to-red-500 text-white shadow-lg"
+                    : "hover:bg-white/40 backdrop-blur-md"
+                }`}
+              >
+                <MdPsychology /> AI Metrics
+              </Link>
+
               {jwtDecoded.data.user.role === "SuperAdmin" && (
                 <>
-                  <Link
-                    href="/admin/compare"
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
-                      pathName === "/admin/compare"
-                        ? "bg-gradient-to-r from-red-600 to-red-500 text-white shadow-lg"
-                        : "hover:bg-white/40 backdrop-blur-md"
-                    }`}
-                  >
-                    <MdCompareArrows /> Compare
-                  </Link>
-
                   <Link
                     href="/admin/bottlenecks"
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
@@ -171,17 +181,6 @@ export default function AdminLayout({
                     }`}
                   >
                     <MdInsights /> KPI Metrics
-                  </Link>
-
-                  <Link
-                    href="/admin/ai_metrics"
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
-                      pathName === "/admin/ai_metrics"
-                        ? "bg-gradient-to-r from-red-600 to-red-500 text-white shadow-lg"
-                        : "hover:bg-white/40 backdrop-blur-md"
-                    }`}
-                  >
-                    <MdPsychology /> AI Metrics
                   </Link>
 
                   <Link
