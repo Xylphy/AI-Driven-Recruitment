@@ -96,7 +96,7 @@ export default function CandidateProfile({
                       <div className="flex items-center gap-1">
                         {[...Array(5)].map((_, i) => (
                           <svg
-                            key={i}
+                            key={crypto.randomUUID()}
                             className={`w-5 h-5 drop-shadow-sm transition ${
                               i <
                               Math.floor(
@@ -130,7 +130,7 @@ export default function CandidateProfile({
                       shrink-0
                       px-4 py-2
                       rounded-xl
-                      bg-gradient-to-r from-[#E30022] to-red-500
+                      bg-linear-to-r from-[#E30022] to-red-500
                       text-white
                       text-xs font-semibold
                       tracking-wide

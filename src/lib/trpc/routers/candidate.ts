@@ -11,11 +11,12 @@ import {
 } from "@/lib/supabase/action";
 import { createClientServer } from "@/lib/supabase/supabase";
 import type { ScoredCandidateScoreData } from "@/types/mongo_db/schema";
-import type {
-  AdminFeedback,
-  Applicants,
-  AuditLog,
-  Changes,
+import {
+  ApplicantSkills,
+  type AdminFeedback,
+  type Applicants,
+  type AuditLog,
+  type Changes,
 } from "@/types/schema";
 import type { Notification } from "@/types/types";
 import { adminProcedure, authorizedProcedure, createTRPCRouter } from "../init";
@@ -188,52 +189,48 @@ const candidateRouter = createTRPCRouter({
         fetchScore: z.boolean().optional().default(false),
         fetchTranscribed: z.boolean().optional().default(false),
         fetchResume: z.boolean().optional().default(false),
+        fetchSkills: z.boolean().optional().default(false),
         candidateId: z.string(),
       }),
     )
     .query(async ({ input }) => {
       const supabaseClient = await createClientServer(1, true);
 
-      const { data: jobApplicant, error: jobApplicantError } =
-        await find<Applicants>(supabaseClient, "applicants", [
-          { column: "id", value: input.candidateId },
-        ]).single();
-
-      if (jobApplicantError) {
-        console.error("Error fetching job applicants", jobApplicantError);
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to fetch candidate profile",
-        });
-      }
-
-      const [parsedResume, score, transcribed, userData] = await Promise.all([
-        input.fetchResume &&
-          findOne("ai-driven-recruitment", "parsed_resume", {
-            applicant_id: jobApplicant?.id,
-          }),
-        input.fetchScore &&
-          findOne("ai-driven-recruitment", "scored_candidates", {
-            applicant_id: jobApplicant?.id,
-          }),
-        input.fetchTranscribed &&
-          findOne("ai-driven-recruitment", "transcribed", {
-            applicant_id: jobApplicant?.id,
-          }),
-        find<Applicants>(supabaseClient, "applicants", [
-          { column: "id", value: jobApplicant?.id || "" },
-        ]).single(),
-      ]);
+      const [parsedResume, score, transcribed, applicantData, applicantSkills] =
+        await Promise.all([
+          input.fetchResume &&
+            findOne("ai-driven-recruitment", "parsed_resume", {
+              applicant_id: input.candidateId,
+            }),
+          input.fetchScore &&
+            findOne("ai-driven-recruitment", "scored_candidates", {
+              applicant_id: input.candidateId,
+            }),
+          input.fetchTranscribed &&
+            findOne("ai-driven-recruitment", "transcribed", {
+              applicant_id: input.candidateId,
+            }),
+          find<Applicants>(supabaseClient, "applicants", [
+            { column: "id", value: input.candidateId },
+          ]).single(),
+          input.fetchSkills
+            ? supabaseClient
+                .from("applicant_skills")
+                .select("rating, tags(name)")
+                .eq("applicant_id", input.candidateId)
+            : Promise.resolve(null),
+        ]);
 
       return {
         parsedResume: parsedResume || null,
         score: score || null,
         transcribed: transcribed || null,
         user: {
-          firstName: userData.data?.first_name || "",
-          lastName: userData.data?.last_name || "",
+          firstName: applicantData.data?.first_name || "",
+          lastName: applicantData.data?.last_name || "",
         },
-        status: jobApplicant?.status ?? null,
+        status: applicantData.data?.status ?? null,
+        skills: applicantSkills?.data ?? null,
       };
     }),
   updateCandidateStatus: authorizedProcedure

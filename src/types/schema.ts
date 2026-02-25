@@ -132,6 +132,6 @@ export interface KeyHighlights extends IdentifiableItem {
 // Table name: applicant_skills
 export interface ApplicantSkills extends IdentifiableItem {
   applicant_id: string;
-  skill_id: string;
+  tag_id: string;
   rating: number;
 }
