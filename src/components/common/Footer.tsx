@@ -7,14 +7,11 @@ import { MdEmail, MdPhone } from "react-icons/md";
 const Header: React.FC = () => {
   return (
     <header className="relative w-full bg-white">
-      {/* Red gradient overlay glow */}
       <div className="absolute inset-0 bg-linear-to-r from-red-600/10 via-rose-500/10 to-red-700/10 pointer-events-none" />
 
       <div className="relative backdrop-blur-xl bg-white/70 border-b border-white/40 shadow-lg">
         <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-6">
-          {/* Left Section */}
           <div className="flex flex-col md:flex-row items-center gap-6">
-            {/* Logo */}
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-xl bg-white/60 backdrop-blur border border-white/40 shadow-sm">
                 <Image
@@ -29,7 +26,6 @@ const Header: React.FC = () => {
               </span>
             </div>
 
-            {/* Contact Info */}
             <div className="text-sm text-gray-600 space-y-1">
               <div className="flex items-center gap-2 hover:text-red-600 transition">
                 <MdEmail className="text-red-600" />
@@ -53,7 +49,6 @@ const Header: React.FC = () => {
             </div>
           </div>
 
-          {/* Navigation */}
           <nav>
             <ul className="flex gap-6 text-sm font-semibold tracking-wide text-gray-700">
               <li>

@@ -90,7 +90,7 @@ export default function UpdatePasswordPage() {
     <div
       className="
         relative
-        min-h-screen
+        h-full
         w-full
         flex
         items-center
