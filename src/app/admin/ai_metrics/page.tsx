@@ -14,7 +14,7 @@ import {
 } from "chart.js";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Bar, Line } from "react-chartjs-2";
 import Select from "react-select";
 import HRReportCard from "@/components/admin/aiMetrics/HRReportCard";
@@ -49,16 +49,33 @@ function weeklyData(data: Array<number>) {
   };
 }
 
+const YM_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
+
+function isYearMonth(v: string) {
+  return YM_RE.test(v);
+}
+
+function compareYM(a: string, b: string) {
+  return a.localeCompare(b);
+}
+
+function getThisYM() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  return `${y}-${m}`;
+}
+
 export default function AIAnalyticsDashboard() {
-  const today = new Date();
+  const thisYM = useMemo(() => getThisYM(), []);
+
+  const [fromYM, setFromYM] = useState<string>(thisYM);
+  const [toYM, setToYM] = useState<string>(thisYM);
+
+  const rangeInvalid =
+    !isYearMonth(fromYM) || !isYearMonth(toYM) || compareYM(fromYM, toYM) > 0;
 
   const { isAuthenticated } = useAuth();
-
-  const [fromYear, setFromYear] = useState<number>(today.getFullYear());
-  const [fromMonth, setFromMonth] = useState<number>(today.getMonth() + 1);
-
-  const [toYear, setToYear] = useState<number>(today.getFullYear());
-  const [toMonth, setToMonth] = useState<number>(today.getMonth() + 1);
 
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(
     null,
@@ -109,16 +126,31 @@ export default function AIAnalyticsDashboard() {
     ],
   };
 
+  const onChangeFrom = (v: string) => {
+    if (!isYearMonth(v)) return; // ignore invalid edits
+    setFromYM(v);
+    if (isYearMonth(toYM) && compareYM(v, toYM) > 0) setToYM(v);
+  };
+
+  const onChangeTo = (v: string) => {
+    if (!isYearMonth(v)) return;
+    setToYM(v);
+    if (isYearMonth(fromYM) && compareYM(fromYM, v) > 0) setFromYM(v);
+  };
+
   const handleDownloadReport = () => {
+    if (rangeInvalid) return;
+
+    const [fy, fm] = fromYM.split("-");
+    const [ty, tm] = toYM.split("-");
+    const from = `${MONTHS[Number(fm) - 1]} ${fy}`;
+    const to = `${MONTHS[Number(tm) - 1]} ${ty}`;
+
     const doc = new jsPDF({
       orientation: "landscape",
       unit: "pt",
       format: "a4",
     });
-
-    const from = `${MONTHS[fromMonth - 1]} ${fromYear}`;
-    const to = `${MONTHS[toMonth - 1]} ${toYear}`;
-
     doc.setFontSize(16);
     doc.text("AI Performance & Accuracy Report", 40, 40);
 
@@ -136,19 +168,12 @@ export default function AIAnalyticsDashboard() {
           "Recommendation Efficiency",
         ],
       ],
-      // body: aiRows.map((r) => [
-      //   r.model,
-      //   r.accuracy,
-      //   r.precision,
-      //   r.recall,
-      //   r.avgResponseTime,
-      //   r.recommendationEfficiency,
-      // ]),
       startY: 90,
       headStyles: { fillColor: [220, 38, 38] },
     });
 
-    doc.save(`ai_analytics_${from}_to_${to}.pdf`);
+    // safer filename: no spaces/special chars
+    doc.save(`ai_analytics_${fromYM}_to_${toYM}.pdf`);
   };
 
   return (
@@ -164,12 +189,8 @@ export default function AIAnalyticsDashboard() {
           <div className="flex gap-3 items-center">
             <input
               type="month"
-              value={`${fromYear}-${String(fromMonth).padStart(2, "0")}`}
-              onChange={(e) => {
-                const [year, month] = e.target.value.split("-");
-                setFromYear(Number(year));
-                setFromMonth(Number(month));
-              }}
+              value={fromYM}
+              onChange={(e) => onChangeFrom(e.target.value)}
               className="px-4 py-2 rounded-xl bg-white/70 backdrop-blur border border-red-200 focus:ring-2 focus:ring-red-500"
             />
 
@@ -177,12 +198,8 @@ export default function AIAnalyticsDashboard() {
 
             <input
               type="month"
-              value={`${toYear}-${String(toMonth).padStart(2, "0")}`}
-              onChange={(e) => {
-                const [year, month] = e.target.value.split("-");
-                setToYear(Number(year));
-                setToMonth(Number(month));
-              }}
+              value={toYM}
+              onChange={(e) => onChangeTo(e.target.value)}
               className="px-4 py-2 rounded-xl bg-white/70 backdrop-blur border border-red-200 focus:ring-2 focus:ring-red-500"
             />
           </div>
@@ -190,12 +207,24 @@ export default function AIAnalyticsDashboard() {
           <button
             type="button"
             onClick={handleDownloadReport}
-            className="bg-linear-to-r from-red-600 to-red-500
-            text-white font-bold px-6 py-2 rounded-xl
-            shadow-lg hover:opacity-90 transition"
+            disabled={rangeInvalid}
+            className={`bg-linear-to-r from-red-600 to-red-500 text-white font-bold px-6 py-2 rounded-xl shadow-lg hover:opacity-90 transition
+          ${rangeInvalid ? "opacity-50 cursor-not-allowed hover:opacity-50" : ""}`}
+            title={
+              rangeInvalid
+                ? "Select a valid month range (From must be <= To)"
+                : ""
+            }
           >
             DOWNLOAD AI REPORT
           </button>
+
+          {rangeInvalid && (
+            <div className="text-sm text-red-600">
+              Please select a valid month range (format YYYY-MM, and From must
+              be before or equal to To).
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
