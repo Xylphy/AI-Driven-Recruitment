@@ -1,22 +1,7 @@
 import type { FetchCandidateProfileOutput } from "@/types/types";
 
-interface WorkExperience {
-  company: string;
-  start_date?: Date;
-  title: string;
-  end_date?: Date;
-}
-
-interface EducationalBackground {
-  degree: string;
-  institution: string;
-  start_date: Date;
-}
-
-interface Project {
-  description: string;
-  name: string;
-  start_date: Date;
+function getYear(value?: string | Date) {
+  return value ? new Date(value).getFullYear() : "N/A";
 }
 
 export default function CandidateResume({
@@ -52,7 +37,7 @@ export default function CandidateResume({
           </h3>
           <div className="bg-white p-4 border rounded">
             {candidateProfile?.parsedResume?.raw_output?.educational_background.map(
-              (edu: EducationalBackground) => (
+              (edu) => (
                 <div key={crypto.randomUUID()} className="mb-4">
                   <p>
                     <strong>Degree:</strong> {edu.degree}
@@ -61,8 +46,7 @@ export default function CandidateResume({
                     <strong>Institution:</strong> {edu.institution}
                   </p>
                   <p>
-                    <strong>Start:</strong>{" "}
-                    {new Date(edu.start_date).getFullYear()}
+                    <strong>Start:</strong> {getYear(edu.start_date)}
                   </p>
                 </div>
               ),
@@ -104,7 +88,7 @@ export default function CandidateResume({
           </h3>
           <div className="space-y-4">
             {candidateProfile?.parsedResume?.raw_output?.work_experience.map(
-              (work: WorkExperience) => (
+              (work) => (
                 <div
                   key={crypto.randomUUID()}
                   className="bg-white p-4 border rounded"
@@ -117,15 +101,11 @@ export default function CandidateResume({
                   </p>
                   <p>
                     <strong>Start:</strong>{" "}
-                    {work.start_date
-                      ? new Date(work.start_date).getFullYear()
-                      : "N/A"}
+                    {work.start_date ? getYear(work.start_date) : "N/A"}
                   </p>
                   <p>
                     <strong>End:</strong>{" "}
-                    {work.end_date
-                      ? new Date(work.end_date).getFullYear()
-                      : "Present"}
+                    {work.end_date ? getYear(work.end_date) : "Present"}
                   </p>
                 </div>
               ),
@@ -138,7 +118,7 @@ export default function CandidateResume({
           {candidateProfile?.parsedResume?.raw_output?.projects &&
           candidateProfile.parsedResume?.raw_output.projects?.length > 0 ? (
             candidateProfile.parsedResume?.raw_output.projects.map(
-              (project: Project) => (
+              (project) => (
                 <div
                   key={crypto.randomUUID()}
                   className="bg-white p-4 border rounded"
@@ -147,8 +127,7 @@ export default function CandidateResume({
                     <strong>Name:</strong> {project.name}
                   </p>
                   <p>
-                    <strong>Start:</strong>{" "}
-                    {new Date(project.start_date).getFullYear()}
+                    <strong>Start:</strong> {getYear(project.start_date)}
                   </p>
                   <p>
                     <strong>Description:</strong> {project.description}

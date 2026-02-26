@@ -24,8 +24,8 @@ export default function UpdatePasswordPage() {
   const [showConfirm, setShowConfirm] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [status, setStatus] = useState<Status>(Status.Idle);
-  const [message, setMessage] = useState<string>("");
+  const [, setStatus] = useState<Status>(Status.Idle);
+  const [, setMessage] = useState<string>("");
 
   const passwordValidity = updatePasswordSchema.safeParse({
     newPassword: password,
@@ -243,12 +243,12 @@ export default function UpdatePasswordPage() {
 
               <button
                 type="submit"
-                disabled={!canSubmit}
+                disabled={!passwordValidity.success || isSubmitting}
                 className={[
                   "relative w-full rounded-2xl px-6 py-3",
                   "font-bold uppercase tracking-[0.18em]",
                   "transition-all duration-300",
-                  canSubmit
+                  !passwordValidity.success || isSubmitting
                     ? "bg-linear-to-r from-red-600 to-red-500 text-white shadow-[0_25px_80px_rgba(220,38,38,0.25)] hover:scale-[1.02]"
                     : "bg-white/60 border border-white/40 text-gray-400 cursor-not-allowed",
                 ].join(" ")}
