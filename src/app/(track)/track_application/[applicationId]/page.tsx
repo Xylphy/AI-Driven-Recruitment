@@ -38,78 +38,45 @@ export default function ApplicationTrackingPage() {
     fetchApplication.data?.data.status || "Paper Screening",
   );
 
+  const formatScheduleDetails = () => {
+    if (!application?.scheduledAt) {
+      return {
+        date: "TBA",
+        time: "TBA",
+        platform: application?.platform || "TBA",
+      };
+    }
+
+    const scheduledDate = new Date(application.scheduledAt);
+    return {
+      date: scheduledDate.toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      }),
+      time: scheduledDate.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+      }),
+      platform: application?.platform || "TBA",
+    };
+  };
+
   const getStageDetails = (status: string) => {
+    const scheduleDetails = formatScheduleDetails();
+
     const details: Record<string, Record<string, string>> = {
       "Paper Screening": {},
-      Exam: {
-        date: application?.scheduledAt
-          ? new Date(application.scheduledAt).toLocaleDateString("en-US", {
-              month: "long",
-              day: "numeric",
-              year: "numeric",
-            })
-          : "TBA",
-        time: application?.scheduledAt
-          ? new Date(application.scheduledAt).toLocaleTimeString("en-US", {
-              hour: "numeric",
-              minute: "2-digit",
-            })
-          : "TBA",
-        platform: application?.platform || "TBA",
-      },
-      "HR Interview": {
-        date: application?.scheduledAt
-          ? new Date(application.scheduledAt).toLocaleDateString("en-US", {
-              month: "long",
-              day: "numeric",
-              year: "numeric",
-            })
-          : "TBA",
-        time: application?.scheduledAt
-          ? new Date(application.scheduledAt).toLocaleTimeString("en-US", {
-              hour: "numeric",
-              minute: "2-digit",
-            })
-          : "TBA",
-        platform: application?.platform || "TBA",
-      },
-      "Technical Interview": {
-        date: application?.scheduledAt
-          ? new Date(application.scheduledAt).toLocaleDateString("en-US", {
-              month: "long",
-              day: "numeric",
-              year: "numeric",
-            })
-          : "TBA",
-        time: application?.scheduledAt
-          ? new Date(application.scheduledAt).toLocaleTimeString("en-US", {
-              hour: "numeric",
-              minute: "2-digit",
-            })
-          : "TBA",
-        platform: application?.platform || "TBA",
-      },
-      "Final Interview": {
-        date: application?.scheduledAt
-          ? new Date(application.scheduledAt).toLocaleDateString("en-US", {
-              month: "long",
-              day: "numeric",
-              year: "numeric",
-            })
-          : "TBA",
-        time: application?.scheduledAt
-          ? new Date(application.scheduledAt).toLocaleTimeString("en-US", {
-              hour: "numeric",
-              minute: "2-digit",
-            })
-          : "TBA",
-        platform: application?.platform || "TBA",
-      },
+      Exam: scheduleDetails,
+      "HR Interview": scheduleDetails,
+      "Technical Interview": scheduleDetails,
+      "Final Interview": scheduleDetails,
       "Job Offer": {},
     };
 
     return details[status] || {};
   };
+
   return (
     <div className="min-h-screen bg-linear-to-br from-red-50 via-white to-gray-100 flex items-center justify-center p-6">
       <div className="w-full max-w-5xl backdrop-blur-xl bg-white/70 border border-white/30 shadow-xl rounded-2xl p-8 space-y-8">
@@ -209,38 +176,16 @@ export default function ApplicationTrackingPage() {
                       🔗 Join Meeting Here
                     </a>
                   ) : (
-                    <p className="text-gray-500 text-center">
-                      No additional details available for this stage.
+                    <p className="text-gray-700 font-semibold text-center">
+                      {value !== "TBA"
+                        ? value
+                        : "No additional details available for this stage."}
                     </p>
                   )}
                 </div>
               );
             })}
           </div>
-
-          {/* {(() => {
-            const currentDetails = application?.status
-              ? getStageDetails(application.status)
-              : {};
-            return Object.keys(currentDetails).length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {Object.entries(currentDetails).map(([key, value]) => (
-                  <div
-                    key={key}
-                    className="bg-white/70 backdrop-blur border border-gray-200 rounded-lg p-4 text-center"
-                  >
-                    <p className="text-sm text-gray-500 capitalize">{key}</p>
-                    <p className="font-semibold text-gray-800">{value}</p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-500 text-center">
-                No additional details available for this stage.
-              </p>
-            );
-          })()}
-        </div> */}
 
           <p className="text-center text-xs text-gray-400">
             Please monitor this page regularly for updates regarding your

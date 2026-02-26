@@ -291,6 +291,8 @@ const candidateRouter = createTRPCRouter({
       z.object({
         applicantId: z.string(),
         newStatus: z.enum(CANDIDATE_STATUSES).nullable(),
+        scheduleAt: z.string().optional(),
+        platform: z.string().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -315,6 +317,8 @@ const candidateRouter = createTRPCRouter({
         "applicants",
         {
           status: input.newStatus,
+          scheduled_at: input.scheduleAt,
+          platform: input.platform,
         },
         [{ column: "id", value: input.applicantId }],
         "id, joblisting_id",
@@ -332,7 +336,7 @@ const candidateRouter = createTRPCRouter({
         ? ((data as unknown[])[0] as Record<string, unknown>)
         : (data as unknown as Record<string, unknown>);
 
-      const userId =
+      const applicantId =
         typeof updatedRow?.id === "string"
           ? (updatedRow.id as string)
           : undefined;
@@ -341,7 +345,7 @@ const candidateRouter = createTRPCRouter({
           ? (updatedRow.joblisting_id as string)
           : undefined;
 
-      if (!userId) {
+      if (!applicantId) {
         console.error("No userId in updated row");
 
         throw new TRPCError({
@@ -369,12 +373,12 @@ const candidateRouter = createTRPCRouter({
       try {
         await db
           .collection("users")
-          .doc(userId)
+          .doc(applicantId)
           .collection("notifications")
           .add(notification);
       } catch (err) {
         notificationSuccess = false;
-        console.error("Failed to add notification for user", userId, err);
+        console.error("Failed to add notification for user", applicantId, err);
       }
 
       const changes: Record<string, Changes> = {};

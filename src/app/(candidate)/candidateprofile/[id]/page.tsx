@@ -144,6 +144,7 @@ export default function Page() {
     time: "",
     location: "",
   });
+
   // New: edit form state
   const [editScore, setEditScore] = useState<number>(0);
   const [editHighlights, setEditHighlights] = useState<string>("");
@@ -218,36 +219,11 @@ export default function Page() {
     e: React.ChangeEvent<HTMLSelectElement>,
   ) => {
     const newStatus = e.target.value as CandidateStatuses | null;
-
     if (!newStatus) return;
-
     if (CANDIDATE_STATUSES.includes(newStatus)) {
       setPendingStatus(newStatus);
       setShowScheduleModal(true);
       return;
-    }
-
-    try {
-      await updateCandidateStatusMutation.mutateAsync({
-        applicantId: candidateId,
-        newStatus,
-      });
-
-      Swal.fire({
-        icon: "success",
-        title: "Status Updated",
-        text: `Candidate moved to ${newStatus}`,
-        confirmButtonColor: "#E30022",
-      });
-
-      // No need to refetch entire profile, just update status locally. Reduce unnecessary network request and UI flicker.
-      setSelectedStatus(newStatus);
-    } catch (err) {
-      Swal.fire({
-        icon: "error",
-        title: "Update failed",
-        text: err instanceof Error ? err.message : "Something went wrong",
-      });
     }
   };
 
@@ -535,28 +511,49 @@ export default function Page() {
                   onClick={async () => {
                     setShowScheduleModal(false);
 
-                    await updateCandidateStatusMutation.mutateAsync({
-                      applicantId: candidateId,
-                      newStatus: pendingStatus,
-                    });
-
-                    Swal.fire({
-                      icon: "success",
-                      title: "Scheduled Successfully",
-                      html: `
+                    await updateCandidateStatusMutation.mutateAsync(
+                      {
+                        applicantId: candidateId,
+                        newStatus: pendingStatus,
+                        scheduleAt:
+                          scheduleData.date && scheduleData.time
+                            ? `${scheduleData.date}T${scheduleData.time}:00Z`
+                            : undefined,
+                        platform: scheduleData.location,
+                      },
+                      {
+                        onSuccess: () => {
+                          setSelectedStatus(pendingStatus);
+                          Swal.fire({
+                            icon: "success",
+                            title: "Scheduled Successfully",
+                            html: `
 																		<strong>Status:</strong> ${pendingStatus}<br/>
 																		<strong>Date:</strong> ${scheduleData.date}<br/>
 																		<strong>Time:</strong> ${scheduleData.time}<br/>
 																		<strong>Location:</strong> ${scheduleData.location}
 																	`,
-                      confirmButtonColor: "#E30022",
-                    });
+                            confirmButtonColor: "#E30022",
+                          });
+                        },
+                        onError: (err) =>
+                          Swal.fire({
+                            icon: "error",
+                            title: "Update failed",
+                            text:
+                              err instanceof Error
+                                ? err.message
+                                : "Something went wrong",
+                          }),
 
-                    setScheduleData({
-                      date: "",
-                      time: "",
-                      location: "",
-                    });
+                        onSettled: () =>
+                          setScheduleData({
+                            date: "",
+                            time: "",
+                            location: "",
+                          }),
+                      },
+                    );
                   }}
                   className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-500 transition"
                   type="button"

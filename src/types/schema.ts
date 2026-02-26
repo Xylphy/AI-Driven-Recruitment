@@ -37,6 +37,8 @@ export interface Applicants extends IdentifiableItem {
   created_at: string;
   email?: string;
   contact_number?: string;
+  scheduled_at?: string;
+  platform?: string;
 }
 
 export interface JobListing extends IdentifiableItem, Title {
