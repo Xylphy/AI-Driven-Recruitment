@@ -8,6 +8,7 @@ import useAuth from "@/hooks/useAuth";
 import { formatDate } from "@/lib/library";
 import { trpc } from "@/lib/trpc/client";
 import type { JobListing } from "@/types/types";
+import { swalSuccess, swalError } from "@/lib/swal";
 
 interface Candidate {
   id: string;
@@ -75,11 +76,12 @@ export default function Page() {
       { joblistingId: jobId },
       {
         onSuccess() {
-          alert("Job deleted successfully");
+          swalSuccess("Deleted Successfully", "Job deleted successfully.");
+
           router.push("/admin/jobs");
         },
         onError(error) {
-          alert(`Error deleting job: ${error.message}`);
+          swalError("Delete Failed", `Error deleting job: ${error.message}`);
         },
       },
     );

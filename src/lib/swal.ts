@@ -1,5 +1,23 @@
 import Swal from "sweetalert2";
 
+const formatValidationError = (error: any): string => {
+  if (!error) return "An unexpected error occurred.";
+
+  if (typeof error === "string") return error;
+
+  if (error.errors && Array.isArray(error.errors)) {
+    return error.errors.join("\n");
+  }
+
+  if (error.properties) {
+    return Object.values(error.properties)
+      .flatMap((prop: any) => prop.errors || [])
+      .join("\n");
+  }
+
+  return JSON.stringify(error);
+};
+
 const BASE_CONFIG = {
   confirmButtonColor: "#E30022",
 };
@@ -21,21 +39,40 @@ export const swalSuccess = (
   });
 };
 
-export const swalError = (title: string, text?: string) => {
+export const swalError = (
+  title: string,
+  text?: unknown,
+  onConfirm?: () => void,
+) => {
+  const formatted =
+    typeof text === "string" ? text : formatValidationError(text);
+
   Swal.fire({
     icon: "error",
     title,
-    text,
+    text: formatted,
     ...BASE_CONFIG,
+  }).then((result) => {
+    if (result.isConfirmed && onConfirm) {
+      onConfirm();
+    }
   });
 };
 
-export const swalInfo = (title: string, text?: string) => {
+export const swalInfo = (
+  title: string,
+  text?: string,
+  onConfirm?: () => void,
+) => {
   Swal.fire({
     icon: "info",
     title,
     text,
     ...BASE_CONFIG,
+  }).then((result) => {
+    if (result.isConfirmed && onConfirm) {
+      onConfirm();
+    }
   });
 };
 

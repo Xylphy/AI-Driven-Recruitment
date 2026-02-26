@@ -7,6 +7,7 @@ import { REGULAR_STAFF_ROLES } from "@/lib/constants";
 import { addStaffSchema } from "@/lib/schemas";
 import { trpc } from "@/lib/trpc/client";
 import type { RegularStaffRoles } from "@/types/types";
+import { swalSuccess, swalError, swalInfo } from "@/lib/swal";
 
 export default function UsersPage() {
   const { isAuthenticated } = useAuth();
@@ -54,7 +55,10 @@ export default function UsersPage() {
           staffsQuery.refetch();
         },
         onError: (error) => {
-          alert(`Failed to change user role: ${error.message}`);
+          swalError(
+            "Role Update Failed",
+            `Failed to change user role: ${error.message}`,
+          );
         },
       },
     );
@@ -62,7 +66,7 @@ export default function UsersPage() {
   // ✅ Placeholder add (local only)
   const handleAddStaff = () => {
     if (!isStaffValid) {
-      alert(treeifyError(staffError));
+      swalError("Validation Failed", staffError);
       return;
     }
 
@@ -76,17 +80,21 @@ export default function UsersPage() {
       },
       {
         onSuccess: () => {
-          alert("Staff added successfully!");
-          staffsQuery.refetch();
-          setIsAddOpen(false);
-          setNewStaffRole("HR Officer");
-          setStaffFirstName("");
-          setStaffLastName("");
-          setStaffEmail("");
-          setStaffPassword("");
+          swalSuccess("Staff Added", "Staff added successfully!", () => {
+            staffsQuery.refetch();
+            setIsAddOpen(false);
+            setNewStaffRole("HR Officer");
+            setStaffFirstName("");
+            setStaffLastName("");
+            setStaffEmail("");
+            setStaffPassword("");
+          });
         },
         onError: (error) => {
-          alert(`Failed to add staff: ${error.message}`);
+          swalError(
+            "Add Staff Failed",
+            error instanceof Error ? error.message : String(error),
+          );
         },
       },
     );

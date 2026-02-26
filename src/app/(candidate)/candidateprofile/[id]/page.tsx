@@ -12,6 +12,7 @@ import useAuth from "@/hooks/useAuth";
 import { CANDIDATE_STATUSES } from "@/lib/constants";
 import { formatDate } from "@/lib/library";
 import { trpc } from "@/lib/trpc/client";
+import { swalSuccess, swalError } from "@/lib/swal";
 
 type CandidateStatus = (typeof CANDIDATE_STATUSES)[number];
 
@@ -160,11 +161,17 @@ export default function Page() {
         { reportId, staffId: getHRReportsQuery.data?.[0]?.staff_id || "" },
         {
           onSuccess: () => {
-            alert("HR evaluation deleted successfully.");
+            swalSuccess(
+              "Deleted Successfully",
+              "HR evaluation deleted successfully.",
+            );
             getHRReportsQuery.refetch();
           },
           onError: (error: unknown) => {
-            alert(error instanceof Error ? error.message : String(error));
+            swalError(
+              "Something went wrong",
+              error instanceof Error ? error.message : String(error),
+            );
           },
         },
       );
@@ -188,12 +195,18 @@ export default function Page() {
       },
       {
         onSuccess: () => {
-          alert("HR evaluation updated successfully.");
+          swalSuccess(
+            "Update Successful",
+            "HR evaluation updated successfully.",
+          );
           setEditingIndex(null);
           getHRReportsQuery.refetch();
         },
         onError: (error: unknown) => {
-          alert(error instanceof Error ? error.message : String(error));
+          swalError(
+            "Update Failed",
+            error instanceof Error ? error.message : String(error),
+          );
         },
       },
     );
@@ -466,7 +479,7 @@ export default function Page() {
             </button>
           </div>
           {activeTab === "evaluation" ? (
-            <div className="grid md:grid-rows-2 gap-6">
+            <div className="flex flex-col gap-6">
               <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 h-full">
                 <h3 className="font-semibold mb-2">AI Generated Report</h3>
                 {candidateProfileQuery.data ? (
@@ -505,10 +518,14 @@ export default function Page() {
                         {
                           onSuccess: () => {
                             getHRReportsQuery.refetch();
-                            alert("HR Report submitted successfully.");
+                            swalSuccess(
+                              "Report Submitted",
+                              "HR report submitted successfully.",
+                            );
                           },
                           onError: (error) => {
-                            alert(
+                            swalError(
+                              "Submission Failed",
                               error instanceof Error
                                 ? error.message
                                 : String(error),
@@ -558,7 +575,12 @@ export default function Page() {
 
                             <div className="flex items-center gap-3 shrink-0">
                               <div className="px-3 py-1 bg-red-600/10 text-red-600 text-sm font-semibold rounded-full whitespace-nowrap">
-                                {(report.score || 0).toFixed(1)} / 5
+                                {report.score != null
+                                  ? Number.isInteger(report.score)
+                                    ? report.score
+                                    : report.score.toFixed(1)
+                                  : 0}{" "}
+                                / 5
                               </div>
 
                               {report.staff_id === userId && (
