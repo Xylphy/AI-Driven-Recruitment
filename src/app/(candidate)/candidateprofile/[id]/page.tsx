@@ -407,7 +407,7 @@ export default function Page() {
           <div className="relative flex flex-col items-end gap-2">
             <button
               type="button"
-              onClick={() => router.push("/admin/applicants")}
+              onClick={() => router.back()}
               className="
                 flex items-center gap-2
                 text-gray-700
@@ -417,7 +417,7 @@ export default function Page() {
               "
             >
               <MdArrowBack className="text-lg" />
-              <span>Back to Candidates Page</span>
+              <span>Back</span>
             </button>
 
             <select
