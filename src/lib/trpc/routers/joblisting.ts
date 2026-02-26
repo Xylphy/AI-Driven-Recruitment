@@ -692,9 +692,7 @@ const jobListingRouter = createTRPCRouter({
 
       const { data, error } = await supabaseClient
         .from("applicants")
-        .select(
-          "id, status, scheduled_at, platform, meeting_url, job_listings(title)",
-        )
+        .select("id, status, scheduled_at, platform, job_listings(title)")
         .eq("id", input.applicantId)
         .single();
       if (error || !data) {
@@ -710,7 +708,6 @@ const jobListingRouter = createTRPCRouter({
         status: (typeof CANDIDATE_STATUSES)[number];
         scheduled_at: string | null;
         platform: string | null;
-        meeting_url: string | null;
         job_listings: { title: string } | null;
       };
 
@@ -719,7 +716,6 @@ const jobListingRouter = createTRPCRouter({
         status: typedData.status,
         scheduledAt: typedData.scheduled_at,
         platform: typedData.platform,
-        meetingURL: typedData.meeting_url,
         jobTitle: typedData.job_listings?.title ?? null,
       };
 
