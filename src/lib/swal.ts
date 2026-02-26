@@ -1,18 +1,28 @@
 import Swal from "sweetalert2";
 
-const formatValidationError = (error: any): string => {
+const formatValidationError = (error: unknown): string => {
   if (!error) return "An unexpected error occurred.";
 
   if (typeof error === "string") return error;
 
-  if (error.errors && Array.isArray(error.errors)) {
-    return error.errors.join("\n");
-  }
+  if (typeof error === "object" && error !== null) {
+    const err = error as Record<string, unknown>;
 
-  if (error.properties) {
-    return Object.values(error.properties)
-      .flatMap((prop: any) => prop.errors || [])
-      .join("\n");
+    if (err.errors && Array.isArray(err.errors)) {
+      return err.errors.join("\n");
+    }
+
+    if (err.properties && typeof err.properties === "object") {
+      return Object.values(err.properties)
+        .flatMap((prop: unknown) => {
+          if (prop && typeof prop === "object" && "errors" in prop) {
+            const propObj = prop as { errors?: unknown[] };
+            return propObj.errors || [];
+          }
+          return [];
+        })
+        .join("\n");
+    }
   }
 
   return JSON.stringify(error);

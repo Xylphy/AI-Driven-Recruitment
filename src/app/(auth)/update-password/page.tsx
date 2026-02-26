@@ -1,15 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useState } from "react";
+import useAuth from "@/hooks/useAuth";
+import { auth } from "@/lib/firebase/client";
+import { updatePasswordSchema } from "@/lib/schemas";
+import { trpc } from "@/lib/trpc/client";
+
+enum Status {
+  Idle,
+  Success,
+  Error,
+}
 
 export default function UpdatePasswordPage() {
-  // const router = useRouter();
-  const searchParams = useSearchParams();
+  useAuth();
 
-  // Admin-provided link could include something like ?token=abc123
-  const token = searchParams.get("token") ?? "";
+  const updatePasswordMutation = trpc.auth.updatePassword.useMutation();
 
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -17,73 +24,52 @@ export default function UpdatePasswordPage() {
   const [showConfirm, setShowConfirm] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
-  // const [message, setMessage] = useState<string>("");
+  const [status, setStatus] = useState<Status>(Status.Idle);
+  const [message, setMessage] = useState<string>("");
 
-  // const { passwordValid, confirmValid, canSubmit,  } = useMemo(() => {
-  const { passwordValid, confirmValid, canSubmit } = useMemo(() => {
-    const minLen = password.length >= 8;
-    const hasUpper = /[A-Z]/.test(password);
-    const hasLower = /[a-z]/.test(password);
-    const hasNumber = /\d/.test(password);
-
-    const passwordValidLocal = minLen && hasUpper && hasLower && hasNumber;
-    const confirmValidLocal = confirm.length > 0 && confirm === password;
-
-    const canSubmitLocal =
-      !!token && passwordValidLocal && confirmValidLocal && !isSubmitting;
-
-    let hintLocal = "";
-    if (!token) hintLocal = "Missing or invalid password update link token.";
-    else if (!minLen) hintLocal = "Password must be at least 8 characters.";
-    else if (!hasUpper) hintLocal = "Add at least 1 uppercase letter.";
-    else if (!hasLower) hintLocal = "Add at least 1 lowercase letter.";
-    else if (!hasNumber) hintLocal = "Add at least 1 number.";
-    else if (confirm.length > 0 && confirm !== password)
-      hintLocal = "Passwords do not match.";
-
-    return {
-      passwordValid: passwordValidLocal,
-      confirmValid: confirmValidLocal,
-      canSubmit: canSubmitLocal,
-      hint: hintLocal,
-    };
-  }, [password, confirm, token, isSubmitting]);
+  const passwordValidity = updatePasswordSchema.safeParse({
+    newPassword: password,
+    confirmPassword: confirm,
+  });
 
   async function handleSubmit(e: React.SyntheticEvent) {
     e.preventDefault();
-    // setStatus("idle");
-    // setMessage("");
+    setStatus(Status.Idle);
+    setMessage("");
 
-    if (!canSubmit) {
-      // setStatus("error");
-      // setMessage(hint || "Please complete the form.");
+    if (!passwordValidity.success) {
+      setStatus(Status.Error);
+      setMessage(passwordValidity.error.message);
       return;
     }
 
     setIsSubmitting(true);
-    try {
-      // ============================
-      // PLACEHOLDER UPDATE LOGIC
-      // ============================
-      // Replace this with your real API call, e.g.
-      // await trpc.auth.updatePassword.mutate({ token, password });
-      // or Firebase confirmPasswordReset(auth, oobCode, newPassword)
-      //
-      await new Promise((r) => setTimeout(r, 600));
-      // ============================
 
-      // setStatus("success");
-      // setMessage("Password updated successfully. You may now log in.");
-
-      // Optional: auto-redirect after a short moment
-      // setTimeout(() => router.push("/login"), 1200);
-    } catch {
-      // setStatus("error");
-      // setMessage("Update failed. Please request a new link from your admin.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    await updatePasswordMutation.mutateAsync(
+      {
+        currentPassword: password,
+        newPassword: confirm,
+        confirmPassword: confirm,
+      },
+      {
+        onSuccess() {
+          setStatus(Status.Success);
+          setMessage("Password updated successfully. You may now log in.");
+          auth.signOut(); // Log out the user after password change
+        },
+        onError(error) {
+          setStatus(Status.Error);
+          setMessage(
+            error instanceof Error
+              ? error.message
+              : "Update failed. Please request a new link from your admin.",
+          );
+        },
+        onSettled() {
+          setIsSubmitting(false);
+        },
+      },
+    );
   }
 
   return (
@@ -95,12 +81,12 @@ export default function UpdatePasswordPage() {
         flex
         items-center
         justify-center
-        bg-gradient-to-br from-white via-red-50/30 to-white
+        bg-linear-to-br from-white via-red-50/30 to-white
         px-4
       "
     >
-      <div className="absolute -top-40 -left-40 w-[450px] h-[450px] bg-red-400/20 rounded-full blur-3xl" />
-      <div className="absolute -bottom-40 -right-40 w-[450px] h-[450px] bg-red-500/20 rounded-full blur-3xl" />
+      <div className="absolute -top-40 -left-40 w-112.5 h-112.5 bg-red-400/20 rounded-full blur-3xl" />
+      <div className="absolute -bottom-40 -right-40 w-112.5 h-112.5 bg-red-500/20 rounded-full blur-3xl" />
 
       <div
         className="
@@ -115,7 +101,7 @@ export default function UpdatePasswordPage() {
         <div
           className="
           relative
-          rounded-[32px]
+          rounded-4xl
           border border-white/40
           bg-white/55
           backdrop-blur-3xl
@@ -124,14 +110,14 @@ export default function UpdatePasswordPage() {
           overflow-hiddenz
         "
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-red-100/30 pointer-events-none" />
+          <div className="absolute inset-0 bg-linear-to-br from-white/40 via-transparent to-red-100/30 pointer-events-none" />
 
           <div className="relative">
             <div className="mb-8 text-center">
               <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-red-600">
                 Secure Access
               </p>
-              <h1 className="mt-3 text-3xl font-extrabold bg-gradient-to-r from-red-600 to-red-400 bg-clip-text text-transparent">
+              <h1 className="mt-3 text-3xl font-extrabold bg-linear-to-r from-red-600 to-red-400 bg-clip-text text-transparent">
                 Update Password
               </h1>
               <p className="mt-2 text-sm text-gray-600">
@@ -263,7 +249,7 @@ export default function UpdatePasswordPage() {
                   "font-bold uppercase tracking-[0.18em]",
                   "transition-all duration-300",
                   canSubmit
-                    ? "bg-gradient-to-r from-red-600 to-red-500 text-white shadow-[0_25px_80px_rgba(220,38,38,0.25)] hover:scale-[1.02]"
+                    ? "bg-linear-to-r from-red-600 to-red-500 text-white shadow-[0_25px_80px_rgba(220,38,38,0.25)] hover:scale-[1.02]"
                     : "bg-white/60 border border-white/40 text-gray-400 cursor-not-allowed",
                 ].join(" ")}
               >

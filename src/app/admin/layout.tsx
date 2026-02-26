@@ -20,6 +20,7 @@ import {
   MdSettings,
   MdWork,
 } from "react-icons/md";
+import useAuth from "@/hooks/useAuth";
 import { auth } from "@/lib/firebase/client";
 import { trpc } from "@/lib/trpc/client";
 
@@ -32,6 +33,8 @@ export default function AdminLayout({
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const pathName = usePathname();
   const jwtDecoded = trpc.auth.decodeJWT.useQuery();
+
+  useAuth(); // For logout refresh and global auth state management
 
   if (jwtDecoded.isLoading || !jwtDecoded.isSuccess || !jwtDecoded.data) {
     return (
@@ -55,7 +58,7 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-red-50 via-white to-gray-100">
+    <div className="flex min-h-screen bg-linear-to-br from-red-50 via-white to-gray-100">
       <AnimatePresence>
         {isSidebarOpen && (
           <motion.aside
@@ -65,23 +68,23 @@ export default function AdminLayout({
             exit={{ x: -260, opacity: 0 }}
             transition={{ duration: 0.35 }}
             className="
-          w-72
-          backdrop-blur-2xl
-          bg-white/20
-          border-r border-white/30
-          shadow-[0_20px_60px_rgba(227,0,34,0.15)]
-          text-gray-800
-          flex flex-col
-          p-6
-          h-screen
-          sticky top-0
-          overflow-y-auto
-        "
+              w-72
+              backdrop-blur-2xl
+              bg-white/20
+              border-r border-white/30
+              shadow-[0_20px_60px_rgba(227,0,34,0.15)]
+              text-gray-800
+              flex flex-col
+              p-6
+              h-screen
+              sticky top-0
+              overflow-y-auto
+            "
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-red-500/10 via-transparent to-red-300/10 pointer-events-none" />
+            <div className="absolute inset-0 bg-linear-to-br from-red-500/10 via-transparent to-red-300/10 pointer-events-none" />
 
             <div className="relative flex justify-between items-center mb-10">
-              <h2 className="text-xl font-bold bg-gradient-to-r from-red-600 to-red-400 bg-clip-text text-transparent">
+              <h2 className="text-xl font-bold bg-linear-to-r from-red-600 to-red-400 bg-clip-text text-transparent">
                 Admin Panel
               </h2>
               <MdClose
@@ -96,7 +99,7 @@ export default function AdminLayout({
                   href="/admin"
                   className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
                     pathName === "/admin"
-                      ? "bg-gradient-to-r from-red-600 to-red-500 text-white shadow-lg"
+                      ? "bg-linear-to-r from-red-600 to-red-500 text-white shadow-lg"
                       : "hover:bg-white/40 backdrop-blur-md"
                   }`}
                 >
@@ -108,7 +111,7 @@ export default function AdminLayout({
                 href="/admin/jobs"
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
                   pathName === "/admin/jobs"
-                    ? "bg-gradient-to-r from-red-600 to-red-500 text-white shadow-lg"
+                    ? "bg-linear-to-r from-red-600 to-red-500 text-white shadow-lg"
                     : "hover:bg-white/40 backdrop-blur-md"
                 }`}
               >
@@ -119,7 +122,7 @@ export default function AdminLayout({
                 href="/admin/applicants"
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
                   pathName === "/admin/applicants"
-                    ? "bg-gradient-to-r from-red-600 to-red-500 text-white shadow-lg"
+                    ? "bg-linear-to-r from-red-600 to-red-500 text-white shadow-lg"
                     : "hover:bg-white/40 backdrop-blur-md"
                 }`}
               >
@@ -130,7 +133,7 @@ export default function AdminLayout({
                 href="/admin/compare"
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
                   pathName === "/admin/compare"
-                    ? "bg-gradient-to-r from-red-600 to-red-500 text-white shadow-lg"
+                    ? "bg-linear-to-r from-red-600 to-red-500 text-white shadow-lg"
                     : "hover:bg-white/40 backdrop-blur-md"
                 }`}
               >
@@ -141,7 +144,7 @@ export default function AdminLayout({
                 href="/admin/ai_metrics"
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
                   pathName === "/admin/ai_metrics"
-                    ? "bg-gradient-to-r from-red-600 to-red-500 text-white shadow-lg"
+                    ? "bg-linear-to-r from-red-600 to-red-500 text-white shadow-lg"
                     : "hover:bg-white/40 backdrop-blur-md"
                 }`}
               >
@@ -154,7 +157,7 @@ export default function AdminLayout({
                     href="/admin/bottlenecks"
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
                       pathName === "/admin/bottlenecks"
-                        ? "bg-gradient-to-r from-red-600 to-red-500 text-white shadow-lg"
+                        ? "bg-linear-to-r from-red-600 to-red-500 text-white shadow-lg"
                         : "hover:bg-white/40 backdrop-blur-md"
                     }`}
                   >
@@ -165,7 +168,7 @@ export default function AdminLayout({
                     href="/admin/audit_logs"
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
                       pathName === "/admin/audit_logs"
-                        ? "bg-gradient-to-r from-red-600 to-red-500 text-white shadow-lg"
+                        ? "bg-linear-to-r from-red-600 to-red-500 text-white shadow-lg"
                         : "hover:bg-white/40 backdrop-blur-md"
                     }`}
                   >
@@ -176,7 +179,7 @@ export default function AdminLayout({
                     href="/admin/kpi_metrics"
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
                       pathName === "/admin/kpi_metrics"
-                        ? "bg-gradient-to-r from-red-600 to-red-500 text-white shadow-lg"
+                        ? "bg-linear-to-r from-red-600 to-red-500 text-white shadow-lg"
                         : "hover:bg-white/40 backdrop-blur-md"
                     }`}
                   >
@@ -187,7 +190,7 @@ export default function AdminLayout({
                     href="/admin/staffs"
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
                       pathName === "/admin/staffs"
-                        ? "bg-gradient-to-r from-red-600 to-red-500 text-white shadow-lg"
+                        ? "bg-linear-to-r from-red-600 to-red-500 text-white shadow-lg"
                         : "hover:bg-white/40 backdrop-blur-md"
                     }`}
                   >
@@ -198,7 +201,7 @@ export default function AdminLayout({
                     href="/admin/hr_officers"
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
                       pathName === "/admin/hr_officers"
-                        ? "bg-gradient-to-r from-red-600 to-red-500 text-white shadow-lg"
+                        ? "bg-linear-to-r from-red-600 to-red-500 text-white shadow-lg"
                         : "hover:bg-white/40 backdrop-blur-md"
                     }`}
                   >
@@ -213,10 +216,7 @@ export default function AdminLayout({
                   className="text-xl text-gray-600 hover:text-red-600 cursor-pointer transition"
                 />
                 <MdLogout
-                  onClick={() => {
-                    auth.signOut();
-                    router.push("/login");
-                  }}
+                  onClick={() => auth.signOut()}
                   className="text-xl text-gray-600 hover:text-red-600 cursor-pointer transition"
                 />
               </div>
@@ -227,35 +227,35 @@ export default function AdminLayout({
         <div className="flex-1 flex flex-col">
           <header
             className="
-      relative
-      backdrop-blur-2xl
-      bg-white/60
-      border-b border-white/40
-      shadow-[0_8px_30px_rgba(0,0,0,0.05)]
-      px-6 py-4
-      flex justify-between items-center
-    "
+              relative
+              backdrop-blur-2xl
+              bg-white/60
+              border-b border-white/40
+              shadow-[0_8px_30px_rgba(0,0,0,0.05)]
+              px-6 py-4
+              flex justify-between items-center
+            "
           >
             {/* Soft red glow overlay */}
-            <div className="absolute inset-0 bg-gradient-to-r from-red-500/5 via-transparent to-red-400/5 pointer-events-none" />
+            <div className="absolute inset-0 bg-linear-to-r from-red-500/5 via-transparent to-red-400/5 pointer-events-none" />
 
             {/* Left Section */}
             <button
               type="button"
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
               className="
-        relative
-        flex items-center gap-2
-        px-4 py-2
-        rounded-xl
-        bg-white/50 backdrop-blur-md
-        border border-white/40
-        text-red-600 font-semibold
-        shadow-sm
-        hover:shadow-md
-        hover:bg-red-50
-        transition-all duration-300
-      "
+                relative
+                flex items-center gap-2
+                px-4 py-2
+                rounded-xl
+                bg-white/50 backdrop-blur-md
+                border border-white/40
+                text-red-600 font-semibold
+                shadow-sm
+                hover:shadow-md
+                hover:bg-red-50
+                transition-all duration-300
+              "
             >
               {!isSidebarOpen && (
                 <>
@@ -270,16 +270,16 @@ export default function AdminLayout({
               <Link
                 href="/"
                 className="
-          flex items-center gap-2
-          px-4 py-2
-          rounded-xl
-          bg-white/50 backdrop-blur-md
-          border border-white/40
-          text-gray-600
-          hover:text-red-600
-          hover:bg-red-50
-          transition-all duration-300
-        "
+                  flex items-center gap-2
+                  px-4 py-2
+                  rounded-xl
+                  bg-white/50 backdrop-blur-md
+                  border border-white/40
+                  text-gray-600
+                  hover:text-red-600
+                  hover:bg-red-50
+                  transition-all duration-300
+                "
               >
                 <MdArrowBack className="text-lg" />
                 <span className="font-medium">Visit Site</span>
@@ -308,7 +308,7 @@ export default function AdminLayout({
               flex-1
               p-8
               overflow-y-auto
-              bg-gradient-to-br from-white/40 via-white/20 to-red-50/30
+              bg-linear-to-br from-white/40 via-white/20 to-red-50/30
             "
           >
             {children}
