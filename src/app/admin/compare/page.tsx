@@ -6,10 +6,10 @@ import { useState } from "react";
 import Select from "react-select";
 import useAuth from "@/hooks/useAuth";
 import { formatDate } from "@/lib/library";
+import { swalError, swalInfo } from "@/lib/swal";
 import { trpc } from "@/lib/trpc/client";
 import type { AdminFeedback } from "@/types/schema";
 import type { FetchCandidateProfileOutput } from "@/types/types";
-import { swalError, swalInfo, swalSuccess } from "@/lib/swal";
 
 interface WorkExperience {
   company: string;

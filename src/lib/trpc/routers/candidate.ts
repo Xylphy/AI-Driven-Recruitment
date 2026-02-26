@@ -10,7 +10,12 @@ import {
   updateTable,
 } from "@/lib/supabase/action";
 import { createClientServer } from "@/lib/supabase/supabase";
-import type { ScoredCandidateScoreData } from "@/types/mongo_db/schema";
+import type {
+  ParsedResumeDoc,
+  ScoredCandidateDoc,
+  ScoredCandidateScoreData,
+  TranscribedDoc,
+} from "@/types/mongo_db/schema";
 import type {
   AdminFeedback,
   Applicants,
@@ -19,6 +24,8 @@ import type {
 } from "@/types/schema";
 import type { Notification } from "@/types/types";
 import { adminProcedure, authorizedProcedure, createTRPCRouter } from "../init";
+import type { Db } from "mongodb";
+import { getMongoDb } from "@/lib/mongodb/mongodb";
 
 type AICompareRes = {
   better_candidate: string;
@@ -31,6 +38,29 @@ type Name = {
   first_name: string;
   last_name: string;
 };
+
+async function getCandidateMatch(applicantId: string, mongoDb: Db) {
+  try {
+    const candidateMatch = await mongoDb
+      .collection("scored_candidates")
+      .findOne({ applicant_id: applicantId });
+
+    if (!candidateMatch) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: `Candidate match data not found for applicant ${applicantId}`,
+      });
+    }
+
+    return Number(candidateMatch?.score_data?.job_fit_score ?? 0);
+  } catch (error) {
+    console.error(
+      `Error fetching candidate match from MongoDB for applicant ${applicantId}`,
+      error,
+    );
+    return 0;
+  }
+}
 
 const candidateRouter = createTRPCRouter({
   // This route is only useful for /admin/applicants page and must be avoided since this route is heavy.
@@ -106,18 +136,6 @@ const candidateRouter = createTRPCRouter({
         });
       }
 
-      async function getCandidateMatch(userId: string) {
-        const candidateMatch = await findOne(
-          "ai-driven-recruitment",
-          "scored_candidates",
-          {
-            applicant_id: userId,
-          },
-        );
-
-        return candidateMatch?.score_data?.predictive_success || 0;
-      }
-
       // Batch fetch Firebase users
       const applicantsArr = (applicants || []) as Array<
         Applicants & {
@@ -137,8 +155,10 @@ const candidateRouter = createTRPCRouter({
         userIds.push(applicant.id);
       }
 
+      const mongoDb = await getMongoDb();
+
       const candidateMatchPromises = userIds.map(async (userId) => {
-        const candidateMatch = await getCandidateMatch(userId);
+        const candidateMatch = await getCandidateMatch(userId, mongoDb);
         return { userId, candidateMatch };
       });
       const candidateMatchesPromise = Promise.all(candidateMatchPromises);
@@ -221,9 +241,9 @@ const candidateRouter = createTRPCRouter({
         ]);
 
       return {
-        parsedResume: parsedResume || null,
-        score: score || null,
-        transcribed: transcribed || null,
+        parsedResume: parsedResume as ParsedResumeDoc | null,
+        score: score as ScoredCandidateDoc | null,
+        transcribed: transcribed as TranscribedDoc | null,
         user: {
           firstName: applicantData.data?.first_name || "",
           lastName: applicantData.data?.last_name || "",
@@ -744,6 +764,47 @@ const candidateRouter = createTRPCRouter({
 
       return {
         candidate: candidateMatch.score_data as ScoredCandidateScoreData,
+      };
+    }),
+  rescoreCandidate: adminProcedure
+    .input(
+      z.object({
+        candidateId: z.uuid(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const { data: applicant, error: applicantError } = await find<Applicants>(
+        await createClientServer(1, true),
+        "applicants",
+        [{ column: "id", value: input.candidateId }],
+      ).single();
+
+      if (applicantError || !applicant) {
+        console.error(
+          "Error fetching applicant for re-scoring",
+          applicantError,
+        );
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch applicant for re-scoring",
+        });
+      }
+
+      const scoreAPI = new URL("http://localhost:8000/score/");
+      scoreAPI.searchParams.set("job_id", applicant.joblisting_id);
+      scoreAPI.searchParams.set("applicant_id", applicant.id);
+      scoreAPI.searchParams.set("resume_public_id", applicant.resume_id);
+      scoreAPI.searchParams.set(
+        "transcript_public_id",
+        applicant.transcript_id,
+      );
+
+      fetch(scoreAPI.toString(), {
+        method: "POST",
+      });
+
+      return {
+        message: "Re-scoring initiated",
       };
     }),
 });

@@ -6,9 +6,9 @@ import { startTransition, useEffect, useState } from "react";
 import { MdAccessTime, MdLocationOn } from "react-icons/md";
 import useAuth from "@/hooks/useAuth";
 import { formatDate } from "@/lib/library";
+import { swalError, swalSuccess } from "@/lib/swal";
 import { trpc } from "@/lib/trpc/client";
 import type { JobListing } from "@/types/types";
-import { swalSuccess, swalError } from "@/lib/swal";
 
 interface Candidate {
   id: string;

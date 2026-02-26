@@ -6,6 +6,7 @@ import type { FieldValue, Timestamp } from "firebase/firestore";
 import type { JwtPayload } from "jsonwebtoken";
 import type {
   ALL_STAFF_ROLES,
+  CANDIDATE_STATUSES,
   ENTITIES,
   EVENT_TYPES,
   REGULAR_STAFF_ROLES,
@@ -95,6 +96,8 @@ export type UserRoles = (typeof USER_ROLES)[number];
 export type RegularStaffRoles = (typeof REGULAR_STAFF_ROLES)[number];
 
 export type AllStaffRoles = (typeof ALL_STAFF_ROLES)[number];
+
+export type CandidateStatuses = (typeof CANDIDATE_STATUSES)[number];
 
 export type FetchCandidateProfileOutput = inferProcedureOutput<
   AppRouter["candidate"]["fetchCandidateProfile"]

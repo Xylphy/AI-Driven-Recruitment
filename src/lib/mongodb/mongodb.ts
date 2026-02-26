@@ -12,6 +12,9 @@ const mongoOptions = {
     strict: true,
     deprecationErrors: true,
   },
+  connectTimeoutMS: 10000,
+  serverSelectionTimeoutMS: 10000,
+  socketTimeoutMS: 30000,
 } as const;
 
 declare global {
@@ -31,7 +34,13 @@ export function getMongoClient(): Promise<MongoClient> {
   if (!globalThis.__mongoClientPromise) {
     globalThis.__mongoClientPromise = globalThis.__mongoClient
       .connect()
-      .then(() => globalThis.__mongoClient as MongoClient);
+      .then(() => globalThis.__mongoClient as MongoClient)
+      .catch((error) => {
+        console.error("MongoDB connect failed:", error);
+        globalThis.__mongoClientPromise = undefined;
+        globalThis.__mongoClient = undefined;
+        throw error;
+      });
   }
 
   return globalThis.__mongoClientPromise;

@@ -5,9 +5,9 @@ import { useState } from "react";
 import ListInputSection from "@/components/joblisting/Qualifications";
 import useAuth from "@/hooks/useAuth";
 import { JOB_LOCATIONS } from "@/lib/constants";
+import { swalError, swalSuccess } from "@/lib/swal";
 import { trpc } from "@/lib/trpc/client";
 import type { JobListing, Tags } from "@/types/types";
-import { swalError, swalSuccess } from "@/lib/swal";
 
 export default function JobListingPage() {
   const router = useRouter();

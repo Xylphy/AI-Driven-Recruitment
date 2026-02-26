@@ -11,10 +11,9 @@ import HRReport from "@/components/admin/candidateProfile/HRReport";
 import useAuth from "@/hooks/useAuth";
 import { CANDIDATE_STATUSES } from "@/lib/constants";
 import { formatDate } from "@/lib/library";
+import { swalError, swalSuccess } from "@/lib/swal";
 import { trpc } from "@/lib/trpc/client";
-import { swalSuccess, swalError } from "@/lib/swal";
-
-type CandidateStatus = (typeof CANDIDATE_STATUSES)[number];
+import type { CandidateStatuses } from "@/types/types";
 
 const CandidateProfile = dynamic(
   () => import("@/components/admin/candidateProfile/CandidateProfile"),
@@ -30,15 +29,14 @@ export default function Page() {
   const router = useRouter();
   const candidateId = useParams().id as string;
   const { isAuthenticated } = useAuth();
-  const [selectedStatus, setSelectedStatus] = useState<CandidateStatus | null>(
-    null,
-  );
+  const [selectedStatus, setSelectedStatus] =
+    useState<CandidateStatuses | null>(null);
   const [activeTab, setActiveTab] = useState<"evaluation" | "resume">(
     "evaluation",
   );
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
-  const [pendingStatus, setPendingStatus] = useState<CandidateStatus | null>(
+  const [pendingStatus, setPendingStatus] = useState<CandidateStatuses | null>(
     null,
   );
 
@@ -119,7 +117,7 @@ export default function Page() {
   const handleStatusChange = async (
     e: React.ChangeEvent<HTMLSelectElement>,
   ) => {
-    const newStatus = e.target.value as CandidateStatus | null;
+    const newStatus = e.target.value as CandidateStatuses | null;
 
     if (!newStatus) return;
 
@@ -485,6 +483,7 @@ export default function Page() {
                 {candidateProfileQuery.data ? (
                   <CandidateProfile
                     candidateProfile={candidateProfileQuery.data}
+                    id={candidateId}
                   />
                 ) : (
                   <p className="text-gray-500 italic">Loading evaluation...</p>

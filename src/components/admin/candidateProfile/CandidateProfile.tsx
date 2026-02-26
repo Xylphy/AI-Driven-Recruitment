@@ -2,24 +2,37 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { swalInfo } from "@/lib/swal";
+import { trpc } from "@/lib/trpc/client";
 import type { FetchCandidateProfileOutput } from "@/types/types";
 
-type TabKey =
-  | "sentiment"
-  | "personality"
-  | "communication"
-  | "interview"
-  | "cultural"
-  | "skills"
-  | "transcript";
+enum TabKey {
+  Sentiment,
+  Personality,
+  Communication,
+  Interview,
+  Cultural,
+  Skills,
+  Transcript,
+}
+
+const tabBtnBase =
+  "px-3.5 py-2 rounded-xl text-sm font-semibold transition-all select-none border whitespace-nowrap";
+const tabBtnActive =
+  "bg-[#E30022] text-white border-[#E30022] shadow-[0_12px_30px_rgba(227,0,34,0.25)]";
+const tabBtnInactive =
+  "bg-white/40 text-slate-700 border-white/60 hover:bg-white/60 hover:border-white/80";
 
 export default function CandidateProfile({
   candidateProfile,
+  id,
 }: {
   candidateProfile: FetchCandidateProfileOutput | null | undefined;
+  id: string;
 }) {
   const alertedRef = useRef(false);
-  const [activeTab, setActiveTab] = useState<TabKey>("sentiment");
+  const [activeTab, setActiveTab] = useState<TabKey>(TabKey.Sentiment);
+
+  const rescoreMutation = trpc.candidate.rescoreCandidate.useMutation();
 
   useEffect(() => {
     if (!candidateProfile && !alertedRef.current) {
@@ -34,23 +47,16 @@ export default function CandidateProfile({
   const tabs = useMemo(
     () =>
       [
-        { key: "sentiment", label: "Sentiment" },
-        { key: "personality", label: "Personality" },
-        { key: "communication", label: "Communication" },
-        { key: "interview", label: "Interview" },
-        { key: "cultural", label: "Culture Fit" },
-        { key: "skills", label: "Skill Gaps" },
-        { key: "transcript", label: "Transcript" },
+        { key: TabKey.Sentiment, label: "Sentiment" },
+        { key: TabKey.Personality, label: "Personality" },
+        { key: TabKey.Communication, label: "Communication" },
+        { key: TabKey.Interview, label: "Interview" },
+        { key: TabKey.Cultural, label: "Culture Fit" },
+        { key: TabKey.Skills, label: "Skill Gaps" },
+        { key: TabKey.Transcript, label: "Transcript" },
       ] as const,
     [],
   );
-
-  const tabBtnBase =
-    "px-3.5 py-2 rounded-xl text-sm font-semibold transition-all select-none border whitespace-nowrap";
-  const tabBtnActive =
-    "bg-[#E30022] text-white border-[#E30022] shadow-[0_12px_30px_rgba(227,0,34,0.25)]";
-  const tabBtnInactive =
-    "bg-white/40 text-slate-700 border-white/60 hover:bg-white/60 hover:border-white/80";
 
   return (
     <div className="w-full h-full relative overflow-hidden bg-linear-to-br from-red-50 via-white to-red-100">
@@ -138,6 +144,19 @@ export default function CandidateProfile({
                       hover:opacity-90
                       transition-all
                     "
+                    onClick={() =>
+                      rescoreMutation.mutate(
+                        { candidateId: id },
+                        {
+                          onSuccess: () => {
+                            swalInfo(
+                              "Rescore Requested",
+                              "The candidate is being re-scored. Please check back in a few moments for the updated score.",
+                            );
+                          },
+                        },
+                      )
+                    }
                   >
                     RESCORE
                   </button>
@@ -154,15 +173,14 @@ export default function CandidateProfile({
                     className="h-3.5 rounded-full bg-linear-to-r from-[#E30022] to-red-400 shadow-[0_10px_25px_rgba(227,0,34,0.35)]"
                     style={{
                       width: `${
-                        candidateProfile?.score?.score_data
-                          ?.predictive_success ?? 0
+                        candidateProfile?.score?.score_data?.job_fit_score ?? 0
                       }%`,
                     }}
                   />
                 </div>
 
                 <span className="text-xs text-slate-600 mt-2 block">
-                  {candidateProfile?.score?.score_data.predictive_success || 0}%
+                  {candidateProfile?.score?.score_data.job_fit_score || 0}%
                   likelihood of success
                 </span>
               </div>
@@ -228,7 +246,7 @@ export default function CandidateProfile({
               </div>
 
               <div className="mt-6 space-y-5 text-sm text-slate-800">
-                {activeTab === "sentiment" && (
+                {activeTab === TabKey.Sentiment && (
                   <div className="space-y-5">
                     <div className="rounded-2xl border border-white/60 bg-white/35 backdrop-blur-xl shadow-md p-5">
                       <h3 className="font-bold text-slate-800 tracking-tight">
@@ -268,7 +286,7 @@ export default function CandidateProfile({
                   </div>
                 )}
 
-                {activeTab === "personality" && (
+                {activeTab === TabKey.Personality && (
                   <div className="space-y-5">
                     <div className="rounded-2xl border border-white/60 bg-white/35 backdrop-blur-xl shadow-md p-5">
                       <h3 className="font-bold text-slate-800 tracking-tight">
@@ -308,7 +326,7 @@ export default function CandidateProfile({
                   </div>
                 )}
 
-                {activeTab === "communication" && (
+                {activeTab === TabKey.Communication && (
                   <div className="space-y-5">
                     <div className="rounded-2xl border border-white/60 bg-white/35 backdrop-blur-xl shadow-md p-5">
                       <h3 className="font-bold text-slate-800 tracking-tight">
@@ -348,7 +366,7 @@ export default function CandidateProfile({
                   </div>
                 )}
 
-                {activeTab === "interview" && (
+                {activeTab === TabKey.Interview && (
                   <div className="space-y-5">
                     <div className="rounded-2xl border border-white/60 bg-white/35 backdrop-blur-xl shadow-md p-5">
                       <h3 className="font-bold text-slate-800 tracking-tight">
@@ -387,7 +405,7 @@ export default function CandidateProfile({
                   </div>
                 )}
 
-                {activeTab === "cultural" && (
+                {activeTab === TabKey.Cultural && (
                   <div className="space-y-5">
                     <div className="rounded-2xl border border-white/60 bg-white/35 backdrop-blur-xl shadow-md p-5">
                       <h3 className="font-bold text-slate-800 tracking-tight">
@@ -427,7 +445,7 @@ export default function CandidateProfile({
                   </div>
                 )}
 
-                {activeTab === "skills" && (
+                {activeTab === TabKey.Skills && (
                   <div className="space-y-5">
                     <div className="rounded-2xl border border-white/60 bg-white/35 backdrop-blur-xl shadow-md p-5">
                       <h3 className="font-bold text-slate-800 tracking-tight">
@@ -441,7 +459,7 @@ export default function CandidateProfile({
                     </div>
                   </div>
                 )}
-                {activeTab === "transcript" && (
+                {activeTab === TabKey.Transcript && (
                   <div className="space-y-5">
                     <div className="rounded-2xl border border-white/60 bg-white/35 backdrop-blur-xl shadow-md p-5">
                       <h3 className="font-bold text-slate-800 tracking-tight">

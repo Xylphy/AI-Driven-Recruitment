@@ -5,9 +5,9 @@ import { startTransition, useEffect, useMemo, useState } from "react";
 import ListInputSection from "@/components/joblisting/Qualifications";
 import useAuth from "@/hooks/useAuth";
 import { JOB_LOCATIONS } from "@/lib/constants";
+import { swalError, swalInfo, swalSuccess } from "@/lib/swal";
 import { trpc } from "@/lib/trpc/client";
 import type { JobListing, Tags } from "@/types/types";
-import { swalInfo, swalSuccess, swalError } from "@/lib/swal";
 
 type HROfficer = {
   id: string;

@@ -1,6 +1,6 @@
-import type { CANDIDATE_STATUSES } from "@/lib/constants";
 import type {
   AllStaffRoles,
+  CandidateStatuses,
   EntityTypes,
   Title,
   UserActionEventType,
@@ -33,7 +33,7 @@ export interface Applicants extends IdentifiableItem {
   parsed_resume_id?: string;
   transcript_id: string;
   transcribed_id?: string;
-  status?: (typeof CANDIDATE_STATUSES)[number] | null;
+  status?: CandidateStatuses | null;
   created_at: string;
   email?: string;
   contact_number?: string;

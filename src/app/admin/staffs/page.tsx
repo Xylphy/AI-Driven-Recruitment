@@ -1,13 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { treeifyError } from "zod";
 import useAuth from "@/hooks/useAuth";
 import { REGULAR_STAFF_ROLES } from "@/lib/constants";
 import { addStaffSchema } from "@/lib/schemas";
+import { swalError, swalSuccess } from "@/lib/swal";
 import { trpc } from "@/lib/trpc/client";
 import type { RegularStaffRoles } from "@/types/types";
-import { swalSuccess, swalError, swalInfo } from "@/lib/swal";
 
 export default function UsersPage() {
   const { isAuthenticated } = useAuth();
