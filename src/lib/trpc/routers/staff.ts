@@ -264,6 +264,7 @@ const staffRouter = createTRPCRouter({
 
       const db = await getMongoDb();
 
+      // Calculate overall and weekly average job fit score and response time for candidates created within the specified month
       const [result] = await db
         .collection("scored_candidates")
         .aggregate([

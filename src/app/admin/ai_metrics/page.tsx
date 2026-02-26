@@ -162,9 +162,7 @@ export default function AIAnalyticsDashboard() {
   const handleDownloadReport = () => {
     if (rangeInvalid) return;
 
-    const [fy, fm] = fromYM.split("-");
     const [ty, tm] = toYM.split("-");
-    const from = `${MONTHS[Number(fm) - 1]} ${fy}`;
     const to = `${MONTHS[Number(tm) - 1]} ${ty}`;
 
     const doc = new jsPDF({
@@ -176,25 +174,47 @@ export default function AIAnalyticsDashboard() {
     doc.text("AI Performance & Accuracy Report", 40, 40);
 
     doc.setFontSize(11);
-    doc.text(`Range: ${from} → ${to}`, 40, 65);
+    doc.text(`Date: ${to}`, 40, 65);
+
+    // Summary section
+    const avgJobFit = aiMetrics.data?.overall.avg_job_fit_score ?? 0;
+    const avgResp = aiMetrics.data?.overall.avg_response_time ?? 0;
+
+    doc.setFontSize(12);
+    doc.text("Summary", 40, 100);
 
     autoTable(doc, {
-      head: [
-        [
-          "Model",
-          "Accuracy",
-          "Precision",
-          "Recall",
-          "Avg Response Time",
-          "Recommendation Efficiency",
-        ],
+      startY: 115,
+      head: [["Metric", "Value"]],
+      body: [
+        ["Average Job Fit Score (%)", formatScore(avgJobFit)],
+        ["Average AI Response Time (s)", formatScore(avgResp)],
       ],
-      startY: 90,
-      headStyles: { fillColor: [220, 38, 38] },
+      styles: { fontSize: 10 },
+      theme: "grid",
+      margin: { left: 40, right: 40 },
+    });
+
+    const weekly = aiMetrics.data?.weekly ?? [];
+    const lastY = (doc as jsPDF & { lastAutoTable?: { finalY: number } })
+      .lastAutoTable?.finalY;
+    const startY = lastY ? lastY + 20 : 200;
+
+    autoTable(doc, {
+      startY,
+      head: [["Week", "Avg Job Fit Score (%)", "Avg Response Time (s)"]],
+      body: weekly.map((w) => [
+        `Week ${w.week}`,
+        formatScore(w.avg_job_fit_score),
+        formatScore(w.avg_response_time),
+      ]),
+      styles: { fontSize: 10 },
+      theme: "striped",
+      margin: { left: 40, right: 40 },
     });
 
     // safer filename: no spaces/special chars
-    doc.save(`ai_analytics_${fromYM}_to_${toYM}.pdf`);
+    doc.save(`ai_analytics_${to}.pdf`);
   };
 
   return (
