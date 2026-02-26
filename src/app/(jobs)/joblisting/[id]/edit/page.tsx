@@ -7,6 +7,7 @@ import useAuth from "@/hooks/useAuth";
 import { JOB_LOCATIONS } from "@/lib/constants";
 import { trpc } from "@/lib/trpc/client";
 import type { JobListing, Tags } from "@/types/types";
+import { swalInfo, swalSuccess, swalError } from "@/lib/swal";
 
 type HROfficer = {
   id: string;
@@ -67,8 +68,11 @@ export default function Page() {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      alert("You must be logged in to access this page");
-      router.push("/login");
+      swalInfo(
+        "Login Required",
+        "You must be logged in to access this page.",
+        () => router.push("/login"),
+      );
     }
   }, [isAuthenticated, router]);
 
@@ -161,8 +165,11 @@ export default function Page() {
     e.preventDefault();
 
     if (!isAuthenticated || joblistingDetails.data?.created_by !== userId) {
-      alert("You are not authorized to edit this job listing");
-      router.push("/login");
+      swalError(
+        "Unauthorized",
+        "You are not authorized to edit this job listing.",
+        () => router.push("/login"),
+      );
     }
 
     await updateJoblisting.mutateAsync(
@@ -178,11 +185,15 @@ export default function Page() {
       },
       {
         onSuccess: (data) => {
-          alert(data.message);
-          router.refresh(); // Refresh the page to show updated data
+          swalSuccess("Updated Successfully", data.message, () => {
+            router.refresh();
+          });
         },
         onError: (error) => {
-          alert(`Failed to update job listing: ${error.message}`);
+          swalError(
+            "Update Failed",
+            `Failed to update job listing: ${error.message}`,
+          );
         },
       },
     );
@@ -190,8 +201,11 @@ export default function Page() {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      alert("You must be logged in to access this page");
-      router.push("/login");
+      swalInfo(
+        "Login Required",
+        "You must be logged in to access this page.",
+        () => router.push("/login"),
+      );
     }
   }, [isAuthenticated, router]);
 

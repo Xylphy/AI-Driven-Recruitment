@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { MdAdd, MdChat, MdClose, MdSend } from "react-icons/md";
 import { trpc } from "@/lib/trpc/client";
+import { swalError } from "@/lib/swal";
 
 type Message = {
   id?: string;
@@ -135,7 +136,14 @@ export default function ChatbotWidget() {
       .then(() => {
         setConversationId(null);
       })
-      .catch((err) => alert(`Error ending conversation:${err}`));
+      .catch((err) => {
+        swalError(
+          "End Conversation Failed",
+          err instanceof Error
+            ? err.message
+            : "An unexpected error occurred while ending the conversation.",
+        );
+      });
   };
 
   return (

@@ -9,6 +9,7 @@ import { formatDate } from "@/lib/library";
 import { trpc } from "@/lib/trpc/client";
 import type { AdminFeedback } from "@/types/schema";
 import type { FetchCandidateProfileOutput } from "@/types/types";
+import { swalError, swalInfo, swalSuccess } from "@/lib/swal";
 
 interface WorkExperience {
   company: string;
@@ -161,8 +162,11 @@ export default function ComparePage() {
 
   const handleDeleteFeedback = (feedbackId: string) => {
     if (!isAuthenticated) {
-      alert("You are not authorized to perform this action.");
-      router.push("/login");
+      swalInfo(
+        "Login Required",
+        "You must be logged in to use this feature.",
+        () => router.push("/login"),
+      );
       return;
     }
 
@@ -186,7 +190,7 @@ export default function ComparePage() {
 
   const handleSaveEdit = (id: string) => {
     if (!editedFeedback.trim()) {
-      alert("Feedback cannot be empty.");
+      swalError("Missing Feedback", "Please enter feedback before submitting.");
       return;
     }
 

@@ -1,4 +1,5 @@
 import type { FieldValue, Timestamp } from "firebase/firestore";
+import { swalError } from "./swal";
 
 export async function getCsrfToken(): Promise<string | null> {
   if (typeof document === "undefined") {
@@ -16,7 +17,10 @@ export async function getCsrfToken(): Promise<string | null> {
     const csrfData = await csrfResponse.json();
     return csrfData.csrfToken;
   } catch {
-    alert("Failed to fetch CSRF token");
+    swalError(
+      "Security Check Failed",
+      "Unable to initialize secure request. Please try again.",
+    );
     return null;
   }
 }

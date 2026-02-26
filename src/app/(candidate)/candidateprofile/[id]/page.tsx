@@ -12,6 +12,7 @@ import useAuth from "@/hooks/useAuth";
 import { CANDIDATE_STATUSES } from "@/lib/constants";
 import { formatDate } from "@/lib/library";
 import { trpc } from "@/lib/trpc/client";
+import { swalSuccess, swalError } from "@/lib/swal";
 
 type CandidateStatus = (typeof CANDIDATE_STATUSES)[number];
 
@@ -165,11 +166,17 @@ export default function Page() {
         { reportId, staffId: getHRReportsQuery.data?.[0]?.staff_id || "" },
         {
           onSuccess: () => {
-            alert("HR evaluation deleted successfully.");
+            swalSuccess(
+              "Deleted Successfully",
+              "HR evaluation deleted successfully.",
+            );
             getHRReportsQuery.refetch();
           },
           onError: (error: unknown) => {
-            alert(error instanceof Error ? error.message : String(error));
+            swalError(
+              "Something went wrong",
+              error instanceof Error ? error.message : String(error),
+            );
           },
         },
       );
@@ -193,12 +200,18 @@ export default function Page() {
       },
       {
         onSuccess: () => {
-          alert("HR evaluation updated successfully.");
+          swalSuccess(
+            "Update Successful",
+            "HR evaluation updated successfully.",
+          );
           setEditingIndex(null);
           getHRReportsQuery.refetch();
         },
         onError: (error: unknown) => {
-          alert(error instanceof Error ? error.message : String(error));
+          swalError(
+            "Update Failed",
+            error instanceof Error ? error.message : String(error),
+          );
         },
       },
     );
@@ -510,10 +523,14 @@ export default function Page() {
                         {
                           onSuccess: () => {
                             getHRReportsQuery.refetch();
-                            alert("HR Report submitted successfully.");
+                            swalSuccess(
+                              "Report Submitted",
+                              "HR report submitted successfully.",
+                            );
                           },
                           onError: (error) => {
-                            alert(
+                            swalError(
+                              "Submission Failed",
                               error instanceof Error
                                 ? error.message
                                 : String(error),

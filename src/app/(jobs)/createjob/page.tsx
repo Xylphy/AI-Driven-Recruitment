@@ -7,6 +7,7 @@ import useAuth from "@/hooks/useAuth";
 import { JOB_LOCATIONS } from "@/lib/constants";
 import { trpc } from "@/lib/trpc/client";
 import type { JobListing, Tags } from "@/types/types";
+import { swalError, swalSuccess } from "@/lib/swal";
 
 export default function JobListingPage() {
   const router = useRouter();
@@ -81,7 +82,10 @@ export default function JobListingPage() {
     e.preventDefault();
 
     if (role !== "Admin" && role !== "SuperAdmin") {
-      alert("You are not authorized to create a job listing");
+      swalError(
+        "Unauthorized",
+        "You are not authorized to create a job listing.",
+      );
       router.push("/login");
     }
 
@@ -97,7 +101,7 @@ export default function JobListingPage() {
       },
       {
         onSuccess: (data) => {
-          alert(data.message);
+          swalSuccess("Create Job Listing", data.message);
           setJobListing({
             title: "",
             qualifications: [],
@@ -110,7 +114,7 @@ export default function JobListingPage() {
           setHrOfficerId(null);
         },
         onError: (error) => {
-          alert(error.message);
+          swalError("Operation Failed", error.message);
         },
       },
     );
