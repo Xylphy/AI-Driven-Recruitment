@@ -268,17 +268,23 @@ const jobListingRouter = createTRPCRouter({
         });
       }
 
-      const { error: applicantSkillsError } = await supabaseClient
-        .from("applicant_skills")
-        .insert(
+      const results = await Promise.all([
+        supabaseClient.from("applicant_skills").insert(
           input.skills.map((tag) => ({
             applicant_id: applicantsID[0]?.id,
             tag_id: tag.id,
             rating: tag.rating || 0,
           })),
-        );
+        ),
+        supabaseClient.from("social_links").insert(
+          input.socialLinks.map((link) => ({
+            applicant_id: applicantsID[0]?.id,
+            link: link.value,
+          })),
+        ),
+      ]);
 
-      if (applicantSkillsError) {
+      if (results.some((result) => result.error)) {
         await deleteRow(
           supabaseClient,
           "applicants",
@@ -286,8 +292,8 @@ const jobListingRouter = createTRPCRouter({
           applicantsID[0]?.id,
         );
         console.error(
-          "Error inserting applicant skills:",
-          applicantSkillsError,
+          "Error inserting applicant skills or social links:",
+          results.find((r) => r.error),
         );
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",

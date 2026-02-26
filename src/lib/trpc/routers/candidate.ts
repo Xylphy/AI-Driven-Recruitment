@@ -1,8 +1,10 @@
 import { TRPCError } from "@trpc/server";
+import type { Db } from "mongodb";
 import z from "zod";
 import { CANDIDATE_STATUSES } from "@/lib/constants";
 import admin, { db } from "@/lib/firebase/admin";
 import { findOne } from "@/lib/mongodb/action";
+import { getMongoDb } from "@/lib/mongodb/mongodb";
 import {
   find,
   insertTable,
@@ -24,8 +26,6 @@ import type {
 } from "@/types/schema";
 import type { Notification } from "@/types/types";
 import { adminProcedure, authorizedProcedure, createTRPCRouter } from "../init";
-import type { Db } from "mongodb";
-import { getMongoDb } from "@/lib/mongodb/mongodb";
 
 type AICompareRes = {
   better_candidate: string;
@@ -210,35 +210,48 @@ const candidateRouter = createTRPCRouter({
         fetchResume: z.boolean().optional().default(false),
         fetchSkills: z.boolean().optional().default(false),
         candidateId: z.string(),
+        fetchSocialLinks: z.boolean().optional().default(false),
       }),
     )
     .query(async ({ input }) => {
       const supabaseClient = await createClientServer(1, true);
 
-      const [parsedResume, score, transcribed, applicantData, applicantSkills] =
-        await Promise.all([
-          input.fetchResume &&
-            findOne("ai-driven-recruitment", "parsed_resume", {
-              applicant_id: input.candidateId,
-            }),
-          input.fetchScore &&
-            findOne("ai-driven-recruitment", "scored_candidates", {
-              applicant_id: input.candidateId,
-            }),
-          input.fetchTranscribed &&
-            findOne("ai-driven-recruitment", "transcribed", {
-              applicant_id: input.candidateId,
-            }),
-          find<Applicants>(supabaseClient, "applicants", [
-            { column: "id", value: input.candidateId },
-          ]).single(),
-          input.fetchSkills
-            ? supabaseClient
-                .from("applicant_skills")
-                .select("rating, tags(name)")
-                .eq("applicant_id", input.candidateId)
-            : Promise.resolve(null),
-        ]);
+      const [
+        parsedResume,
+        score,
+        transcribed,
+        applicantData,
+        applicantSkills,
+        socialLinks,
+      ] = await Promise.all([
+        input.fetchResume &&
+          findOne("ai-driven-recruitment", "parsed_resume", {
+            applicant_id: input.candidateId,
+          }),
+        input.fetchScore &&
+          findOne("ai-driven-recruitment", "scored_candidates", {
+            applicant_id: input.candidateId,
+          }),
+        input.fetchTranscribed &&
+          findOne("ai-driven-recruitment", "transcribed", {
+            applicant_id: input.candidateId,
+          }),
+        find<Applicants>(supabaseClient, "applicants", [
+          { column: "id", value: input.candidateId },
+        ]).single(),
+        input.fetchSkills
+          ? supabaseClient
+              .from("applicant_skills")
+              .select("rating, tags(name)")
+              .eq("applicant_id", input.candidateId)
+          : Promise.resolve(null),
+        input.fetchSocialLinks
+          ? supabaseClient
+              .from("social_links")
+              .select("link")
+              .eq("applicant_id", input.candidateId)
+          : Promise.resolve(null),
+      ]);
 
       return {
         parsedResume: parsedResume as ParsedResumeDoc | null,
@@ -266,6 +279,7 @@ const candidateRouter = createTRPCRouter({
               name: tagName ?? "Unknown",
             };
           }) ?? null,
+        socialLinks: socialLinks?.data?.map((link) => link.link) ?? null,
       };
     }),
   updateCandidateStatus: authorizedProcedure

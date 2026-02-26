@@ -3,7 +3,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { MdAdd, MdChat, MdClose, MdSend } from "react-icons/md";
-import { swalError } from "@/lib/swal";
 import { trpc } from "@/lib/trpc/client";
 
 type Message = {
@@ -125,25 +124,6 @@ export default function ChatbotWidget() {
 
   const handleClose = () => {
     setOpen(false);
-
-    const chatbotAPI = new URL(
-      `http://localhost:8000/chatbot/delete/${conversationId}`,
-    );
-
-    fetch(chatbotAPI.toString(), {
-      method: "DELETE",
-    })
-      .then(() => {
-        setConversationId(null);
-      })
-      .catch((err) => {
-        swalError(
-          "End Conversation Failed",
-          err instanceof Error
-            ? err.message
-            : "An unexpected error occurred while ending the conversation.",
-        );
-      });
   };
 
   return (

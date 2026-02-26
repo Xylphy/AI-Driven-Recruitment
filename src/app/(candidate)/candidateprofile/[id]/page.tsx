@@ -3,9 +3,21 @@
 import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
 import { startTransition, useEffect, useMemo, useState } from "react";
-import { FaFacebook, FaInstagram } from "react-icons/fa";
+import {
+  FaDiscord,
+  FaFacebook,
+  FaGithub,
+  FaGitlab,
+  FaInstagram,
+  FaLinkedin,
+  FaMedium,
+  FaStackOverflow,
+  FaTiktok,
+  FaTwitter,
+  FaYoutube,
+} from "react-icons/fa";
 import { FiEdit2, FiTrash2 } from "react-icons/fi";
-import { MdArrowBack, MdEmail, MdPhone } from "react-icons/md";
+import { MdArrowBack, MdEmail, MdLink, MdPhone } from "react-icons/md";
 import Swal from "sweetalert2";
 import HRReport from "@/components/admin/candidateProfile/HRReport";
 import useAuth from "@/hooks/useAuth";
@@ -24,6 +36,93 @@ const CandidateResume = dynamic(
   () => import("@/components/admin/candidateProfile/CandidateResume"),
   { ssr: false },
 );
+
+type LinkMeta = {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  url: string;
+};
+
+function getLinkMeta(rawUrl: string) {
+  const input = rawUrl?.trim();
+  if (!input) return null;
+
+  const lower = input.toLowerCase();
+
+  const looksLikeEmail =
+    !lower.startsWith("http") &&
+    !lower.startsWith("mailto:") &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(lower);
+
+  if (lower.startsWith("mailto:") || looksLikeEmail) {
+    const mailto = lower.startsWith("mailto:") ? input : `mailto:${input}`;
+    return { icon: MdEmail, label: "Email", url: mailto };
+  }
+
+  // Phone
+  const digits = lower.replace(/[^\d]/g, "");
+  if (
+    lower.startsWith("tel:") ||
+    (digits.length >= 7 && /^[+0-9\s\-()]+$/.test(lower))
+  ) {
+    const tel = lower.startsWith("tel:") ? input : `tel:${input}`;
+    return { icon: MdPhone, label: "Phone", url: tel };
+  }
+
+  const normalized =
+    lower.startsWith("http://") ||
+    lower.startsWith("https://") ||
+    lower.startsWith("mailto:") ||
+    lower.startsWith("tel:")
+      ? input
+      : `https://${input}`;
+
+  // Try to parse hostname for robust matching
+  let hostname = "";
+  try {
+    hostname = new URL(normalized).hostname.replace(/^www\./, "").toLowerCase();
+  } catch {
+    return { icon: MdLink, label: "Link", url: normalized };
+  }
+
+  const providers: Array<{
+    host: string | RegExp;
+    icon: LinkMeta["icon"];
+    label: string;
+  }> = [
+    { host: /(^|\.)facebook\.com$/, icon: FaFacebook, label: "Facebook" },
+    { host: /(^|\.)instagram\.com$/, icon: FaInstagram, label: "Instagram" },
+    { host: /(^|\.)github\.com$/, icon: FaGithub, label: "GitHub" },
+    { host: /(^|\.)gitlab\.com$/, icon: FaGitlab, label: "GitLab" },
+    { host: /(^|\.)linkedin\.com$/, icon: FaLinkedin, label: "LinkedIn" },
+    { host: /(^|\.)x\.com$|(^|\.)twitter\.com$/, icon: FaTwitter, label: "X" },
+    {
+      host: /(^|\.)youtube\.com$|(^|\.)youtu\.be$/,
+      icon: FaYoutube,
+      label: "YouTube",
+    },
+    { host: /(^|\.)tiktok\.com$/, icon: FaTiktok, label: "TikTok" },
+    { host: /(^|\.)medium\.com$/, icon: FaMedium, label: "Medium" },
+    {
+      host: /(^|\.)stackoverflow\.com$/,
+      icon: FaStackOverflow,
+      label: "Stack Overflow",
+    },
+    {
+      host: /(^|\.)discord\.gg$|(^|\.)discord\.com$/,
+      icon: FaDiscord,
+      label: "Discord",
+    },
+  ];
+
+  const match = providers.find((p) =>
+    typeof p.host === "string" ? hostname === p.host : p.host.test(hostname),
+  );
+
+  if (match) return { icon: match.icon, label: match.label, url: normalized };
+
+  return { icon: MdLink, label: "Link", url: normalized };
+}
 
 export default function Page() {
   const router = useRouter();
@@ -63,6 +162,7 @@ export default function Page() {
       fetchTranscribed: true,
       fetchResume: true,
       fetchSkills: true,
+      fetchSocialLinks: true,
     },
     { enabled: isAuthenticated },
   );
@@ -152,7 +252,11 @@ export default function Page() {
   };
 
   const candidate = candidateProfileQuery.data;
-
+  const contactItems = [
+    ...(candidateProfileQuery.data?.socialLinks ?? []).map((link) =>
+      getLinkMeta(link),
+    ),
+  ];
   const handleDeleteReport = (reportId: string) => {
     if (confirm("Are you sure you want to delete this HR evaluation?")) {
       deleteHRReportMutation.mutate(
@@ -280,14 +384,24 @@ export default function Page() {
             </h2>
 
             <div className="flex gap-2 text-red-500">
-              {[MdEmail, FaFacebook, FaInstagram, MdPhone].map((Icon) => (
-                <div
-                  key={Icon.name}
-                  className="p-1 rounded-xl mt-1 bg-white/40 backdrop-blur-md border border-white/40 shadow-sm hover:bg-red-600 hover:text-white transition-all duration-300 cursor-pointer"
-                >
-                  <Icon className="w-5 h-5" />
-                </div>
-              ))}
+              {contactItems
+                .filter((item): item is LinkMeta => Boolean(item))
+                .map((item, idx) => {
+                  const Icon = item.icon;
+                  return (
+                    <a
+                      key={`${item.label}-${idx}`}
+                      href={item.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1 rounded-xl mt-1 bg-white/40 backdrop-blur-md border border-white/40 shadow-sm hover:bg-red-600 hover:text-white transition-all duration-300 cursor-pointer"
+                      aria-label={item.label}
+                      title={item.label}
+                    >
+                      <Icon className="w-5 h-5" />
+                    </a>
+                  );
+                })}
             </div>
           </div>
           <div className="relative flex flex-col items-end gap-2">
