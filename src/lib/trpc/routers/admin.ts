@@ -351,7 +351,10 @@ const adminRouter = createTRPCRouter({
         usersError = nameResult.error || roleResult.error;
         const merged = [...(nameResult.data || []), ...(roleResult.data || [])];
         const uniqueById = new Map(merged.map((u) => [u.id, u]));
-        users = Array.from(uniqueById.values()).slice(0, input.limit) as Staff[];
+        users = Array.from(uniqueById.values()).slice(
+          0,
+          input.limit,
+        ) as Staff[];
       }
 
       if (usersError) {

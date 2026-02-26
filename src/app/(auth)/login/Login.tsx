@@ -4,7 +4,6 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Button } from "@/components/common/Button";
 import useAuth from "@/hooks/useAuth";
 import { auth } from "@/lib/firebase/client";
 import { swalError, swalInfo } from "@/lib/swal";

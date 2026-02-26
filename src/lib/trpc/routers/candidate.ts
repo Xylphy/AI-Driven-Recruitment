@@ -11,12 +11,11 @@ import {
 } from "@/lib/supabase/action";
 import { createClientServer } from "@/lib/supabase/supabase";
 import type { ScoredCandidateScoreData } from "@/types/mongo_db/schema";
-import {
-  ApplicantSkills,
-  type AdminFeedback,
-  type Applicants,
-  type AuditLog,
-  type Changes,
+import type {
+  AdminFeedback,
+  Applicants,
+  AuditLog,
+  Changes,
 } from "@/types/schema";
 import type { Notification } from "@/types/types";
 import { adminProcedure, authorizedProcedure, createTRPCRouter } from "../init";
@@ -230,7 +229,23 @@ const candidateRouter = createTRPCRouter({
           lastName: applicantData.data?.last_name || "",
         },
         status: applicantData.data?.status ?? null,
-        skills: applicantSkills?.data ?? null,
+        skills:
+          applicantSkills?.data?.map((skill) => {
+            const tagsValue = skill.tags as
+              | { name?: string }
+              | Array<{ name?: string }>
+              | null
+              | undefined;
+
+            const tagName = Array.isArray(tagsValue)
+              ? tagsValue[0]?.name
+              : tagsValue?.name;
+
+            return {
+              rating: skill.rating,
+              name: tagName ?? "Unknown",
+            };
+          }) ?? null,
       };
     }),
   updateCandidateStatus: authorizedProcedure

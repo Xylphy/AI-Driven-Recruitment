@@ -25,11 +25,6 @@ const CandidateResume = dynamic(
   { ssr: false },
 );
 
-type CandidateSkill = {
-  rating: number;
-  tags: { name: string } | { name: string }[] | null;
-};
-
 export default function Page() {
   const router = useRouter();
   const candidateId = useParams().id as string;
@@ -869,21 +864,16 @@ export default function Page() {
                   </div>
                 </div>
 
-                {candidateProfileQuery.data?.skills?.map(
-                  (item: CandidateSkill) => {
-                    const pct = Math.max(
-                      0,
-                      Math.min(100, (item.rating / 5) * 100),
-                    );
-                    const tag = Array.isArray(item.tags)
-                      ? item.tags[0]
-                      : item.tags;
-                    const tagName = tag?.name ?? "Unknown Skill";
+                {candidateProfileQuery.data?.skills?.map((item) => {
+                  const pct = Math.max(
+                    0,
+                    Math.min(100, (item.rating / 5) * 100),
+                  );
 
-                    return (
-                      <div
-                        key={`${tagName}-${item.rating}`}
-                        className="
+                  return (
+                    <div
+                      key={`${item.name}-${item.rating}`}
+                      className="
                         mb-3
                         rounded-2xl
                         bg-white/45
@@ -894,42 +884,41 @@ export default function Page() {
                         transition
                         hover:bg-white/60
                       "
-                      >
-                        <div className="flex items-center justify-between gap-4">
-                          <div className="min-w-0">
-                            <p className="text-sm font-semibold text-gray-800 truncate">
-                              {tagName}
-                            </p>
-                            <p className="text-xs text-gray-500 mt-1">
-                              Applicant Self-Assessment Score
-                            </p>
-                          </div>
-
-                          <div className="shrink-0 flex items-center gap-3">
-                            <div className="px-3 py-1 rounded-full bg-red-600/10 text-red-600 text-sm font-bold border border-white/30 whitespace-nowrap">
-                              {item.rating.toFixed(1)} / 5
-                            </div>
-                          </div>
+                    >
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-gray-800 truncate">
+                            {item.name}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Applicant Self-Assessment Score
+                          </p>
                         </div>
 
-                        <div className="mt-3">
-                          <div className="h-2 rounded-full bg-white/50 border border-white/40 overflow-hidden">
-                            <div
-                              className="h-full rounded-full bg-linear-to-r from-red-600 to-red-400"
-                              style={{ width: `${pct}%` }}
-                            />
-                          </div>
-
-                          <div className="mt-2 flex items-center justify-between text-[11px] text-gray-500">
-                            <span>0</span>
-                            <span>2.5</span>
-                            <span>5</span>
+                        <div className="shrink-0 flex items-center gap-3">
+                          <div className="px-3 py-1 rounded-full bg-red-600/10 text-red-600 text-sm font-bold border border-white/30 whitespace-nowrap">
+                            {item.rating.toFixed(1)} / 5
                           </div>
                         </div>
                       </div>
-                    );
-                  },
-                )}
+
+                      <div className="mt-3">
+                        <div className="h-2 rounded-full bg-white/50 border border-white/40 overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-linear-to-r from-red-600 to-red-400"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+
+                        <div className="mt-2 flex items-center justify-between text-[11px] text-gray-500">
+                          <span>0</span>
+                          <span>2.5</span>
+                          <span>5</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
