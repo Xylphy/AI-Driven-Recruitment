@@ -6,12 +6,7 @@ import useAuth from "@/hooks/useAuth";
 import { auth } from "@/lib/firebase/client";
 import { updatePasswordSchema } from "@/lib/schemas";
 import { trpc } from "@/lib/trpc/client";
-
-enum Status {
-  Idle,
-  Success,
-  Error,
-}
+import { swalError, swalSuccess } from "@/lib/swal";
 
 export default function UpdatePasswordPage() {
   useAuth();
@@ -21,11 +16,10 @@ export default function UpdatePasswordPage() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [showPass, setShowPass] = useState(false);
+  const [showOldPass, setShowOldPass] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [, setStatus] = useState<Status>(Status.Idle);
-  const [, setMessage] = useState<string>("");
 
   const passwordValidity = updatePasswordSchema.safeParse({
     newPassword: password,
@@ -34,12 +28,9 @@ export default function UpdatePasswordPage() {
 
   async function handleSubmit(e: React.SyntheticEvent) {
     e.preventDefault();
-    setStatus(Status.Idle);
-    setMessage("");
 
     if (!passwordValidity.success) {
-      setStatus(Status.Error);
-      setMessage(passwordValidity.error.message);
+      swalError("Invalid Password", passwordValidity.error.message);
       return;
     }
 
@@ -53,13 +44,18 @@ export default function UpdatePasswordPage() {
       },
       {
         onSuccess() {
-          setStatus(Status.Success);
-          setMessage("Password updated successfully. You may now log in.");
-          auth.signOut(); // Log out the user after password change
+          swalSuccess(
+            "Password Updated",
+            "Password updated successfully. You may now log in.",
+            () => {
+              auth.signOut();
+            },
+          );
         },
+
         onError(error) {
-          setStatus(Status.Error);
-          setMessage(
+          swalError(
+            "Update Failed",
             error instanceof Error
               ? error.message
               : "Update failed. Please request a new link from your admin.",
@@ -131,6 +127,49 @@ export default function UpdatePasswordPage() {
                   htmlFor="newPassword"
                   className="text-xs font-bold uppercase tracking-[0.2em] text-red-600"
                 >
+                  Old Password
+                </label>
+
+                <div className="relative">
+                  <input
+                    id="newPassword"
+                    type={showOldPass ? "text" : "password"}
+                    placeholder="Enter new password"
+                    className={[
+                      "w-full rounded-2xl px-5 py-3 pr-16",
+                      "bg-white/70 backdrop-blur-xl",
+                      "border border-white/40",
+                      "text-gray-700 font-semibold placeholder:text-gray-400",
+                      "shadow-[0_15px_50px_rgba(220,38,38,0.08)]",
+                      "focus:ring-2 focus:ring-red-400/40 focus:border-red-300",
+                      "transition-all duration-300 outline-none",
+                    ].join(" ")}
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => setShowOldPass((v) => !v)}
+                    className="
+                    absolute right-3 top-1/2 -translate-y-1/2
+                    rounded-xl
+                    px-3 py-2
+                    text-xs font-bold uppercase tracking-[0.15em]
+                    bg-white/60 backdrop-blur-md
+                    border border-white/40
+                    text-red-600
+                    shadow-sm
+                    hover:bg-white/80
+                    transition
+                  "
+                  >
+                    {showOldPass ? "Hide" : "Show"}
+                  </button>
+                </div>
+
+                <label
+                  htmlFor="newPassword"
+                  className="text-xs font-bold uppercase tracking-[0.2em] text-red-600"
+                >
                   New Password
                 </label>
 
@@ -156,17 +195,17 @@ export default function UpdatePasswordPage() {
                     type="button"
                     onClick={() => setShowPass((v) => !v)}
                     className="
-                  absolute right-3 top-1/2 -translate-y-1/2
-                  rounded-xl
-                  px-3 py-2
-                  text-xs font-bold uppercase tracking-[0.15em]
-                  bg-white/60 backdrop-blur-md
-                  border border-white/40
-                  text-red-600
-                  shadow-sm
-                  hover:bg-white/80
-                  transition
-                "
+                    absolute right-3 top-1/2 -translate-y-1/2
+                    rounded-xl
+                    px-3 py-2
+                    text-xs font-bold uppercase tracking-[0.15em]
+                    bg-white/60 backdrop-blur-md
+                    border border-white/40
+                    text-red-600
+                    shadow-sm
+                    hover:bg-white/80
+                    transition
+                  "
                   >
                     {showPass ? "Hide" : "Show"}
                   </button>

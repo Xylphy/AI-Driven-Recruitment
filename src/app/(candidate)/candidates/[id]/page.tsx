@@ -108,151 +108,174 @@ export default function Page() {
   }
 
   return (
-    <main className="bg-white min-h-screen py-5 px-4 md:px-20">
-      <div className="max-w-4xl mx-auto">
-        <div className="relative h-44">
+    <main className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-100 py-10 px-4 md:px-20">
+      <div className="max-w-6xl mx-auto">
+        <div className="relative h-52 rounded-3xl overflow-hidden shadow-xl">
           <Image
             src="/workspace.jpg"
             alt="Header Background"
             fill
-            className="object-cover"
+            className="object-cover scale-105"
             priority
           />
-          <div className="absolute inset-0 bg-black/75 z-10" />
-          <div className="relative z-10 h-full flex flex-col items-center justify-center px-4 text-center">
-            <h1 className="text-3xl font-bold text-center text-white">
+          <div className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/60 to-red-900/40 backdrop-blur-sm" />
+
+          <div className="relative z-10 h-full flex flex-col items-center justify-center px-6 text-center text-white">
+            <h1 className="text-4xl font-bold tracking-tight">
               {jobDetails.title}
             </h1>
-            <hr className="w-1/2 mx-auto border-t border-red-600 my-2" />
-            <div className="flex justify-center mt-2 space-x-4 text-white font-medium text-sm">
-              <span className="flex items-center gap-1">
-                <MdLocationOn className="text-red-600" /> {jobDetails.location}
+
+            <div className="mt-4 flex gap-6 text-sm font-medium">
+              <span className="flex items-center gap-2 bg-white/10 px-4 py-1 rounded-full backdrop-blur-md">
+                <MdLocationOn className="text-red-400" />
+                {jobDetails.location}
               </span>
-              <span className="flex items-center gap-1">
-                <MdAccessTime className="text-red-600" />{" "}
+              <span className="flex items-center gap-2 bg-white/10 px-4 py-1 rounded-full backdrop-blur-md">
+                <MdAccessTime className="text-red-400" />
                 {jobDetails.isFullTime ? "Full-Time" : "Part-Time"}
               </span>
             </div>
           </div>
         </div>
-        <div className="flex flex-col lg:flex-row py-5">
-          <div className="w-full lg:w-2/3 p-8">
-            <section className="mb-8">
-              <h2 className="text-2xl font-bold text-red-600 mb-4">
+
+        <div className="flex flex-col lg:flex-row gap-8 mt-10">
+          <div className="flex-1 bg-white/40 backdrop-blur-2xl border border-white/50 rounded-3xl shadow-xl p-8">
+            <section>
+              <h2 className="text-2xl font-bold text-red-600 mb-6">
                 Applicants for this job
               </h2>
-              <ul className="space-y-4 text-gray-700 text-sm">
-                {candidates?.length === 0 ? (
-                  <p>No candidates yet.</p>
-                ) : (
-                  candidates?.map((candidate) => (
+
+              {candidates?.length === 0 ? (
+                <div className="text-gray-500 text-sm bg-white/50 p-6 rounded-2xl">
+                  No candidates yet.
+                </div>
+              ) : (
+                <ul className="space-y-5">
+                  {candidates?.map((candidate) => (
                     <li
                       key={candidate.id}
-                      className="flex items-center justify-between border p-4 rounded shadow-sm"
+                      className="flex items-center justify-between bg-white/50 backdrop-blur-lg border border-white/60 rounded-2xl p-5 shadow-md hover:shadow-xl transition-all duration-300"
                     >
                       <div>
-                        <p className="font-semibold">{candidate.name}</p>
+                        <p className="font-semibold text-gray-800">
+                          {candidate.name}
+                        </p>
                         <p className="text-xs text-gray-500">
                           {candidate.email || "No email"}
                         </p>
-                        <p className="text-xs text-green-600 font-semibold mt-1">
-                          {candidate.predictiveSuccess || 0} % Job Candidate
-                          Match
+                        <p className="text-xs text-red-600 font-semibold mt-1">
+                          {candidate.predictiveSuccess || 0}% Job Match
                         </p>
                       </div>
+
                       <button
                         type="button"
                         onClick={() =>
                           router.push(`/candidateprofile/${candidate.id}`)
                         }
-                        className="bg-red-600 text-white px-3 py-1 rounded text-sm font-bold hover:bg-transparent hover:text-red-600 hover:border hover:border-red-600 transition-all"
+                        className="bg-gradient-to-r from-red-600 to-red-500 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-md hover:scale-105 hover:shadow-lg transition-all duration-300"
                       >
-                        See Candidate Profile
+                        View Profile
                       </button>
                     </li>
-                  ))
-                )}
-              </ul>
+                  ))}
+                </ul>
+              )}
             </section>
           </div>
 
-          <div className="w-full lg:w-1/3 bg-gray-50 border-l p-6">
-            <section className="mb-8">
-              <h3 className="text-xl font-bold text-gray-800 mb-2">
+          <div className="w-full lg:w-80 bg-white/40 backdrop-blur-2xl border border-white/50 rounded-3xl shadow-xl p-8 space-y-8">
+            <section>
+              <h3 className="text-lg font-bold text-gray-800 mb-4">
                 Job Summary
               </h3>
-              <ul className="text-sm text-gray-700 space-y-1">
+              <ul className="text-sm text-gray-700 space-y-2">
                 <li>
-                  <strong>Published:</strong> {formatDate(jobDetails.createdAt)}
+                  <span className="font-semibold">Published:</span>{" "}
+                  {formatDate(jobDetails.createdAt)}
                 </li>
                 <li>
-                  <strong>Job Nature:</strong>{" "}
+                  <span className="font-semibold">Job Nature:</span>{" "}
                   {jobDetails.isFullTime ? "Full-Time" : "Part-Time"}
                 </li>
                 <li>
-                  <strong>Location:</strong> {jobDetails.location}
+                  <span className="font-semibold">Location:</span>{" "}
+                  {jobDetails.location}
                 </li>
               </ul>
             </section>
 
             <section>
-              <h3 className="text-xl font-bold text-gray-800 mb-2">
+              <h3 className="text-lg font-bold text-gray-800 mb-4">
                 Company Detail
               </h3>
-              <p className="text-sm text-gray-700">
+              <p className="text-sm text-gray-600 leading-relaxed">
                 Alliance Software, Inc. is a global IT services and solutions
                 company. Established in 2000, Alliance has grown to become one
-                of the Philippines’ largest and most respected independent
-                software development companies.
+                of the Philippines’ largest independent software development
+                companies.
               </p>
             </section>
 
-            <button
-              type="button"
-              onClick={() => router.push(`/joblisting/${jobId}`)}
-              className="mt-6 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600"
-            >
-              See Job Details
-            </button>
-            <button
-              type="button"
-              className="mt-2 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600"
-              onClick={() => setShowDeleteModal(true)}
-            >
-              Delete Job
-            </button>
-            <button
-              type="button"
-              className="mt-2 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600"
-              onClick={() => router.push(`/joblisting/${jobId}/edit`)}
-            >
-              Edit Job
-            </button>
-            <button
-              type="button"
-              onClick={() => router.back()}
-              className="mt-2 w-full bg-gray-300 text-gray-800 font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-gray-500 hover:border-gray-500"
-            >
-              Back
-            </button>
+            <div className="space-y-3 pt-4 border-t border-white/40">
+              <button
+                type="button"
+                onClick={() => router.push(`/joblisting/${jobId}`)}
+                className="w-full bg-gradient-to-r from-red-600 to-red-500 text-white font-semibold py-2 rounded-xl shadow-md hover:scale-105 transition-all"
+              >
+                See Job Details
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowDeleteModal(true)}
+                className="w-full bg-white/60 backdrop-blur-md border border-red-500 text-red-600 font-semibold py-2 rounded-xl hover:bg-red-50 transition-all"
+              >
+                Delete Job
+              </button>
+
+              <button
+                type="button"
+                onClick={() => router.push(`/joblisting/${jobId}/edit`)}
+                className="w-full bg-white/60 backdrop-blur-md border border-gray-400 text-gray-700 font-semibold py-2 rounded-xl hover:bg-gray-100 transition-all"
+              >
+                Edit Job
+              </button>
+
+              <button
+                type="button"
+                onClick={() => router.back()}
+                className="w-full bg-gray-200/70 text-gray-700 font-semibold py-2 rounded-xl hover:bg-gray-300 transition-all"
+              >
+                Back
+              </button>
+            </div>
           </div>
         </div>
       </div>
+
       {showDeleteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded shadow-lg max-w-sm w-full">
-            <h2 className="text-lg font-bold mb-4">Confirm Delete</h2>
-            <p className="mb-4">Are you sure you want to delete this job?</p>
-            <div className="flex justify-end gap-2">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white/70 backdrop-blur-xl border border-white/40 shadow-2xl rounded-2xl p-8 max-w-md w-full mx-4">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4">
+              Confirm Delete
+            </h3>
+            <p className="text-gray-600 mb-6 text-sm">
+              Are you sure you want to delete this job? This action cannot be
+              undone.
+            </p>
+
+            <div className="flex justify-end gap-3">
               <button
-                className="bg-gray-300 text-gray-800 px-4 py-2 rounded"
+                className="px-4 py-2 bg-gray-200 rounded-xl hover:bg-gray-300 transition-all"
                 onClick={() => setShowDeleteModal(false)}
                 type="button"
               >
                 Cancel
               </button>
+
               <button
-                className="bg-red-600 text-white px-4 py-2 rounded font-bold"
+                className="px-4 py-2 bg-gradient-to-r from-red-600 to-red-500 text-white rounded-xl shadow-md hover:scale-105 transition-all"
                 onClick={handleDeleteJob}
                 type="button"
               >

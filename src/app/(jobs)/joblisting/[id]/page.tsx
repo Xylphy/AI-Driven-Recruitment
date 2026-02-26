@@ -140,11 +140,11 @@ export default function Page() {
   }
 
   return (
-    <main className="bg-white min-h-screen py-5 px-4 md:px-20">
+    <main className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-100 py-10 px-4 md:px-20">
       {states.showDeleteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-bold text-gray-800 mb-4">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white/70 backdrop-blur-xl border border-white/40 shadow-2xl rounded-2xl p-8 max-w-md w-full mx-4">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4">
               Confirm Delete
             </h3>
             <p className="text-gray-600 mb-6">
@@ -153,7 +153,7 @@ export default function Page() {
             </p>
             <div className="flex gap-3 justify-end">
               <button
-                className="px-4 py-2 text-gray-600 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+                className="px-5 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 transition disabled:opacity-50"
                 disabled={states.isDeleting}
                 onClick={() =>
                   setStates((prev) => ({ ...prev, showDeleteModal: false }))
@@ -163,7 +163,7 @@ export default function Page() {
                 Cancel
               </button>
               <button
-                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
+                className="px-5 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition disabled:opacity-50"
                 disabled={states.isDeleting}
                 onClick={handleDeleteJob}
                 type="button"
@@ -175,8 +175,8 @@ export default function Page() {
         </div>
       )}
 
-      <div className="max-w-4xl mx-auto">
-        <div className="relative h-44">
+      <div className="max-w-6xl mx-auto">
+        <div className="relative h-52 rounded-3xl overflow-hidden shadow-xl">
           <Image
             src="/workspace.jpg"
             alt="Header Background"
@@ -184,157 +184,161 @@ export default function Page() {
             className="object-cover"
             priority
           />
-          <div className="absolute inset-0 bg-black/75 z-10" />
-          <div className="relative z-10 h-full flex flex-col items-center justify-center px-4 text-center">
-            <h1 className="text-3xl font-bold text-center text-white">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <div className="relative z-10 h-full flex flex-col items-center justify-center px-6 text-center">
+            <h1 className="text-4xl font-bold text-white tracking-tight">
               {jobDetails.title}
             </h1>
-            <hr className="w-1/2 mx-auto border-t border-red-600 my-2" />
-            <div className="flex justify-center mt-2 space-x-4 text-white font-medium text-sm">
-              <span className="flex items-center gap-1">
-                <MdLocationOn className="text-red-600" /> {jobDetails.location}
+            <div className="w-20 h-1 bg-red-500 rounded-full my-4" />
+            <div className="flex flex-wrap justify-center gap-6 text-white text-sm font-medium">
+              <span className="flex items-center gap-2">
+                <MdLocationOn className="text-red-400" />
+                {jobDetails.location}
               </span>
-              <span className="flex items-center gap-1">
-                <MdAccessTime className="text-red-600" />{" "}
+              <span className="flex items-center gap-2">
+                <MdAccessTime className="text-red-400" />
                 {jobDetails.is_fulltime ? "Full-Time" : "Part-Time"}
               </span>
             </div>
           </div>
         </div>
-        <div className="flex flex-col lg:flex-row py-5">
-          <div className="w-full lg:w-2/3 p-8">
-            <section className="mb-8">
-              <h2 className="text-2xl font-bold text-red-600 mb-4">
+
+        <div className="flex flex-col lg:flex-row gap-8 mt-10">
+          <div className="w-full lg:w-2/3 space-y-8">
+            <div className="bg-white/70 backdrop-blur-xl border border-white/40 shadow-lg rounded-2xl p-8">
+              <h2 className="text-2xl font-semibold text-red-600 mb-6">
                 Qualifications
               </h2>
-              <ul className="space-y-2 text-gray-700 text-sm">
+              <ul className="space-y-3 text-gray-700 text-sm">
                 {jobDetails.qualifications.map((item) => (
                   <li
                     key={crypto.randomUUID()}
-                    className="flex items-start gap-2"
+                    className="flex items-start gap-3"
                   >
-                    <MdChevronRight className="text-red-600 mt-1" />
+                    <MdChevronRight className="text-red-500 mt-1" />
                     <span>{item}</span>
                   </li>
                 ))}
               </ul>
-            </section>
+            </div>
 
-            <section>
-              <h2 className="text-2xl font-bold text-red-600 mb-4">
+            <div className="bg-white/70 backdrop-blur-xl border border-white/40 shadow-lg rounded-2xl p-8">
+              <h2 className="text-2xl font-semibold text-red-600 mb-6">
                 Requirements
               </h2>
-              <ul className="space-y-2 text-gray-700 text-sm">
+              <ul className="space-y-3 text-gray-700 text-sm">
                 {jobDetails.requirements.map((item) => (
                   <li
                     key={crypto.randomUUID()}
-                    className="flex items-start gap-2"
+                    className="flex items-start gap-3"
                   >
-                    <MdChevronRight className="text-red-600 mt-1" />
+                    <MdChevronRight className="text-red-500 mt-1" />
                     <span>{item}</span>
                   </li>
                 ))}
               </ul>
-            </section>
+            </div>
 
-            <section className="mt-8">
-              <h2 className="text-2xl font-bold text-red-600 mb-4">Tags</h2>
-              <ul className="space-y-2 text-gray-700 text-sm">
+            <div className="bg-white/70 backdrop-blur-xl border border-white/40 shadow-lg rounded-2xl p-8">
+              <h2 className="text-2xl font-semibold text-red-600 mb-6">Tags</h2>
+              <div className="flex flex-wrap gap-2">
                 {tags.map((tag) => (
-                  <li
+                  <span
                     key={crypto.randomUUID()}
-                    className="inline-block bg-gray-200 text-gray-800 px-3 py-1 rounded-full text-sm mr-2 mb-2"
+                    className="bg-red-100 text-red-700 px-4 py-1 rounded-full text-sm font-medium"
                   >
                     {tag.skill}
-                  </li>
+                  </span>
                 ))}
-              </ul>
-            </section>
+              </div>
+            </div>
           </div>
 
-          <div className="w-full lg:w-1/3 bg-gray-50 border-l p-6">
-            <section className="mb-8">
-              <h3 className="text-xl font-bold text-gray-800 mb-2">
+          <div className="w-full lg:w-80 bg-white/40 backdrop-blur-2xl border border-white/50 rounded-3xl shadow-xl p-8 space-y-8">
+            <section>
+              <h3 className="text-lg font-bold text-gray-800 mb-4">
                 Job Summary
               </h3>
-              <ul className="text-sm text-gray-700 space-y-1">
+              <ul className="text-sm text-gray-700 space-y-2">
                 <li>
-                  <strong>Published:</strong>{" "}
+                  <span className="font-semibold">Published:</span>{" "}
                   {formatDate(jobDetails.created_at)}
                 </li>
                 <li>
-                  <strong>Job Nature:</strong>{" "}
+                  <span className="font-semibold">Job Nature:</span>{" "}
                   {jobDetails.is_fulltime ? "Full-Time" : "Part-Time"}
                 </li>
                 <li>
-                  <strong>Location:</strong> {jobDetails.location}
+                  <span className="font-semibold">Location:</span>{" "}
+                  {jobDetails.location}
                 </li>
               </ul>
             </section>
 
             <section>
-              <h3 className="text-xl font-bold text-gray-800 mb-2">
+              <h3 className="text-lg font-bold text-gray-800 mb-4">
                 Company Detail
               </h3>
-              <p className="text-sm text-gray-700">
+              <p className="text-sm text-gray-600 leading-relaxed">
                 Alliance Software, Inc. is a global IT services and solutions
                 company. Established in 2000, Alliance has grown to become one
-                of the Philippines’ largest and most respected independent
-                software development companies.
+                of the Philippines’ largest independent software development
+                companies.
               </p>
             </section>
 
-            {isAuthenticated && (
-              <>
+            <div className="space-y-3 pt-4 border-t border-white/40">
+              {isAuthenticated ? (
+                <>
+                  <button
+                    className="w-full bg-gradient-to-r from-red-600 to-red-500 text-white font-semibold py-2 rounded-xl shadow-md hover:scale-105 transition-all"
+                    onClick={() => router.push(`/candidates/${jobId}`)}
+                    type="button"
+                  >
+                    See Applicants
+                  </button>
+                  <button
+                    className="w-full bg-white/60 backdrop-blur-md border border-red-500 text-red-600 font-semibold py-2 rounded-xl hover:bg-red-50 transition-all"
+                    onClick={() =>
+                      setStates((prev) => ({
+                        ...prev,
+                        showDeleteModal: true,
+                      }))
+                    }
+                    type="button"
+                  >
+                    Delete Job
+                  </button>
+                  <button
+                    className="w-full bg-white/60 backdrop-blur-md border border-gray-400 text-gray-700 font-semibold py-2 rounded-xl hover:bg-gray-100 transition-all"
+                    onClick={() => router.push(`/joblisting/${jobId}/edit`)}
+                    type="button"
+                  >
+                    Edit Job
+                  </button>
+                </>
+              ) : (
                 <button
-                  className="mt-6 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600"
-                  onClick={() => router.push(`/candidates/${jobId}`)}
-                  type="button"
-                >
-                  See Applicants
-                </button>
-                <button
-                  className="mt-2 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600"
+                  className="w-full bg-gradient-to-r from-red-600 to-red-500 text-white font-semibold py-2 rounded-xl shadow-md hover:scale-105 transition-all"
+                  disabled={states.isApplying}
                   onClick={() =>
-                    setStates((prev) => ({
-                      ...prev,
-                      showDeleteModal: true,
-                    }))
+                    router.push(
+                      `/joblisting/${jobId}/application/form` as Route,
+                    )
                   }
                   type="button"
                 >
-                  Delete Job
+                  {states.isApplying ? "Applying..." : "Apply"}
                 </button>
-                <button
-                  className="mt-2 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent hover:bg-transparent hover:text-red-600 hover:border-red-600"
-                  onClick={() => router.push(`/joblisting/${jobId}/edit`)}
-                  type="button"
-                >
-                  Edit Job
-                </button>
-              </>
-            )}
-
-            {!isAuthenticated && (
+              )}
               <button
-                className="mt-2 w-full bg-red-600 text-white font-bold py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-600 hover:border-red-600"
-                disabled={states.isApplying}
-                onClick={() =>
-                  router.push(`/joblisting/${jobId}/application/form` as Route)
-                }
+                className="w-full bg-gray-200/70 text-gray-700 font-semibold py-2 rounded-xl hover:bg-gray-300 transition-all"
+                onClick={() => router.back()}
                 type="button"
               >
-                {states.isApplying ? "Applying..." : "Apply"}
+                Back
               </button>
-            )}
-
-            <button
-              className="mt-2 w-full bg-gray-300 text-gray-800 font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-gray-500 hover:border-gray-500"
-              onClick={() => router.back()}
-              type="button"
-            >
-              Back
-            </button>
+            </div>
           </div>
         </div>
       </div>

@@ -14,7 +14,7 @@ import {
 } from "chart.js";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Bar, Line } from "react-chartjs-2";
 import Select from "react-select";
 import HRReportCard from "@/components/admin/aiMetrics/HRReportCard";
@@ -64,16 +64,6 @@ function responseData(data: Array<number>) {
   };
 }
 
-const YM_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
-
-function isYearMonth(v: string) {
-  return YM_RE.test(v);
-}
-
-function compareYM(a: string, b: string) {
-  return a.localeCompare(b);
-}
-
 function getThisYM() {
   const d = new Date();
   const y = d.getFullYear();
@@ -88,13 +78,7 @@ const formatScore = (value?: number) =>
   }).format(value ?? 0);
 
 export default function AIAnalyticsDashboard() {
-  const thisYM = useMemo(() => getThisYM(), []);
-
-  const [fromYM, setFromYM] = useState<string>(thisYM);
-  const [toYM, setToYM] = useState<string>(thisYM);
-
-  const rangeInvalid =
-    !isYearMonth(fromYM) || !isYearMonth(toYM) || compareYM(fromYM, toYM) > 0;
+  const [ym, setYm] = useState<string>(getThisYM());
 
   const { isAuthenticated } = useAuth();
 
@@ -147,23 +131,15 @@ export default function AIAnalyticsDashboard() {
     ],
   };
 
-  const onChangeFrom = (v: string) => {
-    if (!isYearMonth(v)) return; // ignore invalid edits
-    setFromYM(v);
-    if (isYearMonth(toYM) && compareYM(v, toYM) > 0) setToYM(v);
-  };
-
-  const onChangeTo = (v: string) => {
-    if (!isYearMonth(v)) return;
-    setToYM(v);
-    if (isYearMonth(fromYM) && compareYM(fromYM, v) > 0) setFromYM(v);
-  };
-
   const handleDownloadReport = () => {
-    if (rangeInvalid) return;
+    if (!ym) return;
 
-    const [ty, tm] = toYM.split("-");
-    const to = `${MONTHS[Number(tm) - 1]} ${ty}`;
+    const [y, m] = ym.split("-");
+    const monthIndex = Number(m) - 1;
+
+    if (Number.isNaN(monthIndex) || monthIndex < 0 || monthIndex > 11) return;
+
+    const dateLabel = `${MONTHS[monthIndex]} ${y}`;
 
     const doc = new jsPDF({
       orientation: "landscape",
@@ -174,7 +150,7 @@ export default function AIAnalyticsDashboard() {
     doc.text("AI Performance & Accuracy Report", 40, 40);
 
     doc.setFontSize(11);
-    doc.text(`Date: ${to}`, 40, 65);
+    doc.text(`Date: ${dateLabel}`, 40, 65);
 
     // Summary section
     const avgJobFit = aiMetrics.data?.overall.avg_job_fit_score ?? 0;
@@ -214,7 +190,7 @@ export default function AIAnalyticsDashboard() {
     });
 
     // safer filename: no spaces/special chars
-    doc.save(`ai_analytics_${to}.pdf`);
+    doc.save(`ai_analytics_${dateLabel}.pdf`);
   };
 
   return (
@@ -230,17 +206,8 @@ export default function AIAnalyticsDashboard() {
           <div className="flex gap-3 items-center">
             <input
               type="month"
-              value={fromYM}
-              onChange={(e) => onChangeFrom(e.target.value)}
-              className="px-4 py-2 rounded-xl bg-white/70 backdrop-blur border border-red-200 focus:ring-2 focus:ring-red-500"
-            />
-
-            <span className="text-gray-600 font-medium">to</span>
-
-            <input
-              type="month"
-              value={toYM}
-              onChange={(e) => onChangeTo(e.target.value)}
+              value={ym}
+              onChange={(e) => setYm(e.target.value)}
               className="px-4 py-2 rounded-xl bg-white/70 backdrop-blur border border-red-200 focus:ring-2 focus:ring-red-500"
             />
           </div>
@@ -248,24 +215,10 @@ export default function AIAnalyticsDashboard() {
           <button
             type="button"
             onClick={handleDownloadReport}
-            disabled={rangeInvalid}
-            className={`bg-linear-to-r from-red-600 to-red-500 text-white font-bold px-6 py-2 rounded-xl shadow-lg hover:opacity-90 transition
-          ${rangeInvalid ? "opacity-50 cursor-not-allowed hover:opacity-50" : ""}`}
-            title={
-              rangeInvalid
-                ? "Select a valid month range (From must be <= To)"
-                : ""
-            }
+            className="bg-linear-to-r from-red-600 to-red-500 text-white font-bold px-6 py-2 rounded-xl shadow-lg hover:opacity-90 transition"
           >
             DOWNLOAD AI REPORT
           </button>
-
-          {rangeInvalid && (
-            <div className="text-sm text-red-600">
-              Please select a valid month range (format YYYY-MM, and From must
-              be before or equal to To).
-            </div>
-          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -142,13 +142,6 @@ export default function ApplicantsPage() {
                           View
                         </button>
 
-                        <button
-                          className="px-4 py-1 text-xs font-semibold rounded-xl bg-white/40 border border-red-400 text-red-600 backdrop-blur-md hover:bg-red-50 transition"
-                          type="button"
-                        >
-                          Compare
-                        </button>
-
                         <a
                           href={`https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/raw/upload/${candidate.resumeId}`}
                           target="_blank"

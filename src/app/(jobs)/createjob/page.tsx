@@ -5,7 +5,7 @@ import { useState } from "react";
 import ListInputSection from "@/components/joblisting/Qualifications";
 import useAuth from "@/hooks/useAuth";
 import { JOB_LOCATIONS } from "@/lib/constants";
-import { swalError, swalSuccess } from "@/lib/swal";
+import { swalError, swalSuccess, swalConfirm } from "@/lib/swal";
 import { trpc } from "@/lib/trpc/client";
 import type { JobListing, Tags } from "@/types/types";
 
@@ -89,208 +89,294 @@ export default function JobListingPage() {
       router.push("/login");
     }
 
-    await createJoblisting.mutateAsync(
-      {
-        title: jobListing.title,
-        qualifications: jobListing.qualifications,
-        requirements: jobListing.requirements,
-        tags: jobListing.tags,
-        location: jobListing.location,
-        isFullTime: jobListing.isFullTime,
-        hrOfficerId: hrOfficerId ?? undefined,
-      },
-      {
-        onSuccess: (data) => {
-          swalSuccess("Create Job Listing", data.message);
-          setJobListing({
-            title: "",
-            qualifications: [],
-            requirements: [],
-            tags: [],
-            location: "Cebu City",
-            isFullTime: true,
-          });
-          setHrSearch("");
-          setHrOfficerId(null);
-        },
-        onError: (error) => {
-          swalError("Operation Failed", error.message);
-        },
+    swalConfirm(
+      "Finalize tags?",
+      "Tags will be finalized and cannot be modified after job creation. Do you want to continue?",
+      async () => {
+        await createJoblisting.mutateAsync(
+          {
+            title: jobListing.title,
+            qualifications: jobListing.qualifications,
+            requirements: jobListing.requirements,
+            tags: jobListing.tags,
+            location: jobListing.location,
+            isFullTime: jobListing.isFullTime,
+            hrOfficerId: hrOfficerId ?? undefined,
+          },
+          {
+            onSuccess: (data) => {
+              swalSuccess("Create Job Listing", data.message);
+              setJobListing({
+                title: "",
+                qualifications: [],
+                requirements: [],
+                tags: [],
+                location: "Cebu City",
+                isFullTime: true,
+              });
+              setHrSearch("");
+              setHrOfficerId(null);
+            },
+            onError: (error) => {
+              swalError("Operation Failed", error.message);
+            },
+          },
+        );
       },
     );
   };
 
   return (
-    <div className="flex flex-col justify-center items-center mt-10">
-      <h1 className="text-4xl font-bold text-[#E30022] text-center mb-2 uppercase tracking-wide">
-        CREATE JOB LISTING
-      </h1>
-      <hr className="w-1/4 mx-auto border-t border-black-600 my-1" />
-      <p className="text-center text-sm text-gray-700 mt-2 mb-6">
-        Post your job listing and find the best talent.
-      </p>
+    <div
+      className="
+    relative
+    min-h-screen
+    w-full
+    flex
+    items-center
+    justify-center
+    bg-gradient-to-br from-white via-red-50/30 to-white
+    px-4
+    py-16
+  "
+    >
+      <div className="absolute -top-40 -left-40 w-[450px] h-[450px] bg-red-400/20 rounded-full blur-3xl" />
+      <div className="absolute -bottom-40 -right-40 w-[450px] h-[450px] bg-red-500/20 rounded-full blur-3xl" />
 
-      <form onSubmit={handleSubmit} className="w-full max-w-2xl mt-6 space-y-4">
-        <div className="mb-4">
-          <label
-            htmlFor="title"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Job Title
-          </label>
-          <input
-            type="text"
-            id="title"
-            name="title"
-            value={jobListing.title}
-            onChange={handleInputChange}
-            className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md"
-            required
-            maxLength={255}
-          />
-        </div>
+      <div className="relative w-full max-w-3xl">
+        <div
+          className="
+        relative
+        rounded-[32px]
+        border border-white/40
+        bg-white/55
+        backdrop-blur-3xl
+        shadow-[0_40px_120px_rgba(220,38,38,0.15)]
+        p-10
+        overflow-hidden
+      "
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-red-100/30 pointer-events-none" />
 
-        <ListInputSection
-          items={jobListing.qualifications}
-          title="Qualifications"
-          update={(id, value) => handleUpdate("qualifications", id, value)}
-          deleteItem={(id) => handleDelete("qualifications", id)}
-          add={() => handleAdd("qualifications")}
-        />
-
-        <ListInputSection
-          items={jobListing.requirements}
-          title="Requirements"
-          update={(id, value) => handleUpdate("requirements", id, value)}
-          deleteItem={(id) => handleDelete("requirements", id)}
-          add={() => handleAdd("requirements")}
-        />
-
-        <ListInputSection
-          items={jobListing.tags}
-          title="Tags"
-          update={(id, value) => handleUpdate("tags", id, value)}
-          deleteItem={(id) => handleDelete("tags", id)}
-          add={() => handleAdd("tags")}
-        />
-
-        <div className="mb-4">
-          <label
-            htmlFor="location"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Job Location
-          </label>
-          <select
-            id="location"
-            name="location"
-            value={jobListing.location}
-            onChange={handleInputChange}
-            className="w-full mt-1 px-4 py-2 border border-gray-300 rounded-md"
-            required
-          >
-            <option value="" disabled>
-              Select a location
-            </option>
-            {JOB_LOCATIONS.map((location) => (
-              <option key={location} value={location}>
-                {location}
-              </option>
-            ))}
-          </select>
-
-          {/* change here names of hr officer */}
-          <label
-            htmlFor="hr_officer"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Assigned HR Officer
-          </label>
-
-          <div className="relative mt-1">
-            <input
-              type="text"
-              id="hr_officer"
-              value={hrSearch}
-              onChange={(e) => {
-                setHrSearch(e.target.value);
-                setShowDropdown(true);
-              }}
-              onFocus={() => setShowDropdown(true)}
-              placeholder="Type to search HR Officer"
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:outline-none"
-            />
-
-            {showDropdown && filteredHROfficers.length > 0 && (
-              <ul className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow max-h-48 overflow-y-auto">
-                {filteredHROfficers.map((officer) => (
-                  <li
-                    key={officer.id}
-                    onClick={() => {
-                      setHrOfficerId(officer.id);
-                      setHrSearch(`${officer.first_name} ${officer.last_name}`);
-                      setShowDropdown(false);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        setHrOfficerId(officer.id);
-                        setHrSearch(
-                          `${officer.first_name} ${officer.last_name}`,
-                        );
-                        setShowDropdown(false);
-                      }
-                    }}
-                    className="px-4 py-2 cursor-pointer hover:bg-red-50"
-                  >
-                    {officer.first_name} {officer.last_name}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-          <div className="mt-4">
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="isFullTime"
-                name="isFullTime"
-                checked={jobListing.isFullTime}
-                onChange={(e) =>
-                  setJobListing((prev) => ({
-                    ...prev,
-                    isFullTime: e.target.checked,
-                  }))
-                }
-                className="h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
-              />
-              <label
-                htmlFor="isFullTime"
-                className="ml-2 block text-sm font-medium text-gray-700"
-              >
-                Full Time Position
-              </label>
+          <div className="relative">
+            <div className="text-center mb-10">
+              <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-red-600">
+                Recruitment Panel
+              </p>
+              <h1 className="mt-3 text-3xl font-extrabold bg-gradient-to-r from-red-600 to-red-400 bg-clip-text text-transparent">
+                Create Job Listing
+              </h1>
+              <p className="mt-2 text-sm text-gray-600">
+                Post your job listing and find the best talent.
+              </p>
             </div>
+
+            <form onSubmit={handleSubmit} className="space-y-8">
+              <div className="space-y-3">
+                <label className="text-xs font-bold uppercase tracking-[0.2em] text-red-600">
+                  Job Title
+                </label>
+                <input
+                  type="text"
+                  id="title"
+                  name="title"
+                  value={jobListing.title}
+                  onChange={handleInputChange}
+                  required
+                  maxLength={255}
+                  className="
+                w-full rounded-2xl px-5 py-3
+                bg-white/70 backdrop-blur-xl
+                border border-white/40
+                text-gray-700 font-semibold placeholder:text-gray-400
+                shadow-[0_15px_50px_rgba(220,38,38,0.08)]
+                focus:ring-2 focus:ring-red-400/40 focus:border-red-300
+                transition-all duration-300 outline-none
+              "
+                />
+              </div>
+
+              <ListInputSection
+                items={jobListing.qualifications}
+                title="Qualifications"
+                update={(id, value) =>
+                  handleUpdate("qualifications", id, value)
+                }
+                deleteItem={(id) => handleDelete("qualifications", id)}
+                add={() => handleAdd("qualifications")}
+              />
+
+              <ListInputSection
+                items={jobListing.requirements}
+                title="Requirements"
+                update={(id, value) => handleUpdate("requirements", id, value)}
+                deleteItem={(id) => handleDelete("requirements", id)}
+                add={() => handleAdd("requirements")}
+              />
+
+              <ListInputSection
+                items={jobListing.tags}
+                title="Tags"
+                update={(id, value) => handleUpdate("tags", id, value)}
+                deleteItem={(id) => handleDelete("tags", id)}
+                add={() => handleAdd("tags")}
+              />
+
+              <div className="space-y-3">
+                <label className="text-xs font-bold uppercase tracking-[0.2em] text-red-600">
+                  Job Location
+                </label>
+
+                <select
+                  id="location"
+                  name="location"
+                  value={jobListing.location}
+                  onChange={handleInputChange}
+                  required
+                  className="
+                w-full rounded-2xl px-5 py-3
+                bg-white/70 backdrop-blur-xl
+                border border-white/40
+                text-gray-700 font-semibold
+                shadow-[0_15px_50px_rgba(220,38,38,0.08)]
+                focus:ring-2 focus:ring-red-400/40 focus:border-red-300
+                transition-all duration-300 outline-none
+              "
+                >
+                  <option value="" disabled>
+                    Select a location
+                  </option>
+                  {JOB_LOCATIONS.map((location) => (
+                    <option key={location} value={location}>
+                      {location}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-xs font-bold uppercase tracking-[0.2em] text-red-600">
+                  Assigned HR Officer
+                </label>
+
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={hrSearch}
+                    onChange={(e) => {
+                      setHrSearch(e.target.value);
+                      setShowDropdown(true);
+                    }}
+                    onFocus={() => setShowDropdown(true)}
+                    placeholder="Type to search HR Officer"
+                    className="
+                  w-full rounded-2xl px-5 py-3
+                  bg-white/70 backdrop-blur-xl
+                  border border-white/40
+                  text-gray-700 font-semibold
+                  shadow-[0_15px_50px_rgba(220,38,38,0.08)]
+                  focus:ring-2 focus:ring-red-400/40 focus:border-red-300
+                  transition-all duration-300 outline-none
+                "
+                  />
+
+                  {showDropdown && filteredHROfficers.length > 0 && (
+                    <ul
+                      className="
+                  absolute z-20 mt-2 w-full
+                  rounded-2xl
+                  border border-white/40
+                  bg-white/80 backdrop-blur-2xl
+                  shadow-[0_20px_60px_rgba(220,38,38,0.12)]
+                  max-h-56 overflow-y-auto
+                "
+                    >
+                      {filteredHROfficers.map((officer) => (
+                        <li
+                          key={officer.id}
+                          onClick={() => {
+                            setHrOfficerId(officer.id);
+                            setHrSearch(
+                              `${officer.first_name} ${officer.last_name}`,
+                            );
+                            setShowDropdown(false);
+                          }}
+                          className="px-5 py-3 cursor-pointer hover:bg-red-50 transition"
+                        >
+                          {officer.first_name} {officer.last_name}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+
+              <div
+                className="
+            flex items-center gap-3
+            rounded-2xl
+            border border-white/40
+            bg-white/50
+            backdrop-blur-xl
+            p-4
+          "
+              >
+                <input
+                  type="checkbox"
+                  id="isFullTime"
+                  checked={jobListing.isFullTime}
+                  onChange={(e) =>
+                    setJobListing((prev) => ({
+                      ...prev,
+                      isFullTime: e.target.checked,
+                    }))
+                  }
+                  className="w-5 h-5 accent-red-600"
+                />
+                <label className="text-sm font-semibold text-gray-700">
+                  Full Time Position
+                </label>
+              </div>
+
+              <div className="flex gap-4 justify-center pt-4">
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="
+                relative rounded-2xl px-8 py-3
+                font-bold uppercase tracking-[0.18em]
+                bg-gradient-to-r from-red-600 to-red-500
+                text-white
+                shadow-[0_25px_80px_rgba(220,38,38,0.25)]
+                hover:scale-[1.02]
+                transition-all duration-300
+                disabled:opacity-60 disabled:cursor-not-allowed
+              "
+                >
+                  {isSubmitting ? "Processing..." : "Submit Listing"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => router.back()}
+                  className="
+                rounded-2xl px-8 py-3
+                font-bold uppercase tracking-[0.18em]
+                bg-white/60 backdrop-blur-md
+                border border-white/40
+                text-gray-700
+                shadow-sm
+                hover:bg-white/80
+                transition
+              "
+                >
+                  Back
+                </button>
+              </div>
+            </form>
           </div>
         </div>
-
-        <div className="flex justify-center">
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="bg-[#E30022] text-white font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-red-500 hover:border-red-500"
-          >
-            {isSubmitting ? "Processing..." : "Submit Listing"}
-          </button>
-        </div>
-      </form>
-
-      <button
-        type="button"
-        onClick={() => router.back()}
-        className="mt-4 bg-gray-300 text-gray-800 font-bold px-4 py-2 rounded border border-transparent transition-all duration-300 ease-in-out hover:bg-transparent hover:text-gray-500 hover:border-gray-500"
-      >
-        Back
-      </button>
+      </div>
     </div>
   );
 }
