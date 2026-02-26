@@ -24,7 +24,8 @@ const hrOfficerRouter = createTRPCRouter({
       const query = supabase
         .from("job_listings")
         .select("*, applicants(id)")
-        .eq("officer_id", ctx.userJWT?.id);
+        // biome-ignore lint/style/noNonNullAssertion: JWT is guaranteed to be present by hrOfficerProcedure
+        .eq("officer_id", ctx.userJWT!.id);
 
       if (input.query) {
         query.ilike("title", `%${input.query}%`);

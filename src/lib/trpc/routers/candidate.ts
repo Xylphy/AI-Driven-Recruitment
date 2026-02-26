@@ -91,6 +91,10 @@ const candidateRouter = createTRPCRouter({
           });
         }
         jobListingIds = (listings || []).map((l: { id: string }) => l.id);
+
+        if (jobListingIds.length === 0) {
+          return { applicants: [] };
+        }
       }
 
       // Build filters

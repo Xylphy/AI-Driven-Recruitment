@@ -11,13 +11,6 @@ import { trpc } from "@/lib/trpc/client";
 import type { AdminFeedback } from "@/types/schema";
 import type { FetchCandidateProfileOutput } from "@/types/types";
 
-interface WorkExperience {
-  company: string;
-  start_date?: Date;
-  title: string;
-  end_date?: Date;
-}
-
 interface CandidateID {
   applicantId?: string;
 }
@@ -31,7 +24,7 @@ function getSkillsCount(data: FetchCandidateProfileOutput | undefined) {
 }
 
 function getMatchScore(data: FetchCandidateProfileOutput | undefined) {
-  return data?.score?.score_data?.predictive_success || 0;
+  return data?.score?.score_data?.job_fit_score || 0;
 }
 
 function compareMetric(a: number, b: number) {
@@ -61,9 +54,28 @@ export default function ComparePage() {
 
   const { isAuthenticated } = useAuth();
 
-  const fetchJobsQuery = trpc.admin.fetchAllJobs.useQuery(undefined, {
-    enabled: isAuthenticated,
-  });
+  const userInfo = trpc.auth.decodeJWT.useQuery();
+  const role = userInfo.data?.user.role;
+
+  const adminJobsQuery = trpc.admin.fetchJobs.useQuery(
+    {},
+    {
+      enabled:
+        (userInfo.isSuccess && role === "Admin") || role === "SuperAdmin",
+    },
+  );
+
+  const hrOfficerJobsQuery = trpc.hrOfficer.assignedJobs.useQuery(
+    {},
+    {
+      enabled: userInfo.isSuccess && role === "HR Officer",
+    },
+  );
+
+  const jobsQuery =
+    role === "Admin" || role === "SuperAdmin"
+      ? adminJobsQuery
+      : hrOfficerJobsQuery;
 
   const AIQuery = trpc.candidate.fetchAICompare.useQuery(
     {
@@ -227,7 +239,7 @@ export default function ComparePage() {
                 Select Job
               </label>
 
-              {fetchJobsQuery.isLoading || fetchJobsQuery.isFetching ? (
+              {jobsQuery.isLoading || jobsQuery.isFetching ? (
                 <div className="w-full p-4 rounded-2xl bg-white/60 backdrop-blur-xl border border-white/40 shadow-md flex items-center gap-4">
                   <div className="h-10 w-10 rounded-full bg-red-100/70 animate-pulse" />
                   <div className="flex-1">
@@ -251,7 +263,7 @@ export default function ComparePage() {
                     <Select
                       inputId={jobSelectId}
                       instanceId={jobSelectId}
-                      options={fetchJobsQuery.data?.jobs?.map((job) => ({
+                      options={jobsQuery.data?.jobs?.map((job) => ({
                         value: job.id,
                         label: job.title,
                       }))}
@@ -259,7 +271,7 @@ export default function ComparePage() {
                         selectedJobId
                           ? {
                               value: selectedJobId,
-                              label: fetchJobsQuery.data?.jobs?.find(
+                              label: jobsQuery.data?.jobs?.find(
                                 (j) => j.id === selectedJobId,
                               )?.title,
                             }
@@ -406,7 +418,7 @@ export default function ComparePage() {
                       </h3>
                       <p className="text-gray-600">
                         {
-                          fetchJobsQuery.data?.jobs?.find(
+                          jobsQuery.data?.jobs?.find(
                             (job) => job.id === selectedJobId,
                           )?.title
                         }
@@ -432,15 +444,18 @@ export default function ComparePage() {
                           Experience:
                         </span>{" "}
                         {data.data?.parsedResume?.raw_output?.work_experience
-                          .map((exp: WorkExperience) => exp.title)
+                          .map((exp) => exp.title)
                           .join(", ") || "N/A"}
                       </p>
                       <p>
                         <span className="font-semibold text-gray-900">
                           Education:
                         </span>{" "}
-                        {data.data?.parsedResume?.raw_output
-                          ?.educational_background[0].degree || "N/A"}
+                        {(data.data?.parsedResume?.raw_output
+                          .educational_background[0]?.degree &&
+                          data.data?.parsedResume?.raw_output
+                            ?.educational_background[0].degree) ||
+                          "N/A"}
                       </p>
                       <div>
                         <span className="font-semibold text-gray-900">
@@ -466,16 +481,17 @@ export default function ComparePage() {
                         </span>{" "}
                         <span
                           className={`font-semibold ${
-                            data.data?.score?.score_data?.predictive_success >=
-                            85
+                            data.data?.score?.score_data?.job_fit_score &&
+                            data.data?.score?.score_data?.job_fit_score >= 85
                               ? "text-green-600"
-                              : data.data?.score?.score_data
-                                    ?.predictive_success >= 70
+                              : data.data?.score?.score_data?.job_fit_score &&
+                                  data.data?.score?.score_data?.job_fit_score >=
+                                    70
                                 ? "text-yellow-600"
                                 : "text-red-600"
                           }`}
                         >
-                          {data.data?.score?.score_data?.predictive_success}%
+                          {data.data?.score?.score_data?.job_fit_score}%
                         </span>
                       </p>
                     </div>

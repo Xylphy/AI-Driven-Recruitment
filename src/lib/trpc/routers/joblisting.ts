@@ -360,6 +360,7 @@ const jobListingRouter = createTRPCRouter({
           message: "Job listing not found",
         });
       }
+
       if (
         ctx.userJWT?.role !== "Admin" &&
         ctx.userJWT?.id !== "SuperAdmin" &&
@@ -375,43 +376,7 @@ const jobListingRouter = createTRPCRouter({
       await Promise.all([
         deleteRow(supabase, "jl_qualifications", "joblisting_id", input.jobId),
         deleteRow(supabase, "jl_requirements", "joblisting_id", input.jobId),
-        deleteRow(supabase, "job_tags", "joblisting_id", input.jobId),
       ]);
-
-      const { data: tagRows, error: tagError } = await supabase
-        .from("tags")
-        .upsert(
-          Array.from(new Set(input.tags?.map((tag) => tag.title))).map(
-            (name) => ({
-              name,
-            }),
-          ),
-          { onConflict: "slug" },
-        )
-        .select("id, name");
-
-      if (tagError) {
-        console.error("Tag upsert error:", tagError);
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to create job listings",
-        });
-      }
-
-      const { error: errorLink } = await supabase.from("job_tags").insert(
-        tagRows.map((t) => ({
-          joblisting_id: input.jobId,
-          tag_id: t.id,
-        })),
-      );
-
-      if (errorLink) {
-        console.error("Error inserting job tags", errorLink);
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to create job listings",
-        });
-      }
 
       const promises = await Promise.all([
         updateTable(
@@ -421,6 +386,7 @@ const jobListingRouter = createTRPCRouter({
             title: input.title,
             location: input.location,
             is_fulltime: input.isFullTime,
+            officer_id: input.hrOfficerId || null,
           },
           [{ column: "id", value: input.jobId }],
         ),
