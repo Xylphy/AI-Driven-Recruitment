@@ -359,7 +359,8 @@ export default function Page() {
                 : "Loading..."}
             </h2>
             <p className="text-s py-1 bg-linear-to-r from-red-600 to-red-400 bg-clip-text text-transparent">
-              jameskenneth.acabal@gmail.com | +639091212345
+              {candidate?.user.email || "No email available"} |{" "}
+              {candidate?.user.contactNumber || "No contact number available"}
             </p>
 
             <div className="flex gap-2 text-red-500">

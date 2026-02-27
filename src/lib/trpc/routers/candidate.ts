@@ -264,6 +264,8 @@ const candidateRouter = createTRPCRouter({
         user: {
           firstName: applicantData.data?.first_name || "",
           lastName: applicantData.data?.last_name || "",
+          email: applicantData.data?.email || "",
+          contactNumber: applicantData.data?.contact_number || "",
         },
         status: applicantData.data?.status ?? null,
         skills:
