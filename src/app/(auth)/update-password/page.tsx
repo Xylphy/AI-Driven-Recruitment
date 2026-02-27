@@ -5,16 +5,18 @@ import { useState } from "react";
 import useAuth from "@/hooks/useAuth";
 import { auth } from "@/lib/firebase/client";
 import { updatePasswordSchema } from "@/lib/schemas";
-import { trpc } from "@/lib/trpc/client";
 import { swalError, swalSuccess } from "@/lib/swal";
+import { trpc } from "@/lib/trpc/client";
 
 export default function UpdatePasswordPage() {
   useAuth();
 
   const updatePasswordMutation = trpc.auth.updatePassword.useMutation();
 
+  const [oldPassword, setOldPassword] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+
   const [showPass, setShowPass] = useState(false);
   const [showOldPass, setShowOldPass] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -22,6 +24,7 @@ export default function UpdatePasswordPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const passwordValidity = updatePasswordSchema.safeParse({
+    currentPassword: oldPassword,
     newPassword: password,
     confirmPassword: confirm,
   });
@@ -38,8 +41,8 @@ export default function UpdatePasswordPage() {
 
     await updatePasswordMutation.mutateAsync(
       {
-        currentPassword: password,
-        newPassword: confirm,
+        currentPassword: oldPassword,
+        newPassword: password,
         confirmPassword: confirm,
       },
       {
@@ -124,7 +127,7 @@ export default function UpdatePasswordPage() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-3">
                 <label
-                  htmlFor="newPassword"
+                  htmlFor="oldPassword"
                   className="text-xs font-bold uppercase tracking-[0.2em] text-red-600"
                 >
                   Old Password
@@ -132,9 +135,11 @@ export default function UpdatePasswordPage() {
 
                 <div className="relative">
                   <input
-                    id="newPassword"
+                    id="oldPassword"
                     type={showOldPass ? "text" : "password"}
-                    placeholder="Enter new password"
+                    placeholder="Enter old password"
+                    value={oldPassword}
+                    onChange={(e) => setOldPassword(e.target.value)}
                     className={[
                       "w-full rounded-2xl px-5 py-3 pr-16",
                       "bg-white/70 backdrop-blur-xl",
@@ -195,17 +200,17 @@ export default function UpdatePasswordPage() {
                     type="button"
                     onClick={() => setShowPass((v) => !v)}
                     className="
-                    absolute right-3 top-1/2 -translate-y-1/2
-                    rounded-xl
-                    px-3 py-2
-                    text-xs font-bold uppercase tracking-[0.15em]
-                    bg-white/60 backdrop-blur-md
-                    border border-white/40
-                    text-red-600
-                    shadow-sm
-                    hover:bg-white/80
-                    transition
-                  "
+                      absolute right-3 top-1/2 -translate-y-1/2
+                      rounded-xl
+                      px-3 py-2
+                      text-xs font-bold uppercase tracking-[0.15em]
+                      bg-white/60 backdrop-blur-md
+                      border border-white/40
+                      text-red-600
+                      shadow-sm
+                      hover:bg-white/80
+                      transition
+                    "
                   >
                     {showPass ? "Hide" : "Show"}
                   </button>
@@ -213,13 +218,13 @@ export default function UpdatePasswordPage() {
 
                 <div
                   className="
-              rounded-2xl
-              border border-white/40
-              bg-white/50
-              backdrop-blur-xl
-              p-4
-              shadow-inner
-            "
+                    rounded-2xl
+                    border border-white/40
+                    bg-white/50
+                    backdrop-blur-xl
+                    p-4
+                    shadow-inner
+                  "
                 >
                   <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-red-600">
                     Password Rules
@@ -287,7 +292,7 @@ export default function UpdatePasswordPage() {
                   "relative w-full rounded-2xl px-6 py-3",
                   "font-bold uppercase tracking-[0.18em]",
                   "transition-all duration-300",
-                  !passwordValidity.success || isSubmitting
+                  passwordValidity.success && !isSubmitting
                     ? "bg-linear-to-r from-red-600 to-red-500 text-white shadow-[0_25px_80px_rgba(220,38,38,0.25)] hover:scale-[1.02]"
                     : "bg-white/60 border border-white/40 text-gray-400 cursor-not-allowed",
                 ].join(" ")}

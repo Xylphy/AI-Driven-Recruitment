@@ -32,6 +32,7 @@ const authRouter = createTRPCRouter({
       }
 
       const userEmail = await getEmailByUid(staff?.firebase_uid || "");
+
       try {
         await updateUserPassword(
           userEmail,

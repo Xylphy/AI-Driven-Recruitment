@@ -5,7 +5,7 @@ import { useState } from "react";
 import ListInputSection from "@/components/joblisting/Qualifications";
 import useAuth from "@/hooks/useAuth";
 import { JOB_LOCATIONS } from "@/lib/constants";
-import { swalError, swalSuccess, swalConfirm } from "@/lib/swal";
+import { swalConfirm, swalError, swalSuccess } from "@/lib/swal";
 import { trpc } from "@/lib/trpc/client";
 import type { JobListing, Tags } from "@/types/types";
 
@@ -135,19 +135,19 @@ export default function JobListingPage() {
     flex
     items-center
     justify-center
-    bg-gradient-to-br from-white via-red-50/30 to-white
+    bg-linear-to-br from-white via-red-50/30 to-white
     px-4
     py-16
   "
     >
-      <div className="absolute -top-40 -left-40 w-[450px] h-[450px] bg-red-400/20 rounded-full blur-3xl" />
-      <div className="absolute -bottom-40 -right-40 w-[450px] h-[450px] bg-red-500/20 rounded-full blur-3xl" />
+      <div className="absolute -top-40 -left-40 w-112.5 h-112.5 bg-red-400/20 rounded-full blur-3xl" />
+      <div className="absolute -bottom-40 -right-40 w-112.5 h-112.5 bg-red-500/20 rounded-full blur-3xl" />
 
       <div className="relative w-full max-w-3xl">
         <div
           className="
         relative
-        rounded-[32px]
+        rounded-4xl
         border border-white/40
         bg-white/55
         backdrop-blur-3xl
@@ -156,14 +156,14 @@ export default function JobListingPage() {
         overflow-hidden
       "
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-red-100/30 pointer-events-none" />
+          <div className="absolute inset-0 bg-linear-to-br from-white/40 via-transparent to-red-100/30 pointer-events-none" />
 
           <div className="relative">
             <div className="text-center mb-10">
               <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-red-600">
                 Recruitment Panel
               </p>
-              <h1 className="mt-3 text-3xl font-extrabold bg-gradient-to-r from-red-600 to-red-400 bg-clip-text text-transparent">
+              <h1 className="mt-3 text-3xl font-extrabold bg-linear-to-r from-red-600 to-red-400 bg-clip-text text-transparent">
                 Create Job Listing
               </h1>
               <p className="mt-2 text-sm text-gray-600">
@@ -173,7 +173,10 @@ export default function JobListingPage() {
 
             <form onSubmit={handleSubmit} className="space-y-8">
               <div className="space-y-3">
-                <label className="text-xs font-bold uppercase tracking-[0.2em] text-red-600">
+                <label
+                  htmlFor="title"
+                  className="text-xs font-bold uppercase tracking-[0.2em] text-red-600"
+                >
                   Job Title
                 </label>
                 <input
@@ -223,7 +226,10 @@ export default function JobListingPage() {
               />
 
               <div className="space-y-3">
-                <label className="text-xs font-bold uppercase tracking-[0.2em] text-red-600">
+                <label
+                  htmlFor="location"
+                  className="text-xs font-bold uppercase tracking-[0.2em] text-red-600"
+                >
                   Job Location
                 </label>
 
@@ -255,12 +261,16 @@ export default function JobListingPage() {
               </div>
 
               <div className="space-y-3">
-                <label className="text-xs font-bold uppercase tracking-[0.2em] text-red-600">
+                <label
+                  htmlFor="hrSearch"
+                  className="text-xs font-bold uppercase tracking-[0.2em] text-red-600"
+                >
                   Assigned HR Officer
                 </label>
 
                 <div className="relative">
                   <input
+                    id="hrSearch"
                     type="text"
                     value={hrSearch}
                     onChange={(e) => {
@@ -301,6 +311,16 @@ export default function JobListingPage() {
                             );
                             setShowDropdown(false);
                           }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              setHrOfficerId(officer.id);
+                              setHrSearch(
+                                `${officer.first_name} ${officer.last_name}`,
+                              );
+                              setShowDropdown(false);
+                            }
+                          }}
                           className="px-5 py-3 cursor-pointer hover:bg-red-50 transition"
                         >
                           {officer.first_name} {officer.last_name}
@@ -333,7 +353,10 @@ export default function JobListingPage() {
                   }
                   className="w-5 h-5 accent-red-600"
                 />
-                <label className="text-sm font-semibold text-gray-700">
+                <label
+                  htmlFor="isFullTime"
+                  className="text-sm font-semibold text-gray-700"
+                >
                   Full Time Position
                 </label>
               </div>
@@ -345,7 +368,7 @@ export default function JobListingPage() {
                   className="
                 relative rounded-2xl px-8 py-3
                 font-bold uppercase tracking-[0.18em]
-                bg-gradient-to-r from-red-600 to-red-500
+                bg-linear-to-r from-red-600 to-red-500
                 text-white
                 shadow-[0_25px_80px_rgba(220,38,38,0.25)]
                 hover:scale-[1.02]

@@ -27,7 +27,9 @@ async function verifyCurrentPassword(
   email: string,
   currentPassword: string,
 ): Promise<{ idToken: string; localId: string }> {
-  const apiKey = process.env.FIREBASE_API_KEY;
+  const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+
+  console.log("Email, password: ", `${email} ${currentPassword}`);
 
   if (!apiKey) {
     throw new Error("FIREBASE_API_KEY is not configured");
