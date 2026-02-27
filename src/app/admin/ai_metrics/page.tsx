@@ -64,13 +64,6 @@ function responseData(data: Array<number>) {
   };
 }
 
-function getThisYM() {
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  return `${y}-${m}`;
-}
-
 const formatScore = (value?: number) =>
   new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 0,
@@ -78,7 +71,10 @@ const formatScore = (value?: number) =>
   }).format(value ?? 0);
 
 export default function AIAnalyticsDashboard() {
-  const [ym, setYm] = useState<string>(getThisYM());
+  const now = new Date();
+
+  const [month, setMonth] = useState(now.getMonth() + 1);
+  const [year, setYear] = useState(now.getFullYear());
 
   const { isAuthenticated } = useAuth();
 
@@ -98,8 +94,8 @@ export default function AIAnalyticsDashboard() {
 
   const aiMetrics = trpc.staff.fetchAIMetrics.useQuery({
     // this should be dynamic based on user input.
-    year: 2026,
-    month: 2,
+    year,
+    month,
   });
 
   const candidates = trpc.candidate.getCandidates.useQuery(
@@ -132,6 +128,7 @@ export default function AIAnalyticsDashboard() {
   };
 
   const handleDownloadReport = () => {
+    const ym = `${year}-${String(month).padStart(2, "0")}`;
     if (!ym) return;
 
     const [y, m] = ym.split("-");
@@ -204,12 +201,45 @@ export default function AIAnalyticsDashboard() {
 
         <div className="flex flex-col md:flex-row md:items-center gap-4 flex-wrap">
           <div className="flex gap-3 items-center">
-            <input
-              type="month"
-              value={ym}
-              onChange={(e) => setYm(e.target.value)}
+            <select
+              value={month}
+              onChange={(e) => setMonth(Number(e.target.value))}
               className="px-4 py-2 rounded-xl bg-white/70 backdrop-blur border border-red-200 focus:ring-2 focus:ring-red-500"
-            />
+            >
+              {[
+                "January",
+                "February",
+                "March",
+                "April",
+                "May",
+                "June",
+                "July",
+                "August",
+                "September",
+                "October",
+                "November",
+                "December",
+              ].map((m, index) => (
+                <option key={index} value={index + 1}>
+                  {m}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={year}
+              onChange={(e) => setYear(Number(e.target.value))}
+              className="px-4 py-2 rounded-xl bg-white/70 backdrop-blur border border-red-200 focus:ring-2 focus:ring-red-500"
+            >
+              {Array.from({ length: 10 }, (_, i) => {
+                const y = new Date().getFullYear() - 5 + i;
+                return (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
+                );
+              })}
+            </select>
           </div>
 
           <button
