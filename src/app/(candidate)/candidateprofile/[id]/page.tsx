@@ -130,9 +130,9 @@ export default function Page() {
   const { isAuthenticated } = useAuth();
   const [selectedStatus, setSelectedStatus] =
     useState<CandidateStatuses | null>(null);
-  const [activeTab, setActiveTab] = useState<"evaluation" | "resume">(
-    "evaluation",
-  );
+  type HeaderTabKey = "evaluation" | "resume";
+
+  const [activeTab, setActiveTab] = useState<HeaderTabKey>("evaluation");
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<CandidateStatuses | null>(
@@ -341,10 +341,9 @@ export default function Page() {
             border border-white/30 
             shadow-[0_10px_40px_rgba(0,0,0,0.08)] 
             rounded-3xl 
-            p-8 
-            flex 
-            flex-row 
-            items-center 
+            p-6 sm:p-8
+            flex flex-col lg:flex-row
+            lg:items-center
             justify-between
             gap-6
             overflow-hidden
@@ -352,18 +351,19 @@ export default function Page() {
         >
           <div className="absolute inset-0 bg-linear-to-br from-red-100/40 via-white/10 to-red-50/30 pointer-events-none" />
 
-          <div className="relative flex-1">
+          <div className="relative flex-1 min-w-0">
             <h2 className="text-3xl font-bold bg-linear-to-r from-red-600 to-red-400 bg-clip-text text-transparent">
               {candidate
                 ? `${candidate.user.firstName} ${candidate.user.lastName}`
                 : "Loading..."}
             </h2>
+
             <p className="text-s py-1 bg-linear-to-r from-red-600 to-red-400 bg-clip-text text-transparent">
               {candidate?.user.email || "No email available"} |{" "}
               {candidate?.user.contactNumber || "No contact number available"}
             </p>
 
-            <div className="flex gap-2 text-red-500">
+            <div className="flex flex-wrap gap-2 text-red-500 mt-2">
               {contactItems
                 .filter((item): item is LinkMeta => Boolean(item))
                 .map((item, idx) => {
@@ -374,7 +374,7 @@ export default function Page() {
                       href={item.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-1 rounded-xl mt-1 bg-white/40 backdrop-blur-md border border-white/40 shadow-sm hover:bg-red-600 hover:text-white transition-all duration-300 cursor-pointer"
+                      className="p-1 rounded-xl bg-white/40 backdrop-blur-md border border-white/40 shadow-sm hover:bg-red-600 hover:text-white transition-all duration-300 cursor-pointer"
                       aria-label={item.label}
                       title={item.label}
                     >
@@ -383,8 +383,51 @@ export default function Page() {
                   );
                 })}
             </div>
+            <div className="mt-5">
+              <div
+                role="tablist"
+                aria-label="Candidate sections"
+                className="
+                  inline-flex items-center gap-1
+                  rounded-2xl
+                  bg-white/35 backdrop-blur-xl
+                  border border-white/50
+                  shadow-sm
+                  p-1
+                "
+              >
+                {(
+                  [
+                    { key: "evaluation", label: "Candidate Evaluation" },
+                    { key: "resume", label: "Resume" },
+                  ] as const
+                ).map((t) => {
+                  const active = activeTab === t.key;
+
+                  return (
+                    <button
+                      key={t.key}
+                      type="button"
+                      onClick={() => setActiveTab(t.key)}
+                      role="tab"
+                      aria-selected={active}
+                      className={[
+                        "px-3.5 py-1.5 rounded-xl text-sm font-semibold transition-all",
+                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/60",
+                        active
+                          ? "bg-linear-to-r from-red-600 to-red-500 text-white shadow-md"
+                          : "text-slate-700 hover:text-slate-900 hover:bg-white/40",
+                      ].join(" ")}
+                    >
+                      {t.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
-          <div className="relative flex flex-col items-end gap-2">
+
+          <div className="relative flex flex-col items-start lg:items-end gap-2 self-start">
             <button
               type="button"
               onClick={() => router.back()}
@@ -404,20 +447,20 @@ export default function Page() {
               value={selectedStatus || ""}
               onChange={handleStatusChange}
               className="
-                bg-white/40
-                backdrop-blur-xl
-                border border-white/40
-                shadow-md
-                text-red-700
-                font-semibold
-                px-4 py-2
-                rounded-xl
-                transition-all
-                hover:shadow-lg
-                focus:outline-none
-                focus:ring-2
-                focus:ring-red-400
-              "
+              bg-white/40
+              backdrop-blur-xl
+              border border-white/40
+              shadow-md
+              text-red-700
+              font-semibold
+              px-4 py-2
+              rounded-xl
+              transition-all
+              hover:shadow-lg
+              focus:outline-none
+              focus:ring-2
+              focus:ring-red-400
+            "
             >
               <option value="">Select Status</option>
               {CANDIDATE_STATUSES.map((status) => (
@@ -428,7 +471,6 @@ export default function Page() {
             </select>
           </div>
         </div>
-
         {showScheduleModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
             <div
@@ -567,30 +609,6 @@ export default function Page() {
         )}
 
         <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="flex justify-center gap-4 mb-6">
-            <button
-              className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold transition ${
-                activeTab === "evaluation"
-                  ? "bg-linear-to-r from-red-600 to-red-500 text-white shadow-lg"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-              }`}
-              onClick={() => setActiveTab("evaluation")}
-              type="button"
-            >
-              Candidate Evaluation
-            </button>
-            <button
-              className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold transition ${
-                activeTab === "resume"
-                  ? "bg-linear-to-r from-red-600 to-red-500 text-white shadow-lg"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-              }`}
-              onClick={() => setActiveTab("resume")}
-              type="button"
-            >
-              Resume
-            </button>
-          </div>
           {activeTab === "evaluation" ? (
             <div className="flex flex-col gap-6">
               <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 h-full">
