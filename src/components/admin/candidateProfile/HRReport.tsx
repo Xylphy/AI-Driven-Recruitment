@@ -6,12 +6,12 @@ import {
   Transition,
   TransitionChild,
 } from "@headlessui/react";
-import { Fragment, useState, startTransition, useEffect } from "react";
-import { FiPlus, FiX } from "react-icons/fi";
-import type { CandidateStatuses } from "@/types/types";
-import { trpc } from "@/lib/trpc/client";
-import useAuth from "@/hooks/useAuth";
 import { useParams } from "next/navigation";
+import { Fragment, startTransition, useEffect, useState } from "react";
+import { FiPlus, FiX } from "react-icons/fi";
+import useAuth from "@/hooks/useAuth";
+import { trpc } from "@/lib/trpc/client";
+import type { CandidateStatuses } from "@/types/types";
 
 interface HRReportProps {
   score?: number;

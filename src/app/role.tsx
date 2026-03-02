@@ -41,9 +41,9 @@ const FooterFallback = () => (
   </footer>
 );
 
-export default function AdminGate({ children }: { children: React.ReactNode }) {
+function AdminGateContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { isAuthenticated } = useAuth(); // ✅ so you can keep jwtDecoded.data.user.role logic
+  const { isAuthenticated } = useAuth();
 
   const isAuthPage =
     pathname.startsWith("/login") || pathname.startsWith("/register");
@@ -54,7 +54,7 @@ export default function AdminGate({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <Suspense fallback={NavbarFallback()}>
+      <Suspense fallback={<NavbarFallback />}>
         <LayoutVisibility>
           <Navbar />
         </LayoutVisibility>
@@ -62,11 +62,19 @@ export default function AdminGate({ children }: { children: React.ReactNode }) {
 
       <main className="grow">{children}</main>
 
-      <Suspense fallback={FooterFallback()}>
+      <Suspense fallback={<FooterFallback />}>
         <LayoutVisibility>
           <Footer />
         </LayoutVisibility>
       </Suspense>
     </>
+  );
+}
+
+export default function AdminGate({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={<main className="grow">{children}</main>}>
+      <AdminGateContent>{children}</AdminGateContent>
+    </Suspense>
   );
 }
