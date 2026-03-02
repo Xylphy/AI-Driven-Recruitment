@@ -27,6 +27,7 @@ export default function SkillAssessmentPage() {
     jobId: jobId as string,
   });
   const applyForJob = trpc.joblisting.applyForJob.useMutation();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [tags, setTags] = useState<Skills[]>([]);
   const [applicationDraft, setApplicationDraft] =
@@ -57,6 +58,7 @@ export default function SkillAssessmentPage() {
   }, [jobId]);
 
   const handleCompleteApplication = async () => {
+    if (isSubmitting || applyForJob.isPending) return;
     if (!applicationDraft) {
       swalError(
         "Missing Application Data",
@@ -83,6 +85,8 @@ export default function SkillAssessmentPage() {
       );
       return;
     }
+
+    setIsSubmitting(true);
 
     const { basicFields, resumeURL, transcriptURL, socialLinks } =
       applicationDraft;
@@ -123,6 +127,8 @@ export default function SkillAssessmentPage() {
           ? error.message
           : "Failed to submit your application.",
       );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -218,11 +224,19 @@ export default function SkillAssessmentPage() {
               </button>
 
               <button
-                className="px-6 py-2 rounded-lg bg-linear-to-r from-red-600 to-red-500 text-white font-bold shadow-lg hover:scale-[1.02] transition"
+                className={`px-6 py-2 rounded-lg bg-linear-to-r from-red-600 to-red-500 text-white font-bold shadow-lg transition ${
+                  isSubmitting || applyForJob.isPending
+                    ? "opacity-70 cursor-not-allowed"
+                    : "hover:scale-[1.02]"
+                }`}
                 type="button"
                 onClick={handleCompleteApplication}
+                disabled={isSubmitting || applyForJob.isPending}
+                aria-busy={isSubmitting || applyForJob.isPending}
               >
-                Complete Application
+                {isSubmitting || applyForJob.isPending
+                  ? "Submitting..."
+                  : "Complete Application"}
               </button>
             </div>
           </div>
