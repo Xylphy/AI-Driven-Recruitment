@@ -135,6 +135,8 @@ export default function Page() {
   const [selectedStatus, setSelectedStatus] =
     useState<CandidateStatuses | null>(null);
 
+  const status = "HR Interview";
+
   const [activeTab, setActiveTab] = useState<HeaderTabKey>(
     HeaderTabKey.Evaluation,
   );
@@ -748,7 +750,39 @@ export default function Page() {
                                 {report.staff_name}
                               </h3>
                             </div>
-
+                            <div
+                              className={`
+                              w-max-50
+                              px-3 py-2
+                              mb-2
+                              text-xs font-semibold
+                              rounded-full
+                              whitespace-nowrap
+                              backdrop-blur-md
+                              border
+                              ${
+                                status === "Paper Screening"
+                                  ? "bg-gray-500/10 text-gray-600 border-gray-300/40"
+                                  : status === "Exam"
+                                    ? "bg-indigo-500/10 text-indigo-600 border-indigo-300/40"
+                                    : status === "HR Interview"
+                                      ? "bg-blue-500/10 text-blue-600 border-blue-300/40"
+                                      : status === "Technical Interview"
+                                        ? "bg-purple-500/10 text-purple-600 border-purple-300/40"
+                                        : status === "Final Interview"
+                                          ? "bg-amber-500/10 text-amber-600 border-amber-300/40"
+                                          : status === "Job Offer"
+                                            ? "bg-emerald-500/10 text-emerald-600 border-emerald-300/40"
+                                            : status === "Accepted Job Offer"
+                                              ? "bg-green-600/10 text-green-700 border-green-400/40"
+                                              : status === "Close Status"
+                                                ? "bg-red-500/10 text-red-600 border-red-300/40"
+                                                : "bg-slate-500/10 text-slate-600 border-slate-300/40"
+                              }
+                            `}
+                            >
+                              {status || "Paper Screening"}
+                            </div>
                             <div className="flex items-center gap-3 shrink-0">
                               <div className="px-3 py-1 bg-red-600/10 text-red-600 text-sm font-semibold rounded-full whitespace-nowrap">
                                 {report.score != null
