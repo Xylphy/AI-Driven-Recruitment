@@ -124,15 +124,20 @@ function getLinkMeta(rawUrl: string) {
   return { icon: MdLink, label: "Link", url: normalized };
 }
 
+enum HeaderTabKey {
+  Evaluation,
+  Resume,
+}
 export default function Page() {
   const router = useRouter();
   const candidateId = useParams().id as string;
   const { isAuthenticated } = useAuth();
   const [selectedStatus, setSelectedStatus] =
     useState<CandidateStatuses | null>(null);
-  type HeaderTabKey = "evaluation" | "resume";
 
-  const [activeTab, setActiveTab] = useState<HeaderTabKey>("evaluation");
+  const [activeTab, setActiveTab] = useState<HeaderTabKey>(
+    HeaderTabKey.Evaluation,
+  );
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<CandidateStatuses | null>(
@@ -398,8 +403,11 @@ export default function Page() {
               >
                 {(
                   [
-                    { key: "evaluation", label: "Candidate Evaluation" },
-                    { key: "resume", label: "Resume" },
+                    {
+                      key: HeaderTabKey.Evaluation,
+                      label: "Candidate Evaluation",
+                    },
+                    { key: HeaderTabKey.Resume, label: "Resume" },
                   ] as const
                 ).map((t) => {
                   const active = activeTab === t.key;
@@ -459,7 +467,7 @@ export default function Page() {
                   onChange={handleStatusChange}
                   className="
                     appearance-none
-                    w-full lg:w-[220px]
+                    w-full lg:w-55
                     bg-linear-to-r from-red-600 to-red-500
                     text-white
                     border border-red-500/70
@@ -645,7 +653,7 @@ export default function Page() {
         )}
 
         <div className="bg-white rounded-lg shadow-md p-6">
-          {activeTab === "evaluation" ? (
+          {activeTab === HeaderTabKey.Evaluation ? (
             <div className="flex flex-col gap-6">
               <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 h-full">
                 <h3 className="font-semibold mb-2">AI Generated Report</h3>

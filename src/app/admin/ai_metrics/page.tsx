@@ -250,21 +250,8 @@ export default function AIAnalyticsDashboard() {
               onChange={(e) => setMonth(Number(e.target.value))}
               className="px-4 py-2 rounded-xl bg-white/70 backdrop-blur border border-red-200 focus:ring-2 focus:ring-red-500"
             >
-              {[
-                "January",
-                "February",
-                "March",
-                "April",
-                "May",
-                "June",
-                "July",
-                "August",
-                "September",
-                "October",
-                "November",
-                "December",
-              ].map((m, index) => (
-                <option key={index} value={index + 1}>
+              {MONTHS.map((m, index) => (
+                <option key={m} value={index + 1}>
                   {m}
                 </option>
               ))}
