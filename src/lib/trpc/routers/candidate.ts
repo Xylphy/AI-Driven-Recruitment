@@ -477,13 +477,42 @@ const candidateRouter = createTRPCRouter({
     }),
   fetchAICompare: adminProcedure
     .input(
-      z.object({
-        userId_A: z.uuid(),
-        userId_B: z.uuid(),
-        jobId: z.uuid(),
-      }),
+      z
+        .object({
+          userId_A: z.uuid(),
+          userId_B: z.uuid(),
+          jobId: z.uuid(),
+        })
+        .refine((data) => data.userId_A !== data.userId_B, {
+          message: "userId_A and userId_B must be different",
+        }),
     )
     .query(async ({ input }) => {
+      const supabase = await createClientServer(1, true);
+
+      // Verify if both candidates exist in the database before calling the AI compare API
+      const [candidateA, candidateB] = await Promise.all([
+        find<Applicants>(supabase, "applicants", [
+          { column: "id", value: input.userId_A },
+          { column: "joblisting_id", value: input.jobId },
+        ]).single(),
+        find<Applicants>(supabase, "applicants", [
+          { column: "id", value: input.userId_B },
+          { column: "joblisting_id", value: input.jobId },
+        ]).single(),
+      ]);
+
+      if (candidateA.error || candidateB.error) {
+        console.error("Error fetching candidates for AI compare", {
+          candidateAError: candidateA.error,
+          candidateBError: candidateB.error,
+        });
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch candidates for AI compare",
+        });
+      }
+
       const compareAPI = new URL("http://localhost:8000/compare_candidate/");
       compareAPI.searchParams.set("applicant1_id", input.userId_A);
       compareAPI.searchParams.set("applicant2_id", input.userId_B);

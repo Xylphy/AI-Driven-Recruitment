@@ -257,7 +257,7 @@ const jobListingRouter = createTRPCRouter({
           state: input.state,
           resume_id: resumePublicId,
           transcript_id: transcriptPublicId,
-        } as unknown as Applicants,
+        } as Applicants,
       );
 
       if (!applicantsID || applicantsError) {

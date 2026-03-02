@@ -39,7 +39,6 @@ export const EVENT_TYPES = [
   "Joblisting deleted",
   "Created joblisting",
   "Applied for job",
-  "Changed job alerts",
   "Changed user role",
   "Changed candidate status",
   "Admin feedback created",
@@ -49,6 +48,10 @@ export const EVENT_TYPES = [
   "Deleted HR Report",
   "Updated HR Report",
   "Created staff account",
+  "Staff password updated",
+
+  // Should be removed:
+  "Changed job alerts",
 ] as const;
 
 export const ENTITIES = [
