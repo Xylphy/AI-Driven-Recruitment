@@ -682,7 +682,7 @@ export default function Page() {
                   overflow-hidden
                 "
               >
-                <h3 className="font-semibold mb-2">HR Officer Report</h3>
+                <h3 className="font-semibold mb-2">Staff Evaluation</h3>
                 <div className="w-full flex justify-center mb-4">
                   <HRReport
                     onSubmit={(data) => {
@@ -863,7 +863,7 @@ export default function Page() {
                             "
                               >
                                 <h4 className="font-semibold mb-4 text-gray-800">
-                                  Edit HR Evaluation
+                                  Edit Staff Evaluation
                                 </h4>
 
                                 <div className="grid gap-4">
@@ -1021,7 +1021,7 @@ export default function Page() {
                     </div>
                   ) : (
                     <p className="text-gray-500 italic text-center mt-4">
-                      No HR evaluations yet.
+                      No staff evaluations yet.
                     </p>
                   )}
                 </div>

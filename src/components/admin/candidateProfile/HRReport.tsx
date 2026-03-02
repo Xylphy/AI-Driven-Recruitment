@@ -99,7 +99,7 @@ export default function HRReport({
         type="button"
       >
         <FiPlus />
-        Add HR Officer Report
+        Add Staff Evaluation
       </button>
 
       <Transition appear show={isOpen} as={Fragment}>
@@ -159,7 +159,7 @@ export default function HRReport({
                 </button>
 
                 <DialogTitle className="text-2xl font-bold text-gray-800 mb-6">
-                  HR Evaluation Report
+                  Staff Evaluation
                 </DialogTitle>
 
                 <div className="space-y-6">
