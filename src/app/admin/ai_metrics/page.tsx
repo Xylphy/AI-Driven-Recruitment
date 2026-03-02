@@ -12,8 +12,10 @@ import {
   Title,
   Tooltip,
 } from "chart.js";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+// import jsPDF from "jspdf";
+// import autoTable from "jspdf-autotable";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
 import { useState } from "react";
 import { Bar, Line } from "react-chartjs-2";
 import Select from "react-select";
@@ -127,67 +129,109 @@ export default function AIAnalyticsDashboard() {
     ],
   };
 
-  const handleDownloadReport = () => {
+  const autoFitColumns = (worksheet: ExcelJS.Worksheet) => {
+    worksheet.columns?.forEach((col) => {
+      let maxLength = 10;
+      col.eachCell?.({ includeEmpty: true }, (cell) => {
+        const v = cell.value;
+        const text =
+          v === null || v === undefined
+            ? ""
+            : typeof v === "object"
+              ? JSON.stringify(v)
+              : String(v);
+        maxLength = Math.max(maxLength, text.length);
+      });
+      col.width = Math.min(60, Math.max(10, maxLength + 2));
+    });
+  };
+
+  const handleDownloadReport = async () => {
     const ym = `${year}-${String(month).padStart(2, "0")}`;
     if (!ym) return;
 
     const [y, m] = ym.split("-");
     const monthIndex = Number(m) - 1;
-
     if (Number.isNaN(monthIndex) || monthIndex < 0 || monthIndex > 11) return;
 
     const dateLabel = `${MONTHS[monthIndex]} ${y}`;
 
-    const doc = new jsPDF({
-      orientation: "landscape",
-      unit: "pt",
-      format: "a4",
-    });
-    doc.setFontSize(16);
-    doc.text("AI Performance & Accuracy Report", 40, 40);
-
-    doc.setFontSize(11);
-    doc.text(`Date: ${dateLabel}`, 40, 65);
-
-    // Summary section
     const avgJobFit = aiMetrics.data?.overall.avg_job_fit_score ?? 0;
     const avgResp = aiMetrics.data?.overall.avg_response_time ?? 0;
-
-    doc.setFontSize(12);
-    doc.text("Summary", 40, 100);
-
-    autoTable(doc, {
-      startY: 115,
-      head: [["Metric", "Value"]],
-      body: [
-        ["Average Job Fit Score (%)", formatScore(avgJobFit)],
-        ["Average AI Response Time (s)", formatScore(avgResp)],
-      ],
-      styles: { fontSize: 10 },
-      theme: "grid",
-      margin: { left: 40, right: 40 },
-    });
-
     const weekly = aiMetrics.data?.weekly ?? [];
-    const lastY = (doc as jsPDF & { lastAutoTable?: { finalY: number } })
-      .lastAutoTable?.finalY;
-    const startY = lastY ? lastY + 20 : 200;
 
-    autoTable(doc, {
-      startY,
-      head: [["Week", "Avg Job Fit Score (%)", "Avg Response Time (s)"]],
-      body: weekly.map((w) => [
-        `Week ${w.week}`,
-        formatScore(w.avg_job_fit_score),
-        formatScore(w.avg_response_time),
-      ]),
-      styles: { fontSize: 10 },
-      theme: "striped",
-      margin: { left: 40, right: 40 },
+    const wb = new ExcelJS.Workbook();
+    wb.creator = "Your App";
+    wb.created = new Date();
+
+    const summaryWs = wb.addWorksheet("Summary");
+    summaryWs.views = [{ state: "frozen", ySplit: 1 }];
+
+    summaryWs.mergeCells("A1:D1");
+    summaryWs.getCell("A1").value = "AI Performance & Accuracy Report";
+    summaryWs.getCell("A1").font = { size: 16, bold: true };
+
+    summaryWs.getCell("A2").value = "Date:";
+    summaryWs.getCell("B2").value = dateLabel;
+
+    summaryWs.addRow([]);
+    summaryWs.addRow(["Metric", "Value"]);
+    summaryWs.getRow(4).font = { bold: true };
+
+    summaryWs.addRow(["Average Job Fit Score (%)", avgJobFit]);
+    summaryWs.addRow(["Average AI Response Time (s)", avgResp]);
+
+    summaryWs.getColumn(1).width = 34;
+    summaryWs.getColumn(2).width = 22;
+    summaryWs.getColumn(2).numFmt = "0.00";
+
+    [4, 5, 6].forEach((r) => {
+      summaryWs.getRow(r).eachCell((cell) => {
+        cell.border = {
+          top: { style: "thin" },
+          left: { style: "thin" },
+          bottom: { style: "thin" },
+          right: { style: "thin" },
+        };
+        cell.alignment = { vertical: "middle", horizontal: "left" };
+      });
     });
 
-    // safer filename: no spaces/special chars
-    doc.save(`ai_analytics_${dateLabel}.pdf`);
+    const dataWs = wb.addWorksheet("Data");
+
+    dataWs.columns = [
+      { header: "Week", key: "week", width: 12 },
+      { header: "Avg Job Fit Score (%)", key: "job_fit", width: 22 },
+      { header: "Avg Response Time (s)", key: "resp", width: 24 },
+    ];
+
+    dataWs.views = [{ state: "frozen", ySplit: 1 }];
+    dataWs.autoFilter = { from: "A1", to: "C1" };
+
+    const headerRow = dataWs.getRow(1);
+    headerRow.font = { bold: true };
+    headerRow.alignment = { vertical: "middle", horizontal: "left" };
+
+    weekly.forEach((w) => {
+      dataWs.addRow({
+        week: `Week ${w.week}`,
+        job_fit: w.avg_job_fit_score,
+        resp: w.avg_response_time,
+      });
+    });
+
+    dataWs.getColumn(2).numFmt = "0.00"; // Job fit as numeric percent value like 91.23
+    dataWs.getColumn(3).numFmt = "0.00"; // Response time seconds
+
+    autoFitColumns(dataWs);
+
+    const buf = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buf], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    const safeLabel = `${y}-${String(month).padStart(2, "0")}`;
+    saveAs(blob, `ai_analytics_${safeLabel}.xlsx`);
   };
 
   return (
@@ -279,7 +323,7 @@ export default function AIAnalyticsDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="backdrop-blur-xl bg-white/70 border border-white/40 shadow-xl p-6 rounded-2xl">
             <h3 className="font-semibold mb-4 text-gray-700">
-              Average Job Fit Score Overtime
+              Average Job Fit Score Over Time
             </h3>
             <Line
               data={predictionData(
@@ -289,7 +333,7 @@ export default function AIAnalyticsDashboard() {
           </div>
           <div className="backdrop-blur-xl bg-white/70 border border-white/40 shadow-xl p-6 rounded-2xl">
             <h3 className="font-semibold mb-4 text-gray-700">
-              Average AI Response Time Overtime
+              Average AI Response Time Over Time
             </h3>
             <Line
               data={responseData(

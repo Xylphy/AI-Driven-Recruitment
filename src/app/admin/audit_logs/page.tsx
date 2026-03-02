@@ -1,7 +1,7 @@
 "use client";
 
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
 import { useEffect, useRef, useState } from "react";
 import useAuth from "@/hooks/useAuth";
 import { EVENT_TYPES } from "@/lib/constants";
@@ -60,25 +60,83 @@ export default function JobsPage() {
     return () => observer.disconnect();
   }, [auditLogsInfinite]);
 
-  const handleDownloadReport = () => {
-    const doc = new jsPDF();
-    doc.text("Audit Logs Report", 14, 16);
+  const autoFitColumns = (worksheet: ExcelJS.Worksheet) => {
+    worksheet.columns?.forEach((col) => {
+      let maxLength = 10;
+      col.eachCell?.({ includeEmpty: true }, (cell) => {
+        const text =
+          cell.value == null
+            ? ""
+            : typeof cell.value === "object"
+              ? JSON.stringify(cell.value)
+              : String(cell.value);
 
-    const tableColumn = ["Description", "Category", "Timestamp"];
-    const tableRows: string[][] = [];
+        maxLength = Math.max(maxLength, text.length);
+      });
+      col.width = Math.min(60, maxLength + 2);
+    });
+  };
+
+  const handleDownloadReport = async () => {
+    const wb = new ExcelJS.Workbook();
+    wb.creator = "Your App";
+    wb.created = new Date();
+
+    const ws = wb.addWorksheet("Audit Logs");
+
+    ws.mergeCells("A1:C1");
+    ws.getCell("A1").value = "Audit Logs Report";
+    ws.getCell("A1").font = { size: 16, bold: true };
+    ws.getCell("A1").alignment = { horizontal: "left" };
+
+    ws.addRow([]);
+    ws.addRow(["Description", "Category", "Timestamp"]);
+
+    const headerRow = ws.getRow(3);
+    headerRow.font = { bold: true };
+    headerRow.alignment = { vertical: "middle", horizontal: "left" };
+
+    headerRow.eachCell((cell) => {
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFDC2626" },
+      };
+      cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+    });
 
     rows.forEach((row) => {
-      tableRows.push([row.details, row.event_type, formatDate(row.created_at)]);
+      ws.addRow([row.details, row.event_type, formatDate(row.created_at)]);
     });
 
-    autoTable(doc, {
-      head: [tableColumn],
-      body: tableRows,
-      startY: 22,
-      headStyles: { fillColor: [220, 38, 38] },
+    ws.views = [{ state: "frozen", ySplit: 3 }];
+
+    ws.autoFilter = {
+      from: "A3",
+      to: "C3",
+    };
+
+    ws.eachRow((row, rowNumber) => {
+      if (rowNumber >= 3) {
+        row.eachCell((cell) => {
+          cell.border = {
+            top: { style: "thin" },
+            left: { style: "thin" },
+            bottom: { style: "thin" },
+            right: { style: "thin" },
+          };
+        });
+      }
     });
 
-    doc.save("audit_logs_report.pdf");
+    autoFitColumns(ws);
+
+    const buffer = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    saveAs(blob, "audit_logs_report.xlsx");
   };
 
   return (

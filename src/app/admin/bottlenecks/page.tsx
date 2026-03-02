@@ -11,8 +11,8 @@ import {
   Tooltip,
   type TooltipItem,
 } from "chart.js";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
 import { useState } from "react";
 import { Bar, Pie } from "react-chartjs-2";
 import useAuth from "@/hooks/useAuth";
@@ -28,12 +28,6 @@ ChartJS.register(
   Tooltip,
   Legend,
 );
-
-/* ---------------- Duration Helpers (unchanged logic) ---------------- */
-// keep your formatDuration, parseIntervalToSeconds, formatInterval here
-// (no changes to logic as requested)
-
-/* ---------------- Chart Options ---------------- */
 
 const barOptions = {
   responsive: true,
@@ -113,34 +107,117 @@ export default function JobsPage() {
     ],
   };
 
-  const handleDownloadReport = () => {
-    const doc = new jsPDF({
-      orientation: "landscape",
-      unit: "pt",
-      format: "a4",
+  const autoFitColumns = (worksheet: ExcelJS.Worksheet) => {
+    worksheet.columns?.forEach((col) => {
+      let maxLength = 10;
+      col.eachCell?.({ includeEmpty: true }, (cell) => {
+        const v = cell.value;
+        const text =
+          v == null
+            ? ""
+            : typeof v === "object"
+              ? JSON.stringify(v)
+              : String(v);
+        maxLength = Math.max(maxLength, text.length);
+      });
+      col.width = Math.min(60, Math.max(10, maxLength + 2));
     });
+  };
 
+  const handleDownloadReport = async () => {
     const from = fromDate.slice(0, 10);
     const to = toDate.slice(0, 10);
 
-    doc.setFontSize(16);
-    doc.text("Bottlenecks Report", 40, 40);
-    doc.text(`Range: ${from} → ${to}`, 40, 60);
+    const wb = new ExcelJS.Workbook();
+    wb.creator = "Your App";
+    wb.created = new Date();
 
-    autoTable(doc, {
-      head: [["Status", "Samples", "p50", "p75", "p90"]],
-      body: bottlenecks.map((r) => [
-        r.status,
-        r.samples,
-        r.p50_seconds,
-        r.p75_seconds,
-        r.p90_seconds,
-      ]),
-      startY: 80,
-      headStyles: { fillColor: [220, 38, 38] },
+    const ws = wb.addWorksheet("Bottlenecks Report");
+
+    ws.mergeCells("A1:E1");
+    ws.getCell("A1").value = "Bottlenecks Report";
+    ws.getCell("A1").font = { size: 16, bold: true };
+    ws.getCell("A1").alignment = { vertical: "middle", horizontal: "left" };
+
+    ws.mergeCells("A2:E2");
+    ws.getCell("A2").value = `Range: ${from} → ${to}`;
+    ws.getCell("A2").font = { size: 11 };
+    ws.getCell("A2").alignment = { vertical: "middle", horizontal: "left" };
+
+    ws.addRow([]);
+
+    const headerRowIndex = 4;
+
+    ws.getRow(headerRowIndex).values = [
+      "Status",
+      "Samples",
+      "p50 (s)",
+      "p75 (s)",
+      "p90 (s)",
+    ];
+
+    const headerRow = ws.getRow(headerRowIndex);
+    headerRow.font = { bold: true, color: { argb: "FFFFFFFF" } };
+    headerRow.alignment = { vertical: "middle", horizontal: "left" };
+    headerRow.height = 18;
+
+    headerRow.eachCell((cell) => {
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFDC2626" },
+      };
+      cell.border = {
+        top: { style: "thin" },
+        left: { style: "thin" },
+        bottom: { style: "thin" },
+        right: { style: "thin" },
+      };
     });
 
-    doc.save(`bottlenecks_${from}_to_${to}.pdf`);
+    bottlenecks.forEach((r) => {
+      ws.addRow([
+        r.status,
+        Number(r.samples ?? 0),
+        Number(r.p50_seconds ?? 0),
+        Number(r.p75_seconds ?? 0),
+        Number(r.p90_seconds ?? 0),
+      ]);
+    });
+
+    ws.getColumn(2).numFmt = "#,##0"; // Samples
+    ws.getColumn(3).numFmt = "0.00"; // p50
+    ws.getColumn(4).numFmt = "0.00"; // p75
+    ws.getColumn(5).numFmt = "0.00"; // p90
+
+    ws.views = [{ state: "frozen", ySplit: headerRowIndex }];
+
+    ws.autoFilter = {
+      from: { row: headerRowIndex, column: 1 },
+      to: { row: headerRowIndex, column: 5 },
+    };
+
+    ws.eachRow((row, rowNumber) => {
+      if (rowNumber > headerRowIndex) {
+        row.eachCell((cell) => {
+          cell.border = {
+            top: { style: "thin" },
+            left: { style: "thin" },
+            bottom: { style: "thin" },
+            right: { style: "thin" },
+          };
+        });
+      }
+    });
+
+    autoFitColumns(ws);
+
+    const buf = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buf], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    saveAs(blob, `bottlenecks_${from}_to_${to}.xlsx`);
   };
 
   return (
