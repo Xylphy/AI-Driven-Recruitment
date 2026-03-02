@@ -278,7 +278,7 @@ export default function HRReport({
                       id="keyHighlights"
                       value={highlights}
                       onChange={(e) => setHighlights(e.target.value)}
-                      placeholder="Highlight candidate strengths (e.g., Leadership, Communication)"
+                      placeholder="Enter key highlights separated by commas (e.g., Leadership, Communication, Problem Solving)"
                       rows={3}
                       className="
                         w-full
