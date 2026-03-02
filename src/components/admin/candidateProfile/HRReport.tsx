@@ -30,6 +30,7 @@ export default function HRReport({
   const [score, setScore] = useState<number>(initialScore);
   const [highlights, setHighlights] = useState(initialKeyHighlights);
   const [summary, setSummary] = useState(initialSummary);
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
 
   const handleSubmit = () => {
     const data = { score, keyHighlights: highlights, summary };
@@ -230,6 +231,32 @@ export default function HRReport({
                         transition
                       "
                     />
+                  </div>
+                  <div className="w-full">
+                    <label
+                      htmlFor="fileUpload"
+                      className="block text-sm font-semibold text-white/80 mb-2 uppercase tracking-wide"
+                    >
+                      File Upload
+                    </label>
+
+                    <div className="relative rounded-2xl border border-red/600 bg-red/600 backdrop-blur-md shadow-lg hover:bg-white/15 transition-all duration-300">
+                      <input
+                        id="fileUpload"
+                        type="file"
+                        name="fileUpload"
+                        className="
+                          w-full cursor-pointer text-sm text-black/80
+                          file:mr-4 file:rounded-xl file:border-0
+                          file:bg-red/600 file:px-4 file:py-2
+                          file:text-sm file:font-medium file:text-black
+                          file:hover:bg-red/300
+                          file:transition-all file:duration-300
+                          p-3
+                          focus:outline-none
+                        "
+                      />
+                    </div>
                   </div>
                 </div>
 
