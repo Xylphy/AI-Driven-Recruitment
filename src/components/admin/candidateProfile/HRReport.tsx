@@ -6,8 +6,13 @@ import {
   Transition,
   TransitionChild,
 } from "@headlessui/react";
-import { Fragment, useState } from "react";
+import { Fragment, useState, startTransition, useEffect } from "react";
 import { FiPlus, FiX } from "react-icons/fi";
+import { CANDIDATE_STATUSES } from "@/lib/constants";
+import type { CandidateStatuses } from "@/types/types";
+import { trpc } from "@/lib/trpc/client";
+import useAuth from "@/hooks/useAuth";
+import { useParams } from "next/navigation";
 
 interface HRReportProps {
   score?: number;
@@ -26,11 +31,43 @@ export default function HRReport({
   summary: initialSummary = "",
   onSubmit,
 }: HRReportProps) {
+  const { isAuthenticated } = useAuth();
+  const candidateId = useParams().id as string;
   const [isOpen, setIsOpen] = useState(false);
   const [score, setScore] = useState<number>(initialScore);
   const [highlights, setHighlights] = useState(initialKeyHighlights);
   const [summary, setSummary] = useState(initialSummary);
-  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [selectedStatus, setSelectedStatus] =
+    useState<CandidateStatuses | null>(null);
+
+  const candidateProfileQuery = trpc.candidate.fetchCandidateProfile.useQuery(
+    {
+      candidateId,
+      fetchScore: true,
+      fetchTranscribed: true,
+      fetchResume: true,
+      fetchSkills: true,
+      fetchSocialLinks: true,
+    },
+    { enabled: isAuthenticated },
+  );
+
+  useEffect(() => {
+    startTransition(() =>
+      setSelectedStatus(candidateProfileQuery.data?.status ?? null),
+    );
+  }, [candidateProfileQuery.data?.status]);
+
+  const handleStatusChange = async (
+    e: React.ChangeEvent<HTMLSelectElement>,
+  ) => {
+    const newStatus = e.target.value as CandidateStatuses | null;
+    if (!newStatus) return;
+    if (CANDIDATE_STATUSES.includes(newStatus)) {
+      setPendingStatus(newStatus);
+      return;
+    }
+  };
 
   const handleSubmit = () => {
     const data = { score, keyHighlights: highlights, summary };
@@ -126,6 +163,57 @@ export default function HRReport({
                 </DialogTitle>
 
                 <div className="space-y-6">
+                  <div className="relative">
+                    <select
+                      value={selectedStatus || ""}
+                      onChange={handleStatusChange}
+                      className="
+                                      appearance-none
+                                      w-full lg:w-55
+                                      bg-linear-to-r from-red-600 to-red-500
+                                      text-white
+                                      border border-red-500/70
+                                      shadow-lg
+                                      font-semibold
+                                      pl-4 pr-10 py-2
+                                      rounded-xl
+                                      transition-all duration-200
+                                      hover:from-red-700 hover:to-red-600
+                                      hover:shadow-xl
+                                      focus:outline-none
+                                      focus:ring-2
+                                      focus:ring-red-300
+                                      cursor-pointer
+                                    "
+                    >
+                      <option value="" className="text-slate-900">
+                        Select Status
+                      </option>
+
+                      {CANDIDATE_STATUSES.map((status) => (
+                        <option
+                          key={status}
+                          value={status}
+                          className="text-slate-900"
+                        >
+                          {status}
+                        </option>
+                      ))}
+                    </select>
+
+                    <svg
+                      className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/90"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </div>
                   <div>
                     <label
                       htmlFor="score"
