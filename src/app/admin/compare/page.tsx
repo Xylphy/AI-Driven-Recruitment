@@ -411,7 +411,7 @@ export default function ComparePage() {
             )}
 
             {candidateA.applicantId && candidateB.applicantId && (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
                 {[candidateDataA, candidateDataB].map((data, idx) => (
                   <div
                     key={crypto.randomUUID()}
@@ -502,17 +502,6 @@ export default function ComparePage() {
                     </div>
                   </div>
                 ))}
-
-                <div className="flex items-center justify-center rounded-2xl bg-white/40 backdrop-blur-xl border border-white/40 shadow-lg">
-                  <div className="text-center">
-                    <div className="text-5xl font-extrabold text-red-600/80 tracking-tight">
-                      VS
-                    </div>
-                    <div className="text-sm text-gray-600 mt-2">
-                      Side-by-side comparison
-                    </div>
-                  </div>
-                </div>
               </div>
             )}
 
