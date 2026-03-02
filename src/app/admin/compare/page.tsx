@@ -103,6 +103,29 @@ export default function ComparePage() {
     },
   );
 
+  const selectedAId = candidateA.applicantId ?? null;
+  const selectedBId = candidateB.applicantId ?? null;
+
+  const sameCandidateSelected =
+    !!selectedAId && !!selectedBId && selectedAId === selectedBId;
+
+  const baseCandidateOptions =
+    candidatesQuery.data?.applicants.map((c) => ({
+      value: { applicantId: c.id },
+      label: c.name,
+      applicantId: c.id,
+    })) ?? [];
+
+  const candidateAOptions = baseCandidateOptions.map((opt) => ({
+    ...opt,
+    isDisabled: !!selectedBId && opt.applicantId === selectedBId,
+  }));
+
+  const candidateBOptions = baseCandidateOptions.map((opt) => ({
+    ...opt,
+    isDisabled: !!selectedAId && opt.applicantId === selectedAId,
+  }));
+
   const candidateDataA = trpc.candidate.fetchCandidateProfile.useQuery(
     {
       candidateId: candidateA.applicantId ?? "",
@@ -342,19 +365,14 @@ export default function ComparePage() {
                           <Select
                             inputId={candidateASelectId}
                             instanceId={candidateASelectId}
-                            options={candidatesQuery.data?.applicants.map(
-                              (c) => ({
-                                value: { applicantId: c.id },
-                                label: c.name,
-                              }),
-                            )}
+                            options={candidateAOptions}
                             value={
-                              candidateA.applicantId
+                              selectedAId
                                 ? {
                                     value: candidateA,
                                     label:
                                       candidatesQuery.data?.applicants.find(
-                                        (c) => c.id === candidateA.applicantId,
+                                        (c) => c.id === selectedAId,
                                       )?.name,
                                   }
                                 : null
@@ -379,19 +397,14 @@ export default function ComparePage() {
                           <Select
                             inputId={candidateBSelectId}
                             instanceId={candidateBSelectId}
-                            options={candidatesQuery.data?.applicants.map(
-                              (c) => ({
-                                value: { applicantId: c.id },
-                                label: c.name,
-                              }),
-                            )}
+                            options={candidateBOptions}
                             value={
-                              candidateB.applicantId
+                              selectedBId
                                 ? {
                                     value: candidateB,
                                     label:
                                       candidatesQuery.data?.applicants.find(
-                                        (c) => c.id === candidateB.applicantId,
+                                        (c) => c.id === selectedBId,
                                       )?.name,
                                   }
                                 : null
@@ -402,6 +415,11 @@ export default function ComparePage() {
                             placeholder="-- Select Candidate B --"
                             isClearable
                           />
+                          {sameCandidateSelected && (
+                            <div className="md:col-span-2 text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl p-3">
+                              Candidate A and Candidate B must be different.
+                            </div>
+                          )}
                         </div>
                       </div>
                     </>
