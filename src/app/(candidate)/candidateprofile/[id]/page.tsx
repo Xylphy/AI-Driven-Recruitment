@@ -43,6 +43,18 @@ type LinkMeta = {
   url: string;
 };
 
+const statusClassMap: Record<string, string> = {
+  "Paper Screening": "bg-gray-500/10 text-gray-600 border-gray-300/40",
+  Exam: "bg-indigo-500/10 text-indigo-600 border-indigo-300/40",
+  "HR Interview": "bg-blue-500/10 text-blue-600 border-blue-300/40",
+  "Technical Interview":
+    "bg-purple-500/10 text-purple-600 border-purple-300/40",
+  "Final Interview": "bg-amber-500/10 text-amber-600 border-amber-300/40",
+  "Job Offer": "bg-emerald-500/10 text-emerald-600 border-emerald-300/40",
+  "Accepted Job Offer": "bg-green-600/10 text-green-700 border-green-400/40",
+  "Close Status": "bg-red-500/10 text-red-600 border-red-300/40",
+};
+
 function getLinkMeta(rawUrl: string) {
   const input = rawUrl?.trim();
   if (!input) return null;
@@ -128,6 +140,7 @@ enum HeaderTabKey {
   Evaluation,
   Resume,
 }
+
 export default function Page() {
   const router = useRouter();
   const candidateId = useParams().id as string;
@@ -760,25 +773,7 @@ export default function Page() {
                               whitespace-nowrap
                               backdrop-blur-md
                               border
-                              ${
-                                status === "Paper Screening"
-                                  ? "bg-gray-500/10 text-gray-600 border-gray-300/40"
-                                  : status === "Exam"
-                                    ? "bg-indigo-500/10 text-indigo-600 border-indigo-300/40"
-                                    : status === "HR Interview"
-                                      ? "bg-blue-500/10 text-blue-600 border-blue-300/40"
-                                      : status === "Technical Interview"
-                                        ? "bg-purple-500/10 text-purple-600 border-purple-300/40"
-                                        : status === "Final Interview"
-                                          ? "bg-amber-500/10 text-amber-600 border-amber-300/40"
-                                          : status === "Job Offer"
-                                            ? "bg-emerald-500/10 text-emerald-600 border-emerald-300/40"
-                                            : status === "Accepted Job Offer"
-                                              ? "bg-green-600/10 text-green-700 border-green-400/40"
-                                              : status === "Close Status"
-                                                ? "bg-red-500/10 text-red-600 border-red-300/40"
-                                                : "bg-slate-500/10 text-slate-600 border-slate-300/40"
-                              }
+                              ${statusClassMap[status]}
                             `}
                             >
                               {status || "Paper Screening"}

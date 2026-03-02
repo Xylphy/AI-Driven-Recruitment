@@ -1,11 +1,11 @@
 "use client";
 
-import { Suspense } from "react";
 import { usePathname } from "next/navigation";
+import { Suspense } from "react";
+import AdminNavbar from "@/components/admin/AdminNavbar";
+import Footer from "@/components/common/Footer";
 import LayoutVisibility from "@/components/common/LayoutVisibility";
 import Navbar from "@/components/common/Navbar";
-import Footer from "@/components/common/Footer";
-import AdminNavbar from "@/components/admin/AdminNavbar";
 import useAuth from "@/hooks/useAuth";
 
 const NavbarFallback = () => (
@@ -43,15 +43,12 @@ const FooterFallback = () => (
 
 export default function AdminGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const jwtDecoded: any = useAuth(); // ✅ so you can keep jwtDecoded.data.user.role logic
+  const { isAuthenticated } = useAuth(); // ✅ so you can keep jwtDecoded.data.user.role logic
 
   const isAuthPage =
     pathname.startsWith("/login") || pathname.startsWith("/register");
 
-  const role = jwtDecoded?.data?.user?.role;
-  const isAdmin = role === "SuperAdmin";
-
-  if (isAdmin && !isAuthPage) {
+  if (isAuthenticated && !isAuthPage) {
     return <AdminNavbar>{children}</AdminNavbar>;
   }
 

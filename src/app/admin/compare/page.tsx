@@ -77,8 +77,12 @@ export default function ComparePage() {
       ? adminJobsQuery
       : hrOfficerJobsQuery;
 
-  const isFetchable =
-    isAuthenticated && candidateA.applicantId !== candidateB.applicantId;
+  const selectedAId = candidateA.applicantId;
+  const selectedBId = candidateB.applicantId;
+
+  const sameCandidateSelected =
+    !!selectedAId && !!selectedBId && selectedAId === selectedBId;
+  const isFetchable = isAuthenticated && !sameCandidateSelected;
 
   const AIQuery = trpc.candidate.fetchAICompare.useQuery(
     {
@@ -89,8 +93,7 @@ export default function ComparePage() {
       jobId: selectedJobId,
     },
     {
-      enabled:
-        !!candidateA.applicantId && !!candidateB.applicantId && isFetchable,
+      enabled: isFetchable,
     },
   );
 
@@ -102,12 +105,6 @@ export default function ComparePage() {
       enabled: !!selectedJobId && isAuthenticated,
     },
   );
-
-  const selectedAId = candidateA.applicantId ?? null;
-  const selectedBId = candidateB.applicantId ?? null;
-
-  const sameCandidateSelected =
-    !!selectedAId && !!selectedBId && selectedAId === selectedBId;
 
   const baseCandidateOptions =
     candidatesQuery.data?.applicants.map((c) => ({
@@ -134,7 +131,7 @@ export default function ComparePage() {
       fetchTranscribed: true,
     },
     {
-      enabled: !!candidateA.applicantId && isFetchable,
+      enabled: isFetchable,
     },
   );
 
@@ -146,7 +143,7 @@ export default function ComparePage() {
       fetchTranscribed: true,
     },
     {
-      enabled: !!candidateB.applicantId && isFetchable,
+      enabled: isFetchable,
     },
   );
 
@@ -159,8 +156,7 @@ export default function ComparePage() {
       candidateBId: candidateB.applicantId ?? "",
     },
     {
-      enabled:
-        !!candidateA.applicantId && !!candidateB.applicantId && isAuthenticated,
+      enabled: isFetchable,
     },
   );
 
