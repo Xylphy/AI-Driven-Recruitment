@@ -2,7 +2,6 @@
 
 import { usePathname } from "next/navigation";
 import { Suspense } from "react";
-import AdminNavbar from "@/components/admin/AdminNavbar";
 import Footer from "@/components/common/Footer";
 import LayoutVisibility from "@/components/common/LayoutVisibility";
 import Navbar from "@/components/common/Navbar";
@@ -47,9 +46,10 @@ function AdminGateContent({ children }: { children: React.ReactNode }) {
 
   const isAuthPage =
     pathname.startsWith("/login") || pathname.startsWith("/register");
+  const isAdminRoute = pathname.startsWith("/admin");
 
-  if (isAuthenticated && !isAuthPage) {
-    return <AdminNavbar>{children}</AdminNavbar>;
+  if (isAuthenticated && isAdminRoute && !isAuthPage) {
+    return <main className="grow">{children}</main>;
   }
 
   return (
