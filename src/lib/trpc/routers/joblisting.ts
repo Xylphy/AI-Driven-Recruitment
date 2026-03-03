@@ -6,8 +6,8 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { moveFile } from "@/lib/cloudinary/cloudinary";
 import type { CANDIDATE_STATUSES } from "@/lib/constants";
-import admin, { db } from "@/lib/firebase/admin";
 import { deleteDocument } from "@/lib/mongodb/action";
+import { sendEmail } from "@/lib/nodemailer/sendEmail";
 import { jobListingSchema, userSchema } from "@/lib/schemas";
 import {
   deleteRow,
@@ -27,14 +27,12 @@ import type {
   JobTags,
   Tags,
 } from "@/types/schema";
-import type { Notification } from "@/types/types";
 import {
   adminProcedure,
   authorizedProcedure,
   createTRPCRouter,
   rateLimitedProcedure,
 } from "../init";
-import { sendEmail } from "@/lib/nodemailer/sendEmail";
 
 const jobListingRouter = createTRPCRouter({
   joblistings: authorizedProcedure
@@ -48,7 +46,7 @@ const jobListingRouter = createTRPCRouter({
     )
     .query(async ({ ctx }) => {
       const userId = ctx.userJWT?.id ?? "";
-      const supabase = await createClientServer(1, true);
+      const supabase = await createClientServer(true);
 
       const { data: appliedData, error: appliedError } = await findWithJoin<
         Applicants & { job_listings: JobListing }
@@ -103,7 +101,7 @@ const jobListingRouter = createTRPCRouter({
         });
       }
 
-      const supabase = await createClientServer(1, true);
+      const supabase = await createClientServer(true);
       const { error } = await deleteRow(
         supabase,
         "job_listings",
@@ -153,7 +151,7 @@ const jobListingRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input }) => {
-      const supabase = await createClientServer(1, true);
+      const supabase = await createClientServer(true);
 
       const { data: jobListing, error: errorJobListing } =
         await find<JobListing>(supabase, "job_listings", [
@@ -236,7 +234,7 @@ const jobListingRouter = createTRPCRouter({
         .extend(userSchema.shape),
     )
     .mutation(async ({ input }) => {
-      const supabaseClient = await createClientServer(1, true);
+      const supabaseClient = await createClientServer(true);
 
       const [resumePublicId, transcriptPublicId] = await Promise.all([
         moveFile(input.resumeURL),
@@ -329,7 +327,7 @@ const jobListingRouter = createTRPCRouter({
           details: `Applicant with ID ${
             applicantsID[0]?.id
           } applied for job listing with ID ${input.jobId}.`,
-        } as AuditLog),
+        }),
         sendEmail(applicantsID[0]?.id, input.firstName, input.email),
       ]);
 
@@ -354,7 +352,7 @@ const jobListingRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      const supabase = await createClientServer(1, true);
+      const supabase = await createClientServer(true);
       const { data: oldJoblisting, error: oldJoblistingError } =
         await find<JobListing>(supabase, "job_listings", [
           { column: "id", value: input.jobId },
@@ -470,7 +468,7 @@ const jobListingRouter = createTRPCRouter({
   createJoblisting: adminProcedure
     .input(jobListingSchema)
     .mutation(async ({ input, ctx }) => {
-      const supabase = await createClientServer(1, true);
+      const supabase = await createClientServer(true);
 
       const { data: tagRows, error: tagError } = await supabase
         .from("tags")
@@ -568,35 +566,6 @@ const jobListingRouter = createTRPCRouter({
         });
       }
 
-      const { data: usersToNotify, error: usersError } = await supabase.rpc(
-        "get_similar_job_applicants",
-        {
-          new_job_id: insertedData[0]?.id,
-        },
-      );
-
-      if (usersError) {
-        console.error("Error fetching users to notify", usersError);
-      }
-
-      const notification: Omit<Notification, "id"> = {
-        title: "New Job Listing Available",
-        body: `A new job listing "${input.title}" has been posted that's similar to your applied jobs before. Check it out!`,
-        isRead: false,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        link: `/joblisting/${insertedData[0]?.id}`,
-      };
-
-      await Promise.all(
-        (usersToNotify || []).map((user: { user_id: string }) =>
-          db
-            .collection("users")
-            .doc(user.user_id)
-            .collection("notifications")
-            .add(notification),
-        ),
-      );
-
       const { error: insertLogError } = await insertTable(
         supabase,
         "audit_logs",
@@ -625,7 +594,7 @@ const jobListingRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input }) => {
-      const supabaseClient = await createClientServer(1, true);
+      const supabaseClient = await createClientServer(true);
 
       let query = supabaseClient.from("job_listings").select("*");
 
@@ -660,7 +629,7 @@ const jobListingRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input }) => {
-      const supabaseClient = await createClientServer(1, true);
+      const supabaseClient = await createClientServer(true);
 
       const tags = await findWithJoin<JobTags & { tags: Tags }>(
         supabaseClient,
@@ -695,7 +664,7 @@ const jobListingRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input }) => {
-      const supabaseClient = await createClientServer(1, true);
+      const supabaseClient = await createClientServer(true);
 
       const { data, error } = await supabaseClient
         .from("applicants")

@@ -68,7 +68,7 @@ export default function ComparePage() {
   const hrOfficerJobsQuery = trpc.hrOfficer.assignedJobs.useQuery(
     {},
     {
-      enabled: userInfo.isSuccess && role === "HR Officer",
+      enabled: userInfo.isSuccess && role === "Staff",
     },
   );
 

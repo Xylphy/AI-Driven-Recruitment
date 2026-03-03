@@ -33,7 +33,7 @@ type HiringTimelineStatistics = {
 
 const adminRouter = createTRPCRouter({
   fetchStats: adminProcedure.query(async () => {
-    const supabase = await createClientServer(1, true);
+    const supabase = await createClientServer(true);
 
     const [
       { data: dailyActiveJobs, error: dailyActiveJobsError },
@@ -156,7 +156,7 @@ const adminRouter = createTRPCRouter({
         ])
         .toArray();
 
-      const supabaseClient = await createClientServer(1, true);
+      const supabaseClient = await createClientServer(true);
 
       const userIds = Array.from(
         new Set(topCandidates.map((c) => c.applicant_id)),
@@ -211,7 +211,7 @@ const adminRouter = createTRPCRouter({
       };
     }),
   fetchAllJobs: adminProcedure.query(async () => {
-    const supabase = await createClientServer(1, true);
+    const supabase = await createClientServer(true);
 
     const { data: jobs, error: jobsError } = await find<JobListing>(
       supabase,
@@ -260,7 +260,7 @@ const adminRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input }) => {
-      const supabase = await createClientServer(1, true);
+      const supabase = await createClientServer(true);
       let query = supabase.from("audit_logs").select("*").order("created_at", {
         ascending: false,
       });
@@ -295,11 +295,11 @@ const adminRouter = createTRPCRouter({
 
       const nextCursor =
         (auditLogs && auditLogs.length === input.limit
-          ? auditLogs[auditLogs.length - 1].created_at
+          ? auditLogs[auditLogs.length - 1]?.created_at
           : null) || null;
 
       return {
-        auditLogs: auditLogs as AuditLog[],
+        auditLogs: auditLogs,
         nextCursor,
       };
     }),
@@ -311,7 +311,7 @@ const adminRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input }) => {
-      const supabase = await createClientServer(1, true);
+      const supabase = await createClientServer(true);
 
       const q = input.searchQuery?.trim();
       let users: Staff[] = [];
@@ -343,7 +343,7 @@ const adminRouter = createTRPCRouter({
                 .from("staff")
                 .select("*")
                 .neq("role", "SuperAdmin")
-                .in("role", matchingRoles)
+                .in("role", matchingRoles as Array<"Admin" | "SuperAdmin" | "Staff" | "Applicant">)
                 .limit(input.limit)
             : Promise.resolve({ data: [], error: null }),
         ]);
@@ -401,7 +401,7 @@ const adminRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const supabase = await createClientServer(1, true);
+      const supabase = await createClientServer(true);
 
       const { data: staff, error: staffError } = await find<Staff>(
         supabase,
@@ -424,7 +424,7 @@ const adminRouter = createTRPCRouter({
 
       const { error: updateError } = await supabase
         .from("staff")
-        .update({ role: input.newRole })
+        .update({ role: input.newRole as "Admin" | "Staff" | "SuperAdmin" | "Applicant" })
         .eq("id", input.userId);
 
       if (updateError) {
@@ -475,7 +475,7 @@ const adminRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input }) => {
-      const supabase = await createClientServer(1, true);
+      const supabase = await createClientServer(true);
 
       const { data: BottleneckPercentileRow, error: bottleneckError } =
         await supabase.rpc("get_bottleneck_percentiles", {
@@ -505,9 +505,9 @@ const adminRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input }) => {
-      const supabase = await createClientServer(1, true);
+      const supabase = await createClientServer(true);
 
-      let query = supabase.from("staff").select("*").eq("role", "HR Officer");
+      let query = supabase.from("staff").select("*").eq("role", "Staff");
 
       if (input.currentHRId) {
         query = query.neq("id", input.currentHRId);
@@ -546,7 +546,7 @@ const adminRouter = createTRPCRouter({
         );
       }
 
-      const jobsAssignedPromises = hrOfficers?.map((officer: Staff) =>
+      const jobsAssignedPromises = hrOfficers?.map((officer) =>
         supabase
           .from("job_listings")
           .select("title")
@@ -560,7 +560,7 @@ const adminRouter = createTRPCRouter({
       const jobsAssignedResults = await Promise.all(jobsAssignedPromises);
 
       return {
-        hrOfficers: hrOfficers?.map((officer: Staff, index: number) => ({
+        hrOfficers: hrOfficers?.map((officer, index: number) => ({
           ...officer,
           email: userMap.get(officer.firebase_uid)?.email || "",
           jobsAssigned:
@@ -575,7 +575,7 @@ const adminRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input }) => {
-      const supabaseClient = await createClientServer(1, true);
+      const supabaseClient = await createClientServer(true);
       let query = supabaseClient
         .from("job_listings")
         .select(
@@ -603,7 +603,7 @@ const adminRouter = createTRPCRouter({
           created_at: item.created_at,
           is_fulltime: item.is_fulltime,
           location: item.location,
-          applicant_count: item.job_applicants?.length || 0,
+          applicant_count: item.applicants?.length || 0,
           officer_name: item.officer
             ? `${item.officer.first_name} ${item.officer.last_name}`
             : undefined,
@@ -618,7 +618,7 @@ const adminRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input }) => {
-      const supabase = await createClientServer(1, true);
+      const supabase = await createClientServer(true);
 
       const { data: kpiMetrics, error: kpiError } = await supabase.rpc(
         "get_hiring_kpis",
@@ -643,7 +643,7 @@ const adminRouter = createTRPCRouter({
   addStaff: superAdminProcedure
     .input(addStaffSchema)
     .mutation(async ({ input, ctx }) => {
-      const supabase = await createClientServer(1, true);
+      const supabase = await createClientServer(true);
 
       const createdUser = await createUserWithEmailAndPassword(
         input.email,

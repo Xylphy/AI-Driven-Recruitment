@@ -112,7 +112,7 @@ export const adminProcedure = authorizedProcedure.use(async ({ ctx, next }) => {
 
 export const hrOfficerProcedure = authorizedProcedure.use(
   async ({ ctx, next }) => {
-    if (ctx.userJWT?.role !== "HR Officer") {
+    if (ctx.userJWT?.role !== "Staff") {
       throw new TRPCError({
         code: "FORBIDDEN",
         message: "Access restricted to HR Officers",

@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
         { status: 401 },
       );
     }
-    const supabase = await createClientServer(1, true);
+    const supabase = await createClientServer(true);
 
     const { data: userData, error: usersError } = await find<Staff>(
       supabase,

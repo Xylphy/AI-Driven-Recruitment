@@ -4,7 +4,7 @@ import { updatePasswordSchema } from "@/lib/schemas/user";
 import { find, insertTable } from "@/lib/supabase/action";
 import { createClientServer } from "@/lib/supabase/supabase";
 import { authorizedProcedure, createTRPCRouter } from "@/lib/trpc/init";
-import type { AuditLog, Staff } from "@/types/schema";
+import type { Staff } from "@/types/schema";
 
 const authRouter = createTRPCRouter({
   decodeJWT: authorizedProcedure.query(({ ctx }) => {
@@ -14,7 +14,7 @@ const authRouter = createTRPCRouter({
   updatePassword: authorizedProcedure
     .input(updatePasswordSchema)
     .mutation(async ({ input, ctx }) => {
-      const supabase = await createClientServer(1, true);
+      const supabase = await createClientServer(true);
 
       const { data: staff, error: staffError } = await find<Staff>(
         supabase,
@@ -49,7 +49,7 @@ const authRouter = createTRPCRouter({
           entity: "HR Officer",
           details: `Staff member with ID ${staff.id} updated their password.`,
           changes: {},
-        } as AuditLog);
+        });
 
         if (logError) {
           console.error("Failed to log password update action:", logError);

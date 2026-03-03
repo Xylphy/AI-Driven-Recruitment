@@ -8,7 +8,7 @@ import { trpc } from "@/lib/trpc/client";
 type Message = {
   id?: string;
   message: string;
-  role: "user" | "assistant";
+  role: string;
   created_at?: string;
 };
 

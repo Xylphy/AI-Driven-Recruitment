@@ -7,7 +7,7 @@ const chatbotRouter = createTRPCRouter({
   createNewConversation: rateLimitedProcedure.query(async () => {
     const conversationId = crypto.randomUUID();
 
-    const { error } = await (await createClientServer(1, true))
+    const { error } = await (await createClientServer(true))
       .from("conversation_messages")
       .insert({
         conversation_id: conversationId,
@@ -35,7 +35,7 @@ const chatbotRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input }) => {
-      const { data, error } = await (await createClientServer(1, true))
+      const { data, error } = await (await createClientServer(true))
         .from("conversation_messages")
         .select("id, role, message, created_at")
         .eq("conversation_id", input.conversationId)

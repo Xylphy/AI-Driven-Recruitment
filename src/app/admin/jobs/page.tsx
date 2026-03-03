@@ -33,7 +33,7 @@ export default function JobsPage() {
   const hrOfficerJobsQuery = trpc.hrOfficer.assignedJobs.useQuery(
     { query: searchInput },
     {
-      enabled: userInfo.isSuccess && role === "HR Officer",
+      enabled: userInfo.isSuccess && role === "Staff",
     },
   );
 
@@ -107,7 +107,7 @@ export default function JobsPage() {
                   <td className="p-4">
                     <div className="h-4 bg-gray-200 rounded w-1/4 animate-pulse" />
                   </td>
-                  {role !== "HR Officer" && (
+                  {role !== "Staff" && (
                     <td className="p-4">
                       <div className="h-4 bg-gray-200 rounded w-1/2 animate-pulse" />
                     </td>
@@ -128,7 +128,7 @@ export default function JobsPage() {
                       Open
                     </span>
                   </td>
-                  {role !== "HR Officer" && (
+                  {role !== "Staff" && (
                     <td className="p-4">{job.officer_name || "-"}</td>
                   )}
                 </tr>

@@ -22,7 +22,7 @@ export default function LoginPage() {
   useEffect(() => {
     if (isAuthenticated && jwtInfo.data) {
       const role = jwtInfo.data.user.role;
-      if (role === "HR Officer") {
+      if (role === "Staff") {
         router.push("/admin/jobs");
       } else {
         router.push("/admin");
@@ -30,7 +30,7 @@ export default function LoginPage() {
     }
   }, [jwtInfo.data, router, isAuthenticated]);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsAuthLoading(true);
 
@@ -85,12 +85,12 @@ export default function LoginPage() {
     flex
     items-center
     justify-center
-    bg-gradient-to-br from-white via-red-50/30 to-white
+    bg-linear-to-br from-white via-red-50/30 to-white
     px-4
   "
     >
-      <div className="absolute -top-40 -left-40 w-[450px] h-[450px] bg-red-400/20 rounded-full blur-3xl" />
-      <div className="absolute -bottom-40 -right-40 w-[450px] h-[450px] bg-red-500/20 rounded-full blur-3xl" />
+      <div className="absolute -top-40 -left-40 w-112.5 h-112.5 bg-red-400/20 rounded-full blur-3xl" />
+      <div className="absolute -bottom-40 -right-40 w-112.5 h-112.5 bg-red-500/20 rounded-full blur-3xl" />
 
       <div
         className="
@@ -106,7 +106,7 @@ export default function LoginPage() {
           className="
         relative
         grid md:grid-cols-[1.4fr_1fr]
-        rounded-[32px]
+        rounded-4xl
         border border-white/40
         bg-white/55
         backdrop-blur-3xl
@@ -114,14 +114,14 @@ export default function LoginPage() {
         overflow-hidden
       "
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-red-100/30 pointer-events-none" />
+          <div className="absolute inset-0 bg-linear-to-br from-white/40 via-transparent to-red-100/30 pointer-events-none" />
 
           <div className="relative p-10 flex flex-col justify-center">
             <div className="mb-8">
               <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-red-600">
                 Secure Access
               </p>
-              <h1 className="mt-3 text-3xl font-extrabold bg-gradient-to-r from-red-600 to-red-400 bg-clip-text text-transparent">
+              <h1 className="mt-3 text-3xl font-extrabold bg-linear-to-r from-red-600 to-red-400 bg-clip-text text-transparent">
                 Welcome Back
               </h1>
               <p className="mt-2 text-sm text-gray-600">
@@ -214,7 +214,7 @@ export default function LoginPage() {
                 className="
               relative w-full rounded-2xl px-6 py-3
               font-bold uppercase tracking-[0.18em]
-              bg-gradient-to-r from-red-600 to-red-500
+              bg-linear-to-r from-red-600 to-red-500
               text-white
               shadow-[0_25px_80px_rgba(220,38,38,0.25)]
               hover:scale-[1.02]

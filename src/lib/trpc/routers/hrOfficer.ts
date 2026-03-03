@@ -4,7 +4,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { deleteRow, find, insertTable } from "@/lib/supabase/action";
 import { createClientServer } from "@/lib/supabase/supabase";
-import type { AuditLog, Changes, HRReport } from "@/types/schema";
+import type { Changes, HRReport } from "@/types/schema";
 import {
   authorizedProcedure,
   createTRPCRouter,
@@ -19,7 +19,7 @@ const hrOfficerRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input, ctx }) => {
-      const supabase = await createClientServer(1, true);
+      const supabase = await createClientServer(true);
 
       const query = supabase
         .from("job_listings")
@@ -48,7 +48,7 @@ const hrOfficerRouter = createTRPCRouter({
           created_at: item.created_at,
           is_fulltime: item.is_fulltime,
           location: item.location,
-          applicant_count: item.job_applicants?.length || 0,
+          applicant_count: item.applicants?.length || 0,
         })),
       };
     }),
@@ -68,7 +68,7 @@ const hrOfficerRouter = createTRPCRouter({
         });
       }
 
-      const supabase = await createClientServer(1, true);
+      const supabase = await createClientServer(true);
 
       const { error: deleteReportError } = await deleteRow(
         supabase,
@@ -97,7 +97,7 @@ const hrOfficerRouter = createTRPCRouter({
           entity_id: input.reportId,
           changes: {},
           details: `HR Report with ID ${input.reportId} deleted`,
-        } as AuditLog,
+        },
       );
 
       if (insertLogError) {
@@ -127,7 +127,7 @@ const hrOfficerRouter = createTRPCRouter({
         });
       }
 
-      const supabase = await createClientServer(1, true);
+      const supabase = await createClientServer(true);
 
       const { data: oldData, error: oldDataError } = await find<HRReport>(
         supabase,
@@ -153,7 +153,7 @@ const hrOfficerRouter = createTRPCRouter({
           .from("hr_reports")
           .update({
             score: input.score,
-            summary: input.summary,
+            summary: input.summary || "",
           })
           .eq("id", input.reportId)
           .select()
@@ -232,7 +232,7 @@ const hrOfficerRouter = createTRPCRouter({
           entity_id: input.reportId,
           changes,
           details: `HR Report with ID ${input.reportId} updated`,
-        } as AuditLog,
+        },
       );
 
       if (insertLogError) {

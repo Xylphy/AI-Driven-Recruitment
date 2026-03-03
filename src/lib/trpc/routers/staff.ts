@@ -13,7 +13,6 @@ import {
 } from "@/lib/supabase/action";
 import { createClientServer } from "@/lib/supabase/supabase";
 import type {
-  AuditLog,
   HRReport,
   JobListing,
   JobListingQualifications,
@@ -32,7 +31,7 @@ const staffRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input }) => {
-      const supabase = await createClientServer(1, true);
+      const supabase = await createClientServer(true);
 
       const { data: jobListing, error: errorJobListing } = await findWithJoin<
         JobListing & { users: Pick<Staff, "first_name" | "last_name"> }
@@ -130,7 +129,7 @@ const staffRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      const supabase = await createClientServer(1, true);
+      const supabase = await createClientServer(true);
 
       const { data: hrReport, error: hrReportError } = await insertTable(
         supabase,
@@ -186,7 +185,7 @@ const staffRouter = createTRPCRouter({
           entity_id: hrReport[0]?.id,
           changes: {},
           details: `HR Report created with score ${input.score}`,
-        } as AuditLog,
+        },
       );
 
       if (insertLogError) {
@@ -208,7 +207,7 @@ const staffRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input }) => {
-      const supabase = await createClientServer(1, true);
+      const supabase = await createClientServer(true);
 
       const { data: hrReports, error: hrReportsError } = await findWithJoin<
         HRReport & {

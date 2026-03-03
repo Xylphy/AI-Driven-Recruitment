@@ -27,14 +27,13 @@ export const CANDIDATE_STATUSES = [
 export const USER_ROLES = [
   "Admin",
   "SuperAdmin",
-  "HR Officer",
+  "Staff",
   "Applicant",
 ] as const;
 
 export const JOB_LOCATIONS = ["Cebu City", "Manila", "Tokyo"] as const;
 
 export const EVENT_TYPES = [
-  "Profile Updated",
   "Joblisting modified",
   "Joblisting deleted",
   "Created joblisting",
@@ -49,16 +48,13 @@ export const EVENT_TYPES = [
   "Updated HR Report",
   "Created staff account",
   "Staff password updated",
-
-  // Should be removed:
-  "Changed job alerts",
 ] as const;
 
 export const ENTITIES = [
-  "Job Applicant",
+  "Applicant",
   "Job Listing",
   "Admin Feedback",
-  "HR Report",
+  "Staff Report",
   "Staff",
 ] as const;
 

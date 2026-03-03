@@ -28,7 +28,7 @@
     "file-saver": "^2.0.5",
     "firebase": "^12.10.0",
     "firebase-admin": "^13.7.0",
-    "framer-motion": "^12.34.4",
+    "framer-motion": "^12.34.5",
     "jsonwebtoken": "^9.0.3",
     "lru-cache": "^11.2.6",
     "lucide-react": "^0.576.0",
@@ -38,7 +38,7 @@
     "react": "^19.2.4",
     "react-chartjs-2": "^5.3.1",
     "react-dom": "^19.2.4",
-    "react-icons": "^5.5.0",
+    "react-icons": "^5.6.0",
     "react-select": "^5.10.2",
     "recharts": "^3.7.0",
     "superjson": "^2.2.6",
@@ -56,6 +56,7 @@
     "@types/react-dom": "^19.2.3",
     "babel-plugin-react-compiler": "^1.0.0",
     "knip": "^5.85.0",
+    "supabase": "^2.76.16",
     "tailwindcss": "^4.2.1",
     "typescript": "^5.9.3"
   }

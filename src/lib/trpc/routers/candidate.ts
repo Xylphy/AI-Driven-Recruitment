@@ -72,12 +72,12 @@ const candidateRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input, ctx }) => {
-      const supabaseClient = await createClientServer(1, true);
+      const supabaseClient = await createClientServer(true);
 
       let jobListingIds: string[] | undefined;
 
-      // If HR Officer, limit to their job listings
-      if (ctx.userJWT?.role === "HR Officer") {
+      // If Staff, limit to their job listings
+      if (ctx.userJWT?.role === "Staff") {
         // Fetch job listings for this officer
         const { data: listings, error: listingsError } = await supabaseClient
           .from("job_listings")
@@ -218,7 +218,7 @@ const candidateRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input }) => {
-      const supabaseClient = await createClientServer(1, true);
+      const supabaseClient = await createClientServer(true);
 
       const [
         parsedResume,
@@ -298,7 +298,7 @@ const candidateRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const supabase = await createClientServer(1, true);
+      const supabase = await createClientServer(true);
 
       const { data: oldData, error: oldDataError } = await find<Applicants>(
         supabase,
@@ -406,7 +406,7 @@ const candidateRouter = createTRPCRouter({
           entity_id: input.applicantId,
           changes,
           details,
-        } as AuditLog,
+        },
       );
 
       if (insertLogError) {
@@ -427,7 +427,7 @@ const candidateRouter = createTRPCRouter({
     )
     .mutation(async ({ input }) => {
       const { error } = await updateTable(
-        await createClientServer(1, true),
+        await createClientServer(true),
         "job_applicants",
         {
           admin_feedback: input.feedback,
@@ -456,7 +456,7 @@ const candidateRouter = createTRPCRouter({
     .query(async ({ input }) => {
       const { data: adminFeedback, error: jobApplicantError } =
         await find<AdminFeedback>(
-          await createClientServer(1, true),
+          await createClientServer(true),
           "admin_feedback",
           [{ column: "applicant_id", value: input.candidateId }],
         )
@@ -488,7 +488,7 @@ const candidateRouter = createTRPCRouter({
         }),
     )
     .query(async ({ input }) => {
-      const supabase = await createClientServer(1, true);
+      const supabase = await createClientServer(true);
 
       // Verify if both candidates exist in the database before calling the AI compare API
       const [candidateA, candidateB] = await Promise.all([
@@ -540,7 +540,7 @@ const candidateRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const supabase = await createClientServer(1, true);
+      const supabase = await createClientServer(true);
 
       const { error } = await insertTable(supabase, "admin_feedback", {
         applicant_id: input.candidateId,
@@ -588,7 +588,7 @@ const candidateRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input }) => {
-      const supabase = await createClientServer(1, true);
+      const supabase = await createClientServer(true);
 
       const { data, error } = await supabase
         .from("admin_feedback")
@@ -622,7 +622,7 @@ const candidateRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      const supabase = await createClientServer(1, true);
+      const supabase = await createClientServer(true);
 
       const { data: oldData, error: oldDataError } = await find<AdminFeedback>(
         supabase,
@@ -694,7 +694,7 @@ const candidateRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      const supabase = await createClientServer(1, true);
+      const supabase = await createClientServer(true);
 
       const { error } = await supabase
         .from("admin_feedback")
@@ -744,12 +744,12 @@ const candidateRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input, ctx }) => {
-      const supabaseClient = await createClientServer(1, true);
+      const supabaseClient = await createClientServer(true);
 
       let jobListingIds: string[] | undefined;
 
-      // If HR Officer, limit to their job listings
-      if (ctx.userJWT?.role === "HR Officer") {
+      // If Staff, limit to their job listings
+      if (ctx.userJWT?.role === "Staff") {
         // Fetch job listings for this officer
         const { data: listings, error: listingsError } = await supabaseClient
           .from("job_listings")
@@ -827,7 +827,7 @@ const candidateRouter = createTRPCRouter({
     )
     .mutation(async ({ input }) => {
       const { data: applicant, error: applicantError } = await find<Applicants>(
-        await createClientServer(1, true),
+        await createClientServer(true),
         "applicants",
         [{ column: "id", value: input.candidateId }],
       ).single();

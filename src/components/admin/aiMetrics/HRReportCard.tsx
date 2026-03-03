@@ -44,7 +44,7 @@ export default function HRReportCard({ report }: HRReportCardProps) {
       <div className="relative flex gap-1">
         {[...Array(5)].map((_, i) => (
           <svg
-            key={`star-${report.id}-${i}`}
+            key={`star-${report.id}`}
             className={`w-5 h-5 ${
               i < Math.round(report.score) ? "text-yellow-400" : "text-gray-300"
             }`}
@@ -63,9 +63,9 @@ export default function HRReportCard({ report }: HRReportCardProps) {
         </p>
 
         <div className="flex flex-wrap gap-2">
-          {report.highlights.map((item, index) => (
+          {report.highlights.map((item) => (
             <span
-              key={`${report.id}-highlight-${index}`}
+              key={`${report.id}-highlight`}
               className="
                 px-3 py-1.5 text-xs font-medium
                 rounded-full

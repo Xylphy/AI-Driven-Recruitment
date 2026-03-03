@@ -141,14 +141,6 @@ function getLinkMeta(rawUrl: string) {
   return { icon: MdLink, label: "Link", url: normalized };
 }
 
-<<<<<<< Updated upstream
-enum HeaderTabKey {
-  Evaluation,
-  Resume,
-}
-
-=======
->>>>>>> Stashed changes
 export default function Page() {
   const router = useRouter();
   const candidateId = useParams().id as string;
@@ -394,11 +386,11 @@ export default function Page() {
             <div className="flex flex-wrap gap-2 text-red-500 mt-2">
               {contactItems
                 .filter((item): item is LinkMeta => Boolean(item))
-                .map((item, idx) => {
+                .map((item) => {
                   const Icon = item.icon;
                   return (
                     <a
-                      key={`${item.label}-${idx}`}
+                      key={`${item.label}`}
                       href={item.url}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -837,7 +829,7 @@ export default function Page() {
                           <div className="relative flex gap-1 mb-4">
                             {[...Array(5)].map((_, i) => (
                               <svg
-                                key={`${report.id}-star-${i}`}
+                                key={`${report.id}-star`}
                                 className={`w-5 h-5 ${
                                   i < Math.round(report.score || 0)
                                     ? "text-yellow-400 drop-shadow-sm"
@@ -858,9 +850,9 @@ export default function Page() {
                             </p>
 
                             <div className="flex flex-wrap gap-2">
-                              {report.highlights.map((highlight, i) => (
+                              {report.highlights.map((highlight) => (
                                 <span
-                                  key={`${report.id}-highlight-${i}`}
+                                  key={`${report.id}-highlight`}
                                   className="
                                     px-3 py-1.5 text-xs font-medium
                                     rounded-full
