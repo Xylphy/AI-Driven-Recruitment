@@ -123,6 +123,7 @@ export interface HRReport extends IdentifiableItem {
   score: number; // Floating point number
   summary: string;
   created_at: string;
+  candidate_status: CandidateStatuses;
 }
 
 export interface KeyHighlights extends IdentifiableItem {

@@ -37,6 +37,11 @@ const CandidateResume = dynamic(
   { ssr: false },
 );
 
+enum HeaderTabKey {
+  Evaluation,
+  Resume,
+}
+
 type LinkMeta = {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
@@ -136,11 +141,14 @@ function getLinkMeta(rawUrl: string) {
   return { icon: MdLink, label: "Link", url: normalized };
 }
 
+<<<<<<< Updated upstream
 enum HeaderTabKey {
   Evaluation,
   Resume,
 }
 
+=======
+>>>>>>> Stashed changes
 export default function Page() {
   const router = useRouter();
   const candidateId = useParams().id as string;

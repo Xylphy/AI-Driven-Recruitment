@@ -1,5 +1,5 @@
 /**
- * Router for job listing related procedures (mostly for users)
+ * Router for job listing related procedures (mostly for applicants)
  */
 
 import { TRPCError } from "@trpc/server";
@@ -34,6 +34,7 @@ import {
   createTRPCRouter,
   rateLimitedProcedure,
 } from "../init";
+import { sendEmail } from "@/lib/nodemailer/sendEmail";
 
 const jobListingRouter = createTRPCRouter({
   joblistings: authorizedProcedure
@@ -314,10 +315,11 @@ const jobListingRouter = createTRPCRouter({
         },
       });
 
-      const { error: insertLogError } = await insertTable(
-        supabaseClient,
-        "audit_logs",
-        {
+      const [
+        { error: insertLogError },
+        { success: emailSuccess, error: emailError },
+      ] = await Promise.all([
+        insertTable(supabaseClient, "audit_logs", {
           actor_type: "Applicant",
           action: "create",
           event_type: "Applied for job",
@@ -327,11 +329,16 @@ const jobListingRouter = createTRPCRouter({
           details: `Applicant with ID ${
             applicantsID[0]?.id
           } applied for job listing with ID ${input.jobId}.`,
-        } as AuditLog,
-      );
+        } as AuditLog),
+        sendEmail(applicantsID[0]?.id, input.firstName, input.email),
+      ]);
 
       if (insertLogError) {
         console.error("Error inserting audit log:", insertLogError);
+      }
+
+      if (!emailSuccess) {
+        console.error("Error sending email:", emailError);
       }
 
       return {
