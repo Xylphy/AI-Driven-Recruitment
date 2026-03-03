@@ -757,7 +757,7 @@ export default function Page() {
                           <div className="relative flex items-start justify-between gap-4 mb-4">
                             <div className="min-w-0">
                               <p className="text-xs uppercase tracking-widest text-gray-500">
-                                HR Officer
+                                Staff
                               </p>
                               <h3 className="text-lg font-semibold text-gray-800 truncate">
                                 {report.staff_name}

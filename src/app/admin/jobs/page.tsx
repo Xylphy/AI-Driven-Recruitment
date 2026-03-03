@@ -91,7 +91,7 @@ export default function JobsPage() {
               <th className="p-4 text-left font-semibold">Job Title</th>
               <th className="p-4 text-left font-semibold">Applicants</th>
               <th className="p-4 text-left font-semibold">Status</th>
-              <th className="p-4 text-left font-semibold">HR Officer</th>
+              <th className="p-4 text-left font-semibold">Staff</th>
             </tr>
           </thead>
           <tbody>

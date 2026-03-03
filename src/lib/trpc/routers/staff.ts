@@ -1,5 +1,5 @@
 /**
- * Router for staff-related procedures (HR Officer, SuperAdmin, Admin)
+ * Router for staff-related procedures (Staff, SuperAdmin, Admin)
  */
 
 import { TRPCError } from "@trpc/server";

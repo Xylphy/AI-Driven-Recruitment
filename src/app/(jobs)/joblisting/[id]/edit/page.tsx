@@ -161,7 +161,7 @@ export default function Page() {
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
 
     if (!isAuthenticated || joblistingDetails.data?.created_by !== userId) {
@@ -384,7 +384,7 @@ export default function Page() {
                     htmlFor="hrSearch"
                     className="text-xs font-bold uppercase tracking-[0.2em] text-red-600"
                   >
-                    Assigned HR Officer
+                    Assigned Staff
                   </label>
 
                   <div className="relative">
@@ -397,7 +397,7 @@ export default function Page() {
                         setShowDropdown(true);
                       }}
                       onFocus={() => setShowDropdown(true)}
-                      placeholder="Type to search HR Officer"
+                      placeholder="Type to search Staff"
                       required
                       className="
                           w-full rounded-2xl px-5 py-3

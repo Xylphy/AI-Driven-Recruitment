@@ -14,7 +14,7 @@ export default function UsersPage() {
 
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [newStaffRole, setNewStaffRole] =
-    useState<RegularStaffRoles>("HR Officer");
+    useState<RegularStaffRoles>("Staff");
   const [staffFirstName, setStaffFirstName] = useState("");
   const [staffLastName, setStaffLastName] = useState("");
   const [staffPassword, setStaffPassword] = useState("");
@@ -82,7 +82,7 @@ export default function UsersPage() {
           swalSuccess("Staff Added", "Staff added successfully!", () => {
             staffsQuery.refetch();
             setIsAddOpen(false);
-            setNewStaffRole("HR Officer");
+            setNewStaffRole("Staff");
             setStaffFirstName("");
             setStaffLastName("");
             setStaffEmail("");

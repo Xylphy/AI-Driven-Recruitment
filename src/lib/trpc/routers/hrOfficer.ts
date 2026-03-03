@@ -1,4 +1,4 @@
-// Router for HR Officer related procedures
+// Router for Staff-only related procedures
 
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
@@ -34,7 +34,7 @@ const hrOfficerRouter = createTRPCRouter({
       const { data, error } = await query;
 
       if (error) {
-        console.error("Error fetching jobs as HR Officer", error);
+        console.error("Error fetching jobs as Staff", error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to fetch assigned jobs.",

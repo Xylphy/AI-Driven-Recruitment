@@ -201,11 +201,6 @@ const candidateRouter = createTRPCRouter({
           ),
       };
     }),
-  /**
-   * HR Officers can access the candidate profile
-   * Problem is that other HR officer can access other job applicants that's not theirs
-   * Checking the integrity can slow down the response time and it's okay since the HR officers are staffs of the company
-   */
   fetchCandidateProfile: authorizedProcedure
     .input(
       z.object({

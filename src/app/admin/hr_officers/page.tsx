@@ -23,12 +23,12 @@ export default function HROfficersPage() {
       <div className="relative z-10 space-y-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <h2 className="text-3xl font-bold bg-linear-to-r from-red-600 to-red-600 bg-clip-text text-transparent">
-            HR Officers
+            Staffs
           </h2>
 
           <input
             type="text"
-            placeholder="Search HR Officer by name or email..."
+            placeholder="Search Staff by name or email..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             className="w-full md:w-80 px-5 py-2 rounded-2xl bg-white/40 border border-white/30 backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-red-400 shadow-inner transition-al"
@@ -85,7 +85,7 @@ export default function HROfficersPage() {
                     colSpan={3}
                     className="text-center p-6 text-gray-500 italic"
                   >
-                    No HR Officers found.
+                    No Staffs found.
                   </td>
                 </tr>
               )}

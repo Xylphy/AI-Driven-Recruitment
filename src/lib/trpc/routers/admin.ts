@@ -343,7 +343,12 @@ const adminRouter = createTRPCRouter({
                 .from("staff")
                 .select("*")
                 .neq("role", "SuperAdmin")
-                .in("role", matchingRoles as Array<"Admin" | "SuperAdmin" | "Staff" | "Applicant">)
+                .in(
+                  "role",
+                  matchingRoles as Array<
+                    "Admin" | "SuperAdmin" | "Staff" | "Applicant"
+                  >,
+                )
                 .limit(input.limit)
             : Promise.resolve({ data: [], error: null }),
         ]);
@@ -424,7 +429,9 @@ const adminRouter = createTRPCRouter({
 
       const { error: updateError } = await supabase
         .from("staff")
-        .update({ role: input.newRole as "Admin" | "Staff" | "SuperAdmin" | "Applicant" })
+        .update({
+          role: input.newRole as "Admin" | "Staff" | "SuperAdmin" | "Applicant",
+        })
         .eq("id", input.userId);
 
       if (updateError) {
@@ -523,10 +530,10 @@ const adminRouter = createTRPCRouter({
       const { data: hrOfficers, error: hrOfficersError } = await query;
 
       if (hrOfficersError) {
-        console.error("Error fetching HR Officers", hrOfficersError);
+        console.error("Error fetching Staffs", hrOfficersError);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: hrOfficersError?.message || "Failed to fetch HR Officers",
+          message: hrOfficersError?.message || "Failed to fetch Staffs",
         });
       }
 

@@ -115,7 +115,7 @@ export const hrOfficerProcedure = authorizedProcedure.use(
     if (ctx.userJWT?.role !== "Staff") {
       throw new TRPCError({
         code: "FORBIDDEN",
-        message: "Access restricted to HR Officers",
+        message: "Access restricted to Staffs",
       });
     }
 

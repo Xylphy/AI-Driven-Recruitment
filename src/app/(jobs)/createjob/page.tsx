@@ -265,7 +265,7 @@ export default function JobListingPage() {
                   htmlFor="hrSearch"
                   className="text-xs font-bold uppercase tracking-[0.2em] text-red-600"
                 >
-                  Assigned HR Officer
+                  Assigned Staff
                 </label>
 
                 <div className="relative">
@@ -278,7 +278,7 @@ export default function JobListingPage() {
                       setShowDropdown(true);
                     }}
                     onFocus={() => setShowDropdown(true)}
-                    placeholder="Type to search HR Officer"
+                    placeholder="Type to search Staff"
                     className="
                   w-full rounded-2xl px-5 py-3
                   bg-white/70 backdrop-blur-xl

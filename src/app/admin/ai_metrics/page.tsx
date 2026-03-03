@@ -497,10 +497,10 @@ export default function AIAnalyticsDashboard() {
             <div className="space-y-6">
               <div className="text-center">
                 <h2 className="text-2xl font-bold bg-linear-to-r from-red-600 to-red-400 bg-clip-text text-transparent">
-                  HR Officer Reports
+                  Staff Reports
                 </h2>
                 <p className="text-sm text-gray-500">
-                  Actual HR evaluations for the candidate
+                  Actual Staff evaluations for the candidate
                 </p>
               </div>
 

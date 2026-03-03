@@ -26,7 +26,7 @@ export default function HRReportCard({ report }: HRReportCardProps) {
       <div className="relative flex justify-between items-start">
         <div>
           <p className="text-xs uppercase tracking-widest text-gray-500">
-            HR Officer
+            Staff
           </p>
           <h3 className="text-lg font-semibold text-gray-800">
             {report.staff_name}

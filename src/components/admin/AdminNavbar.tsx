@@ -204,7 +204,7 @@ export default function AdminNavbar({
                           : "hover:bg-white/40 backdrop-blur-md"
                       }`}
                     >
-                      <MdPeople /> HR Officers
+                      <MdPeople /> Staffs
                     </Link>
                   </>
                 )}

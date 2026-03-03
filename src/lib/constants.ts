@@ -58,6 +58,6 @@ export const ENTITIES = [
   "Staff",
 ] as const;
 
-export const REGULAR_STAFF_ROLES = ["Admin", "HR Officer"] as const;
+export const REGULAR_STAFF_ROLES = ["Admin", "Staff"] as const;
 
 export const ALL_STAFF_ROLES = [...REGULAR_STAFF_ROLES, "SuperAdmin"] as const;

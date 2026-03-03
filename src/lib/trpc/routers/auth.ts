@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { getEmailByUid, updateUserPassword } from "@/lib/firebase/action";
 import { updatePasswordSchema } from "@/lib/schemas/user";
-import { find, insertTable } from "@/lib/supabase/action";
+import { find } from "@/lib/supabase/action";
 import { createClientServer } from "@/lib/supabase/supabase";
 import { authorizedProcedure, createTRPCRouter } from "@/lib/trpc/init";
 import type { Staff } from "@/types/schema";
@@ -40,13 +40,12 @@ const authRouter = createTRPCRouter({
           input.newPassword,
         );
 
-        const { error: logError } = await insertTable(supabase, "audit_logs", {
+        const { error: logError } = await supabase.from("audit_logs").insert({
           entity_id: staff.id,
-          actor_type: "HR Officer",
+          actor_type: "Staff",
           event_type: "Staff password updated",
           entity_type: "Staff",
           action: "update",
-          entity: "HR Officer",
           details: `Staff member with ID ${staff.id} updated their password.`,
           changes: {},
         });
