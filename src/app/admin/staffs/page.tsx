@@ -13,8 +13,7 @@ export default function UsersPage() {
   const [searchInput, setSearchInput] = useState("");
 
   const [isAddOpen, setIsAddOpen] = useState(false);
-  const [newStaffRole, setNewStaffRole] =
-    useState<RegularStaffRoles>("Staff");
+  const [newStaffRole, setNewStaffRole] = useState<RegularStaffRoles>("Staff");
   const [staffFirstName, setStaffFirstName] = useState("");
   const [staffLastName, setStaffLastName] = useState("");
   const [staffPassword, setStaffPassword] = useState("");

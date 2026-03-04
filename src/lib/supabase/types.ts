@@ -361,7 +361,7 @@ export type Database = {
           id: string;
           is_fulltime: boolean;
           location: string;
-          officer_id: string | null;
+          staff_id: string | null;
           title: string;
         };
         Insert: {
@@ -370,7 +370,7 @@ export type Database = {
           id?: string;
           is_fulltime?: boolean;
           location: string;
-          officer_id?: string | null;
+          staff_id?: string | null;
           title: string;
         };
         Update: {
@@ -379,7 +379,7 @@ export type Database = {
           id?: string;
           is_fulltime?: boolean;
           location?: string;
-          officer_id?: string | null;
+          staff_id?: string | null;
           title?: string;
         };
         Relationships: [
@@ -392,7 +392,7 @@ export type Database = {
           },
           {
             foreignKeyName: "job_listings_officer_id_fkey";
-            columns: ["officer_id"];
+            columns: ["staff_id"];
             isOneToOne: false;
             referencedRelation: "staff";
             referencedColumns: ["id"];

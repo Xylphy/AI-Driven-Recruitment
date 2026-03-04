@@ -5,25 +5,15 @@ import { CANDIDATE_STATUSES } from "@/lib/constants";
 import admin, { db } from "@/lib/firebase/admin";
 import { findOne } from "@/lib/mongodb/action";
 import { getMongoDb } from "@/lib/mongodb/mongodb";
-import {
-  find,
-  insertTable,
-  type QueryFilter,
-  updateTable,
-} from "@/lib/supabase/action";
 import { createClientServer } from "@/lib/supabase/supabase";
+import type { Json } from "@/lib/supabase/types";
 import type {
   ParsedResumeDoc,
   ScoredCandidateDoc,
   ScoredCandidateScoreData,
   TranscribedDoc,
 } from "@/types/mongo_db/schema";
-import type {
-  AdminFeedback,
-  Applicants,
-  AuditLog,
-  Changes,
-} from "@/types/schema";
+import type { AdminFeedback, Applicants } from "@/types/schema";
 import type { Notification } from "@/types/types";
 import { adminProcedure, authorizedProcedure, createTRPCRouter } from "../init";
 
@@ -38,6 +28,11 @@ type Name = {
   first_name: string;
   last_name: string;
 };
+
+export interface QueryFilter {
+  column: string;
+  value: string | string[];
+}
 
 async function getCandidateMatch(applicantId: string, mongoDb: Db) {
   try {
@@ -235,9 +230,11 @@ const candidateRouter = createTRPCRouter({
           findOne("ai-driven-recruitment", "transcribed", {
             applicant_id: input.candidateId,
           }),
-        find<Applicants>(supabaseClient, "applicants", [
-          { column: "id", value: input.candidateId },
-        ]).single(),
+        supabaseClient
+          .from("applicants")
+          .select("first_name, last_name, email, contact_number, status")
+          .eq("id", input.candidateId)
+          .single(),
         input.fetchSkills
           ? supabaseClient
               .from("applicant_skills")
@@ -287,19 +284,19 @@ const candidateRouter = createTRPCRouter({
     .input(
       z.object({
         applicantId: z.string(),
-        newStatus: z.enum(CANDIDATE_STATUSES).nullable(),
-        scheduleAt: z.string().optional(),
-        platform: z.string().optional(),
+        newStatus: z.enum(CANDIDATE_STATUSES).default("Paper Screening"),
+        scheduleAt: z.string().nullable(),
+        platform: z.string().nullable(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
       const supabase = await createClientServer(true);
 
-      const { data: oldData, error: oldDataError } = await find<Applicants>(
-        supabase,
-        "applicants",
-        [{ column: "id", value: input.applicantId }],
-      ).single();
+      const { data: oldData, error: oldDataError } = await supabase
+        .from("applicants")
+        .select("status, joblisting_id")
+        .eq("id", input.applicantId)
+        .single();
 
       if (oldDataError) {
         console.error("Error fetching old job applicant data ", oldDataError);
@@ -309,17 +306,16 @@ const candidateRouter = createTRPCRouter({
         });
       }
 
-      const { data, error } = await updateTable(
-        supabase,
-        "applicants",
-        {
+      const { data, error } = await supabase
+        .from("applicants")
+        .update({
           status: input.newStatus,
           scheduled_at: input.scheduleAt,
           platform: input.platform,
-        },
-        [{ column: "id", value: input.applicantId }],
-        "id, joblisting_id",
-      );
+        })
+        .eq("id", input.applicantId)
+        .select("id, joblisting_id")
+        .single();
 
       if (error) {
         console.error("Error updating candidate status ", error);
@@ -378,7 +374,7 @@ const candidateRouter = createTRPCRouter({
         console.error("Failed to add notification for user", applicantId, err);
       }
 
-      const changes: Record<string, Changes> = {};
+      const changes: Json = {};
 
       if (oldData?.status !== input.newStatus) {
         changes.status = {
@@ -389,20 +385,20 @@ const candidateRouter = createTRPCRouter({
 
       const details = `Changed status to "${input.newStatus}" for applicant ID ${input.applicantId}`;
 
-      const { error: insertLogError } = await insertTable(
-        supabase,
-        "audit_logs",
-        {
-          actor_type: ctx.userJWT?.role,
-          actor_id: ctx.userJWT?.id,
+      const { error: insertLogError } = await supabase
+        .from("audit_logs")
+        .insert({
+          // biome-ignore lint/style/noNonNullAssertion: ctx.userJWT is guaranteed by authorizedProcedure
+          actor_type: ctx.userJWT!.role,
+          // biome-ignore lint/style/noNonNullAssertion: ctx.userJWT is guaranteed by authorizedProcedure
+          actor_id: ctx.userJWT!.id,
           action: "update",
           event_type: "Changed candidate status",
-          entity_type: "Job Applicant",
+          entity_type: "Applicant",
           entity_id: input.applicantId,
           changes,
           details,
-        },
-      );
+        });
 
       if (insertLogError) {
         console.error("Error inserting audit log for role change");
@@ -420,15 +416,15 @@ const candidateRouter = createTRPCRouter({
         feedback: z.string(),
       }),
     )
-    .mutation(async ({ input }) => {
-      const { error } = await updateTable(
-        await createClientServer(true),
-        "job_applicants",
-        {
-          admin_feedback: input.feedback,
-        },
-        [{ column: "id", value: input.candidateId }],
-      );
+    .mutation(async ({ ctx, input }) => {
+      const supabase = await createClientServer(true);
+
+      const { error } = await supabase.from("admin_feedback").insert({
+        applicant_id: input.candidateId,
+        feedback: input.feedback,
+        // biome-ignore lint/style/noNonNullAssertion: ctx.userJWT is guaranteed by adminProcedure
+        admin_id: ctx.userJWT!.id,
+      });
 
       if (error) {
         console.error("Error adding admin feedback ", error);
@@ -449,14 +445,12 @@ const candidateRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input }) => {
+      const supabaseClient = await createClientServer(true);
       const { data: adminFeedback, error: jobApplicantError } =
-        await find<AdminFeedback>(
-          await createClientServer(true),
-          "admin_feedback",
-          [{ column: "applicant_id", value: input.candidateId }],
-        )
-          .many()
-          .execute();
+        await supabaseClient
+          .from("admin_feedback")
+          .select("*")
+          .eq("applicant_id", input.candidateId);
 
       if (jobApplicantError) {
         console.error("Error fetching job applicants", jobApplicantError);
@@ -487,14 +481,18 @@ const candidateRouter = createTRPCRouter({
 
       // Verify if both candidates exist in the database before calling the AI compare API
       const [candidateA, candidateB] = await Promise.all([
-        find<Applicants>(supabase, "applicants", [
-          { column: "id", value: input.userId_A },
-          { column: "joblisting_id", value: input.jobId },
-        ]).single(),
-        find<Applicants>(supabase, "applicants", [
-          { column: "id", value: input.userId_B },
-          { column: "joblisting_id", value: input.jobId },
-        ]).single(),
+        supabase
+          .from("applicants")
+          .select("id")
+          .eq("id", input.userId_A)
+          .eq("joblisting_id", input.jobId)
+          .single(),
+        supabase
+          .from("applicants")
+          .select("id")
+          .eq("id", input.userId_B)
+          .eq("joblisting_id", input.jobId)
+          .single(),
       ]);
 
       if (candidateA.error || candidateB.error) {
@@ -537,12 +535,13 @@ const candidateRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const supabase = await createClientServer(true);
 
-      const { error } = await insertTable(supabase, "admin_feedback", {
+      const { error } = await supabase.from("admin_feedback").insert({
         applicant_id: input.candidateId,
         feedback: input.feedback,
         created_at: new Date().toISOString(),
-        admin_id: ctx.userJWT?.id,
-      } as Omit<AdminFeedback, "id">);
+        // biome-ignore lint/style/noNonNullAssertion: ctx.userJWT is guaranteed by adminProcedure
+        admin_id: ctx.userJWT!.id,
+      });
 
       if (error) {
         console.error("Error posting admin feedback ", error);
@@ -552,20 +551,20 @@ const candidateRouter = createTRPCRouter({
         });
       }
 
-      const { error: insertLogError } = await insertTable(
-        supabase,
-        "audit_logs",
-        {
-          actor_type: ctx.userJWT?.role,
-          actor_id: ctx.userJWT?.id,
+      const { error: insertLogError } = await supabase
+        .from("audit_logs")
+        .insert({
+          // biome-ignore lint/style/noNonNullAssertion: ctx.userJWT is guaranteed by adminProcedure
+          actor_type: ctx.userJWT!.role,
+          // biome-ignore lint/style/noNonNullAssertion: ctx.userJWT is guaranteed by adminProcedure
+          actor_id: ctx.userJWT!.id,
           action: "create",
           event_type: "Admin feedback created",
           entity_type: "Admin Feedback",
           entity_id: input.candidateId,
           changes: {},
           details: `Created admin feedback for candidate ID ${input.candidateId}`,
-        } as AuditLog,
-      );
+        });
 
       if (insertLogError) {
         console.error("Error inserting audit log for creating admin feedback");
@@ -619,11 +618,11 @@ const candidateRouter = createTRPCRouter({
     .mutation(async ({ input, ctx }) => {
       const supabase = await createClientServer(true);
 
-      const { data: oldData, error: oldDataError } = await find<AdminFeedback>(
-        supabase,
-        "admin_feedback",
-        [{ column: "id", value: input.feedbackId }],
-      ).single();
+      const { data: oldData, error: oldDataError } = await supabase
+        .from("admin_feedback")
+        .select("*")
+        .eq("id", input.feedbackId)
+        .single();
 
       if (oldDataError) {
         console.error("Error fetching old admin feedback data ", oldDataError);
@@ -633,14 +632,12 @@ const candidateRouter = createTRPCRouter({
         });
       }
 
-      const { error } = await updateTable(
-        supabase,
-        "admin_feedback",
-        {
+      const { error } = await supabase
+        .from("admin_feedback")
+        .update({
           feedback: input.newFeedback,
-        },
-        [{ column: "id", value: input.feedbackId }],
-      );
+        })
+        .eq("id", input.feedbackId);
 
       if (error) {
         console.error("Error updating admin feedback ", error);
@@ -650,7 +647,7 @@ const candidateRouter = createTRPCRouter({
         });
       }
 
-      const changes: Record<string, Changes> = {};
+      const changes: Json = {};
 
       if (oldData?.feedback !== input.newFeedback) {
         changes.feedback = {
@@ -659,20 +656,20 @@ const candidateRouter = createTRPCRouter({
         };
       }
 
-      const { error: insertLogError } = await insertTable(
-        supabase,
-        "audit_logs",
-        {
-          actor_type: ctx.userJWT?.role,
-          actor_id: ctx.userJWT?.id,
+      const { error: insertLogError } = await supabase
+        .from("audit_logs")
+        .insert({
+          // biome-ignore lint/style/noNonNullAssertion: ctx.userJWT is guaranteed by adminProcedure
+          actor_type: ctx.userJWT!.role,
+          // biome-ignore lint/style/noNonNullAssertion: ctx.userJWT is guaranteed by adminProcedure
+          actor_id: ctx.userJWT!.id,
           action: "update",
           event_type: "Admin feedback updated",
           entity_type: "Admin Feedback",
           entity_id: input.feedbackId,
           changes,
           details: `Admin feedback updated with ID ${input.feedbackId}`,
-        } as AuditLog,
-      );
+        });
 
       if (insertLogError) {
         console.error("Error inserting audit log for updating admin feedback");
@@ -704,20 +701,20 @@ const candidateRouter = createTRPCRouter({
         });
       }
 
-      const { error: insertLogError } = await insertTable(
-        supabase,
-        "audit_logs",
-        {
-          actor_type: ctx.userJWT?.role,
-          actor_id: ctx.userJWT?.id,
+      const { error: insertLogError } = await supabase
+        .from("audit_logs")
+        .insert({
+          // biome-ignore lint/style/noNonNullAssertion: ctx.userJWT is guaranteed by adminProcedure
+          actor_type: ctx.userJWT!.role,
+          // biome-ignore lint/style/noNonNullAssertion: ctx.userJWT is guaranteed by adminProcedure
+          actor_id: ctx.userJWT!.id,
           action: "delete",
           event_type: "Admin feedback deleted",
           entity_type: "Admin Feedback",
           entity_id: input.feedbackId,
           changes: {},
           details: `Deleted admin feedback with ID ${input.feedbackId}`,
-        } as AuditLog,
-      );
+        });
 
       if (insertLogError) {
         console.error(
@@ -821,11 +818,13 @@ const candidateRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ input }) => {
-      const { data: applicant, error: applicantError } = await find<Applicants>(
-        await createClientServer(true),
-        "applicants",
-        [{ column: "id", value: input.candidateId }],
-      ).single();
+      const supabase = await createClientServer(true);
+
+      const { data: applicant, error: applicantError } = await supabase
+        .from("applicants")
+        .select("id, joblisting_id, resume_id, transcript_id")
+        .eq("id", input.candidateId)
+        .single();
 
       if (applicantError || !applicant) {
         console.error(

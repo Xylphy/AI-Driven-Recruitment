@@ -9,27 +9,11 @@ import { createUserWithEmailAndPassword } from "@/lib/firebase/action";
 import { auth } from "@/lib/firebase/admin";
 import { getMongoDb } from "@/lib/mongodb/mongodb";
 import { addStaffSchema } from "@/lib/schemas";
-import { countTable, find, insertTable } from "@/lib/supabase/action";
 import { createClientServer } from "@/lib/supabase/supabase";
 import type { ScoredCandidateDoc } from "@/types/mongo_db/schema";
-import type {
-  ActiveJob,
-  AuditLog,
-  JobListing,
-  Staff,
-  WeeklyCumulativeApplicants,
-} from "@/types/schema";
+import type { Staff } from "@/types/schema";
 import type { BottleneckPercentileRow } from "@/types/types";
 import { adminProcedure, createTRPCRouter, superAdminProcedure } from "../init";
-
-type HiringTimelineStatistics = {
-  metric_type: string;
-  status_or_stage: string | null;
-  value: number;
-  p50: number | null;
-  p75: number | null;
-  p90: number | null;
-};
 
 const adminRouter = createTRPCRouter({
   fetchStats: adminProcedure.query(async () => {
@@ -45,17 +29,14 @@ const adminRouter = createTRPCRouter({
       { data: weeklyApplicants, error: weeklyApplicantsError },
       { data: numberCandidateStatuses, error: numberCandidateStatusesError },
     ] = await Promise.all([
-      find<ActiveJob>(supabase, "daily_active_jobs_last_7_days")
-        .many()
-        .execute(),
-      countTable(supabase, "applicants"),
+      supabase
+        .from("daily_active_jobs_last_7_days")
+        .select("date, dow, jobs, weekday"),
+      supabase.from("applicants").select("*", { count: "exact", head: true }),
       supabase.rpc("compute_hiring_success_and_time_to_hire"),
-      find<WeeklyCumulativeApplicants>(
-        supabase,
-        "weekly_applicants_last_4_weeks",
-      )
-        .many()
-        .execute(),
+      supabase
+        .from("weekly_applicants_last_4_weeks")
+        .select("applicants, iso_week, week_end, week_start"),
       supabase.rpc("count_applicants_by_status"),
     ]);
 
@@ -120,8 +101,7 @@ const adminRouter = createTRPCRouter({
           value: Number(row.applicants_count ?? 0),
         }),
       ),
-      hiringSuccess_timeToHire:
-        hiringSuccess_timeToHire as Array<HiringTimelineStatistics>,
+      hiringSuccess_timeToHire,
     };
   }),
   topCandidates: adminProcedure
@@ -163,14 +143,10 @@ const adminRouter = createTRPCRouter({
       );
 
       const { data: users, error: usersError } = userIds.length
-        ? await find<Pick<Staff, "id" | "first_name" | "last_name">>(
-            supabaseClient,
-            "applicants",
-            [{ column: "id", value: userIds }],
-            "id, first_name, last_name",
-          )
-            .many()
-            .execute()
+        ? await supabaseClient
+            .from("applicants")
+            .select("id, first_name, last_name")
+            .in("id", userIds)
         : { data: [], error: null };
 
       if (usersError) {
@@ -213,12 +189,9 @@ const adminRouter = createTRPCRouter({
   fetchAllJobs: adminProcedure.query(async () => {
     const supabase = await createClientServer(true);
 
-    const { data: jobs, error: jobsError } = await find<JobListing>(
-      supabase,
-      "job_listings",
-    )
-      .many()
-      .execute();
+    const { data: jobs, error: jobsError } = await supabase
+      .from("job_listings")
+      .select("*");
 
     if (jobsError) {
       console.error("Error fetching jobs", jobsError);
@@ -408,16 +381,11 @@ const adminRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const supabase = await createClientServer(true);
 
-      const { data: staff, error: staffError } = await find<Staff>(
-        supabase,
-        "staff",
-        [
-          {
-            column: "id",
-            value: input.userId,
-          },
-        ],
-      ).single();
+      const { data: staff, error: staffError } = await supabase
+        .from("staff")
+        .select("*")
+        .eq("id", input.userId)
+        .single();
 
       if (staffError || !staff) {
         console.error("Error fetching user for role change", staffError);
@@ -447,20 +415,20 @@ const adminRouter = createTRPCRouter({
       };
       const details = `Changed role of staff ${staff.first_name} ${staff.last_name} (ID: ${staff.id}) from ${staff.role} to ${input.newRole}.`;
 
-      const { error: insertLogError } = await insertTable(
-        supabase,
-        "audit_logs",
-        {
-          actor_type: ctx.userJWT?.role,
-          actor_id: ctx.userJWT?.id,
+      const { error: insertLogError } = await supabase
+        .from("audit_logs")
+        .insert({
+          // biome-ignore lint/style/noNonNullAssertion: JWT is guaranteed to be present in authorized procedures
+          actor_type: ctx.userJWT!.role,
+          // biome-ignore lint/style/noNonNullAssertion: JWT is guaranteed to be present in authorized procedures
+          actor_id: ctx.userJWT!.id,
           action: "update",
           event_type: "Changed user role",
           entity_type: "Staff",
           entity_id: input.userId,
           changes,
           details,
-        } as AuditLog,
-      );
+        });
 
       if (insertLogError) {
         console.error(
@@ -627,7 +595,7 @@ const adminRouter = createTRPCRouter({
     .query(async ({ input }) => {
       const supabase = await createClientServer(true);
 
-      const { data: kpiMetrics, error: kpiError } = await supabase.rpc(
+      const { data: kpis, error: kpiError } = await supabase.rpc(
         "get_hiring_kpis",
         {
           from_ts: input.fromDate,
@@ -644,7 +612,7 @@ const adminRouter = createTRPCRouter({
       }
 
       return {
-        kpis: kpiMetrics as Array<HiringTimelineStatistics>,
+        kpis,
       };
     }),
   addStaff: superAdminProcedure
@@ -657,12 +625,16 @@ const adminRouter = createTRPCRouter({
         input.password,
       );
 
-      const { data: newStaff, error } = await insertTable(supabase, "staff", {
-        first_name: input.firstName,
-        last_name: input.lastName,
-        role: input.role,
-        firebase_uid: createdUser.uid,
-      } as Omit<Staff, "id">);
+      const { data: newStaff, error } = await supabase
+        .from("staff")
+        .insert({
+          first_name: input.firstName,
+          last_name: input.lastName,
+          role: input.role,
+          firebase_uid: createdUser.uid,
+        })
+        .select("id")
+        .single();
 
       if (error || !newStaff) {
         console.error("Error creating new staff:", error);
@@ -672,20 +644,20 @@ const adminRouter = createTRPCRouter({
         });
       }
 
-      const { error: insertLogError } = await insertTable(
-        supabase,
-        "audit_logs",
-        {
-          actor_type: ctx.userJWT?.role,
-          actor_id: ctx.userJWT?.id,
+      const { error: insertLogError } = await supabase
+        .from("audit_logs")
+        .insert({
+          // biome-ignore lint/style/noNonNullAssertion: JWT is guaranteed to be present in authorized procedures
+          actor_type: ctx.userJWT!.role,
+          // biome-ignore lint/style/noNonNullAssertion: JWT is guaranteed to be present in authorized procedures
+          actor_id: ctx.userJWT!.id,
           action: "create",
           event_type: "Created staff account",
           entity_type: "Staff",
-          entity_id: newStaff[0]?.id,
+          entity_id: newStaff.id,
           changes: {},
           details: `Staff member ${input.firstName} ${input.lastName} created with role ${input.role}`,
-        } as AuditLog,
-      );
+        });
 
       if (insertLogError) {
         console.error(
@@ -694,7 +666,7 @@ const adminRouter = createTRPCRouter({
         );
       }
 
-      return newStaff[0] as Staff;
+      return newStaff;
     }),
 });
 

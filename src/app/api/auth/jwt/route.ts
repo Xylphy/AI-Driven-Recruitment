@@ -2,10 +2,8 @@ import { serialize } from "cookie";
 import jwt from "jsonwebtoken";
 import { type NextRequest, NextResponse } from "next/server";
 import { generateCsrfToken } from "@/lib/csrf";
-import { find } from "@/lib/supabase/action";
 import { createClientServer } from "@/lib/supabase/supabase";
 import { ErrorResponse } from "@/types/classes";
-import type { Staff } from "@/types/schema";
 
 export async function GET(request: NextRequest) {
   try {
@@ -27,9 +25,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { data: userData, error } = await find<Staff>(supabase, "staff", [
-      { column: "firebase_uid", value: authToken },
-    ]).single();
+    const { data: userData, error } = await supabase
+      .from("staff")
+      .select("*")
+      .eq("firebase_uid", authToken)
+      .single();
 
     if (error || !userData) {
       console.error("Invalid token or user not found", error);

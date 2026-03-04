@@ -2,9 +2,7 @@ import { serialize } from "cookie";
 import jwt from "jsonwebtoken";
 import { type NextRequest, NextResponse } from "next/server";
 import { generateCsrfToken } from "@/lib/csrf";
-import { find } from "@/lib/supabase/action";
 import { createClientServer } from "@/lib/supabase/supabase";
-import type { Staff } from "@/types/schema";
 
 interface RefreshTokenPayload {
   userId: string;
@@ -37,11 +35,11 @@ export async function GET(request: NextRequest) {
     }
     const supabase = await createClientServer(true);
 
-    const { data: userData, error: usersError } = await find<Staff>(
-      supabase,
-      "staff",
-      [{ column: "id", value: decoded.userId }],
-    ).single();
+    const { data: userData, error: usersError } = await supabase
+      .from("staff")
+      .select("id, role")
+      .eq("id", decoded.userId)
+      .single();
 
     if (!userData || usersError) {
       const response = NextResponse.json(

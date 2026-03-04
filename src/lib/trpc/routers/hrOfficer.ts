@@ -2,9 +2,8 @@
 
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { deleteRow, find, insertTable } from "@/lib/supabase/action";
 import { createClientServer } from "@/lib/supabase/supabase";
-import type { Changes, HRReport } from "@/types/schema";
+import type { Json } from "@/lib/supabase/types";
 import {
   authorizedProcedure,
   createTRPCRouter,
@@ -70,12 +69,10 @@ const hrOfficerRouter = createTRPCRouter({
 
       const supabase = await createClientServer(true);
 
-      const { error: deleteReportError } = await deleteRow(
-        supabase,
-        "hr_reports",
-        "id",
-        input.reportId,
-      );
+      const { error: deleteReportError } = await supabase
+        .from("hr_reports")
+        .delete()
+        .eq("id", input.reportId);
 
       if (deleteReportError) {
         console.error("Error deleting HR Report:", deleteReportError);
@@ -85,20 +82,20 @@ const hrOfficerRouter = createTRPCRouter({
         });
       }
 
-      const { error: insertLogError } = await insertTable(
-        supabase,
-        "audit_logs",
-        {
-          actor_type: ctx.userJWT?.role,
-          actor_id: ctx.userJWT?.id,
+      const { error: insertLogError } = await supabase
+        .from("audit_logs")
+        .insert({
+          // biome-ignore lint/style/noNonNullAssertion: JWT is guaranteed to be present by hrOfficerProcedure
+          actor_type: ctx.userJWT!.role,
+          // biome-ignore lint/style/noNonNullAssertion: JWT is guaranteed to be present by hrOfficerProcedure
+          actor_id: ctx.userJWT!.id,
           action: "delete",
           event_type: "Deleted HR Report",
-          entity_type: "HR Report",
+          entity_type: "Staff Report",
           entity_id: input.reportId,
           changes: {},
           details: `HR Report with ID ${input.reportId} deleted`,
-        },
-      );
+        });
 
       if (insertLogError) {
         console.error(
@@ -129,16 +126,11 @@ const hrOfficerRouter = createTRPCRouter({
 
       const supabase = await createClientServer(true);
 
-      const { data: oldData, error: oldDataError } = await find<HRReport>(
-        supabase,
-        "hr_reports",
-        [
-          {
-            column: "id",
-            value: input.reportId,
-          },
-        ],
-      ).single();
+      const { data: oldData, error: oldDataError } = await supabase
+        .from("hr_reports")
+        .select("score, summary")
+        .eq("id", input.reportId)
+        .single();
 
       if (oldDataError || !oldData) {
         console.error("Error fetching existing HR Report:", oldDataError);
@@ -183,10 +175,9 @@ const hrOfficerRouter = createTRPCRouter({
         });
       }
 
-      const { data: keyHighlight, error: keyHighlightError } =
-        await insertTable(
-          supabase,
-          "key_highlights",
+      const { error: keyHighlightError } = await supabase
+        .from("key_highlights")
+        .insert(
           input.keyHighlights
             .split(",")
             .map((h) => h.trim())
@@ -197,7 +188,7 @@ const hrOfficerRouter = createTRPCRouter({
             })),
         );
 
-      if (keyHighlightError || !keyHighlight) {
+      if (keyHighlightError) {
         console.error("Error inserting Key Highlights:", keyHighlightError);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
@@ -205,7 +196,7 @@ const hrOfficerRouter = createTRPCRouter({
         });
       }
 
-      const changes: Record<string, Changes> = {};
+      const changes: Json = {};
 
       if (oldData.score !== input.score) {
         changes.score = {
@@ -220,20 +211,20 @@ const hrOfficerRouter = createTRPCRouter({
         };
       }
 
-      const { error: insertLogError } = await insertTable(
-        supabase,
-        "audit_logs",
-        {
-          actor_type: ctx.userJWT?.role,
-          actor_id: ctx.userJWT?.id,
+      const { error: insertLogError } = await supabase
+        .from("audit_logs")
+        .insert({
+          // biome-ignore lint/style/noNonNullAssertion: JWT is guaranteed to be present by hrOfficerProcedure
+          actor_type: ctx.userJWT!.role,
+          // biome-ignore lint/style/noNonNullAssertion: JWT is guaranteed to be present by hrOfficerProcedure
+          actor_id: ctx.userJWT!.id,
           action: "update",
           event_type: "Updated HR Report",
-          entity_type: "HR Report",
+          entity_type: "Staff Report",
           entity_id: input.reportId,
           changes,
           details: `HR Report with ID ${input.reportId} updated`,
-        },
-      );
+        });
 
       if (insertLogError) {
         console.error(

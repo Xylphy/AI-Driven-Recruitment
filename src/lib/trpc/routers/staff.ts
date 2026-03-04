@@ -5,22 +5,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getMongoDb } from "@/lib/mongodb/mongodb";
-import {
-  deleteRow,
-  find,
-  findWithJoin,
-  insertTable,
-} from "@/lib/supabase/action";
 import { createClientServer } from "@/lib/supabase/supabase";
-import type {
-  HRReport,
-  JobListing,
-  JobListingQualifications,
-  JobListingRequirements,
-  JobTags,
-  KeyHighlights,
-  Staff,
-} from "@/types/schema";
 import { authorizedProcedure, createTRPCRouter } from "../init";
 
 const staffRouter = createTRPCRouter({
@@ -33,17 +18,11 @@ const staffRouter = createTRPCRouter({
     .query(async ({ input }) => {
       const supabase = await createClientServer(true);
 
-      const { data: jobListing, error: errorJobListing } = await findWithJoin<
-        JobListing & { users: Pick<Staff, "first_name" | "last_name"> }
-      >(supabase, "job_listings", [
-        {
-          foreignTable: "staff!job_listings_officer_id_fkey",
-          foreignKey: "officer_id",
-          fields: "first_name, last_name",
-        },
-      ])
-        .many([{ column: "id", value: input.jobId }])
-        .execute();
+      const { data: jobListing, error: errorJobListing } = await supabase
+        .from("job_listings")
+        .select(`*, staff!staff_id(first_name, last_name)`)
+        .eq("id", input.jobId)
+        .single();
 
       if (errorJobListing || !jobListing) {
         console.error(errorJobListing);
@@ -53,35 +32,20 @@ const staffRouter = createTRPCRouter({
         });
       }
 
-      const qualificationsPromise = find<JobListingQualifications>(
-        supabase,
-        "jl_qualifications",
-        [{ column: "joblisting_id", value: input.jobId }],
-      )
-        .many()
-        .execute();
+      const qualificationsPromise = supabase
+        .from("jl_qualifications")
+        .select("qualification")
+        .eq("joblisting_id", input.jobId);
 
-      const requirementsPromise = find<JobListingRequirements>(
-        supabase,
-        "jl_requirements",
-        [{ column: "joblisting_id", value: input.jobId }],
-      )
-        .many()
-        .execute();
+      const requirementsPromise = supabase
+        .from("jl_requirements")
+        .select("requirement")
+        .eq("joblisting_id", input.jobId);
 
-      const tagsPromise = findWithJoin<JobTags & { tags: { name: string } }>(
-        supabase,
-        "job_tags",
-        [
-          {
-            foreignTable: "tags",
-            foreignKey: "tag_id",
-            fields: "id, name",
-          },
-        ],
-      )
-        .many([{ column: "joblisting_id", value: input.jobId }])
-        .execute();
+      const tagsPromise = supabase
+        .from("job_tags")
+        .select("*, tags(name)")
+        .eq("joblisting_id", input.jobId);
 
       const qualifications = await qualificationsPromise;
       const requirements = await requirementsPromise;
@@ -99,22 +63,20 @@ const staffRouter = createTRPCRouter({
         });
       }
 
-      const joblistingResponse: (typeof jobListing)[0] & {
+      const joblistingResponse: typeof jobListing & {
         officer_name?: string;
       } = {
-        // biome-ignore lint/style/noNonNullAssertion: We check for jobListing existence above, so this is safe
-        ...jobListing[0]!,
+        ...jobListing,
       };
 
-      joblistingResponse.officer_name = jobListing[0]?.users
-        ? `${jobListing[0].users.first_name} ${jobListing[0].users.last_name}`
+      joblistingResponse.officer_name = jobListing.staff
+        ? `${jobListing.staff.first_name} ${jobListing.staff.last_name}`
         : "Unknown Officer";
 
       return {
         ...joblistingResponse,
-        requirements: requirements.data?.map((item) => item.requirement) || [],
-        qualifications:
-          qualifications.data?.map((item) => item.qualification) || [],
+        requirements: requirements.data || [],
+        qualifications: qualifications.data || [],
         tags: (tags.data || []).map((item) => item.tags.name),
         users: undefined,
       };
@@ -131,18 +93,19 @@ const staffRouter = createTRPCRouter({
     .mutation(async ({ input, ctx }) => {
       const supabase = await createClientServer(true);
 
-      const { data: hrReport, error: hrReportError } = await insertTable(
-        supabase,
-        "hr_reports",
-        {
+      const { data: hrReport, error: hrReportError } = await supabase
+        .from("hr_reports")
+        .insert({
           score: input.score,
           applicant_id: input.applicantId,
           summary: input.summary,
-          staff_id: ctx.userJWT?.id,
-        },
-      );
+          // biome-ignore lint/style/noNonNullAssertion: We check for userJWT existence in the authProcedure, so this is safe
+          staff_id: ctx.userJWT!.id,
+        })
+        .select("id")
+        .single();
 
-      if (hrReportError || !hrReport) {
+      if (hrReportError) {
         console.error("Error inserting HR Report:", hrReportError);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
@@ -150,43 +113,42 @@ const staffRouter = createTRPCRouter({
         });
       }
 
-      const { data: keyHighlight, error: keyHighlightError } =
-        await insertTable(
-          supabase,
-          "key_highlights",
+      const { data: keyHighlight, error: keyHighlightError } = await supabase
+        .from("key_highlights")
+        .insert(
           input.keyHighlights
             .split(",")
             .map((h) => h.trim())
             .filter(Boolean)
             .map((highlight) => ({
-              report_id: hrReport[0]?.id,
+              report_id: hrReport.id,
               highlight,
             })),
         );
 
-      if (keyHighlightError || !keyHighlight) {
+      if (keyHighlightError) {
         console.error("Error inserting Key Highlights:", keyHighlightError);
-        await deleteRow(supabase, "hr_reports", "id", hrReport[0]?.id);
+        await supabase.from("hr_reports").delete().eq("id", hrReport.id);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to submit key highlights",
         });
       }
 
-      const { error: insertLogError } = await insertTable(
-        supabase,
-        "audit_logs",
-        {
-          actor_type: ctx.userJWT?.role,
-          actor_id: ctx.userJWT?.id,
+      const { error: insertLogError } = await supabase
+        .from("audit_logs")
+        .insert({
+          // biome-ignore lint/style/noNonNullAssertion: We check for userJWT existence in the authProcedure, so this is safe
+          actor_type: ctx.userJWT!.role,
+          // biome-ignore lint/style/noNonNullAssertion: We check for userJWT existence in the authProcedure, so this is safe
+          actor_id: ctx.userJWT!.id,
           action: "create",
           event_type: "Created HR Report",
-          entity_type: "HR Report",
-          entity_id: hrReport[0]?.id,
+          entity_type: "Staff Report",
+          entity_id: hrReport.id,
           changes: {},
           details: `HR Report created with score ${input.score}`,
-        },
-      );
+        });
 
       if (insertLogError) {
         console.error(
@@ -196,8 +158,8 @@ const staffRouter = createTRPCRouter({
       }
 
       return {
-        hrReport: hrReport[0] as HRReport,
-        keyHighlights: keyHighlight as KeyHighlights[],
+        hrReport: hrReport,
+        keyHighlights: keyHighlight,
       };
     }),
   fetchHRReports: authorizedProcedure
@@ -209,25 +171,12 @@ const staffRouter = createTRPCRouter({
     .query(async ({ input }) => {
       const supabase = await createClientServer(true);
 
-      const { data: hrReports, error: hrReportsError } = await findWithJoin<
-        HRReport & {
-          staff: Pick<Staff, "first_name" | "last_name">;
-          key_highlights: Pick<KeyHighlights, "highlight">[];
-        }
-      >(supabase, "hr_reports", [
-        {
-          foreignTable: "staff",
-          foreignKey: "staff_id",
-          fields: "first_name, last_name",
-        },
-        {
-          foreignTable: "key_highlights",
-          foreignKey: "report_id",
-          fields: "highlight",
-        },
-      ])
-        .many([{ column: "applicant_id", value: input.applicantId }])
-        .execute();
+      const { data: hrReports, error: hrReportsError } = await supabase
+        .from("hr_reports")
+        .select(
+          `*, staff!staff_id(first_name, last_name), key_highlights(highlight)`,
+        )
+        .eq("applicant_id", input.applicantId);
 
       if (hrReportsError) {
         console.error("Error fetching HR Reports:", hrReportsError);

@@ -9,24 +9,8 @@ import type { CANDIDATE_STATUSES } from "@/lib/constants";
 import { deleteDocument } from "@/lib/mongodb/action";
 import { sendEmail } from "@/lib/nodemailer/sendEmail";
 import { jobListingSchema, userSchema } from "@/lib/schemas";
-import {
-  deleteRow,
-  find,
-  findWithJoin,
-  insertTable,
-  updateTable,
-} from "@/lib/supabase/action";
 import { createClientServer } from "@/lib/supabase/supabase";
-import type {
-  Applicants,
-  AuditLog,
-  Changes,
-  JobListing,
-  JobListingQualifications,
-  JobListingRequirements,
-  JobTags,
-  Tags,
-} from "@/types/schema";
+import type { Json } from "@/lib/supabase/types";
 import {
   adminProcedure,
   authorizedProcedure,
@@ -48,22 +32,10 @@ const jobListingRouter = createTRPCRouter({
       const userId = ctx.userJWT?.id ?? "";
       const supabase = await createClientServer(true);
 
-      const { data: appliedData, error: appliedError } = await findWithJoin<
-        Applicants & { job_listings: JobListing }
-      >(supabase, "job_applicants", [
-        {
-          foreignTable: "job_listings",
-          foreignKey: "joblisting_id",
-          fields: "title",
-        },
-      ])
-        .many([
-          {
-            column: "user_id",
-            value: userId,
-          },
-        ])
-        .execute();
+      const { data: appliedData, error: appliedError } = await supabase
+        .from("applicants")
+        .select("id, status, scheduled_at, platform, job_listings(title)")
+        .eq("user_id", userId);
 
       if (appliedError) {
         console.error(appliedError);
@@ -102,12 +74,10 @@ const jobListingRouter = createTRPCRouter({
       }
 
       const supabase = await createClientServer(true);
-      const { error } = await deleteRow(
-        supabase,
-        "job_listings",
-        "id",
-        input.joblistingId,
-      );
+      const { error } = await supabase
+        .from("job_listings")
+        .delete()
+        .eq("id", input.joblistingId);
 
       if (error) {
         console.error(error);
@@ -121,20 +91,20 @@ const jobListingRouter = createTRPCRouter({
         job_id: input.joblistingId,
       }).many();
 
-      const { error: insertLogError } = await insertTable(
-        supabase,
-        "audit_logs",
-        {
-          actor_type: ctx.userJWT?.role,
-          actor_id: ctx.userJWT?.id,
+      const { error: insertLogError } = await supabase
+        .from("audit_logs")
+        .insert({
+          // biome-ignore lint/style/noNonNullAssertion: ctx.userJWT is guaranteed to exist due to authorizedProcedure
+          actor_type: ctx.userJWT!.role,
+          // biome-ignore lint/style/noNonNullAssertion: ctx.userJWT is guaranteed to exist due to authorizedProcedure
+          actor_id: ctx.userJWT!.id,
           action: "delete",
           event_type: "Joblisting deleted",
           entity_type: "Job Listing",
           entity_id: input.joblistingId,
           changes: {},
           details: `Job listing with ID ${input.joblistingId} was deleted.`,
-        } as AuditLog,
-      );
+        });
 
       if (insertLogError) {
         console.error("Error inserting audit log:", insertLogError);
@@ -153,10 +123,11 @@ const jobListingRouter = createTRPCRouter({
     .query(async ({ input }) => {
       const supabase = await createClientServer(true);
 
-      const { data: jobListing, error: errorJobListing } =
-        await find<JobListing>(supabase, "job_listings", [
-          { column: "id", value: input.jobId },
-        ]).single();
+      const { data: jobListing, error: errorJobListing } = await supabase
+        .from("job_listings")
+        .select("*")
+        .eq("id", input.jobId)
+        .single();
 
       if (errorJobListing || !jobListing) {
         console.error(errorJobListing);
@@ -166,35 +137,20 @@ const jobListingRouter = createTRPCRouter({
         });
       }
 
-      const qualificationsPromise = find<JobListingQualifications>(
-        supabase,
-        "jl_qualifications",
-        [{ column: "joblisting_id", value: input.jobId }],
-      )
-        .many()
-        .execute();
+      const qualificationsPromise = supabase
+        .from("jl_qualifications")
+        .select("qualification")
+        .eq("joblisting_id", input.jobId);
 
-      const requirementsPromise = find<JobListingRequirements>(
-        supabase,
-        "jl_requirements",
-        [{ column: "joblisting_id", value: input.jobId }],
-      )
-        .many()
-        .execute();
+      const requirementsPromise = supabase
+        .from("jl_requirements")
+        .select("requirement")
+        .eq("joblisting_id", input.jobId);
 
-      const tagsPromise = findWithJoin<JobTags & { tags: { name: string } }>(
-        supabase,
-        "job_tags",
-        [
-          {
-            foreignTable: "tags",
-            foreignKey: "tag_id",
-            fields: "id, name",
-          },
-        ],
-      )
-        .many([{ column: "joblisting_id", value: input.jobId }])
-        .execute();
+      const tagsPromise = supabase
+        .from("job_tags")
+        .select("tags(name)")
+        .eq("joblisting_id", input.jobId);
 
       const [qualifications, requirements, tags] = await Promise.all([
         qualificationsPromise,
@@ -216,9 +172,8 @@ const jobListingRouter = createTRPCRouter({
 
       return {
         ...jobListing,
-        requirements: requirements.data?.map((item) => item.requirement) || [],
-        qualifications:
-          qualifications.data?.map((item) => item.qualification) || [],
+        requirements: requirements.data || [],
+        qualifications: qualifications.data || [],
         tags: (tags.data || []).map((item) => item.tags.name),
         users: undefined,
       };
@@ -241,23 +196,24 @@ const jobListingRouter = createTRPCRouter({
         moveFile(input.transcriptURL),
       ]);
 
-      const { data: applicantsID, error: applicantsError } = await insertTable(
-        supabaseClient,
-        "applicants",
-        {
-          joblisting_id: input.jobId,
-          first_name: input.firstName,
-          last_name: input.lastName,
-          email: input.email,
-          contact_number: input.contactNumber,
-          street: input.street,
-          zip: input.zip,
-          city: input.city,
-          state: input.state,
-          resume_id: resumePublicId,
-          transcript_id: transcriptPublicId,
-        } as Applicants,
-      );
+      const { data: applicantsID, error: applicantsError } =
+        await supabaseClient
+          .from("applicants")
+          .insert({
+            joblisting_id: input.jobId,
+            first_name: input.firstName,
+            last_name: input.lastName,
+            email: input.email,
+            contact_number: input.contactNumber,
+            street: input.street,
+            zip: input.zip,
+            city: input.city,
+            state: input.state,
+            resume_id: resumePublicId,
+            transcript_id: transcriptPublicId,
+          })
+          .select("id")
+          .single();
 
       if (!applicantsID || applicantsError) {
         console.error("Error inserting applicant data:", applicantsError);
@@ -270,26 +226,21 @@ const jobListingRouter = createTRPCRouter({
       const results = await Promise.all([
         supabaseClient.from("applicant_skills").insert(
           input.skills.map((tag) => ({
-            applicant_id: applicantsID[0]?.id,
+            applicant_id: applicantsID.id,
             tag_id: tag.id,
             rating: tag.rating || 0,
           })),
         ),
         supabaseClient.from("social_links").insert(
           input.socialLinks.map((link) => ({
-            applicant_id: applicantsID[0]?.id,
+            applicant_id: applicantsID.id,
             link: link.value,
           })),
         ),
       ]);
 
       if (results.some((result) => result.error)) {
-        await deleteRow(
-          supabaseClient,
-          "applicants",
-          "id",
-          applicantsID[0]?.id,
-        );
+        supabaseClient.from("applicants").delete().eq("id", applicantsID.id);
         console.error(
           "Error inserting applicant skills or social links:",
           results.find((r) => r.error),
@@ -302,7 +253,7 @@ const jobListingRouter = createTRPCRouter({
 
       const scoreAPI = new URL("http://localhost:8000/score/");
       scoreAPI.searchParams.set("job_id", input.jobId);
-      scoreAPI.searchParams.set("applicant_id", applicantsID[0]?.id);
+      scoreAPI.searchParams.set("applicant_id", applicantsID.id);
       scoreAPI.searchParams.set("resume_public_id", resumePublicId);
       scoreAPI.searchParams.set("transcript_public_id", transcriptPublicId);
 
@@ -317,18 +268,17 @@ const jobListingRouter = createTRPCRouter({
         { error: insertLogError },
         { success: emailSuccess, error: emailError },
       ] = await Promise.all([
-        insertTable(supabaseClient, "audit_logs", {
+        supabaseClient.from("audit_logs").insert({
           actor_type: "Applicant",
           action: "create",
           event_type: "Applied for job",
-          entity_type: "Job Applicant",
-          entity_id: applicantsID[0]?.id,
+          entity_type: "Applicant",
+          entity_id: applicantsID.id,
           changes: {},
-          details: `Applicant with ID ${
-            applicantsID[0]?.id
-          } applied for job listing with ID ${input.jobId}.`,
+          details: `Applicant with ID ${applicantsID.id} applied for job listing with ID ${input.jobId}.`,
         }),
-        sendEmail(applicantsID[0]?.id, input.firstName, input.email),
+
+        sendEmail(applicantsID.id, input.firstName, input.email),
       ]);
 
       if (insertLogError) {
@@ -342,7 +292,7 @@ const jobListingRouter = createTRPCRouter({
       return {
         success: true,
         message: "Application submitted successfully",
-        trackingId: applicantsID[0]?.id,
+        trackingId: applicantsID.id,
       };
     }),
   updateJoblisting: authorizedProcedure
@@ -353,10 +303,11 @@ const jobListingRouter = createTRPCRouter({
     )
     .mutation(async ({ input, ctx }) => {
       const supabase = await createClientServer(true);
-      const { data: oldJoblisting, error: oldJoblistingError } =
-        await find<JobListing>(supabase, "job_listings", [
-          { column: "id", value: input.jobId },
-        ]).single();
+      const { data: oldJoblisting, error: oldJoblistingError } = await supabase
+        .from("job_listings")
+        .select("*")
+        .eq("id", input.jobId)
+        .single();
 
       if (oldJoblistingError || !oldJoblisting) {
         console.error("Error fetching old job listing:", oldJoblistingError);
@@ -379,34 +330,42 @@ const jobListingRouter = createTRPCRouter({
       }
 
       await Promise.all([
-        deleteRow(supabase, "jl_qualifications", "joblisting_id", input.jobId),
-        deleteRow(supabase, "jl_requirements", "joblisting_id", input.jobId),
+        supabase
+          .from("jl_qualifications")
+          .delete()
+          .eq("joblisting_id", input.jobId),
+        supabase
+          .from("jl_requirements")
+          .delete()
+          .eq("joblisting_id", input.jobId),
       ]);
 
       const promises = await Promise.all([
-        updateTable(
-          supabase,
-          "job_listings",
-          {
+        supabase
+          .from("job_listings")
+          .update({
             title: input.title,
             location: input.location,
             is_fulltime: input.isFullTime,
             officer_id: input.hrOfficerId || null,
-          },
-          [{ column: "id", value: input.jobId }],
-        ),
-        ...(input.qualifications || []).map((qualification) =>
-          insertTable(supabase, "jl_qualifications", {
-            joblisting_id: input.jobId,
-            qualification: qualification.title,
-          }),
-        ),
-        ...(input.requirements || []).map((requirement) =>
-          insertTable(supabase, "jl_requirements", {
-            joblisting_id: input.jobId,
-            requirement: requirement.title,
-          }),
-        ),
+          })
+          .eq("id", input.jobId),
+        input.qualifications && input.qualifications.length > 0
+          ? supabase.from("jl_qualifications").insert(
+              input.qualifications.map((q) => ({
+                joblisting_id: input.jobId,
+                qualification: q.title,
+              })),
+            )
+          : Promise.resolve({ data: [], error: null }),
+        input.requirements && input.requirements.length > 0
+          ? supabase.from("jl_requirements").insert(
+              input.requirements.map((r) => ({
+                joblisting_id: input.jobId,
+                requirement: r.title,
+              })),
+            )
+          : Promise.resolve({ data: [], error: null }),
       ]);
 
       if (promises.some((promise) => promise.error)) {
@@ -416,7 +375,7 @@ const jobListingRouter = createTRPCRouter({
         });
       }
 
-      const changes: Record<string, Changes> = {};
+      const changes: Json = {};
 
       if (input.hrOfficerId && oldJoblisting.officer_id !== input.hrOfficerId) {
         changes.officer_id = {
@@ -444,20 +403,20 @@ const jobListingRouter = createTRPCRouter({
         };
       }
 
-      const { error: insertLogError } = await insertTable(
-        supabase,
-        "audit_logs",
-        {
-          actor_type: ctx.userJWT?.role,
-          actor_id: ctx.userJWT?.id,
+      const { error: insertLogError } = await supabase
+        .from("audit_logs")
+        .insert({
+          // biome-ignore lint/style/noNonNullAssertion: ctx.userJWT is guaranteed to exist due to authorizedProcedure
+          actor_type: ctx.userJWT!.role,
+          // biome-ignore lint/style/noNonNullAssertion: ctx.userJWT is guaranteed to exist due to authorizedProcedure
+          actor_id: ctx.userJWT!.id,
           action: "update",
           event_type: "Joblisting modified",
           entity_type: "Job Listing",
           entity_id: input.jobId,
           changes,
           details: `Job listing with ID ${input.jobId} was updated.`,
-        } as AuditLog,
-      );
+        });
 
       if (insertLogError) {
         console.error("Error inserting audit log:", insertLogError);
@@ -488,17 +447,18 @@ const jobListingRouter = createTRPCRouter({
         });
       }
 
-      const { data: insertedData, error: insertedError } = await insertTable(
-        supabase,
-        "job_listings",
-        {
+      const { data: insertedData, error: insertedError } = await supabase
+        .from("job_listings")
+        .insert({
           title: input.title,
           location: input.location,
-          created_by: ctx.userJWT?.id,
+          // biome-ignore lint/style/noNonNullAssertion: ctx.userJWT is guaranteed to exist due to adminProcedure
+          created_by: ctx.userJWT!.id,
           is_fulltime: input.isFullTime,
           officer_id: input.hrOfficerId || null,
-        },
-      );
+        })
+        .select("id")
+        .single();
 
       if (insertedError) {
         console.error("Insert error", insertedError);
@@ -510,14 +470,14 @@ const jobListingRouter = createTRPCRouter({
 
       const { error: errorLink } = await supabase.from("job_tags").insert(
         tagRows.map((t) => ({
-          joblisting_id: insertedData[0]?.id,
+          joblisting_id: insertedData.id,
           tag_id: t.id,
         })),
       );
 
       if (errorLink) {
         console.error("Error inserting tags", errorLink);
-        await deleteRow(supabase, "job_listings", "id", insertedData[0]?.id);
+        await supabase.from("job_listings").delete().eq("id", insertedData.id);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to create job listings",
@@ -525,18 +485,22 @@ const jobListingRouter = createTRPCRouter({
       }
 
       const results = await Promise.all([
-        ...(input.qualifications || []).map((qualification) =>
-          insertTable(supabase, "jl_qualifications", {
-            joblisting_id: insertedData[0]?.id,
-            qualification: qualification.title,
-          }),
-        ),
-        ...(input.requirements || []).map((requirement) =>
-          insertTable(supabase, "jl_requirements", {
-            joblisting_id: insertedData[0]?.id,
-            requirement: requirement.title,
-          }),
-        ),
+        input.qualifications && input.qualifications.length > 0
+          ? supabase.from("jl_qualifications").insert(
+              input.qualifications.map((q) => ({
+                joblisting_id: insertedData.id,
+                qualification: q.title,
+              })),
+            )
+          : Promise.resolve({ data: [], error: null }),
+        input.requirements && input.requirements.length > 0
+          ? supabase.from("jl_requirements").insert(
+              input.requirements.map((r) => ({
+                joblisting_id: insertedData.id,
+                requirement: r.title,
+              })),
+            )
+          : Promise.resolve({ data: [], error: null }),
       ]);
 
       if (results.some((result) => result.error)) {
@@ -545,20 +509,19 @@ const jobListingRouter = createTRPCRouter({
           results.find((r) => r.error),
         );
         await Promise.all([
-          deleteRow(supabase, "job_listings", "id", insertedData[0]?.id),
-          deleteRow(supabase, "job_tags", "joblisting_id", insertedData[0]?.id),
-          deleteRow(
-            supabase,
-            "jl_qualifications",
-            "joblisting_id",
-            insertedData[0]?.id,
-          ),
-          deleteRow(
-            supabase,
-            "jl_requirements",
-            "joblisting_id",
-            insertedData[0]?.id,
-          ),
+          supabase.from("job_listings").delete().eq("id", insertedData.id),
+          supabase
+            .from("job_tags")
+            .delete()
+            .eq("joblisting_id", insertedData.id),
+          supabase
+            .from("jl_qualifications")
+            .delete()
+            .eq("joblisting_id", insertedData.id),
+          supabase
+            .from("jl_requirements")
+            .delete()
+            .eq("joblisting_id", insertedData.id),
         ]);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
@@ -566,20 +529,20 @@ const jobListingRouter = createTRPCRouter({
         });
       }
 
-      const { error: insertLogError } = await insertTable(
-        supabase,
-        "audit_logs",
-        {
-          actor_type: ctx.userJWT?.role,
-          actor_id: ctx.userJWT?.id,
+      const { error: insertLogError } = await supabase
+        .from("audit_logs")
+        .insert({
+          // biome-ignore lint/style/noNonNullAssertion: ctx.userJWT is guaranteed to exist due to adminProcedure
+          actor_type: ctx.userJWT!.role,
+          // biome-ignore lint/style/noNonNullAssertion: ctx.userJWT is guaranteed to exist due to adminProcedure
+          actor_id: ctx.userJWT!.id,
           action: "create",
           event_type: "Created joblisting",
           entity_type: "Job Listing",
-          entity_id: insertedData[0]?.id,
+          entity_id: insertedData.id,
           changes: {},
-          details: `Job listing with ID ${insertedData[0]?.id} was created.`,
-        } as AuditLog,
-      );
+          details: `Job listing with ID ${insertedData.id} was created.`,
+        });
 
       if (insertLogError) {
         console.error("Error inserting audit log:", insertLogError);
@@ -631,22 +594,13 @@ const jobListingRouter = createTRPCRouter({
     .query(async ({ input }) => {
       const supabaseClient = await createClientServer(true);
 
-      const tags = await findWithJoin<JobTags & { tags: Tags }>(
-        supabaseClient,
-        "job_tags",
-        [
-          {
-            foreignTable: "tags",
-            foreignKey: "tag_id",
-            fields: "id, name",
-          },
-        ],
-      )
-        .many([{ column: "joblisting_id", value: input.jobId }])
-        .execute();
+      const { data: tags, error: tagsError } = await supabaseClient
+        .from("job_tags")
+        .select("tags(name)")
+        .eq("joblisting_id", input.jobId);
 
-      if (tags.error) {
-        console.error("Error fetching tags:", tags.error);
+      if (tagsError) {
+        console.error("Error fetching tags:", tagsError);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to fetch tags",
@@ -654,7 +608,7 @@ const jobListingRouter = createTRPCRouter({
       }
 
       return {
-        tags: (tags.data || []).map((item) => item.tags),
+        tags: tags || [],
       };
     }),
   fetchApplication: rateLimitedProcedure

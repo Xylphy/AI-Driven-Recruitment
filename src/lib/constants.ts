@@ -43,9 +43,9 @@ export const EVENT_TYPES = [
   "Admin feedback created",
   "Admin feedback deleted",
   "Admin feedback updated",
-  "Created HR Report",
-  "Deleted HR Report",
-  "Updated HR Report",
+  "Created HR Report", // Change to Staff Evaluation
+  "Deleted HR Report", // Change to Staff Evaluation
+  "Updated HR Report", // Change to Staff Evaluation
   "Created staff account",
   "Staff password updated",
 ] as const;
@@ -54,7 +54,7 @@ export const ENTITIES = [
   "Applicant",
   "Job Listing",
   "Admin Feedback",
-  "Staff Report",
+  "Staff Report", // Change to Staff Evaluation
   "Staff",
 ] as const;
 

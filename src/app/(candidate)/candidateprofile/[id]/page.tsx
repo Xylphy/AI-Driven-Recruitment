@@ -829,7 +829,8 @@ export default function Page() {
                           <div className="relative flex gap-1 mb-4">
                             {[...Array(5)].map((_, i) => (
                               <svg
-                                key={`${report.id}-star`}
+                                // biome-ignore lint/suspicious/noArrayIndexKey: This is a static array of 5 elements, so using index as key is acceptable here.
+                                key={`${report.id}-star-${i}`}
                                 className={`w-5 h-5 ${
                                   i < Math.round(report.score || 0)
                                     ? "text-yellow-400 drop-shadow-sm"
@@ -850,9 +851,10 @@ export default function Page() {
                             </p>
 
                             <div className="flex flex-wrap gap-2">
-                              {report.highlights.map((highlight) => (
+                              {report.highlights.map((highlight, i) => (
                                 <span
-                                  key={`${report.id}-highlight`}
+                                  // biome-ignore lint/suspicious/noArrayIndexKey: Using index as key is acceptable here since highlights are not expected to change order or be added/removed frequently.
+                                  key={`${report.id}-highlight-${i}`}
                                   className="
                                     px-3 py-1.5 text-xs font-medium
                                     rounded-full
