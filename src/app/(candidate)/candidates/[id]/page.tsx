@@ -8,7 +8,7 @@ import useAuth from "@/hooks/useAuth";
 import { formatDate } from "@/lib/library";
 import { swalError, swalSuccess } from "@/lib/swal";
 import { trpc } from "@/lib/trpc/client";
-import type { JobListing } from "@/types/types";
+import type { JobListing, JobLocations } from "@/types/types";
 
 interface Candidate {
   id: string;
@@ -53,7 +53,7 @@ export default function Page() {
       startTransition(() =>
         setJobDetails({
           title: joblistingDetails.data.title,
-          location: joblistingDetails.data.location,
+          location: joblistingDetails.data.location as JobLocations,
           isFullTime: joblistingDetails.data.is_fulltime,
           createdAt: joblistingDetails.data.created_at,
         }),
@@ -108,7 +108,7 @@ export default function Page() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-100 py-10 px-4 md:px-20">
+    <main className="min-h-screen bg-linear-to-br from-red-50 via-white to-red-100 py-10 px-4 md:px-20">
       <div className="max-w-6xl mx-auto">
         <div className="relative h-52 rounded-3xl overflow-hidden shadow-xl">
           <Image
@@ -118,7 +118,7 @@ export default function Page() {
             className="object-cover scale-105"
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/60 to-red-900/40 backdrop-blur-sm" />
+          <div className="absolute inset-0 bg-linear-to-br from-black/70 via-black/60 to-red-900/40 backdrop-blur-sm" />
 
           <div className="relative z-10 h-full flex flex-col items-center justify-center px-6 text-center text-white">
             <h1 className="text-4xl font-bold tracking-tight">
@@ -173,7 +173,7 @@ export default function Page() {
                         onClick={() =>
                           router.push(`/candidateprofile/${candidate.id}`)
                         }
-                        className="bg-gradient-to-r from-red-600 to-red-500 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-md hover:scale-105 hover:shadow-lg transition-all duration-300"
+                        className="bg-linear-to-r from-red-600 to-red-500 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-md hover:scale-105 hover:shadow-lg transition-all duration-300"
                       >
                         View Profile
                       </button>
@@ -221,7 +221,7 @@ export default function Page() {
               <button
                 type="button"
                 onClick={() => router.push(`/joblisting/${jobId}`)}
-                className="w-full bg-gradient-to-r from-red-600 to-red-500 text-white font-semibold py-2 rounded-xl shadow-md hover:scale-105 transition-all"
+                className="w-full bg-linear-to-r from-red-600 to-red-500 text-white font-semibold py-2 rounded-xl shadow-md hover:scale-105 transition-all"
               >
                 See Job Details
               </button>
@@ -275,7 +275,7 @@ export default function Page() {
               </button>
 
               <button
-                className="px-4 py-2 bg-gradient-to-r from-red-600 to-red-500 text-white rounded-xl shadow-md hover:scale-105 transition-all"
+                className="px-4 py-2 bg-linear-to-r from-red-600 to-red-500 text-white rounded-xl shadow-md hover:scale-105 transition-all"
                 onClick={handleDeleteJob}
                 type="button"
               >

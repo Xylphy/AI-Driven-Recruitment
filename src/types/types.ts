@@ -9,6 +9,7 @@ import type {
   CANDIDATE_STATUSES,
   ENTITIES,
   EVENT_TYPES,
+  JOB_LOCATIONS,
   REGULAR_STAFF_ROLES,
   USER_ROLES,
 } from "@/lib/constants";
@@ -106,3 +107,5 @@ export type FetchCandidateProfileOutput = inferProcedureOutput<
 export type HRReport = inferProcedureOutput<
   AppRouter["staff"]["fetchHRReports"]
 >[number];
+
+export type JobLocations = (typeof JOB_LOCATIONS)[number];

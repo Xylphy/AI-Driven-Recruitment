@@ -29,7 +29,8 @@ const jobListingRouter = createTRPCRouter({
         .optional(),
     )
     .query(async ({ ctx }) => {
-      const userId = ctx.userJWT?.id ?? "";
+      // biome-ignore lint/style/noNonNullAssertion: ctx.userJWT is guaranteed to exist due to authorizedProcedure
+      const userId = ctx.userJWT!;
       const supabase = await createClientServer(true);
 
       const { data: appliedData, error: appliedError } = await supabase
@@ -320,8 +321,8 @@ const jobListingRouter = createTRPCRouter({
       if (
         ctx.userJWT?.role !== "Admin" &&
         ctx.userJWT?.id !== "SuperAdmin" &&
-        oldJoblisting.officer_id &&
-        oldJoblisting.officer_id !== ctx.userJWT?.id
+        oldJoblisting.staff_id &&
+        oldJoblisting.staff_id !== ctx.userJWT?.id
       ) {
         throw new TRPCError({
           code: "FORBIDDEN",
@@ -377,9 +378,9 @@ const jobListingRouter = createTRPCRouter({
 
       const changes: Json = {};
 
-      if (input.hrOfficerId && oldJoblisting.officer_id !== input.hrOfficerId) {
-        changes.officer_id = {
-          before: oldJoblisting.officer_id || "null",
+      if (input.hrOfficerId && oldJoblisting.staff_id !== input.hrOfficerId) {
+        changes.staff_id = {
+          before: oldJoblisting.staff_id || "null",
           after: input.hrOfficerId,
         };
       }
@@ -596,7 +597,7 @@ const jobListingRouter = createTRPCRouter({
 
       const { data: tags, error: tagsError } = await supabaseClient
         .from("job_tags")
-        .select("tags(name)")
+        .select("tags(id, name)")
         .eq("joblisting_id", input.jobId);
 
       if (tagsError) {
@@ -608,7 +609,7 @@ const jobListingRouter = createTRPCRouter({
       }
 
       return {
-        tags: tags || [],
+        tags,
       };
     }),
   fetchApplication: rateLimitedProcedure

@@ -554,7 +554,7 @@ const adminRouter = createTRPCRouter({
       let query = supabaseClient
         .from("job_listings")
         .select(
-          "*, applicants(id), officer:staff!job_listings_officer_id_fkey(first_name, last_name)",
+          "*, applicants(id), officer:staff!job_listings_staff_id_fkey(first_name, last_name)",
         );
 
       if (input.searchQuery) {

@@ -7,7 +7,7 @@ import useAuth from "@/hooks/useAuth";
 import { JOB_LOCATIONS } from "@/lib/constants";
 import { swalError, swalInfo, swalSuccess } from "@/lib/swal";
 import { trpc } from "@/lib/trpc/client";
-import type { JobListing, Tags } from "@/types/types";
+import type { JobListing, JobLocations, Tags } from "@/types/types";
 
 type HROfficer = {
   id: string;
@@ -77,9 +77,9 @@ export default function Page() {
   }, [isAuthenticated, router]);
 
   useEffect(() => {
-    if (joblistingDetails.data?.officer_id) {
+    if (joblistingDetails.data?.staff_id) {
       const assignedOfficer = filteredHROfficers.find(
-        (officer) => officer.id === joblistingDetails.data?.officer_id,
+        (officer) => officer.id === joblistingDetails.data?.staff_id,
       );
 
       if (assignedOfficer) {
@@ -92,7 +92,7 @@ export default function Page() {
         );
       }
     }
-  }, [joblistingDetails.data?.officer_id, filteredHROfficers]);
+  }, [joblistingDetails.data?.staff_id, filteredHROfficers]);
 
   useEffect(() => {
     if (joblistingDetails.data) {
@@ -101,13 +101,13 @@ export default function Page() {
           title: joblistingDetails.data.title,
           qualifications: joblistingDetails.data.qualifications.map(
             (qualification, index) => ({
-              title: qualification,
+              title: qualification.qualification,
               id: index,
             }),
           ),
           requirements: joblistingDetails.data.requirements.map(
             (requirement, index) => ({
-              title: requirement,
+              title: requirement.requirement,
               id: index,
             }),
           ),
@@ -115,7 +115,7 @@ export default function Page() {
             title: tags,
             id: index,
           })),
-          location: joblistingDetails.data.location,
+          location: joblistingDetails.data.location as JobLocations,
           isFullTime: true,
         }),
       );

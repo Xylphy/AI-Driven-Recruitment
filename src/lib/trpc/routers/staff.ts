@@ -143,8 +143,8 @@ const staffRouter = createTRPCRouter({
           // biome-ignore lint/style/noNonNullAssertion: We check for userJWT existence in the authProcedure, so this is safe
           actor_id: ctx.userJWT!.id,
           action: "create",
-          event_type: "Created HR Report",
-          entity_type: "Staff Report",
+          event_type: "Created Staff Evaluation",
+          entity_type: "Staff Evaluation",
           entity_id: hrReport.id,
           changes: {},
           details: `HR Report created with score ${input.score}`,

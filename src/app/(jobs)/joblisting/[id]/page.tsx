@@ -17,16 +17,6 @@ type UIState = {
   isNotifying: boolean;
 };
 
-type JobDetail = {
-  title: string;
-  requirements: string[];
-  qualifications: string[];
-  tags: string[];
-  created_at: string;
-  is_fulltime: boolean;
-  location: string;
-};
-
 export default function Page() {
   const router = useRouter();
   const jobId = useParams().id as string;
@@ -56,7 +46,7 @@ export default function Page() {
     },
   );
 
-  const jobDetails: JobDetail | undefined = isAuthenticated
+  const jobDetails = isAuthenticated
     ? jobDetailsStaff.data
     : jobDetailsUser.data;
 
@@ -87,7 +77,7 @@ export default function Page() {
         try {
           await deleteJobMutation.mutateAsync({
             joblistingId: jobId,
-            officer_id: jobDetailsUser.data?.officer_id || "",
+            officer_id: jobDetailsUser.data?.staff_id || "",
           });
 
           swalSuccess("Deleted", "Job listing deleted successfully", () => {
@@ -140,7 +130,7 @@ export default function Page() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-100 py-10 px-4 md:px-20">
+    <main className="min-h-screen bg-linear-to-br from-red-50 via-white to-red-100 py-10 px-4 md:px-20">
       {states.showDeleteModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white/70 backdrop-blur-xl border border-white/40 shadow-2xl rounded-2xl p-8 max-w-md w-full mx-4">
@@ -216,7 +206,7 @@ export default function Page() {
                     className="flex items-start gap-3"
                   >
                     <MdChevronRight className="text-red-500 mt-1" />
-                    <span>{item}</span>
+                    <span>{item.qualification}</span>
                   </li>
                 ))}
               </ul>
@@ -233,7 +223,7 @@ export default function Page() {
                     className="flex items-start gap-3"
                   >
                     <MdChevronRight className="text-red-500 mt-1" />
-                    <span>{item}</span>
+                    <span>{item.requirement}</span>
                   </li>
                 ))}
               </ul>
@@ -291,7 +281,7 @@ export default function Page() {
               {isAuthenticated ? (
                 <>
                   <button
-                    className="w-full bg-gradient-to-r from-red-600 to-red-500 text-white font-semibold py-2 rounded-xl shadow-md hover:scale-105 transition-all"
+                    className="w-full bg-linear-to-r from-red-600 to-red-500 text-white font-semibold py-2 rounded-xl shadow-md hover:scale-105 transition-all"
                     onClick={() => router.push(`/candidates/${jobId}`)}
                     type="button"
                   >
@@ -319,7 +309,7 @@ export default function Page() {
                 </>
               ) : (
                 <button
-                  className="w-full bg-gradient-to-r from-red-600 to-red-500 text-white font-semibold py-2 rounded-xl shadow-md hover:scale-105 transition-all"
+                  className="w-full bg-linear-to-r from-red-600 to-red-500 text-white font-semibold py-2 rounded-xl shadow-md hover:scale-105 transition-all"
                   disabled={states.isApplying}
                   onClick={() =>
                     router.push(

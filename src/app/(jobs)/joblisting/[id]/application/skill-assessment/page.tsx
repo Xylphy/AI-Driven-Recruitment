@@ -35,7 +35,12 @@ export default function SkillAssessmentPage() {
 
   useEffect(() => {
     if (fetchTags.data?.tags) {
-      setTags(fetchTags.data.tags);
+      setTags(
+        fetchTags.data.tags.map((tag) => ({
+          name: tag.tags.name,
+          id: tag.tags.id,
+        })),
+      );
     }
   }, [fetchTags.data?.tags]);
 

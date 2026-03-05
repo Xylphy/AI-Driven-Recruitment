@@ -155,9 +155,8 @@ export default function Page() {
   );
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
-  const [pendingStatus, setPendingStatus] = useState<CandidateStatuses | null>(
-    null,
-  );
+  const [pendingStatus, setPendingStatus] =
+    useState<CandidateStatuses>("Paper Screening");
 
   const [scheduleData, setScheduleData] = useState({
     date: "",
@@ -620,7 +619,7 @@ export default function Page() {
                         scheduleAt:
                           scheduleData.date && scheduleData.time
                             ? `${scheduleData.date}T${scheduleData.time}:00Z`
-                            : undefined,
+                            : null,
                         platform: scheduleData.location,
                       },
                       {

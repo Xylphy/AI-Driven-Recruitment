@@ -90,8 +90,8 @@ const hrOfficerRouter = createTRPCRouter({
           // biome-ignore lint/style/noNonNullAssertion: JWT is guaranteed to be present by hrOfficerProcedure
           actor_id: ctx.userJWT!.id,
           action: "delete",
-          event_type: "Deleted HR Report",
-          entity_type: "Staff Report",
+          event_type: "Deleted Staff Evaluation",
+          entity_type: "Staff Evaluation",
           entity_id: input.reportId,
           changes: {},
           details: `HR Report with ID ${input.reportId} deleted`,
@@ -219,8 +219,8 @@ const hrOfficerRouter = createTRPCRouter({
           // biome-ignore lint/style/noNonNullAssertion: JWT is guaranteed to be present by hrOfficerProcedure
           actor_id: ctx.userJWT!.id,
           action: "update",
-          event_type: "Updated HR Report",
-          entity_type: "Staff Report",
+          event_type: "Updated Staff Evaluation",
+          entity_type: "Staff Evaluation",
           entity_id: input.reportId,
           changes,
           details: `HR Report with ID ${input.reportId} updated`,

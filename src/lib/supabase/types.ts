@@ -391,7 +391,7 @@ export type Database = {
             referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "job_listings_officer_id_fkey";
+            foreignKeyName: "job_listings_staff_id_fkey";
             columns: ["staff_id"];
             isOneToOne: false;
             referencedRelation: "staff";
@@ -599,7 +599,7 @@ export type Database = {
         | "Applicant"
         | "Job Listing"
         | "Admin Feedback"
-        | "Staff Report"
+        | "Staff Evaluation"
         | "Staff";
       audit_event_type:
         | "Joblisting modified"
@@ -611,9 +611,9 @@ export type Database = {
         | "Admin feedback created"
         | "Admin feedback deleted"
         | "Admin feedback updated"
-        | "Created HR Report"
-        | "Deleted HR Report"
-        | "Updated HR Report"
+        | "Created Staff Evaluation"
+        | "Deleted Staff Evaluation"
+        | "Updated Staff Evaluation"
         | "Created staff account"
         | "Staff password updated";
       candidate_status:
@@ -764,7 +764,7 @@ export const Constants = {
         "Applicant",
         "Job Listing",
         "Admin Feedback",
-        "Staff Report",
+        "Staff Evaluation",
         "Staff",
       ],
       audit_event_type: [
@@ -777,9 +777,9 @@ export const Constants = {
         "Admin feedback created",
         "Admin feedback deleted",
         "Admin feedback updated",
-        "Created HR Report",
-        "Deleted HR Report",
-        "Updated HR Report",
+        "Created Staff Evaluation",
+        "Deleted Staff Evaluation",
+        "Updated Staff Evaluation",
         "Created staff account",
         "Staff password updated",
       ],
