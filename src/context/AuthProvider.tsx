@@ -8,7 +8,7 @@ import {
 import { useRouter } from "next/navigation";
 import type React from "react";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
-import { auth } from "@/lib/firebase/client";
+import { getAuthInstance } from "@/lib/firebase/client";
 import { getCsrfToken, refreshToken } from "@/lib/library";
 
 const AuthContext = createContext<{
@@ -35,7 +35,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const refresh = async () => {
       if (!(await refreshToken())) {
-        await auth.signOut();
+        await getAuthInstance().signOut();
         setIsAuthenticated(false);
         router.push("/login");
         return;
@@ -69,7 +69,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (!csrfToken) return;
 
     const unsubscribe = onAuthStateChanged(
-      auth,
+      getAuthInstance(),
       async (firebaseUser: FirebaseAuthUser | null) => {
         if (!firebaseUser) {
           try {
@@ -100,7 +100,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${auth.currentUser?.uid}`,
+              Authorization: `Bearer ${getAuthInstance().currentUser?.uid}`,
             },
             credentials: "include",
           });

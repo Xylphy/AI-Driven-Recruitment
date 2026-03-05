@@ -11,7 +11,7 @@ import {
   writeBatch,
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { db } from "@/lib/firebase/client";
+import { getDbInstance } from "@/lib/firebase/client";
 import type { Notification } from "@/types/types";
 
 export default function useNotifications(
@@ -30,7 +30,7 @@ export default function useNotifications(
       return;
     }
 
-    const notificationsRef = collection(db, "users", userId, "notifications");
+    const notificationsRef = collection(getDbInstance(), "users", userId, "notifications");
 
     // Real-time listener
     const unsubscribe = onSnapshot(
@@ -58,18 +58,18 @@ export default function useNotifications(
 
   const markAsRead = async (notificationId: string) => {
     if (!userId) return;
-    await updateDoc(doc(db, "users", userId, "notifications", notificationId), {
+    await updateDoc(doc(getDbInstance(), "users", userId, "notifications", notificationId), {
       isRead: true,
     });
   };
 
   const markAllAsRead = async () => {
     if (!userId) return;
-    const batch = writeBatch(db);
+    const batch = writeBatch(getDbInstance());
     notifications
       .filter((n) => !n.isRead)
       .forEach((n) => {
-        batch.update(doc(db, "users", userId, "notifications", n.id), {
+        batch.update(doc(getDbInstance(), "users", userId, "notifications", n.id), {
           isRead: true,
         });
       });
@@ -78,7 +78,7 @@ export default function useNotifications(
 
   const deleteNotification = async (notificationId: string) => {
     if (!userId) return;
-    await deleteDoc(doc(db, "users", userId, "notifications", notificationId));
+    await deleteDoc(doc(getDbInstance(), "users", userId, "notifications", notificationId));
   };
 
   return {

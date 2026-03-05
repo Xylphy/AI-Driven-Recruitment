@@ -23,7 +23,7 @@ import {
 
 import useAuth from "@/hooks/useAuth";
 import useNotifications from "@/hooks/useNotifications";
-import { auth } from "@/lib/firebase/client";
+import { getAuthInstance } from "@/lib/firebase/client";
 import { trpc } from "@/lib/trpc/client";
 
 const profileImageUrl = "/default-avatar.png";
@@ -392,7 +392,7 @@ export default function Navbar() {
 
                   <button
                     type="button"
-                    onClick={() => auth.signOut()}
+                    onClick={() => getAuthInstance().signOut()}
                     aria-label="Logout"
                   >
                     <MdNotifications className="hidden" />

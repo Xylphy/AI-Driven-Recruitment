@@ -2,7 +2,7 @@ import { TRPCError } from "@trpc/server";
 import type { Db } from "mongodb";
 import z from "zod";
 import { CANDIDATE_STATUSES } from "@/lib/constants";
-import admin, { db } from "@/lib/firebase/admin";
+import admin, { getDb } from "@/lib/firebase/admin";
 import { findOne } from "@/lib/mongodb/action";
 import { getMongoDb } from "@/lib/mongodb/mongodb";
 import { createClientServer } from "@/lib/supabase/supabase";
@@ -364,7 +364,7 @@ const candidateRouter = createTRPCRouter({
 
       let notificationSuccess = true;
       try {
-        await db
+        await getDb()
           .collection("users")
           .doc(applicantId)
           .collection("notifications")

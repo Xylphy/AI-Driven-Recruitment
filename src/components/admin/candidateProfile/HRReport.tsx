@@ -77,7 +77,7 @@ export default function HRReport({
           flex items-center gap-2
           px-6 py-2.5
           rounded-xl
-          bg-gradient-to-r from-red-600 to-red-500
+          bg-linear-to-r from-red-600 to-red-500
           text-white font-semibold
           shadow-lg
           hover:scale-105
@@ -310,7 +310,7 @@ export default function HRReport({
                     className="
                       px-6 py-2.5
                       rounded-xl
-                      bg-gradient-to-r from-red-600 to-red-500
+                      bg-linear-to-r from-red-600 to-red-500
                       text-white font-semibold
                       shadow-md
                       hover:scale-105

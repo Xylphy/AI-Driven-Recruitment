@@ -116,7 +116,9 @@ export default function AdminDashboard() {
             },
           ].map((item) => (
             <GlassCard key={item.label} title={item.label}>
-              <p className="text-3xl font-bold text-red-600">{item.value as string}</p>
+              <p className="text-3xl font-bold text-red-600">
+                {item.value as string}
+              </p>
             </GlassCard>
           ))}
         </section>

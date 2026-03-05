@@ -1,11 +1,11 @@
-import { auth } from "./admin";
+import { getAuth } from "./admin";
 
 export async function createUserWithEmailAndPassword(
   email: string,
   password: string,
 ) {
   try {
-    const userRecord = await auth.createUser({
+    const userRecord = await getAuth().createUser({
       email: email,
       password: password,
     });
@@ -73,14 +73,14 @@ export async function updateUserPassword(
   const { localId } = await verifyCurrentPassword(email, currentPassword);
 
   // If verification succeeds, update the password using Admin SDK
-  await auth.updateUser(localId, {
+  await getAuth().updateUser(localId, {
     password: newPassword,
   });
 }
 
 export async function getEmailByUid(uid: string): Promise<string> {
   try {
-    const userRecord = await auth.getUser(uid);
+    const userRecord = await getAuth().getUser(uid);
     return userRecord.email || "";
   } catch (error) {
     console.error("Error fetching user data:", error);

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import useAuth from "@/hooks/useAuth";
-import { auth } from "@/lib/firebase/client";
+import { getAuthInstance } from "@/lib/firebase/client";
 import { updatePasswordSchema } from "@/lib/schemas";
 import { swalError, swalSuccess } from "@/lib/swal";
 import { trpc } from "@/lib/trpc/client";
@@ -51,7 +51,7 @@ export default function UpdatePasswordPage() {
             "Password Updated",
             "Password updated successfully. You may now log in.",
             () => {
-              auth.signOut();
+              getAuthInstance().signOut();
             },
           );
         },

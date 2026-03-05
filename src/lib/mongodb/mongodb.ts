@@ -1,10 +1,10 @@
 import { MongoClient, ServerApiVersion } from "mongodb";
 
-const uri =
-  process.env.MONGODB_URI ||
-  (() => {
-    throw new Error("MONGODB_URI is not defined");
-  })();
+function getMongoUri() {
+  const uri = process.env.MONGODB_URI;
+  if (!uri) throw new Error("MONGODB_URI is not defined");
+  return uri;
+}
 
 const mongoOptions = {
   serverApi: {
@@ -23,7 +23,7 @@ declare global {
 }
 
 function createClient() {
-  return new MongoClient(uri, mongoOptions);
+  return new MongoClient(getMongoUri(), mongoOptions);
 }
 
 export function getMongoClient(): Promise<MongoClient> {

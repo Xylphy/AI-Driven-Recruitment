@@ -6,7 +6,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { EVENT_TYPES, REGULAR_STAFF_ROLES } from "@/lib/constants";
 import { createUserWithEmailAndPassword } from "@/lib/firebase/action";
-import { auth } from "@/lib/firebase/admin";
+import { getAuth } from "@/lib/firebase/admin";
 import { getMongoDb } from "@/lib/mongodb/mongodb";
 import { addStaffSchema } from "@/lib/schemas";
 import { createClientServer } from "@/lib/supabase/supabase";
@@ -351,7 +351,7 @@ const adminRouter = createTRPCRouter({
       let firebaseUserByUid = new Map<string, { email: string }>();
 
       if (firebaseUids.length > 0) {
-        const firebaseUsersResult = await auth.getUsers(
+        const firebaseUsersResult = await getAuth().getUsers(
           firebaseUids.map((uid) => ({ uid })),
         );
         firebaseUserByUid = new Map(
@@ -512,11 +512,11 @@ const adminRouter = createTRPCRouter({
         .filter(Boolean);
 
       let firebaseUsersResult:
-        | Awaited<ReturnType<typeof auth.getUsers>>
+        | Awaited<ReturnType<ReturnType<typeof getAuth>["getUsers"]>>
         | undefined;
 
       if (firebaseUids.length > 0) {
-        firebaseUsersResult = await auth.getUsers(
+        firebaseUsersResult = await getAuth().getUsers(
           firebaseUids.map((uid) => ({ uid })),
         );
       }

@@ -10,15 +10,28 @@ const cloudinaryConfigSchema = z.object({
   api_secret: z.string().min(1, "CLOUDINARY_API_SECRET is required"),
 });
 
-cloudinary.config(
-  cloudinaryConfigSchema.parse({
-    cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
-  }),
-);
+declare global {
+  var __cloudinaryConfigured: boolean | undefined;
+}
+
+function getCloudinary() {
+  if (!globalThis.__cloudinaryConfigured) {
+    const parsed = cloudinaryConfigSchema.parse({
+      cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET,
+    });
+
+    cloudinary.config(parsed);
+    globalThis.__cloudinaryConfigured = true;
+  }
+
+  return cloudinary;
+}
 
 export async function uploadFile(file: File, folder: string) {
+  const c = getCloudinary();
+
   let resourceType: "auto" | "image" | "video" | "raw" = "raw";
   let specificOptions: Record<string, string> = {};
 
@@ -38,7 +51,7 @@ export async function uploadFile(file: File, folder: string) {
     resourceType = "video";
   }
 
-  const result = await cloudinary.uploader.upload(
+  const result = await c.uploader.upload(
     `data:${file.type};base64,${Buffer.from(await file.arrayBuffer()).toString(
       "base64",
     )}`,
@@ -57,7 +70,8 @@ export async function uploadFile(file: File, folder: string) {
 }
 
 export async function deleteFile(publicId: string) {
-  await cloudinary.uploader.destroy(publicId);
+  const c = getCloudinary();
+  await c.uploader.destroy(publicId);
 }
 
 function normalizeToPublicId(value: string) {
@@ -82,6 +96,7 @@ function normalizeToPublicId(value: string) {
 }
 
 export async function getFileInfo(publicIdOrUrl: string) {
+  const c = getCloudinary();
   const normalized = normalizeToPublicId(publicIdOrUrl);
   const withoutExt = normalized.replace(/\.[^/.]+$/, "");
   const candidates = Array.from(new Set([normalized, withoutExt]));
@@ -89,7 +104,7 @@ export async function getFileInfo(publicIdOrUrl: string) {
   for (const candidate of candidates) {
     for (const resourceType of ["raw", "image", "video"]) {
       try {
-        const result = await cloudinary.api.resource(candidate, {
+        const result = await c.api.resource(candidate, {
           resource_type: resourceType,
           type: "upload",
         });
@@ -114,6 +129,7 @@ export async function getFileInfo(publicIdOrUrl: string) {
 }
 
 export async function moveFile(publicIdOrUrl: string) {
+  const c = getCloudinary();
   const fileInfo = await getFileInfo(publicIdOrUrl);
   const newFolder =
     fileInfo.resourceType === "video" ? "transcripts" : "resumes";
@@ -121,18 +137,14 @@ export async function moveFile(publicIdOrUrl: string) {
   const fileName = fileInfo.publicId.split("/").pop();
   const newPublicId = `${newFolder}/${fileName}`;
 
-  const result = await cloudinary.uploader.rename(
-    fileInfo.publicId,
-    newPublicId,
-    {
-      resource_type: fileInfo.resourceType,
-      type: "upload",
-      overwrite: false,
-      invalidate: true,
-    },
-  );
+  const result = await c.uploader.rename(fileInfo.publicId, newPublicId, {
+    resource_type: fileInfo.resourceType,
+    type: "upload",
+    overwrite: false,
+    invalidate: true,
+  });
 
-  await cloudinary.uploader.explicit(result.public_id, {
+  await c.uploader.explicit(result.public_id, {
     resource_type: fileInfo.resourceType,
     type: "upload",
     asset_folder: newFolder,

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import useAuth from "@/hooks/useAuth";
-import { auth } from "@/lib/firebase/client";
+import { getAuthInstance } from "@/lib/firebase/client";
 import { swalError, swalInfo } from "@/lib/swal";
 import { trpc } from "@/lib/trpc/client";
 
@@ -48,12 +48,12 @@ export default function LoginPage() {
     }
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      await signInWithEmailAndPassword(getAuthInstance(), email, password);
 
       setJwtSuccess(true);
       void jwtInfo.refetch();
     } catch (error) {
-      auth.signOut();
+      getAuthInstance().signOut();
 
       let message = "Authentication failed. Please try again.";
 

@@ -20,7 +20,7 @@ import {
   MdWork,
 } from "react-icons/md";
 import useAuth from "@/hooks/useAuth";
-import { auth } from "@/lib/firebase/client";
+import { getAuthInstance } from "@/lib/firebase/client";
 import { trpc } from "@/lib/trpc/client";
 
 export default function AdminNavbar({
@@ -215,7 +215,7 @@ export default function AdminNavbar({
                     className="text-xl text-gray-600 hover:text-red-600 cursor-pointer transition"
                   />
                   <MdLogout
-                    onClick={() => auth.signOut()}
+                    onClick={() => getAuthInstance().signOut()}
                     className="text-xl text-gray-600 hover:text-red-600 cursor-pointer transition"
                   />
                 </div>
