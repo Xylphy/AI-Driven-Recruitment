@@ -5,9 +5,7 @@ import type { inferProcedureOutput } from "@trpc/server";
 import type { FieldValue, Timestamp } from "firebase/firestore";
 import type { JwtPayload } from "jsonwebtoken";
 import type {
-  ALL_STAFF_ROLES,
   CANDIDATE_STATUSES,
-  ENTITIES,
   EVENT_TYPES,
   JOB_LOCATIONS,
   REGULAR_STAFF_ROLES,
@@ -15,11 +13,11 @@ import type {
 } from "@/lib/constants";
 import type { AppRouter } from "@/lib/trpc/routers/app";
 
-export interface IdentifiableItem {
+interface IdentifiableItem {
   id: number;
 }
 
-export interface Title {
+interface Title {
   title: string;
 }
 
@@ -90,13 +88,9 @@ export interface BottleneckPercentileRow {
 
 export type UserActionEventType = (typeof EVENT_TYPES)[number];
 
-export type EntityTypes = (typeof ENTITIES)[number];
-
 export type UserRoles = (typeof USER_ROLES)[number];
 
 export type RegularStaffRoles = (typeof REGULAR_STAFF_ROLES)[number];
-
-export type AllStaffRoles = (typeof ALL_STAFF_ROLES)[number];
 
 export type CandidateStatuses = (typeof CANDIDATE_STATUSES)[number];
 

@@ -50,14 +50,4 @@ export const EVENT_TYPES = [
   "Staff password updated",
 ] as const;
 
-export const ENTITIES = [
-  "Applicant",
-  "Job Listing",
-  "Admin Feedback",
-  "Staff Evaluation",
-  "Staff",
-] as const;
-
 export const REGULAR_STAFF_ROLES = ["Admin", "Staff"] as const;
-
-export const ALL_STAFF_ROLES = [...REGULAR_STAFF_ROLES, "SuperAdmin"] as const;

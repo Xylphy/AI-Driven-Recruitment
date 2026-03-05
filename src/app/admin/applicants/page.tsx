@@ -143,7 +143,7 @@ export default function ApplicantsPage() {
                         </button>
 
                         <a
-                          href={`https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/raw/upload/${candidate.resumeId}`}
+                          href={`${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BASE_URL}/object/public/${candidate.resumeId}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="px-4 py-1 text-xs font-semibold rounded-xl bg-white/40 border border-red-400 text-red-600 backdrop-blur-md hover:bg-red-50 transition"

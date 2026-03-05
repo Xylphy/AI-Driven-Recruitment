@@ -6,9 +6,9 @@ import { useState } from "react";
 import Select from "react-select";
 import useAuth from "@/hooks/useAuth";
 import { formatDate } from "@/lib/library";
+import type { Tables } from "@/lib/supabase/types";
 import { swalError, swalInfo } from "@/lib/swal";
 import { trpc } from "@/lib/trpc/client";
-import type { AdminFeedback } from "@/types/schema";
 import type { FetchCandidateProfileOutput } from "@/types/types";
 
 interface CandidateID {
@@ -215,13 +215,13 @@ export default function ComparePage() {
   };
 
   const handleEditClick = (
-    post: AdminFeedback & {
+    post: Tables<"admin_feedback"> & {
       admin: { last_name: string; first_name: string };
       applicant: { last_name: string; first_name: string };
     },
   ) => {
     setEditingFeedbackId(post.id);
-    setEditedFeedback(post.feedback);
+    setEditedFeedback(post.feedback || "");
   };
 
   const handleSaveEdit = (id: string) => {
@@ -752,7 +752,7 @@ export default function ComparePage() {
             <div className="space-y-4">
               {adminFeedbacksQuery.data?.adminFeedbacks.map(
                 (
-                  post: AdminFeedback & {
+                  post: Tables<"admin_feedback"> & {
                     admin: { last_name: string; first_name: string };
                     applicant: {
                       last_name: string;

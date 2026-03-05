@@ -4,11 +4,11 @@
 
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { moveFile } from "@/lib/cloudinary/cloudinary";
 import type { CANDIDATE_STATUSES } from "@/lib/constants";
 import { deleteDocument } from "@/lib/mongodb/action";
 import { sendEmail } from "@/lib/nodemailer/sendEmail";
 import { jobListingSchema, userSchema } from "@/lib/schemas";
+import { moveFile } from "@/lib/supabase/action";
 import { createClientServer } from "@/lib/supabase/supabase";
 import type { Json } from "@/lib/supabase/types";
 import {
@@ -193,8 +193,20 @@ const jobListingRouter = createTRPCRouter({
       const supabaseClient = await createClientServer(true);
 
       const [resumePublicId, transcriptPublicId] = await Promise.all([
-        moveFile(input.resumeURL),
-        moveFile(input.transcriptURL),
+        moveFile(
+          {
+            bucket: "applications",
+            path: input.resumeURL.split("applications/")[1] ?? "",
+          },
+          "resumes",
+        ),
+        moveFile(
+          {
+            bucket: "applications",
+            path: input.transcriptURL.split("applications/")[1] ?? "",
+          },
+          "transcripts",
+        ),
       ]);
 
       const { data: applicantsID, error: applicantsError } =

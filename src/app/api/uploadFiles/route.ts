@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { uploadFile } from "@/lib/cloudinary/cloudinary";
 import { filesSchema } from "@/lib/schemas";
+import { uploadFile } from "@/lib/supabase/action";
 
 export async function POST(request: Request) {
   const formData = await request.formData();
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const folder = `applications/${new Date().toLocaleDateString("en-US", { year: "numeric", month: "2-digit", day: "2-digit" }).replace(/\//g, "-")}`;
+  const folder = `${new Date().toLocaleDateString("en-US", { year: "numeric", month: "2-digit", day: "2-digit" }).replace(/\//g, "-")}`;
 
   const [resumeURL, transcriptURL] = await Promise.all([
     validatedData.data.resume

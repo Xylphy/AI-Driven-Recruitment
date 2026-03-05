@@ -5,10 +5,11 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { swalError, swalSuccess } from "@/lib/swal";
 import { trpc } from "@/lib/trpc/client";
-import type { Tags } from "@/types/schema";
 import type { SocialLink } from "@/types/types";
 
-interface Skills extends Tags {
+interface Skills {
+  id: number;
+  name: string;
   rating?: number;
 }
 

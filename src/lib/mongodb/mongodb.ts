@@ -26,7 +26,7 @@ function createClient() {
   return new MongoClient(getMongoUri(), mongoOptions);
 }
 
-export function getMongoClient(): Promise<MongoClient> {
+function getMongoClient(): Promise<MongoClient> {
   if (!globalThis.__mongoClient) {
     globalThis.__mongoClient = createClient();
   }

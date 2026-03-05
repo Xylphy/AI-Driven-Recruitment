@@ -30,7 +30,12 @@ export default function useNotifications(
       return;
     }
 
-    const notificationsRef = collection(getDbInstance(), "users", userId, "notifications");
+    const notificationsRef = collection(
+      getDbInstance(),
+      "users",
+      userId,
+      "notifications",
+    );
 
     // Real-time listener
     const unsubscribe = onSnapshot(
@@ -58,9 +63,12 @@ export default function useNotifications(
 
   const markAsRead = async (notificationId: string) => {
     if (!userId) return;
-    await updateDoc(doc(getDbInstance(), "users", userId, "notifications", notificationId), {
-      isRead: true,
-    });
+    await updateDoc(
+      doc(getDbInstance(), "users", userId, "notifications", notificationId),
+      {
+        isRead: true,
+      },
+    );
   };
 
   const markAllAsRead = async () => {
@@ -69,16 +77,21 @@ export default function useNotifications(
     notifications
       .filter((n) => !n.isRead)
       .forEach((n) => {
-        batch.update(doc(getDbInstance(), "users", userId, "notifications", n.id), {
-          isRead: true,
-        });
+        batch.update(
+          doc(getDbInstance(), "users", userId, "notifications", n.id),
+          {
+            isRead: true,
+          },
+        );
       });
     await batch.commit();
   };
 
   const deleteNotification = async (notificationId: string) => {
     if (!userId) return;
-    await deleteDoc(doc(getDbInstance(), "users", userId, "notifications", notificationId));
+    await deleteDoc(
+      doc(getDbInstance(), "users", userId, "notifications", notificationId),
+    );
   };
 
   return {

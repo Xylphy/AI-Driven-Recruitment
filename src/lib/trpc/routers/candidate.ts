@@ -6,14 +6,13 @@ import admin, { getDb } from "@/lib/firebase/admin";
 import { findOne } from "@/lib/mongodb/action";
 import { getMongoDb } from "@/lib/mongodb/mongodb";
 import { createClientServer } from "@/lib/supabase/supabase";
-import type { Json } from "@/lib/supabase/types";
+import type { Json, Tables } from "@/lib/supabase/types";
 import type {
   ParsedResumeDoc,
   ScoredCandidateDoc,
   ScoredCandidateScoreData,
   TranscribedDoc,
 } from "@/types/mongo_db/schema";
-import type { AdminFeedback, Applicants } from "@/types/schema";
 import type { Notification } from "@/types/types";
 import { adminProcedure, authorizedProcedure, createTRPCRouter } from "../init";
 
@@ -29,7 +28,7 @@ type Name = {
   last_name: string;
 };
 
-export interface QueryFilter {
+interface QueryFilter {
   column: string;
   value: string | string[];
 }
@@ -137,7 +136,7 @@ const candidateRouter = createTRPCRouter({
 
       // Batch fetch Firebase users
       const applicantsArr = (applicants || []) as Array<
-        Applicants & {
+        Tables<"applicants"> & {
           job_title?: { title: string };
         }
       >;
@@ -601,7 +600,7 @@ const candidateRouter = createTRPCRouter({
 
       return {
         adminFeedbacks: (data || []) as unknown as Array<
-          AdminFeedback & {
+          Tables<"admin_feedback"> & {
             admin: Name;
             applicant: Name;
           }

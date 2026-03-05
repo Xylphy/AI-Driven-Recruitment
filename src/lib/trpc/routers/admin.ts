@@ -10,8 +10,8 @@ import { getAuth } from "@/lib/firebase/admin";
 import { getMongoDb } from "@/lib/mongodb/mongodb";
 import { addStaffSchema } from "@/lib/schemas";
 import { createClientServer } from "@/lib/supabase/supabase";
+import type { Tables } from "@/lib/supabase/types";
 import type { ScoredCandidateDoc } from "@/types/mongo_db/schema";
-import type { Staff } from "@/types/schema";
 import type { BottleneckPercentileRow } from "@/types/types";
 import { adminProcedure, createTRPCRouter, superAdminProcedure } from "../init";
 
@@ -287,7 +287,7 @@ const adminRouter = createTRPCRouter({
       const supabase = await createClientServer(true);
 
       const q = input.searchQuery?.trim();
-      let users: Staff[] = [];
+      let users: Array<Tables<"staff">> = [];
       let usersError: { message?: string } | null = null;
 
       if (!q) {
@@ -297,7 +297,7 @@ const adminRouter = createTRPCRouter({
           .neq("role", "SuperAdmin")
           .limit(input.limit);
 
-        users = (data || []) as Staff[];
+        users = (data || []) as Array<Tables<"staff">>;
         usersError = error;
       } else {
         const matchingRoles = REGULAR_STAFF_ROLES.filter((role) =>
@@ -329,10 +329,9 @@ const adminRouter = createTRPCRouter({
         usersError = nameResult.error || roleResult.error;
         const merged = [...(nameResult.data || []), ...(roleResult.data || [])];
         const uniqueById = new Map(merged.map((u) => [u.id, u]));
-        users = Array.from(uniqueById.values()).slice(
-          0,
-          input.limit,
-        ) as Staff[];
+        users = Array.from(uniqueById.values()).slice(0, input.limit) as Array<
+          Tables<"staff">
+        >;
       }
 
       if (usersError) {
@@ -368,7 +367,7 @@ const adminRouter = createTRPCRouter({
       }));
 
       return {
-        staffs: usersWithEmail as Array<Staff & { email: string }>,
+        staffs: usersWithEmail as Array<Tables<"staff"> & { email: string }>,
       };
     }),
   changeStaffRole: superAdminProcedure
