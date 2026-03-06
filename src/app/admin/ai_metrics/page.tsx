@@ -12,8 +12,6 @@ import {
   Title,
   Tooltip,
 } from "chart.js";
-// import jsPDF from "jspdf";
-// import autoTable from "jspdf-autotable";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { useState } from "react";
@@ -123,7 +121,11 @@ export default function AIAnalyticsDashboard() {
     datasets: [
       {
         label: "Efficiency Score (%)",
-        data: [candidateReportQuery.data?.candidate.job_fit_score || 0, 92, 89],
+        data: [
+          candidateReportQuery.data?.candidate?.job_fit_score || 0,
+          92,
+          89,
+        ],
         backgroundColor: "rgba(220, 38, 38, 0.8)",
       },
     ],
@@ -156,8 +158,8 @@ export default function AIAnalyticsDashboard() {
 
     const dateLabel = `${MONTHS[monthIndex]} ${y}`;
 
-    const avgJobFit = aiMetrics.data?.overall.avg_job_fit_score ?? 0;
-    const avgResp = aiMetrics.data?.overall.avg_response_time ?? 0;
+    const avgJobFit = aiMetrics.data?.overall?.avg_job_fit_score ?? 0;
+    const avgResp = aiMetrics.data?.overall?.avg_response_time ?? 0;
     const weekly = aiMetrics.data?.weekly ?? [];
 
     const wb = new ExcelJS.Workbook();
@@ -457,7 +459,7 @@ export default function AIAnalyticsDashboard() {
                         Job Fit Score
                       </p>
                       <p className="text-2xl font-bold text-red-600 mt-1">
-                        {candidateReportQuery.data?.candidate.job_fit_score ||
+                        {candidateReportQuery.data?.candidate?.job_fit_score ||
                           0}
                         %
                       </p>
@@ -481,7 +483,7 @@ export default function AIAnalyticsDashboard() {
                       </p>
                       <p className="text-sm font-medium text-gray-700 mt-2 leading-relaxed">
                         {candidateReportQuery.data?.candidate
-                          .skill_gaps_recommendations ||
+                          ?.skill_gaps_recommendations ||
                           "No recommendation available."}
                       </p>
                     </div>

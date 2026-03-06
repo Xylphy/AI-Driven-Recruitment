@@ -6,7 +6,7 @@ import { useState } from "react";
 import Select from "react-select";
 import useAuth from "@/hooks/useAuth";
 import { formatDate } from "@/lib/library";
-import type { Tables } from "@/lib/supabase/types";
+import type { Tables } from "@/types/supabase";
 import { swalError, swalInfo } from "@/lib/swal";
 import { trpc } from "@/lib/trpc/client";
 import type { FetchCandidateProfileOutput } from "@/types/types";
@@ -16,15 +16,15 @@ interface CandidateID {
 }
 
 function getExperienceCount(data: FetchCandidateProfileOutput | undefined) {
-  return data?.parsedResume?.raw_output?.work_experience?.length || 0;
+  return data?.parsedResume?.work_experience?.length || 0;
 }
 
 function getSkillsCount(data: FetchCandidateProfileOutput | undefined) {
-  return data?.parsedResume?.raw_output?.soft_skills?.length || 0;
+  return data?.parsedResume?.soft_skills?.length || 0;
 }
 
 function getMatchScore(data: FetchCandidateProfileOutput | undefined) {
-  return data?.score?.score_data?.job_fit_score || 0;
+  return data?.score?.job_fit_score || 0;
 }
 
 function compareMetric(a: number, b: number) {
@@ -462,7 +462,7 @@ export default function ComparePage() {
                         <span className="font-semibold text-gray-900">
                           Experience:
                         </span>{" "}
-                        {data.data?.parsedResume?.raw_output?.work_experience
+                        {data.data?.parsedResume?.work_experience
                           .map((exp) => exp.title)
                           .join(", ") || "N/A"}
                       </p>
@@ -470,10 +470,10 @@ export default function ComparePage() {
                         <span className="font-semibold text-gray-900">
                           Education:
                         </span>{" "}
-                        {(data.data?.parsedResume?.raw_output
-                          .educational_background[0]?.degree &&
-                          data.data?.parsedResume?.raw_output
-                            ?.educational_background[0].degree) ||
+                        {(data.data?.parsedResume?.educational_background[0]
+                          ?.degree &&
+                          data.data?.parsedResume?.educational_background[0]
+                            .degree) ||
                           "N/A"}
                       </p>
                       <div>
@@ -481,7 +481,7 @@ export default function ComparePage() {
                           Skills:
                         </span>{" "}
                         <div className="mt-2 flex flex-wrap gap-2">
-                          {data.data?.parsedResume?.raw_output?.soft_skills.map(
+                          {data.data?.parsedResume?.soft_skills.map(
                             (skill: string) => (
                               <span
                                 key={skill}
@@ -500,17 +500,16 @@ export default function ComparePage() {
                         </span>{" "}
                         <span
                           className={`font-semibold ${
-                            data.data?.score?.score_data?.job_fit_score &&
-                            data.data?.score?.score_data?.job_fit_score >= 85
+                            data.data?.score?.job_fit_score &&
+                            data.data?.score?.job_fit_score >= 85
                               ? "text-green-600"
-                              : data.data?.score?.score_data?.job_fit_score &&
-                                  data.data?.score?.score_data?.job_fit_score >=
-                                    70
+                              : data.data?.score?.job_fit_score &&
+                                  data.data?.score?.job_fit_score >= 70
                                 ? "text-yellow-600"
                                 : "text-red-600"
                           }`}
                         >
-                          {data.data?.score?.score_data?.job_fit_score}%
+                          {data.data?.score?.job_fit_score}%
                         </span>
                       </p>
                     </div>

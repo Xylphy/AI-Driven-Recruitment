@@ -7,12 +7,13 @@ import { z } from "zod";
 import { EVENT_TYPES, REGULAR_STAFF_ROLES } from "@/lib/constants";
 import { createUserWithEmailAndPassword } from "@/lib/firebase/action";
 import { getAuth } from "@/lib/firebase/admin";
-import { getMongoDb } from "@/lib/mongodb/mongodb";
 import { addStaffSchema } from "@/lib/schemas";
 import { createClientServer } from "@/lib/supabase/supabase";
-import type { Tables } from "@/lib/supabase/types";
-import type { ScoredCandidateDoc } from "@/types/mongo_db/schema";
-import type { BottleneckPercentileRow } from "@/types/types";
+import type { Tables } from "@/types/supabase";
+import type {
+  BottleneckPercentileRow,
+  ScoredCandidateData,
+} from "@/types/types";
 import { adminProcedure, createTRPCRouter, superAdminProcedure } from "../init";
 
 const adminRouter = createTRPCRouter({
@@ -111,80 +112,27 @@ const adminRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input }) => {
-      const db = await getMongoDb();
-      const topCandidates = await db
-        .collection("scored_candidates")
-        .aggregate([
-          {
-            $addFields: {
-              predictive_success: {
-                $ifNull: ["$score_data.predictive_success", 0],
-              },
-            },
-          },
-          { $sort: { predictive_success: -1 } },
-          { $limit: input.limit },
-          {
-            $project: {
-              applicant_id: 1,
-              job_id: 1,
-              overall_score: 1,
-              score_data: 1,
-              predictive_success: 1,
-            },
-          },
-        ])
-        .toArray();
-
       const supabaseClient = await createClientServer(true);
 
-      const userIds = Array.from(
-        new Set(topCandidates.map((c) => c.applicant_id)),
+      const { data, error } = await supabaseClient.rpc(
+        "get_top_candidates_by_job_fit",
+        { p_limit: input.limit },
       );
 
-      const { data: users, error: usersError } = userIds.length
-        ? await supabaseClient
-            .from("applicants")
-            .select("id, first_name, last_name")
-            .in("id", userIds)
-        : { data: [], error: null };
-
-      if (usersError) {
-        console.error(
-          "Error fetching user names for top candidates",
-          usersError,
-        );
+      if (error) {
+        console.error("Error fetching user names for top candidates", error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message:
-            usersError?.message ||
-            "Failed to fetch user names for top candidates",
+            error?.message || "Failed to fetch user names for top candidates",
         });
       }
 
-      const userMap = new Map<
-        string,
-        { first_name: string; last_name: string }
-      >();
-      users?.forEach((user) => {
-        userMap.set(user.id, {
-          first_name: user.first_name,
-          last_name: user.last_name,
-        });
-      });
-
-      const topCandidatesWithNames = topCandidates.map((c) => ({
-        ...c,
-        name: `${userMap.get(c.applicant_id)?.first_name || "N/A"} ${
-          userMap.get(c.applicant_id)?.last_name || "N/A"
-        }`,
+      return (data ?? []).map((row) => ({
+        ...row,
+        name: `${row.first_name} ${row.last_name}`,
+        score_data: row.score_data as ScoredCandidateData,
       }));
-
-      return {
-        topCandidates: topCandidatesWithNames as (ScoredCandidateDoc & {
-          name: string;
-        })[],
-      };
     }),
   fetchAllJobs: adminProcedure.query(async () => {
     const supabase = await createClientServer(true);

@@ -137,7 +137,7 @@ export default function AdminDashboard() {
 
           <GlassCard title="Top Talent (AI Match >80%)">
             <ul className="space-y-3">
-              {topTalentQuery.data?.topCandidates.map((c) => (
+              {topTalentQuery.data?.map((c) => (
                 <button
                   key={crypto.randomUUID()}
                   className="flex justify-between items-center bg-white/40 rounded-lg px-4 py-2 cursor-pointer w-full text-left hover:bg-white/60 transition-colors"

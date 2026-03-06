@@ -3,7 +3,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { createClientServer } from "@/lib/supabase/supabase";
-import type { Json } from "@/lib/supabase/types";
+import type { Json } from "@/types/supabase";
 import {
   authorizedProcedure,
   createTRPCRouter,

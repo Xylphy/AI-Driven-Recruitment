@@ -115,7 +115,7 @@ export default function CandidateProfile({
 
                     <span
                       className={[
-                        "absolute left-0 -bottom-[2px] h-[3px] w-full rounded-full transition-all duration-300",
+                        "absolute left-0 -bottom-0.5 h-0.75 w-full rounded-full transition-all duration-300",
                         active
                           ? "opacity-100 bg-red-500 scale-100"
                           : "opacity-0 scale-75",
@@ -168,8 +168,8 @@ export default function CandidateProfile({
                                   className={`w-5 h-5 drop-shadow-sm transition ${
                                     i <
                                     Math.floor(
-                                      candidateProfile?.score?.score_data
-                                        ?.job_fit_stars || 0,
+                                      candidateProfile?.score?.job_fit_stars ||
+                                        0,
                                     )
                                       ? "text-[#E30022]"
                                       : "text-red-200"
@@ -184,9 +184,7 @@ export default function CandidateProfile({
                             </div>
 
                             <span className="text-sm font-medium text-slate-600">
-                              (
-                              {candidateProfile?.score?.score_data
-                                ?.job_fit_stars || 0}
+                              ({candidateProfile?.score?.job_fit_stars || 0}
                               /5)
                             </span>
                           </div>
@@ -235,16 +233,15 @@ export default function CandidateProfile({
                           className="h-3.5 rounded-full bg-linear-to-r from-[#E30022] to-red-400 shadow-[0_10px_25px_rgba(227,0,34,0.35)]"
                           style={{
                             width: `${
-                              candidateProfile?.score?.score_data
-                                ?.job_fit_score ?? 0
+                              candidateProfile?.score?.job_fit_score ?? 0
                             }%`,
                           }}
                         />
                       </div>
 
                       <span className="text-xs text-slate-600 mt-2 block">
-                        {candidateProfile?.score?.score_data.job_fit_score || 0}
-                        % likelihood of success
+                        {candidateProfile?.score?.job_fit_score || 0}%
+                        likelihood of success
                       </span>
                     </div>
 
@@ -254,7 +251,7 @@ export default function CandidateProfile({
                       </span>
 
                       <ul className="list-disc ml-6 text-sm text-slate-700 space-y-1.5 marker:text-red-400">
-                        {candidateProfile?.score?.score_data.phrases.map(
+                        {candidateProfile?.score?.phrases.map(
                           (phrase: string) => (
                             <li
                               key={crypto.randomUUID()}
@@ -273,7 +270,7 @@ export default function CandidateProfile({
                       </span>
 
                       <p className="text-sm text-slate-700 leading-relaxed">
-                        {candidateProfile?.score?.score_data.reason}
+                        {candidateProfile?.score?.reason}
                       </p>
                     </div>
                   </div>
@@ -323,10 +320,10 @@ export default function CandidateProfile({
                             <h3 className="font-bold text-slate-800 tracking-tight">
                               Sentiment Highlights
                             </h3>
-                            {candidateProfile?.transcribed?.transcription
+                            {candidateProfile?.transcribed
                               ?.sentimental_analysis_phrases ? (
                               <ul className="list-disc ml-6 mt-3 space-y-1.5 marker:text-red-400 text-slate-700">
-                                {candidateProfile.transcribed.transcription.sentimental_analysis_phrases.map(
+                                {candidateProfile.transcribed.sentimental_analysis_phrases.map(
                                   (phrase: string) => (
                                     <li
                                       key={crypto.randomUUID()}
@@ -349,7 +346,7 @@ export default function CandidateProfile({
                               Sentiment Analysis
                             </h3>
                             <p className="text-slate-700 leading-relaxed mt-2">
-                              {candidateProfile?.transcribed?.transcription
+                              {candidateProfile?.transcribed
                                 ?.sentimental_analysis ||
                                 "No sentiment analysis available."}
                             </p>
@@ -363,10 +360,10 @@ export default function CandidateProfile({
                             <h3 className="font-bold text-slate-800 tracking-tight">
                               Personality Highlights
                             </h3>
-                            {candidateProfile?.transcribed?.transcription
+                            {candidateProfile?.transcribed
                               ?.personality_traits_phrases ? (
                               <ul className="list-disc ml-6 mt-3 space-y-1.5 marker:text-red-400 text-slate-700">
-                                {candidateProfile.transcribed.transcription.personality_traits_phrases.map(
+                                {candidateProfile.transcribed.personality_traits_phrases.map(
                                   (trait: string) => (
                                     <li
                                       key={crypto.randomUUID()}
@@ -389,7 +386,7 @@ export default function CandidateProfile({
                               Personality Traits
                             </h3>
                             <p className="text-slate-700 leading-relaxed mt-2">
-                              {candidateProfile?.transcribed?.transcription
+                              {candidateProfile?.transcribed
                                 ?.personality_traits ||
                                 "No personality traits insights available."}
                             </p>
@@ -403,10 +400,10 @@ export default function CandidateProfile({
                             <h3 className="font-bold text-slate-800 tracking-tight">
                               Communication Highlights
                             </h3>
-                            {candidateProfile?.transcribed?.transcription
+                            {candidateProfile?.transcribed
                               ?.communication_style_insights_phrases ? (
                               <ul className="list-disc ml-6 mt-3 space-y-1.5 marker:text-red-400 text-slate-700">
-                                {candidateProfile.transcribed.transcription.communication_style_insights_phrases.map(
+                                {candidateProfile.transcribed.communication_style_insights_phrases.map(
                                   (insight: string) => (
                                     <li
                                       key={crypto.randomUUID()}
@@ -429,7 +426,7 @@ export default function CandidateProfile({
                               Communication Style
                             </h3>
                             <p className="text-slate-700 leading-relaxed mt-2">
-                              {candidateProfile?.transcribed?.transcription
+                              {candidateProfile?.transcribed
                                 ?.communication_style_insights ||
                                 "No communication style insights available."}
                             </p>
@@ -443,10 +440,10 @@ export default function CandidateProfile({
                             <h3 className="font-bold text-slate-800 tracking-tight">
                               Interview Highlights
                             </h3>
-                            {candidateProfile?.transcribed?.transcription
+                            {candidateProfile?.transcribed
                               ?.interview_insights_phrases ? (
                               <ul className="list-disc ml-6 mt-3 space-y-1.5 marker:text-red-400 text-slate-700">
-                                {candidateProfile.transcribed.transcription.interview_insights_phrases.map(
+                                {candidateProfile.transcribed.interview_insights_phrases.map(
                                   (insight: string) => (
                                     <li
                                       key={crypto.randomUUID()}
@@ -468,7 +465,7 @@ export default function CandidateProfile({
                               Interview Insights
                             </h3>
                             <p className="text-slate-700 leading-relaxed mt-2">
-                              {candidateProfile?.transcribed?.transcription
+                              {candidateProfile?.transcribed
                                 ?.interview_insights ||
                                 "No interview insights available."}
                             </p>
@@ -482,10 +479,10 @@ export default function CandidateProfile({
                             <h3 className="font-bold text-slate-800 tracking-tight">
                               Cultural Fit Highlights
                             </h3>
-                            {candidateProfile?.transcribed?.transcription
+                            {candidateProfile?.transcribed
                               ?.cultural_fit_insights_phrases ? (
                               <ul className="list-disc ml-6 mt-3 space-y-1.5 marker:text-red-400 text-slate-700">
-                                {candidateProfile.transcribed.transcription.cultural_fit_insights_phrases.map(
+                                {candidateProfile.transcribed.cultural_fit_insights_phrases.map(
                                   (insight: string) => (
                                     <li
                                       key={crypto.randomUUID()}
@@ -508,7 +505,7 @@ export default function CandidateProfile({
                               Cultural Fit Insights
                             </h3>
                             <p className="text-slate-700 leading-relaxed mt-2">
-                              {candidateProfile?.transcribed?.transcription
+                              {candidateProfile?.transcribed
                                 ?.cultural_fit_insights ||
                                 "No cultural fit insights available."}
                             </p>
@@ -523,7 +520,7 @@ export default function CandidateProfile({
                               Skill Gaps Recommendations
                             </h3>
                             <p className="text-slate-700 leading-relaxed mt-2">
-                              {candidateProfile?.score?.score_data
+                              {candidateProfile?.score
                                 ?.skill_gaps_recommendations ||
                                 "No skill gaps recommendations available."}
                             </p>
@@ -539,8 +536,7 @@ export default function CandidateProfile({
 
                             <div className="mt-3 rounded-2xl border border-white/60 bg-white/45 backdrop-blur-xl shadow-inner p-4">
                               <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">
-                                {candidateProfile?.transcribed?.transcription
-                                  ?.transcription ||
+                                {candidateProfile?.transcribed?.transcription ||
                                   "No transcription available."}
                               </p>
                             </div>

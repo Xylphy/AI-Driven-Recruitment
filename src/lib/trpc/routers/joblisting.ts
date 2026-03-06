@@ -5,12 +5,11 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import type { CANDIDATE_STATUSES } from "@/lib/constants";
-import { deleteDocument } from "@/lib/mongodb/action";
 import { sendEmail } from "@/lib/nodemailer/sendEmail";
 import { jobListingSchema, userSchema } from "@/lib/schemas";
 import { moveFile } from "@/lib/supabase/action";
 import { createClientServer } from "@/lib/supabase/supabase";
-import type { Json } from "@/lib/supabase/types";
+import type { Json } from "@/types/supabase";
 import {
   adminProcedure,
   authorizedProcedure,
@@ -87,10 +86,6 @@ const jobListingRouter = createTRPCRouter({
           message: "Failed to delete job listing",
         });
       }
-
-      await deleteDocument("ai-driven-recruitment", "scored_candidates", {
-        job_id: input.joblistingId,
-      }).many();
 
       const { error: insertLogError } = await supabase
         .from("audit_logs")

@@ -1,19 +1,15 @@
 import { TRPCError } from "@trpc/server";
-import type { Db } from "mongodb";
 import z from "zod";
 import { CANDIDATE_STATUSES } from "@/lib/constants";
 import admin, { getDb } from "@/lib/firebase/admin";
-import { findOne } from "@/lib/mongodb/action";
-import { getMongoDb } from "@/lib/mongodb/mongodb";
 import { createClientServer } from "@/lib/supabase/supabase";
-import type { Json, Tables } from "@/lib/supabase/types";
+import type { Json, Tables } from "@/types/supabase";
 import type {
-  ParsedResumeDoc,
-  ScoredCandidateDoc,
-  ScoredCandidateScoreData,
-  TranscribedDoc,
-} from "@/types/mongo_db/schema";
-import type { Notification } from "@/types/types";
+  Notification,
+  ParsedResumeData,
+  ScoredCandidateData,
+  TranscribedData,
+} from "@/types/types";
 import { adminProcedure, authorizedProcedure, createTRPCRouter } from "../init";
 
 type AICompareRes = {
@@ -31,29 +27,6 @@ type Name = {
 interface QueryFilter {
   column: string;
   value: string | string[];
-}
-
-async function getCandidateMatch(applicantId: string, mongoDb: Db) {
-  try {
-    const candidateMatch = await mongoDb
-      .collection("scored_candidates")
-      .findOne({ applicant_id: applicantId });
-
-    if (!candidateMatch) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: `Candidate match data not found for applicant ${applicantId}`,
-      });
-    }
-
-    return Number(candidateMatch?.score_data?.job_fit_score ?? 0);
-  } catch (error) {
-    console.error(
-      `Error fetching candidate match from MongoDB for applicant ${applicantId}`,
-      error,
-    );
-    return 0;
-  }
 }
 
 const candidateRouter = createTRPCRouter({
@@ -108,7 +81,9 @@ const candidateRouter = createTRPCRouter({
       // Fetch applicants with joins
       let baseQuery = supabaseClient
         .from("applicants")
-        .select("*, job_title: job_listings(title)");
+        .select(
+          "*, job_title: job_listings(title), scored_candidates(score_data)",
+        );
 
       filters.forEach(({ column, value }) => {
         if (Array.isArray(value)) {
@@ -134,61 +109,22 @@ const candidateRouter = createTRPCRouter({
         });
       }
 
-      // Batch fetch Firebase users
-      const applicantsArr = (applicants || []) as Array<
-        Tables<"applicants"> & {
-          job_title?: { title: string };
-        }
-      >;
-
-      const userIdToApplicant = new Map<
-        string,
-        (typeof applicantsArr)[number]
-      >();
-
-      const userIds: string[] = [];
-
-      for (const applicant of applicantsArr) {
-        userIdToApplicant.set(applicant.id, applicant);
-        userIds.push(applicant.id);
-      }
-
-      const mongoDb = await getMongoDb();
-
-      const candidateMatchPromises = userIds.map(async (userId) => {
-        const candidateMatch = await getCandidateMatch(userId, mongoDb);
-        return { userId, candidateMatch };
-      });
-      const candidateMatchesPromise = Promise.all(candidateMatchPromises);
-
-      const candidateMatches = await candidateMatchesPromise;
-
-      const candidateMatchByUserId = new Map<string, number>();
-      for (const { userId, candidateMatch } of candidateMatches) {
-        candidateMatchByUserId.set(userId, candidateMatch);
-      }
-
-      // Merge all data
-      const applicantWithEmail = applicantsArr.map((applicant) => {
-        const candidateMatch = candidateMatchByUserId.get(applicant.id) || 0;
-        return {
-          applicantId: applicant.id,
-          ...applicant,
-          candidateMatch,
-        };
-      });
-
       return {
-        applicants: applicantWithEmail
-          .map((applicant) => ({
-            id: applicant.id,
-            name: `${applicant.first_name} ${applicant.last_name}`,
-            predictiveSuccess: applicant.candidateMatch,
-            status: applicant.status,
-            resumeId: applicant.resume_id,
-            jobTitle: applicant.job_title?.title || "N/A",
-            email: applicant.email || "N/A",
-          }))
+        applicants: applicants
+          .map((applicant) => {
+            const scoreData = applicant.scored_candidates
+              ?.score_data as ScoredCandidateData | null;
+
+            return {
+              id: applicant.id,
+              name: `${applicant.first_name} ${applicant.last_name}`,
+              predictiveSuccess: scoreData?.job_fit_score ?? 0,
+              status: applicant.status,
+              resumeId: applicant.resume_id,
+              jobTitle: applicant.job_title || "N/A",
+              email: applicant.email || "N/A",
+            };
+          })
           .sort(
             (applicantA, applicantB) =>
               applicantB.predictiveSuccess - applicantA.predictiveSuccess,
@@ -217,18 +153,27 @@ const candidateRouter = createTRPCRouter({
         applicantSkills,
         socialLinks,
       ] = await Promise.all([
-        input.fetchResume &&
-          findOne("ai-driven-recruitment", "parsed_resume", {
-            applicant_id: input.candidateId,
-          }),
-        input.fetchScore &&
-          findOne("ai-driven-recruitment", "scored_candidates", {
-            applicant_id: input.candidateId,
-          }),
-        input.fetchTranscribed &&
-          findOne("ai-driven-recruitment", "transcribed", {
-            applicant_id: input.candidateId,
-          }),
+        input.fetchResume
+          ? supabaseClient
+              .from("applicants")
+              .select("parsed_resume(parsed_resume)")
+              .eq("id", input.candidateId)
+              .single()
+          : Promise.resolve(null),
+        input.fetchScore
+          ? supabaseClient
+              .from("applicants")
+              .select("scored_candidates(score_data)")
+              .eq("id", input.candidateId)
+              .single()
+          : Promise.resolve(null),
+        input.fetchTranscribed
+          ? supabaseClient
+              .from("applicants")
+              .select("transcribed(transcription)")
+              .eq("id", input.candidateId)
+              .single()
+          : Promise.resolve(null),
         supabaseClient
           .from("applicants")
           .select("first_name, last_name, email, contact_number, status")
@@ -249,9 +194,12 @@ const candidateRouter = createTRPCRouter({
       ]);
 
       return {
-        parsedResume: parsedResume as ParsedResumeDoc | null,
-        score: score as ScoredCandidateDoc | null,
-        transcribed: transcribed as TranscribedDoc | null,
+        parsedResume: (parsedResume?.data?.parsed_resume?.parsed_resume ??
+          null) as ParsedResumeData | null,
+        score: (score?.data?.scored_candidates?.score_data ??
+          null) as ScoredCandidateData | null,
+        transcribed: (transcribed?.data?.transcribed?.transcription ??
+          null) as TranscribedData | null,
         user: {
           firstName: applicantData.data?.first_name || "",
           lastName: applicantData.data?.last_name || "",
@@ -791,23 +739,29 @@ const candidateRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input }) => {
-      const candidateMatch = await findOne(
-        "ai-driven-recruitment",
-        "scored_candidates",
-        {
-          applicant_id: input.candidateId,
-        },
-      );
+      const supabase = await createClientServer(true);
 
-      if (!candidateMatch) {
+      const { data: candidateMatch, error: candidateMatchError } =
+        await supabase
+          .from("applicants")
+          .select("scored_candidates(score_data)")
+          .eq("id", input.candidateId)
+          .single();
+
+      if (candidateMatchError) {
+        console.error(
+          "Error fetching candidate match data",
+          candidateMatchError,
+        );
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Candidate match data not found",
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch candidate match data",
         });
       }
 
       return {
-        candidate: candidateMatch.score_data as ScoredCandidateScoreData,
+        candidate:
+          candidateMatch.scored_candidates as ScoredCandidateData | null,
       };
     }),
   rescoreCandidate: adminProcedure

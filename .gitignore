@@ -43,3 +43,5 @@ next-env.d.ts
 # IDEs and editors
 *.code-workspace
 .vscode/
+
+supabase/snippets

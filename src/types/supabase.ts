@@ -641,6 +641,21 @@ export type Database = {
           status: Database["public"]["Enums"]["candidate_status"];
         }[];
       };
+      get_ai_metrics_overall_by_month: {
+        Args: { p_month: number; p_year: number };
+        Returns: {
+          avg_job_fit_score: number;
+          avg_response_time: number;
+        }[];
+      };
+      get_ai_metrics_weekly_by_month: {
+        Args: { p_month: number; p_year: number };
+        Returns: {
+          avg_job_fit_score: number;
+          avg_response_time: number;
+          week: number;
+        }[];
+      };
       get_bottleneck_percentiles: {
         Args: { from_ts: string; to_ts: string };
         Returns: {
@@ -667,6 +682,19 @@ export type Database = {
             }[];
           }
         | { Args: { end_date: string; start_date: string }; Returns: Json };
+      get_top_candidates_by_job_fit: {
+        Args: { p_limit?: number };
+        Returns: {
+          applicant_id: string;
+          email: string;
+          first_name: string;
+          job_fit_score: number;
+          last_name: string;
+          score_data: Json;
+          score_id: string;
+          status: Database["public"]["Enums"]["candidate_status"];
+        }[];
+      };
     };
     Enums: {
       action_type: "create" | "update" | "delete";
