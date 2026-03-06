@@ -184,6 +184,27 @@ export type Database = {
             referencedRelation: "job_listings";
             referencedColumns: ["id"];
           },
+          {
+            foreignKeyName: "applicants_parsed_resume_id_fkey";
+            columns: ["parsed_resume_id"];
+            isOneToOne: false;
+            referencedRelation: "parsed_resume";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "applicants_score_id_fkey";
+            columns: ["score_id"];
+            isOneToOne: false;
+            referencedRelation: "scored_candidates";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "applicants_transcribed_id_fkey";
+            columns: ["transcribed_id"];
+            isOneToOne: false;
+            referencedRelation: "transcribed";
+            referencedColumns: ["id"];
+          },
         ];
       };
       audit_logs: {
@@ -458,6 +479,42 @@ export type Database = {
           },
         ];
       };
+      parsed_resume: {
+        Row: {
+          created_at: string;
+          id: string;
+          parsed_resume: Json;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          parsed_resume: Json;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          parsed_resume?: Json;
+        };
+        Relationships: [];
+      };
+      scored_candidates: {
+        Row: {
+          created_at: string;
+          id: string;
+          score_data: Json;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          score_data: Json;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          score_data?: Json;
+        };
+        Relationships: [];
+      };
       social_links: {
         Row: {
           applicant_id: string;
@@ -523,6 +580,24 @@ export type Database = {
           id?: number;
           name?: string;
           slug?: string | null;
+        };
+        Relationships: [];
+      };
+      transcribed: {
+        Row: {
+          created_at: string;
+          id: string;
+          transcription: Json;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          transcription: Json;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          transcription?: Json;
         };
         Relationships: [];
       };
