@@ -790,13 +790,7 @@ const candidateRouter = createTRPCRouter({
       }
 
       const scoreAPI = new URL("http://localhost:8000/score/");
-      scoreAPI.searchParams.set("job_id", applicant.joblisting_id);
       scoreAPI.searchParams.set("applicant_id", applicant.id);
-      scoreAPI.searchParams.set("resume_public_id", applicant.resume_id);
-      scoreAPI.searchParams.set(
-        "transcript_public_id",
-        applicant.transcript_id,
-      );
 
       fetch(scoreAPI.toString(), {
         method: "POST",

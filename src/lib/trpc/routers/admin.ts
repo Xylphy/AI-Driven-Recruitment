@@ -153,22 +153,6 @@ const adminRouter = createTRPCRouter({
       jobs,
     };
   }),
-  compareCandidates: adminProcedure
-    .input(
-      z.object({
-        applicantIdA: z.uuid(),
-        applicantIdB: z.uuid(),
-      }),
-    )
-    .query(async ({ input }) => {
-      const compareAPI = new URL("http://localhost:8000/score/");
-      compareAPI.searchParams.set("applicant1_id", input.applicantIdA);
-      compareAPI.searchParams.set("applicant2_id", input.applicantIdB);
-
-      return {
-        compareResult: await fetch(compareAPI).then((res) => res.json()),
-      };
-    }),
   auditLogs: adminProcedure
     .input(
       z.object({
