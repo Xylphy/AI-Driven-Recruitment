@@ -6,9 +6,9 @@ import { useState } from "react";
 import Select from "react-select";
 import useAuth from "@/hooks/useAuth";
 import { formatDate } from "@/lib/library";
-import type { Tables } from "@/types/supabase";
 import { swalError, swalInfo } from "@/lib/swal";
 import { trpc } from "@/lib/trpc/client";
+import type { Tables } from "@/types/supabase";
 import type { FetchCandidateProfileOutput } from "@/types/types";
 
 interface CandidateID {

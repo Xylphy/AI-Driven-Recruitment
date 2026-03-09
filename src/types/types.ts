@@ -97,6 +97,7 @@ export type ScoredCandidateData = {
   response_time: number;
   job_fit_score: number;
   job_fit_stars: number;
+  predictive_success: number;
 };
 
 export type TranscribedData = {

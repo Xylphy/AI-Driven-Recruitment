@@ -9,8 +9,7 @@ type FileLocation = {
 export async function uploadFile(file: File, folder: string) {
   const supabase = await createClientServer();
   const fileName = `${randomUUID()}_${file.name
-    .replace(/\.[^/.]+$/, "")
-    .replace(/[^a-zA-Z0-9_-]/g, "_")
+    .replace(/[^a-zA-Z0-9_.-]/g, "_")
     .toLowerCase()}`;
 
   const filePath = `${folder}/${fileName}`;
