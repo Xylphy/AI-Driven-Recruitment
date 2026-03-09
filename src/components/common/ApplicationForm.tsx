@@ -61,11 +61,14 @@ export function ApplicationForm({
           >
             Upload Resume
           </label>
+
           <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
             <FileUpload
               onFileSelect={handleFileSelect}
-              labelName="Upload Resume"
+              labelName="Resume"
               required
+              accept="application/pdf"
+              helperText="PDF – max 10MB"
             />
           </div>
         </div>
@@ -206,8 +209,10 @@ export function ApplicationForm({
             {handleTranscriptSelect && (
               <FileUpload
                 onFileSelect={handleTranscriptSelect}
-                labelName="Upload Interview Video"
+                labelName="Interview Video"
                 required
+                accept="video/mp4,video/webm,video/ogg,video/x-msvideo,video/quicktime"
+                helperText="MP4, WebM, OGG, AVI, MOV – max 90MB"
               />
             )}
           </div>
