@@ -456,7 +456,6 @@ const candidateRouter = createTRPCRouter({
       const compareAPI = new URL("http://localhost:8000/compare_candidate/");
       compareAPI.searchParams.set("applicant1_id", input.userId_A);
       compareAPI.searchParams.set("applicant2_id", input.userId_B);
-      compareAPI.searchParams.set("job_id", input.jobId);
 
       const response = await fetch(compareAPI.toString());
 
