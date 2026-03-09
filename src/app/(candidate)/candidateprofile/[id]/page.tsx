@@ -141,6 +141,51 @@ function getLinkMeta(rawUrl: string) {
   return { icon: MdLink, label: "Link", url: normalized };
 }
 
+function StatusScoreCards() {
+  const statuses = [
+    "Paper Screening",
+    "Exam",
+    "HR Interview",
+    "Technical Interview",
+    "Final Interview",
+  ];
+
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+      {statuses.map((status) => (
+        <div
+          key={status}
+          className="
+            relative
+            rounded-2xl
+            bg-white/40
+            backdrop-blur-xl
+            border border-white/40
+            shadow-md
+            p-4
+            flex flex-col
+            items-center
+            justify-center
+            text-center
+            transition-all
+            hover:scale-[1.03]
+          "
+        >
+          <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/40 to-transparent pointer-events-none" />
+
+          <p className="text-[11px] font-semibold tracking-widest text-gray-500 uppercase">
+            {status}
+          </p>
+
+          <p className="text-2xl font-bold text-gray-400 mt-2">--</p>
+
+          <p className="text-xs text-gray-400 mt-1">out of 5</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function Page() {
   const router = useRouter();
   const candidateId = useParams().id as string;
@@ -669,6 +714,7 @@ export default function Page() {
         <div className="bg-white rounded-lg shadow-md p-6">
           {activeTab === HeaderTabKey.Evaluation ? (
             <div className="flex flex-col gap-6">
+              <StatusScoreCards />
               <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 h-full">
                 <h3 className="font-semibold mb-2">AI Generated Report</h3>
                 {candidateProfileQuery.data ? (
