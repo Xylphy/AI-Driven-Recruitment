@@ -26,7 +26,7 @@ import { trpc } from "@/lib/trpc/client";
 export default function AdminNavbar({
   children,
 }: {
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }) {
   const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -315,7 +315,6 @@ export default function AdminNavbar({
           </div>
         </AnimatePresence>
       </div>
-      {children}
     </div>
   );
 }
