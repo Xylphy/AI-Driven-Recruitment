@@ -7,11 +7,15 @@ export default function FileUpload({
   defaultFileName = "No file selected",
   labelName,
   required = false,
+  accept,
+  helperText,
 }: {
   onFileSelect: (file: File | null) => void;
   defaultFileName?: string | undefined;
   labelName: string;
   required?: boolean;
+  accept?: string;
+  helperText?: string;
 }) {
   const [fileName, setFileName] = useState(defaultFileName);
   const [isDragging, setIsDragging] = useState(false);
@@ -58,7 +62,7 @@ export default function FileUpload({
         id={labelName}
         name={labelName}
         type="file"
-        accept=".doc,.docx,.pdf,.odt,.rtf"
+        accept={accept}
         className="sr-only"
         onChange={handleFileChange}
         required={required}
@@ -110,6 +114,7 @@ export default function FileUpload({
           </div>
 
           <p className="text-sm font-medium text-gray-700">{fileName}</p>
+          {helperText && <p className="text-xs text-gray-500">{helperText}</p>}
         </div>
       </button>
     </div>
