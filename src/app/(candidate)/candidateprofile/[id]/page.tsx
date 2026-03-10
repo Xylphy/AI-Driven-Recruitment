@@ -148,8 +148,6 @@ export default function Page() {
   const [selectedStatus, setSelectedStatus] =
     useState<CandidateStatuses | null>(null);
 
-  const status = "HR Interview";
-
   const [activeTab, setActiveTab] = useState<HeaderTabKey>(
     HeaderTabKey.Evaluation,
   );
@@ -772,10 +770,10 @@ export default function Page() {
                               whitespace-nowrap
                               backdrop-blur-md
                               border
-                              ${statusClassMap[status]}
+                              ${statusClassMap[report.candidate_status]}
                             `}
                             >
-                              {status || "Paper Screening"}
+                              {report.candidate_status || "Paper Screening"}
                             </div>
                             <div className="flex items-center gap-3 shrink-0">
                               <div className="px-3 py-1 bg-red-600/10 text-red-600 text-sm font-semibold rounded-full whitespace-nowrap">

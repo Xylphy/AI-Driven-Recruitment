@@ -20,7 +20,6 @@ type UIState = {
 export default function Page() {
   const router = useRouter();
   const jobId = useParams().id as string;
-  // const [showSkillModal, setShowSkillModal] = useState(false);
   const [tags, setTags] = useState<
     {
       skill: string;
@@ -50,7 +49,6 @@ export default function Page() {
     ? jobDetailsStaff.data
     : jobDetailsUser.data;
 
-  // const applyJobMutation = trpc.joblisting.applyForJob.useMutation();
   const deleteJobMutation = trpc.joblisting.deleteJoblisting.useMutation();
 
   useEffect(() => {
