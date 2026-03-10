@@ -7,7 +7,7 @@ import { z } from "zod";
 import { EVENT_TYPES, REGULAR_STAFF_ROLES } from "@/lib/constants";
 import { createUserWithEmailAndPassword } from "@/lib/firebase/action";
 import { getAuth } from "@/lib/firebase/admin";
-import { addStaffSchema } from "@/lib/schemas";
+import { addStaffSchema } from "@/lib/schemas/user";
 import { createClientServer } from "@/lib/supabase/supabase";
 import type { Tables } from "@/types/supabase";
 import type {

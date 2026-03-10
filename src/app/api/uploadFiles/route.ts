@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { filesSchema } from "@/lib/schemas";
+import { filesSchema } from "@/lib/schemas/user";
 import { uploadFile } from "@/lib/supabase/action";
 
 export async function POST(request: Request) {
@@ -23,18 +23,18 @@ export async function POST(request: Request) {
 
   const folder = `${new Date().toLocaleDateString("en-US", { year: "numeric", month: "2-digit", day: "2-digit" }).replace(/\//g, "-")}`;
 
-  const [resumeURL, transcriptURL] = await Promise.all([
+  const [resumePathname, transcriptPathname] = await Promise.all([
     validatedData.data.resume
-      ? uploadFile(validatedData.data.resume, folder)
+      ? uploadFile(validatedData.data.resume, folder, "applications")
       : Promise.resolve(null),
     validatedData.data.transcript
-      ? uploadFile(validatedData.data.transcript, folder)
+      ? uploadFile(validatedData.data.transcript, folder, "applications")
       : Promise.resolve(null),
   ]);
 
   return NextResponse.json({
     success: true,
-    resumeURL,
-    transcriptURL,
+    resumeURL: resumePathname,
+    transcriptURL: transcriptPathname,
   });
 }

@@ -283,6 +283,7 @@ export type Database = {
           applicant_id: string;
           candidate_status: Database["public"]["Enums"]["candidate_status"];
           created_at: string;
+          file_pathname: string | null;
           id: string;
           score: number;
           staff_id: string;
@@ -292,6 +293,7 @@ export type Database = {
           applicant_id?: string;
           candidate_status?: Database["public"]["Enums"]["candidate_status"];
           created_at?: string;
+          file_pathname?: string | null;
           id?: string;
           score: number;
           staff_id?: string;
@@ -301,6 +303,7 @@ export type Database = {
           applicant_id?: string;
           candidate_status?: Database["public"]["Enums"]["candidate_status"];
           created_at?: string;
+          file_pathname?: string | null;
           id?: string;
           score?: number;
           staff_id?: string;

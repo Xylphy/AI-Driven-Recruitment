@@ -6,19 +6,28 @@ type FileLocation = {
   path: string;
 };
 
-export async function uploadFile(file: File, folder: string) {
-  const supabase = await createClientServer();
+export async function uploadFile(
+  file: File,
+  prefix: string = "",
+  bucket: string,
+) {
+  const supabase = await createClientServer(true);
   const fileName = `${randomUUID()}_${file.name
     .replace(/[^a-zA-Z0-9_.-]/g, "_")
     .toLowerCase()}`;
 
-  const filePath = `${folder}/${fileName}`;
+  const filePath = `${prefix}${fileName}`;
 
   const { data, error } = await supabase.storage
-    .from("applications")
+    .from(bucket)
     .upload(filePath, file);
 
-  if (error) throw new Error(`Upload failed: ${error.message}`);
+  if (error) {
+    console.error("Supabase upload error full:", error);
+    throw new Error(
+      `Upload failed: ${error.message} | ${JSON.stringify(error)}`,
+    );
+  }
   return data.fullPath;
 }
 
@@ -28,11 +37,11 @@ export async function deleteFile(fileLocation: FileLocation) {
     .from(fileLocation.bucket)
     .remove([fileLocation.path]);
 
-  if (error) throw new Error(`Delete failed: ${error.message}`);
+  return !error;
 }
 
 export async function getFileInfo(fileLocation: FileLocation) {
-  const supabase = await createClientServer();
+  const supabase = await createClientServer(true);
   const { data, error } = await supabase.storage
     .from(fileLocation.bucket)
     .info(fileLocation.path);

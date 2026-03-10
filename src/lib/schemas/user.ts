@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { REGULAR_STAFF_ROLES } from "../constants";
+import {
+  FILE_SIZE_LIMIT,
+  REGULAR_STAFF_ROLES,
+  VIDEO_SIZE_LIMIT,
+} from "../constants";
 
 export const userSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -32,7 +36,7 @@ export const filesSchema = z.object({
       message: "Invalid input",
     })
     .refine(
-      (file) => file.size <= 90 * 1024 * 1024,
+      (file) => file.size <= VIDEO_SIZE_LIMIT,
       "Transcript file must be smaller than 90MB",
     )
     .refine(
@@ -51,7 +55,7 @@ export const filesSchema = z.object({
       message: "Invalid input",
     })
     .refine(
-      (file) => file.size <= 10 * 1024 * 1024,
+      (file) => file.size <= FILE_SIZE_LIMIT,
       "Resume file must be smaller than 10MB",
     )
     .refine(
@@ -82,4 +86,9 @@ export const updatePasswordSchema = z.object({
     .regex(/[0-9]/, "Password must contain at least one number")
     .regex(/[a-z]/, "Password must contain at least one lowercase letter")
     .regex(/[A-Z]/, "Password must contain at least one uppercase letter"),
+});
+
+export const jwtSchema = z.object({
+  id: z.string(),
+  role: z.enum(Object.values([...REGULAR_STAFF_ROLES, "SuperAdmin"] as const)),
 });

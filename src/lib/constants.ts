@@ -1,3 +1,5 @@
+export const FILE_SIZE_LIMIT = 10 * 1024 * 1024; // 10MB
+export const VIDEO_SIZE_LIMIT = 90 * 1024 * 1024; // 90MB
 export const MONTHS = [
   "January",
   "February",

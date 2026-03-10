@@ -1,3 +1,3 @@
 export * from "./common";
-export * from "./jobListing";
+export * from "./joblisting";
 export * from "./user";

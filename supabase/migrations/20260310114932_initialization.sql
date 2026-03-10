@@ -125,7 +125,8 @@ CREATE TABLE "public"."hr_reports"(
   "staff_id" uuid NOT NULL DEFAULT gen_random_uuid(),
   "score" real NOT NULL,
   "summary" text NOT NULL,
-  "candidate_status" public.candidate_status NOT NULL DEFAULT 'Paper Screening'::public.candidate_status
+  "candidate_status" public.candidate_status NOT NULL DEFAULT 'Paper Screening'::public.candidate_status,
+  "file_pathname" text
 );
 
 ALTER TABLE "public"."hr_reports" ENABLE ROW LEVEL SECURITY;

@@ -144,7 +144,7 @@ function getLinkMeta(rawUrl: string) {
 export default function Page() {
   const router = useRouter();
   const candidateId = useParams().id as string;
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, csrfToken } = useAuth();
   const [selectedStatus, setSelectedStatus] =
     useState<CandidateStatuses | null>(null);
 
@@ -188,7 +188,6 @@ export default function Page() {
   const updateCandidateStatusMutation =
     trpc.candidate.updateCandidateStatus.useMutation();
 
-  const createHRReportMutation = trpc.staff.postHrReport.useMutation();
   const getHRReportsQuery = trpc.staff.fetchHRReports.useQuery(
     { applicantId: candidateId },
     {
@@ -245,11 +244,7 @@ export default function Page() {
   };
 
   const candidate = candidateProfileQuery.data;
-  const contactItems = [
-    ...(candidateProfileQuery.data?.socialLinks ?? []).map((link) =>
-      getLinkMeta(link),
-    ),
-  ];
+
   const handleDeleteReport = (reportId: string) => {
     if (confirm("Are you sure you want to delete this HR evaluation?")) {
       deleteHRReportMutation.mutate(
@@ -271,10 +266,6 @@ export default function Page() {
         },
       );
     }
-  };
-
-  const handleEditReport = (index: number) => {
-    setEditingIndex(index);
   };
 
   const handleSaveEdit = () => {
@@ -307,8 +298,45 @@ export default function Page() {
     );
   };
 
-  const handleCancelEdit = () => {
-    setEditingIndex(null);
+  const handleStaffEvaluationSubmit = async (data: {
+    score: number;
+    keyHighlights: string;
+    summary: string;
+    evaluationFile?: File;
+  }) => {
+    try {
+      const formData = new FormData();
+      formData.append("score", String(data.score));
+      formData.append("applicantId", candidateId);
+      formData.append("summary", data.summary);
+      formData.append("keyHighlights", data.keyHighlights);
+
+      if (data.evaluationFile) {
+        formData.append("evaluationFile", data.evaluationFile);
+      }
+
+      const response = await fetch("/api/staffEvaluation", {
+        method: "POST",
+        body: formData,
+        headers: { "X-CSRF-Token": csrfToken ?? "" },
+      });
+
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(
+          payload?.message || "Failed to submit HR report. Please try again.",
+        );
+      }
+
+      await getHRReportsQuery.refetch();
+      swalSuccess("Report Submitted", "HR report submitted successfully.");
+    } catch (error: unknown) {
+      swalError(
+        "Submission Failed",
+        error instanceof Error ? error.message : String(error),
+      );
+    }
   };
 
   if (!isAuthenticated) {
@@ -381,7 +409,11 @@ export default function Page() {
             </p>
 
             <div className="flex flex-wrap gap-2 text-red-500 mt-2">
-              {contactItems
+              {[
+                ...(candidateProfileQuery.data?.socialLinks ?? []).map((link) =>
+                  getLinkMeta(link),
+                ),
+              ]
                 .filter((item): item is LinkMeta => Boolean(item))
                 .map((item) => {
                   const Icon = item.icon;
@@ -530,20 +562,20 @@ export default function Page() {
         {showScheduleModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
             <div
-              className="
-                        relative
-                        bg-white/40 
-                        backdrop-blur-2xl 
-                        border border-white/30 
-                        shadow-[0_10px_40px_rgba(0,0,0,0.08)] 
-                        rounded-3xl 
-                        p-8 
-                        flex 
-                        flex-col 
-                        items-center 
-                        gap-6
-                        overflow-hidden
-                      "
+              className={[
+                "relative",
+                "bg-white/40",
+                "backdrop-blur-2xl",
+                "border border-white/30",
+                "shadow-[0_10px_40px_rgba(0,0,0,0.08)]",
+                "rounded-3xl",
+                "p-8",
+                "flex",
+                "flex-col",
+                "items-center",
+                "gap-6",
+                "overflow-hidden",
+              ].join(" ")}
             >
               <div className="absolute inset-0 bg-linear-to-br from-red-100/40 via-white/10 to-red-50/30 pointer-events-none" />
 
@@ -697,31 +729,8 @@ export default function Page() {
                 <h3 className="font-semibold mb-2">Staff Evaluation</h3>
                 <div className="w-full flex justify-center mb-4">
                   <HRReport
-                    onSubmit={(data) => {
-                      createHRReportMutation.mutate(
-                        {
-                          ...data,
-                          applicantId: candidateId,
-                        },
-                        {
-                          onSuccess: () => {
-                            getHRReportsQuery.refetch();
-                            swalSuccess(
-                              "Report Submitted",
-                              "HR report submitted successfully.",
-                            );
-                          },
-                          onError: (error) => {
-                            swalError(
-                              "Submission Failed",
-                              error instanceof Error
-                                ? error.message
-                                : String(error),
-                            );
-                          },
-                        },
-                      );
-                    }}
+                    status={selectedStatus || "Paper Screening"}
+                    onSubmit={handleStaffEvaluationSubmit}
                   />
                 </div>
                 <div
@@ -789,7 +798,11 @@ export default function Page() {
                                 <div className="flex items-center gap-2">
                                   <button
                                     type="button"
-                                    onClick={() => handleEditReport(idx)}
+                                    onClick={() =>
+                                      ((index: number) => {
+                                        setEditingIndex(index);
+                                      })(idx)
+                                    }
                                     className="
                                       p-2 rounded-xl
                                       bg-white/70 backdrop-blur-md
@@ -1006,7 +1019,7 @@ export default function Page() {
                                   <div className="flex justify-end gap-3">
                                     <button
                                       type="button"
-                                      onClick={handleCancelEdit}
+                                      onClick={() => setEditingIndex(null)}
                                       className="
                                     px-5 py-2 rounded-xl
                                     bg-white/70 backdrop-blur-md

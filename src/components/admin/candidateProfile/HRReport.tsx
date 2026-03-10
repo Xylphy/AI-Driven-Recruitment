@@ -6,21 +6,19 @@ import {
   Transition,
   TransitionChild,
 } from "@headlessui/react";
-import { useParams } from "next/navigation";
-import { Fragment, startTransition, useEffect, useState } from "react";
+import { Fragment, useState } from "react";
 import { FiPlus, FiX } from "react-icons/fi";
-import useAuth from "@/hooks/useAuth";
-import { trpc } from "@/lib/trpc/client";
-import type { CandidateStatuses } from "@/types/types";
 
 interface HRReportProps {
   score?: number;
   keyHighlights?: string;
   summary?: string;
-  onSubmit?: (data: {
+  status: string;
+  onSubmit: (data: {
     score: number;
     keyHighlights: string;
     summary: string;
+    evaluationFile?: File;
   }) => void;
 }
 
@@ -28,46 +26,30 @@ export default function HRReport({
   score: initialScore = 0,
   keyHighlights: initialKeyHighlights = "",
   summary: initialSummary = "",
+  status: selectedStatus,
   onSubmit,
 }: HRReportProps) {
-  const { isAuthenticated } = useAuth();
-  const candidateId = useParams().id as string;
   const [isOpen, setIsOpen] = useState(false);
   const [score, setScore] = useState<number>(initialScore);
   const [highlights, setHighlights] = useState(initialKeyHighlights);
   const [summary, setSummary] = useState(initialSummary);
-  const [selectedStatus, setSelectedStatus] =
-    useState<CandidateStatuses | null>(null);
-
-  const candidateProfileQuery = trpc.candidate.fetchCandidateProfile.useQuery(
-    {
-      candidateId,
-      fetchScore: true,
-      fetchTranscribed: true,
-      fetchResume: true,
-      fetchSkills: true,
-      fetchSocialLinks: true,
-    },
-    { enabled: isAuthenticated },
-  );
-
-  useEffect(() => {
-    startTransition(() =>
-      setSelectedStatus(candidateProfileQuery.data?.status ?? null),
-    );
-  }, [candidateProfileQuery.data?.status]);
+  const [evaluationFile, setEvaluationFile] = useState<File | null>(null);
 
   const handleSubmit = () => {
-    const data = { score, keyHighlights: highlights, summary };
+    const data = {
+      score,
+      keyHighlights: highlights,
+      summary,
+      ...(evaluationFile ? { evaluationFile } : {}),
+    };
 
-    if (onSubmit) {
-      onSubmit(data);
-    }
+    onSubmit(data);
 
     setIsOpen(false);
     setScore(0);
     setHighlights("");
     setSummary("");
+    setEvaluationFile(null);
   };
 
   return (
@@ -152,7 +134,7 @@ export default function HRReport({
 
                 <div className="space-y-6">
                   <div className="w-full lg:w-55 bg-linear-to-r from-red-600 to-red-500 text-white border border-red-500/70 shadow-lg font-semibold px-4 py-2 rounded-xl">
-                    {selectedStatus || "Candidate Status"}
+                    {selectedStatus || "Status not available"}
                   </div>
                   <div>
                     <label
@@ -273,6 +255,11 @@ export default function HRReport({
                         id="fileUpload"
                         type="file"
                         name="fileUpload"
+                        accept=".pdf,.doc,.docx"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0] ?? null;
+                          setEvaluationFile(file);
+                        }}
                         className="
                           w-full cursor-pointer text-sm text-black/80
                           file:mr-4 file:rounded-xl file:border-0
