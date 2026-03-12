@@ -103,9 +103,21 @@ const candidateRouter = createTRPCRouter({
 
       if (input.searchQuery) {
         const search = `%${input.searchQuery}%`;
-        baseQuery = baseQuery.or(
-          `first_name.ilike.${search},last_name.ilike.${search},job_title.ilike.${search},status_text.ilike.${search}`,
+        const orParts = [
+          `first_name.ilike.${search}`,
+          `last_name.ilike.${search}`,
+        ];
+
+        const normalized = input.searchQuery.trim().toLowerCase();
+        const matchedStatuses = CANDIDATE_STATUSES.filter((s) =>
+          s.toLowerCase().includes(normalized),
         );
+
+        matchedStatuses.forEach((s) => {
+          orParts.push(`status.eq.${s}`);
+        });
+
+        baseQuery = baseQuery.or(orParts.join(","));
       }
       const { data: applicants, error: errorApplicants } = await baseQuery;
 

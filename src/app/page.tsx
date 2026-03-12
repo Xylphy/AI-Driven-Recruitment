@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import useDebounce from "@/hooks/useDebounce";
 import { trpc } from "@/lib/trpc/client";
 
 export default function Careers() {
-  const jobsQuery = trpc.joblisting.fetchJobs.useQuery({});
   const [jobTitle, setJobTitle] = useState("");
-  const filteredJobs = jobsQuery.data?.jobs.filter((job) =>
-    job.title.toLowerCase().includes(jobTitle.toLowerCase()),
-  );
+  const debouncedJobTitle = useDebounce(jobTitle);
+  const jobsQuery = trpc.joblisting.fetchJobs.useQuery({
+    searchQuery: debouncedJobTitle,
+  });
 
   if (jobsQuery.isLoading) {
     return (
@@ -107,7 +108,7 @@ export default function Careers() {
         </div>
 
         <div className="md:col-span-2 space-y-4 overflow-y-auto max-h-125 pr-2">
-          {filteredJobs?.map((job) => (
+          {jobsQuery.data?.jobs.map((job) => (
             <Link
               key={job.id}
               href={`/joblisting/${job.id}`}

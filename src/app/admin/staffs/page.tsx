@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import useAuth from "@/hooks/useAuth";
+import useDebounce from "@/hooks/useDebounce";
 import { REGULAR_STAFF_ROLES } from "@/lib/constants";
 import { addStaffSchema } from "@/lib/schemas";
 import { swalError, swalSuccess } from "@/lib/swal";
@@ -11,6 +12,7 @@ import type { RegularStaffRoles } from "@/types/types";
 export default function UsersPage() {
   const { isAuthenticated } = useAuth();
   const [searchInput, setSearchInput] = useState("");
+  const debouncedSearchInput = useDebounce(searchInput);
 
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [newStaffRole, setNewStaffRole] = useState<RegularStaffRoles>("Staff");
@@ -21,7 +23,7 @@ export default function UsersPage() {
 
   const staffsQuery = trpc.admin.staffs.useQuery(
     {
-      searchQuery: searchInput || undefined,
+      searchQuery: debouncedSearchInput,
     },
     {
       enabled: isAuthenticated,

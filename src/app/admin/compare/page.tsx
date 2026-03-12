@@ -49,8 +49,9 @@ export default function ComparePage() {
   const [editingFeedbackId, setEditingFeedbackId] = useState<string | null>(
     null,
   );
-  const [editedFeedback, setEditedFeedback] = useState("");
-  const [showAdminFeedbackFields, setShowAdminFeedbackFields] = useState(false);
+  const [editedFeedback, setEditedFeedback] = useState<string>("");
+  const [showAdminFeedbackFields, setShowAdminFeedbackFields] =
+    useState<boolean>(false);
 
   const { isAuthenticated } = useAuth();
 

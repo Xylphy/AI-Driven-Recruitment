@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import useAuth from "@/hooks/useAuth";
+import useDebounce from "@/hooks/useDebounce";
 import { trpc } from "@/lib/trpc/client";
 
 type Job = {
@@ -19,11 +20,12 @@ export default function JobsPage() {
   useAuth();
   const router = useRouter();
   const [searchInput, setSearchInput] = useState("");
+  const debouncedSearchInput = useDebounce(searchInput);
   const userInfo = trpc.auth.decodeJWT.useQuery();
   const role = userInfo.data?.user.role;
 
   const jobsQuery = trpc.admin.fetchJobs.useQuery(
-    { searchQuery: searchInput },
+    { searchQuery: debouncedSearchInput },
     {
       enabled:
         (userInfo.isSuccess && role === "Admin") || role === "SuperAdmin",

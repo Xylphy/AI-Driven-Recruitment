@@ -2,15 +2,17 @@
 
 import { useState } from "react";
 import useAuth from "@/hooks/useAuth";
+import useDebounce from "@/hooks/useDebounce";
 import { trpc } from "@/lib/trpc/client";
 
 export default function HROfficersPage() {
   const { isAuthenticated } = useAuth();
   const [searchInput, setSearchInput] = useState("");
+  const debouncedSearchInput = useDebounce(searchInput);
 
   const hrOfficersQuery = trpc.admin.fetchHrOfficers.useQuery(
     {
-      query: searchInput || undefined,
+      query: debouncedSearchInput,
     },
     {
       enabled: isAuthenticated,
