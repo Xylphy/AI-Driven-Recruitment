@@ -7,13 +7,9 @@ import { trpc } from "@/lib/trpc/client";
 export default function Careers() {
   const jobsQuery = trpc.joblisting.fetchJobs.useQuery({});
   const [jobTitle, setJobTitle] = useState("");
-  const filteredJobs = jobsQuery.data?.jobs.filter((job) => {
-    const matchesTitle = job.title
-      .toLowerCase()
-      .includes(jobTitle.toLowerCase());
-
-    return matchesTitle;
-  });
+  const filteredJobs = jobsQuery.data?.jobs.filter((job) =>
+    job.title.toLowerCase().includes(jobTitle.toLowerCase()),
+  );
 
   if (jobsQuery.isLoading) {
     return (

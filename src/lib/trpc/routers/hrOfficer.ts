@@ -2,6 +2,7 @@
 
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import { PAGE_SIZE } from "@/lib/constants";
 import { createClientServer } from "@/lib/supabase/supabase";
 import type { Json } from "@/types/supabase";
 import {
@@ -15,6 +16,8 @@ const hrOfficerRouter = createTRPCRouter({
     .input(
       z.object({
         query: z.string().optional(),
+        limit: z.number().optional().default(PAGE_SIZE),
+        cursor: z.string().optional(),
       }),
     )
     .query(async ({ input, ctx }) => {
@@ -24,7 +27,13 @@ const hrOfficerRouter = createTRPCRouter({
         .from("job_listings")
         .select("*, applicants(id)")
         // biome-ignore lint/style/noNonNullAssertion: JWT is guaranteed to be present by hrOfficerProcedure
-        .eq("officer_id", ctx.userJWT!.id);
+        .eq("staff_id", ctx.userJWT!.id)
+        .limit(input.limit)
+        .order("created_at", { ascending: false });
+
+      if (input.cursor) {
+        query.lt("created_at", input.cursor);
+      }
 
       if (input.query) {
         query.ilike("title", `%${input.query}%`);
@@ -49,6 +58,11 @@ const hrOfficerRouter = createTRPCRouter({
           location: item.location,
           applicant_count: item.applicants?.length || 0,
         })),
+
+        nextCursor:
+          data && data.length === input.limit
+            ? data[data.length - 1]?.created_at
+            : undefined,
       };
     }),
   deleteHRReport: authorizedProcedure

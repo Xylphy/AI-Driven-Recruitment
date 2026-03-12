@@ -546,6 +546,7 @@ export type Database = {
       };
       staff: {
         Row: {
+          created_at: string;
           firebase_uid: string;
           first_name: string;
           id: string;
@@ -553,6 +554,7 @@ export type Database = {
           role: Database["public"]["Enums"]["user_roles"];
         };
         Insert: {
+          created_at?: string;
           firebase_uid: string;
           first_name: string;
           id?: string;
@@ -560,6 +562,7 @@ export type Database = {
           role: Database["public"]["Enums"]["user_roles"];
         };
         Update: {
+          created_at?: string;
           firebase_uid?: string;
           first_name?: string;
           id?: string;

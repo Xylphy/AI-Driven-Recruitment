@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import z from "zod";
-import { CANDIDATE_STATUSES } from "@/lib/constants";
+import { CANDIDATE_STATUSES, PAGE_SIZE } from "@/lib/constants";
 import admin, { getDb } from "@/lib/firebase/admin";
 import { createClientServer } from "@/lib/supabase/supabase";
 import type { Json, Tables } from "@/types/supabase";
@@ -36,6 +36,8 @@ const candidateRouter = createTRPCRouter({
       z.object({
         jobId: z.uuid().optional(),
         searchQuery: z.string().optional(),
+        limit: z.number().optional().default(PAGE_SIZE),
+        cursor: z.string().optional(),
       }),
     )
     .query(async ({ input, ctx }) => {
@@ -49,7 +51,7 @@ const candidateRouter = createTRPCRouter({
         const { data: listings, error: listingsError } = await supabaseClient
           .from("job_listings")
           .select("id")
-          .eq("officer_id", ctx.userJWT?.id);
+          .eq("staff_id", ctx.userJWT?.id);
 
         if (listingsError) {
           throw new TRPCError({
@@ -82,8 +84,14 @@ const candidateRouter = createTRPCRouter({
       let baseQuery = supabaseClient
         .from("applicants")
         .select(
-          "*, job_title: job_listings(title), scored_candidates(score_data)",
-        );
+          "id, first_name, last_name, resume_id, email, status, created_at, job_listings(title), scored_candidates(score_data)",
+        )
+        .limit(input.limit)
+        .order("created_at", { ascending: false });
+
+      if (input.cursor) {
+        baseQuery = baseQuery.lt("created_at", input.cursor);
+      }
 
       filters.forEach(({ column, value }) => {
         if (Array.isArray(value)) {
@@ -121,7 +129,7 @@ const candidateRouter = createTRPCRouter({
               predictiveSuccess: scoreData?.job_fit_score ?? 0,
               status: applicant.status,
               resumeId: applicant.resume_id,
-              jobTitle: applicant.job_title || "N/A",
+              jobTitle: applicant.job_listings.title || "N/A",
               email: applicant.email || "N/A",
             };
           })
@@ -129,6 +137,10 @@ const candidateRouter = createTRPCRouter({
             (applicantA, applicantB) =>
               applicantB.predictiveSuccess - applicantA.predictiveSuccess,
           ),
+        nextCursor:
+          applicants?.length === input.limit
+            ? applicants[applicants.length - 1]?.created_at
+            : undefined,
       };
     }),
   fetchCandidateProfile: authorizedProcedure
@@ -389,6 +401,8 @@ const candidateRouter = createTRPCRouter({
     .input(
       z.object({
         candidateId: z.uuid(),
+        limit: z.number().optional().default(PAGE_SIZE),
+        cursor: z.string().optional(),
       }),
     )
     .query(async ({ input }) => {
@@ -397,7 +411,9 @@ const candidateRouter = createTRPCRouter({
         await supabaseClient
           .from("admin_feedback")
           .select("*")
-          .eq("applicant_id", input.candidateId);
+          .eq("applicant_id", input.candidateId)
+          .limit(input.limit)
+          .order("created_at", { ascending: false });
 
       if (jobApplicantError) {
         console.error("Error fetching job applicants", jobApplicantError);
@@ -409,6 +425,10 @@ const candidateRouter = createTRPCRouter({
 
       return {
         adminFeedback,
+        nextCursor:
+          adminFeedback && adminFeedback.length === input.limit
+            ? adminFeedback[adminFeedback.length - 1]?.created_at
+            : undefined,
       };
     }),
   fetchAICompare: adminProcedure
@@ -525,17 +545,27 @@ const candidateRouter = createTRPCRouter({
       z.object({
         candidateAId: z.uuid(), // Applicant ID, not the user ID
         candidateBId: z.uuid(), // Applicant ID, not the user ID
+        limit: z.number().optional().default(PAGE_SIZE),
+        cursor: z.string().optional(),
       }),
     )
     .query(async ({ input }) => {
       const supabase = await createClientServer(true);
 
-      const { data, error } = await supabase
+      const query = supabase
         .from("admin_feedback")
         .select(
           "*, admin:staff!admin_id(first_name, last_name), applicant:applicants!applicant_id(first_name, last_name)",
         )
-        .in("applicant_id", [input.candidateAId, input.candidateBId]);
+        .in("applicant_id", [input.candidateAId, input.candidateBId])
+        .limit(input.limit)
+        .order("created_at", { ascending: false });
+
+      if (input.cursor) {
+        query.lt("created_at", input.cursor);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         console.error("Error fetching admin feedbacks ", error);
@@ -552,6 +582,10 @@ const candidateRouter = createTRPCRouter({
             applicant: Name;
           }
         >,
+        nextCursor:
+          data && data.length === input.limit
+            ? data[data.length - 1]?.created_at
+            : undefined,
       };
     }),
   updateAdminFeedback: adminProcedure
@@ -692,7 +726,7 @@ const candidateRouter = createTRPCRouter({
         const { data: listings, error: listingsError } = await supabaseClient
           .from("job_listings")
           .select("id")
-          .eq("officer_id", ctx.userJWT?.id);
+          .eq("staff_id", ctx.userJWT?.id);
 
         if (listingsError) {
           throw new TRPCError({

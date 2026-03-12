@@ -45,23 +45,6 @@ export default function UsersPage() {
     password: staffPassword,
   });
 
-  const handleRoleChange = async (userId: string, newRole: RegularStaffRoles) =>
-    await changeRoleMutation.mutateAsync(
-      { userId, newRole },
-      {
-        onSuccess: () => {
-          staffsQuery.refetch();
-        },
-        onError: (error) => {
-          swalError(
-            "Role Update Failed",
-            `Failed to change user role: ${error.message}`,
-          );
-        },
-      },
-    );
-
-  // ✅ Placeholder add (local only)
   const handleAddStaff = () => {
     if (!isStaffValid) {
       swalError("Validation Failed", staffError);
@@ -171,10 +154,21 @@ export default function UsersPage() {
                       <select
                         value={staff.role}
                         onChange={(e) =>
-                          handleRoleChange(
-                            staff.id,
-                            e.target.value as RegularStaffRoles,
-                          )
+                          (async (userId: string, newRole: RegularStaffRoles) =>
+                            await changeRoleMutation.mutateAsync(
+                              { userId, newRole },
+                              {
+                                onSuccess: () => {
+                                  staffsQuery.refetch();
+                                },
+                                onError: (error) => {
+                                  swalError(
+                                    "Role Update Failed",
+                                    `Failed to change user role: ${error.message}`,
+                                  );
+                                },
+                              },
+                            ))(staff.id, e.target.value as RegularStaffRoles)
                         }
                         className="border rounded px-2 py-1 text-sm focus:ring-1 focus:ring-red-500 focus:outline-none"
                       >

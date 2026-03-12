@@ -98,7 +98,7 @@ export default function ApplicantsPage() {
                   >
                     <td className="py-4 px-6 font-medium">{candidate.name}</td>
 
-                    <td className="py-4 px-6">{candidate.jobTitle.title}</td>
+                    <td className="py-4 px-6">{candidate.jobTitle}</td>
 
                     <td className="py-4 px-6 text-center">
                       <span

@@ -53,3 +53,5 @@ export const EVENT_TYPES = [
 ] as const;
 
 export const REGULAR_STAFF_ROLES = ["Admin", "Staff"] as const;
+
+export const PAGE_SIZE = 10; // Size for pagination
