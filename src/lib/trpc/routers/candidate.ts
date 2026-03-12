@@ -123,6 +123,7 @@ const candidateRouter = createTRPCRouter({
               resumeId: applicant.resume_id,
               jobTitle: applicant.job_title || "N/A",
               email: applicant.email || "N/A",
+              transcriptId: applicant.transcript_id,
             };
           })
           .sort(

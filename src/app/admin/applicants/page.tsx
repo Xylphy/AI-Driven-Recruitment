@@ -152,12 +152,12 @@ export default function ApplicantsPage() {
                         </a>
 
                         <a
-                          href={``}
+                          href={`${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BASE_URL}/object/public/${candidate.transcriptId}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="px-4 py-1 text-xs font-semibold rounded-xl bg-white/40 border border-red-400 text-red-600 backdrop-blur-md hover:bg-red-50 transition"
                         >
-                          Interview Video
+                          Introduction Video
                         </a>
                       </div>
                     </td>
