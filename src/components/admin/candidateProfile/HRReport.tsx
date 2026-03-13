@@ -1,5 +1,6 @@
 "use client";
 
+import { EVALUATION_STATUS_LIST } from "@/lib/constants";
 import {
   Dialog,
   DialogTitle,
@@ -54,8 +55,9 @@ export default function HRReport({
 
   return (
     <div className="flex flex-col items-center">
-      <button
-        className="
+      {EVALUATION_STATUS_LIST.includes(selectedStatus) && (
+        <button
+          className="
           flex items-center gap-2
           px-6 py-2.5
           rounded-xl
@@ -65,12 +67,13 @@ export default function HRReport({
           hover:scale-105
           transition-all duration-200
         "
-        onClick={() => setIsOpen(true)}
-        type="button"
-      >
-        <FiPlus />
-        Add Staff Evaluation
-      </button>
+          onClick={() => setIsOpen(true)}
+          type="button"
+        >
+          <FiPlus />
+          Add Staff Evaluation
+        </button>
+      )}
 
       <Transition appear show={isOpen} as={Fragment}>
         <Dialog

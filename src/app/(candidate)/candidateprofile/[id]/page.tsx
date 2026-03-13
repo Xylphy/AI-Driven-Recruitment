@@ -21,7 +21,7 @@ import { MdArrowBack, MdEmail, MdLink, MdPhone } from "react-icons/md";
 import Swal from "sweetalert2";
 import HRReport from "@/components/admin/candidateProfile/HRReport";
 import useAuth from "@/hooks/useAuth";
-import { CANDIDATE_STATUSES } from "@/lib/constants";
+import { CANDIDATE_STATUSES, EVALUATION_STATUS_LIST } from "@/lib/constants";
 import { formatDate } from "@/lib/library";
 import { swalError, swalSuccess } from "@/lib/swal";
 import { trpc } from "@/lib/trpc/client";
@@ -141,51 +141,6 @@ function getLinkMeta(rawUrl: string) {
   return { icon: MdLink, label: "Link", url: normalized };
 }
 
-function StatusScoreCards() {
-  const statuses = [
-    "Paper Screening",
-    "Exam",
-    "HR Interview",
-    "Technical Interview",
-    "Final Interview",
-  ];
-
-  return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
-      {statuses.map((status) => (
-        <div
-          key={status}
-          className="
-            relative
-            rounded-2xl
-            bg-white/40
-            backdrop-blur-xl
-            border border-white/40
-            shadow-md
-            p-4
-            flex flex-col
-            items-center
-            justify-center
-            text-center
-            transition-all
-            hover:scale-[1.03]
-          "
-        >
-          <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/40 to-transparent pointer-events-none" />
-
-          <p className="text-[11px] font-semibold tracking-widest text-gray-500 uppercase">
-            {status}
-          </p>
-
-          <p className="text-2xl font-bold text-gray-400 mt-2">--</p>
-
-          <p className="text-xs text-gray-400 mt-1">out of 5</p>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 export default function Page() {
   const router = useRouter();
   const candidateId = useParams().id as string;
@@ -207,7 +162,6 @@ export default function Page() {
     location: "",
   });
 
-  // New: edit form state
   const [editScore, setEditScore] = useState<number>(0);
   const [editHighlights, setEditHighlights] = useState<string>("");
   const [editSummary, setEditSummary] = useState<string>("");
@@ -239,8 +193,8 @@ export default function Page() {
       enabled: isAuthenticated,
     },
   );
-  const deleteHRReportMutation = trpc.hrOfficer.deleteHRReport.useMutation();
-  const updateHRReportMutation = trpc.hrOfficer.editHRReport.useMutation();
+  const deleteHRReportMutation = trpc.hrOfficer.deleteStaffEvaluation.useMutation();
+  const updateHRReportMutation = trpc.hrOfficer.staffStaffEvaluation.useMutation();
 
   const hrReportsData = useMemo(
     () => getHRReportsQuery.data ?? [],
@@ -271,9 +225,7 @@ export default function Page() {
   }, [editingReport]);
 
   useEffect(() => {
-    startTransition(() =>
-      setSelectedStatus(candidateProfileQuery.data?.status ?? null),
-    );
+    setSelectedStatus(candidateProfileQuery.data?.status ?? null);
   }, [candidateProfileQuery.data?.status]);
 
   const handleStatusChange = async (
@@ -744,7 +696,39 @@ export default function Page() {
         <div className="bg-white rounded-lg shadow-md p-6">
           {activeTab === HeaderTabKey.Evaluation ? (
             <div className="flex flex-col gap-6">
-              <StatusScoreCards />
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+                {EVALUATION_STATUS_LIST.map((status) => (
+                  <div
+                    key={status}
+                    className={[
+                      "relative",
+                      "rounded-2xl",
+                      "bg-white/40",
+                      "backdrop-blur-xl",
+                      "border border-white/40",
+                      "shadow-md",
+                      "p-4",
+                      "flex flex-col",
+                      "items-center",
+                      "justify-center",
+                      "text-center",
+                      "transition-all",
+                      "hover:scale-[1.03]",
+                    ].join(" ")}
+                  >
+                    <div className="absolute inset-0 rounded-2xl bg-linear-to-br from-white/40 to-transparent pointer-events-none" />
+
+                    <p className="text-[11px] font-semibold tracking-widest text-gray-500 uppercase">
+                      {status}
+                    </p>
+
+                    <p className="text-2xl font-bold text-gray-400 mt-2">--</p>
+
+                    <p className="text-xs text-gray-400 mt-1">out of 5</p>
+                  </div>
+                ))}
+              </div>
+
               <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 h-full">
                 <h3 className="font-semibold mb-2">AI Generated Report</h3>
                 {candidateProfileQuery.data ? (
@@ -1066,13 +1050,13 @@ export default function Page() {
                                     <button
                                       type="button"
                                       onClick={() => setEditingIndex(null)}
-                                      className="
-                                    px-5 py-2 rounded-xl
-                                    bg-white/70 backdrop-blur-md
-                                    border border-white/40
-                                    hover:bg-gray-200/50
-                                    transition
-                                  "
+                                      className={[
+                                        "px-5 py-2 rounded-xl",
+                                        "bg-white/70 backdrop-blur-md",
+                                        "border border-white/40",
+                                        "hover:bg-gray-200/50",
+                                        "transition",
+                                      ].join(" ")}
                                       disabled={
                                         updateHRReportMutation.isPending
                                       }
@@ -1083,14 +1067,14 @@ export default function Page() {
                                     <button
                                       type="button"
                                       onClick={handleSaveEdit}
-                                      className="
-                                    px-6 py-2 rounded-xl
-                                    bg-linear-to-r from-red-600 to-red-500
-                                    text-white font-semibold
-                                    shadow-md
-                                    hover:scale-105
-                                    transition-all
-                                  "
+                                      className={[
+                                        "px-6 py-2 rounded-xl",
+                                        "bg-linear-to-r from-red-600 to-red-500",
+                                        "text-white font-semibold",
+                                        "shadow-md",
+                                        "hover:scale-105 hover:shadow-lg",
+                                        "transition-all",
+                                      ].join(" ")}
                                       disabled={
                                         updateHRReportMutation.isPending
                                       }

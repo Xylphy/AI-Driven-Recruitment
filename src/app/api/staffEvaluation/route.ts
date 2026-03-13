@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { FILE_SIZE_LIMIT } from "@/lib/constants";
+import { EVALUATION_STATUS_LIST, FILE_SIZE_LIMIT } from "@/lib/constants";
 import { jwtSchema } from "@/lib/schemas/user";
 import { deleteFile, uploadFile } from "@/lib/supabase/action";
 import { createClientServer } from "@/lib/supabase/supabase";
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
   );
 
   if (!parsedJWT.success) {
-    console.log(parsedJWT.error);
+    console.error(parsedJWT.error);
     return NextResponse.json(
       {
         success: false,
@@ -100,6 +100,16 @@ export async function POST(request: NextRequest) {
         message: "Applicant not found",
       },
       { status: 404 },
+    );
+  }
+
+  if (!EVALUATION_STATUS_LIST.includes(applicant.status)) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: `Cannot submit evaluation for applicant with status ${applicant.status}`,
+      },
+      { status: 400 },
     );
   }
 

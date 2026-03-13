@@ -53,3 +53,11 @@ export const EVENT_TYPES = [
 ] as const;
 
 export const REGULAR_STAFF_ROLES = ["Admin", "Staff"] as const;
+
+export const EVALUATION_STATUS_LIST = [
+    "Paper Screening",
+    "Exam",
+    "HR Interview",
+    "Technical Interview",
+    "Final Interview",
+  ];

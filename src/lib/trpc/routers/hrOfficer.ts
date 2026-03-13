@@ -51,7 +51,7 @@ const hrOfficerRouter = createTRPCRouter({
         })),
       };
     }),
-  deleteHRReport: authorizedProcedure
+  deleteStaffEvaluation: authorizedProcedure
     .input(
       z.object({
         reportId: z.uuid(),
@@ -106,7 +106,7 @@ const hrOfficerRouter = createTRPCRouter({
 
       return { success: true };
     }),
-  editHRReport: authorizedProcedure
+  staffStaffEvaluation: authorizedProcedure
     .input(
       z.object({
         reportId: z.uuid(),
