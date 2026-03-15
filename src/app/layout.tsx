@@ -5,7 +5,6 @@ import { AuthProvider } from "@/context/AuthProvider";
 import { TRPCProvider } from "@/lib/trpc/client";
 import { poppins } from "@/styles/font";
 import AdminGate from "./role";
-import AdminNavbar from "@/components/admin/AdminNavbar";
 
 export const metadata: Metadata = {
   title: "AI-Driven Recruitment",
@@ -14,9 +13,9 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
     <html lang="en">
       <head>
@@ -28,11 +27,7 @@ export default function RootLayout({
       >
         <TRPCProvider>
           <AuthProvider>
-            <AdminGate>
-              <AdminNavbar />
-            </AdminGate>
-
-            {children}
+            <AdminGate>{children}</AdminGate>
           </AuthProvider>
 
           <Chatbot />

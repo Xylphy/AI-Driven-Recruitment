@@ -7,7 +7,7 @@ import {
   TransitionChild,
 } from "@headlessui/react";
 import { useParams } from "next/navigation";
-import { Fragment, startTransition, useEffect, useState } from "react";
+import { Fragment, startTransition, useEffect, useRef, useState } from "react";
 import { FiPlus, FiX } from "react-icons/fi";
 import useAuth from "@/hooks/useAuth";
 import { trpc } from "@/lib/trpc/client";
@@ -21,7 +21,7 @@ interface HRReportProps {
     score: number;
     keyHighlights: string;
     summary: string;
-  }) => void;
+  }) => void | Promise<void>;
 }
 
 export default function HRReport({
@@ -32,12 +32,16 @@ export default function HRReport({
 }: HRReportProps) {
   const { isAuthenticated } = useAuth();
   const candidateId = useParams().id as string;
+
   const [isOpen, setIsOpen] = useState(false);
   const [score, setScore] = useState<number>(initialScore);
   const [highlights, setHighlights] = useState(initialKeyHighlights);
   const [summary, setSummary] = useState(initialSummary);
   const [selectedStatus, setSelectedStatus] =
     useState<CandidateStatuses | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const submitLockRef = useRef(false);
 
   const candidateProfileQuery = trpc.candidate.fetchCandidateProfile.useQuery(
     {
@@ -57,17 +61,35 @@ export default function HRReport({
     );
   }, [candidateProfileQuery.data?.status]);
 
-  const handleSubmit = () => {
-    const data = { score, keyHighlights: highlights, summary };
-
-    if (onSubmit) {
-      onSubmit(data);
-    }
-
-    setIsOpen(false);
+  const resetForm = () => {
     setScore(0);
     setHighlights("");
     setSummary("");
+  };
+
+  const handleSubmit = async () => {
+    if (submitLockRef.current || isSubmitting) return;
+
+    submitLockRef.current = true;
+    setIsSubmitting(true);
+
+    try {
+      const data = {
+        score,
+        keyHighlights: highlights,
+        summary,
+      };
+
+      await onSubmit?.(data);
+
+      setIsOpen(false);
+      resetForm();
+    } catch (error) {
+      console.error("Failed to submit staff evaluation:", error);
+    } finally {
+      submitLockRef.current = false;
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -82,9 +104,11 @@ export default function HRReport({
           shadow-lg
           hover:scale-105
           transition-all duration-200
+          disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100
         "
         onClick={() => setIsOpen(true)}
         type="button"
+        disabled={isSubmitting}
       >
         <FiPlus />
         Add Staff Evaluation
@@ -94,7 +118,9 @@ export default function HRReport({
         <Dialog
           as="div"
           className="fixed inset-0 z-50 overflow-y-auto"
-          onClose={() => setIsOpen(false)}
+          onClose={() => {
+            if (!isSubmitting) setIsOpen(false);
+          }}
         >
           <div className="flex items-center justify-center min-h-screen px-4">
             <TransitionChild
@@ -131,7 +157,9 @@ export default function HRReport({
                 "
               >
                 <button
-                  onClick={() => setIsOpen(false)}
+                  onClick={() => {
+                    if (!isSubmitting) setIsOpen(false);
+                  }}
                   className="
                     absolute top-4 right-4
                     p-2 rounded-lg
@@ -140,8 +168,10 @@ export default function HRReport({
                     border border-white/40
                     hover:bg-red-600 hover:text-white
                     transition
+                    disabled:opacity-50 disabled:cursor-not-allowed
                   "
                   type="button"
+                  disabled={isSubmitting}
                 >
                   <FiX />
                 </button>
@@ -154,6 +184,7 @@ export default function HRReport({
                   <div className="w-full lg:w-55 bg-linear-to-r from-red-600 to-red-500 text-white border border-red-500/70 shadow-lg font-semibold px-4 py-2 rounded-xl">
                     {selectedStatus || "Candidate Status"}
                   </div>
+
                   <div>
                     <label
                       htmlFor="score"
@@ -178,21 +209,15 @@ export default function HRReport({
 
                         const numericValue = Number(value);
 
-                        if (value.endsWith(".")) {
-                          setScore(value as unknown as number);
-                          return;
-                        }
-
                         if (numericValue >= 1 && numericValue <= 5) {
                           setScore(numericValue);
                         }
                       }}
                       onBlur={() => {
-                        if (typeof score === "number") {
-                          if (score < 1) setScore(1);
-                          if (score > 5) setScore(5);
-                        }
+                        if (score < 1) setScore(1);
+                        if (score > 5) setScore(5);
                       }}
+                      disabled={isSubmitting}
                       className="
                         w-full
                         px-4 py-2.5
@@ -203,6 +228,7 @@ export default function HRReport({
                         focus:outline-none
                         focus:ring-2 focus:ring-red-400/50
                         transition
+                        disabled:opacity-60 disabled:cursor-not-allowed
                       "
                     />
                   </div>
@@ -220,6 +246,7 @@ export default function HRReport({
                       onChange={(e) => setHighlights(e.target.value)}
                       placeholder="Enter key highlights separated by commas (e.g., Leadership, Communication, Problem Solving)"
                       rows={3}
+                      disabled={isSubmitting}
                       className="
                         w-full
                         px-4 py-2.5
@@ -230,6 +257,7 @@ export default function HRReport({
                         focus:outline-none
                         focus:ring-2 focus:ring-red-400/50
                         transition
+                        disabled:opacity-60 disabled:cursor-not-allowed
                       "
                     />
                   </div>
@@ -247,6 +275,7 @@ export default function HRReport({
                       onChange={(e) => setSummary(e.target.value)}
                       placeholder="Provide overall evaluation summary..."
                       rows={4}
+                      disabled={isSubmitting}
                       className="
                         w-full
                         px-4 py-2.5
@@ -257,9 +286,11 @@ export default function HRReport({
                         focus:outline-none
                         focus:ring-2 focus:ring-red-400/50
                         transition
+                        disabled:opacity-60 disabled:cursor-not-allowed
                       "
                     />
                   </div>
+
                   <div className="w-full">
                     <label
                       htmlFor="fileUpload"
@@ -268,20 +299,22 @@ export default function HRReport({
                       File Upload
                     </label>
 
-                    <div className="relative rounded-2xl border border-red/600 bg-red/600 backdrop-blur-md shadow-lg hover:bg-white/15 transition-all duration-300">
+                    <div className="relative rounded-2xl border border-red-600 bg-red-600/10 backdrop-blur-md shadow-lg hover:bg-white/15 transition-all duration-300">
                       <input
                         id="fileUpload"
                         type="file"
                         name="fileUpload"
+                        disabled={isSubmitting}
                         className="
                           w-full cursor-pointer text-sm text-black/80
                           file:mr-4 file:rounded-xl file:border-0
-                          file:bg-red/600 file:px-4 file:py-2
-                          file:text-sm file:font-medium file:text-black
-                          file:hover:bg-red/300
+                          file:bg-red-600 file:px-4 file:py-2
+                          file:text-sm file:font-medium file:text-white
+                          file:hover:bg-red-500
                           file:transition-all file:duration-300
                           p-3
                           focus:outline-none
+                          disabled:opacity-60 disabled:cursor-not-allowed
                         "
                       />
                     </div>
@@ -290,7 +323,9 @@ export default function HRReport({
 
                 <div className="mt-8 flex justify-end gap-4">
                   <button
-                    onClick={() => setIsOpen(false)}
+                    onClick={() => {
+                      if (!isSubmitting) setIsOpen(false);
+                    }}
                     className="
                       px-5 py-2.5
                       rounded-xl
@@ -299,14 +334,17 @@ export default function HRReport({
                       border border-white/40
                       hover:bg-gray-200/50
                       transition
+                      disabled:opacity-60 disabled:cursor-not-allowed
                     "
                     type="button"
+                    disabled={isSubmitting}
                   >
                     Cancel
                   </button>
 
                   <button
                     onClick={handleSubmit}
+                    disabled={isSubmitting}
                     className="
                       px-6 py-2.5
                       rounded-xl
@@ -315,10 +353,11 @@ export default function HRReport({
                       shadow-md
                       hover:scale-105
                       transition-all
+                      disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100
                     "
                     type="button"
                   >
-                    Submit Report
+                    {isSubmitting ? "Submitting..." : "Submit Report"}
                   </button>
                 </div>
               </div>
