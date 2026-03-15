@@ -363,7 +363,7 @@ export default function Navbar() {
                           : "hover:bg-white/60"
                       }`}
                     >
-                      <MdPeople /> Staffs
+                      <MdPeople /> Staff Management
                     </Link>
 
                     <Link
