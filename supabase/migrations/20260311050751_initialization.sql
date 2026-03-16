@@ -204,7 +204,8 @@ CREATE TABLE "public"."staff"(
   "last_name" character varying NOT NULL,
   "firebase_uid" text NOT NULL,
   "id" uuid NOT NULL DEFAULT gen_random_uuid(),
-  "role" public.user_roles NOT NULL
+  "role" public.user_roles NOT NULL,
+  "created_at" timestamp with time zone NOT NULL DEFAULT now()
 );
 
 ALTER TABLE "public"."staff" ENABLE ROW LEVEL SECURITY;

@@ -4,7 +4,7 @@
 
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import type { CANDIDATE_STATUSES } from "@/lib/constants";
+import { type CANDIDATE_STATUSES, PAGE_SIZE } from "@/lib/constants";
 import { sendEmail } from "@/lib/nodemailer/sendEmail";
 import { jobListingSchema, userSchema } from "@/lib/schemas";
 import { moveFile } from "@/lib/supabase/action";
@@ -352,7 +352,7 @@ const jobListingRouter = createTRPCRouter({
             title: input.title,
             location: input.location,
             is_fulltime: input.isFullTime,
-            officer_id: input.hrOfficerId || null,
+            staff_id: input.hrOfficerId || null,
           })
           .eq("id", input.jobId),
         input.qualifications && input.qualifications.length > 0
@@ -460,7 +460,7 @@ const jobListingRouter = createTRPCRouter({
           // biome-ignore lint/style/noNonNullAssertion: ctx.userJWT is guaranteed to exist due to adminProcedure
           created_by: ctx.userJWT!.id,
           is_fulltime: input.isFullTime,
-          officer_id: input.hrOfficerId || null,
+          staff_id: input.hrOfficerId || null,
         })
         .select("id")
         .single();
@@ -555,19 +555,26 @@ const jobListingRouter = createTRPCRouter({
 
       return { success: true, message: "Job listing created successfully" };
     }),
+  // Accessible by everyone
   fetchJobs: rateLimitedProcedure
     .input(
       z.object({
         searchQuery: z.string().optional(),
+        limit: z.number().optional().default(PAGE_SIZE),
+        cursor: z.string().optional(),
       }),
     )
     .query(async ({ input }) => {
       const supabaseClient = await createClientServer(true);
 
-      let query = supabaseClient.from("job_listings").select("*");
+      const query = supabaseClient
+        .from("job_listings")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(input.limit);
 
       if (input.searchQuery) {
-        query = query.ilike("title", `%${input.searchQuery}%`);
+        query.ilike("title", `%${input.searchQuery}%`);
       }
 
       const { data, error } = await query;
@@ -588,6 +595,10 @@ const jobListingRouter = createTRPCRouter({
           is_fulltime: item.is_fulltime,
           location: item.location,
         })),
+        nextCursor:
+          data && data.length === input.limit
+            ? data[data.length - 1]?.id
+            : null,
       };
     }),
   fetchTags: rateLimitedProcedure

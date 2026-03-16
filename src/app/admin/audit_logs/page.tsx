@@ -4,12 +4,10 @@ import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { useEffect, useRef, useState } from "react";
 import useAuth from "@/hooks/useAuth";
-import { EVENT_TYPES } from "@/lib/constants";
+import { EVENT_TYPES, PAGE_SIZE } from "@/lib/constants";
 import { formatDate } from "@/lib/library";
 import { trpc } from "@/lib/trpc/client";
 import type { UserActionEventType } from "@/types/types";
-
-const PAGE_SIZE = 15;
 
 export default function JobsPage() {
   const { isAuthenticated } = useAuth();

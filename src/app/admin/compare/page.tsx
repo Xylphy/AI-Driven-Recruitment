@@ -49,8 +49,9 @@ export default function ComparePage() {
   const [editingFeedbackId, setEditingFeedbackId] = useState<string | null>(
     null,
   );
-  const [editedFeedback, setEditedFeedback] = useState("");
-  const [showAdminFeedbackFields, setShowAdminFeedbackFields] = useState(false);
+  const [editedFeedback, setEditedFeedback] = useState<string>("");
+  const [showAdminFeedbackFields, setShowAdminFeedbackFields] =
+    useState<boolean>(false);
 
   const { isAuthenticated } = useAuth();
 
@@ -212,16 +213,6 @@ export default function ComparePage() {
         { onSuccess: () => adminFeedbacksQuery.refetch() },
       );
     }
-  };
-
-  const handleEditClick = (
-    post: Tables<"admin_feedback"> & {
-      admin: { last_name: string; first_name: string };
-      applicant: { last_name: string; first_name: string };
-    },
-  ) => {
-    setEditingFeedbackId(post.id);
-    setEditedFeedback(post.feedback || "");
   };
 
   const handleSaveEdit = (id: string) => {
@@ -823,7 +814,23 @@ export default function ComparePage() {
                         <button
                           className="p-2 rounded-xl bg-white/40 backdrop-blur border border-white/40
                           hover:bg-red-50/60 transition"
-                          onClick={() => handleEditClick(post)}
+                          onClick={() =>
+                            ((
+                              post: Tables<"admin_feedback"> & {
+                                admin: {
+                                  last_name: string;
+                                  first_name: string;
+                                };
+                                applicant: {
+                                  last_name: string;
+                                  first_name: string;
+                                };
+                              },
+                            ) => {
+                              setEditingFeedbackId(post.id);
+                              setEditedFeedback(post.feedback || "");
+                            })(post)
+                          }
                           title="Edit feedback"
                           type="button"
                         >

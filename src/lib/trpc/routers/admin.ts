@@ -4,7 +4,7 @@
 
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { EVENT_TYPES, REGULAR_STAFF_ROLES } from "@/lib/constants";
+import { EVENT_TYPES, PAGE_SIZE, REGULAR_STAFF_ROLES } from "@/lib/constants";
 import { createUserWithEmailAndPassword } from "@/lib/firebase/action";
 import { getAuth } from "@/lib/firebase/admin";
 import { addStaffSchema } from "@/lib/schemas/user";
@@ -212,7 +212,8 @@ const adminRouter = createTRPCRouter({
     .input(
       z.object({
         searchQuery: z.string().optional(),
-        limit: z.number().optional().default(20),
+        limit: z.number().optional().default(PAGE_SIZE),
+        cursor: z.string().optional(),
       }),
     )
     .query(async ({ input }) => {
@@ -221,13 +222,19 @@ const adminRouter = createTRPCRouter({
       const q = input.searchQuery?.trim();
       let users: Array<Tables<"staff">> = [];
       let usersError: { message?: string } | null = null;
+      const query = supabase
+        .from("staff")
+        .select("*")
+        .neq("role", "SuperAdmin")
+        .limit(input.limit)
+        .order("created_at", { ascending: false });
+
+      if (input.cursor) {
+        query.lt("created_at", input.cursor);
+      }
 
       if (!q) {
-        const { data, error } = await supabase
-          .from("staff")
-          .select("*")
-          .neq("role", "SuperAdmin")
-          .limit(input.limit);
+        const { data, error } = await query;
 
         users = (data || []) as Array<Tables<"staff">>;
         usersError = error;
@@ -300,6 +307,10 @@ const adminRouter = createTRPCRouter({
 
       return {
         staffs: usersWithEmail as Array<Tables<"staff"> & { email: string }>,
+        nextCursor:
+          (users && users.length === input.limit
+            ? users[users.length - 1]?.created_at
+            : null) || null,
       };
     }),
   changeStaffRole: superAdminProcedure
@@ -456,7 +467,7 @@ const adminRouter = createTRPCRouter({
         supabase
           .from("job_listings")
           .select("title")
-          .eq("officer_id", officer.id),
+          .eq("staff_id", officer.id),
       );
 
       firebaseUsersResult?.users?.forEach((userRecord) => {
@@ -478,6 +489,8 @@ const adminRouter = createTRPCRouter({
     .input(
       z.object({
         searchQuery: z.string().optional(),
+        limit: z.number().optional().default(PAGE_SIZE),
+        cursor: z.string().optional(),
       }),
     )
     .query(async ({ input }) => {
@@ -486,7 +499,13 @@ const adminRouter = createTRPCRouter({
         .from("job_listings")
         .select(
           "*, applicants(id), officer:staff!job_listings_staff_id_fkey(first_name, last_name)",
-        );
+        )
+        .limit(input.limit)
+        .order("created_at", { ascending: false });
+
+      if (input.cursor) {
+        query = query.lt("created_at", input.cursor);
+      }
 
       if (input.searchQuery) {
         query = query.ilike("title", `%${input.searchQuery}%`);
@@ -514,6 +533,10 @@ const adminRouter = createTRPCRouter({
             ? `${item.officer.first_name} ${item.officer.last_name}`
             : undefined,
         })),
+        nextCursor:
+          data && data.length === input.limit
+            ? data[data.length - 1]?.created_at
+            : undefined,
       };
     }),
   fetchKpiMetrics: adminProcedure
