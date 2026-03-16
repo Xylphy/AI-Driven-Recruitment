@@ -1,11 +1,9 @@
 import { TRPCError } from "@trpc/server";
 import z from "zod";
 import { CANDIDATE_STATUSES, PAGE_SIZE } from "@/lib/constants";
-import admin, { getDb } from "@/lib/firebase/admin";
-import { createClientServer } from "@/lib/supabase/supabase";
+import { createClientServer } from "@/lib/supabase/server";
 import type { Json, Tables } from "@/types/supabase";
 import type {
-  Notification,
   ParsedResumeData,
   ScoredCandidateData,
   TranscribedData,
@@ -84,7 +82,7 @@ const candidateRouter = createTRPCRouter({
       let baseQuery = supabaseClient
         .from("applicants")
         .select(
-          "id, first_name, last_name, resume_id, email, status, created_at, job_listings(title), scored_candidates(score_data)",
+          "id, first_name, last_name, resume_id, transcript_id, email, status, created_at, job_listings(title), scored_candidates(score_data)",
         )
         .limit(input.limit)
         .order("created_at", { ascending: false });
@@ -326,26 +324,6 @@ const candidateRouter = createTRPCRouter({
         });
       }
 
-      const notification: Omit<Notification, "id"> = {
-        title: "Application Status Updated",
-        body: `Your application status has been updated to "${input.newStatus}".`,
-        isRead: false,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        link: `/joblisting/${joblistingId}`,
-      };
-
-      let notificationSuccess = true;
-      try {
-        await getDb()
-          .collection("users")
-          .doc(applicantId)
-          .collection("notifications")
-          .add(notification);
-      } catch (err) {
-        notificationSuccess = false;
-        console.error("Failed to add notification for user", applicantId, err);
-      }
-
       const changes: Json = {};
 
       if (oldData?.status !== input.newStatus) {
@@ -378,7 +356,6 @@ const candidateRouter = createTRPCRouter({
 
       return {
         message: "Candidate status updated successfully",
-        notificationSuccess,
       };
     }),
   addAdminFeedback: adminProcedure

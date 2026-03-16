@@ -482,6 +482,44 @@ export type Database = {
           },
         ];
       };
+      notifications: {
+        Row: {
+          body: string | null;
+          created_at: string;
+          id: string;
+          link: string | null;
+          read: boolean;
+          staff_id: string;
+          title: string;
+        };
+        Insert: {
+          body?: string | null;
+          created_at?: string;
+          id?: string;
+          link?: string | null;
+          read?: boolean;
+          staff_id: string;
+          title: string;
+        };
+        Update: {
+          body?: string | null;
+          created_at?: string;
+          id?: string;
+          link?: string | null;
+          read?: boolean;
+          staff_id?: string;
+          title?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "notifications_staff_id_fkey";
+            columns: ["staff_id"];
+            isOneToOne: false;
+            referencedRelation: "staff";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       parsed_resume: {
         Row: {
           created_at: string;

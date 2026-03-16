@@ -4,7 +4,7 @@ import { z } from "zod";
 import { FILE_SIZE_LIMIT } from "@/lib/constants";
 import { jwtSchema } from "@/lib/schemas/user";
 import { deleteFile, uploadFile } from "@/lib/supabase/action";
-import { createClientServer } from "@/lib/supabase/supabase";
+import { createClientServer } from "@/lib/supabase/server";
 
 const staffEvaluationSchema = z.object({
   score: z.coerce.number().min(0).max(5),

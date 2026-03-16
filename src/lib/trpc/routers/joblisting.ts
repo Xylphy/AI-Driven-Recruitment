@@ -8,7 +8,7 @@ import { type CANDIDATE_STATUSES, PAGE_SIZE } from "@/lib/constants";
 import { sendEmail } from "@/lib/nodemailer/sendEmail";
 import { jobListingSchema, userSchema } from "@/lib/schemas";
 import { moveFile } from "@/lib/supabase/action";
-import { createClientServer } from "@/lib/supabase/supabase";
+import { createClientServer } from "@/lib/supabase/server";
 import type { Json } from "@/types/supabase";
 import {
   adminProcedure,

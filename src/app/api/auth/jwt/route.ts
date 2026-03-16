@@ -2,7 +2,7 @@ import { serialize } from "cookie";
 import jwt from "jsonwebtoken";
 import { type NextRequest, NextResponse } from "next/server";
 import { generateCsrfToken } from "@/lib/csrf";
-import { createClientServer } from "@/lib/supabase/supabase";
+import { createClientServer } from "@/lib/supabase/server";
 import { ErrorResponse } from "@/types/classes";
 
 export async function GET(request: NextRequest) {
