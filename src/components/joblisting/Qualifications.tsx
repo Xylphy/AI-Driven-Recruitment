@@ -31,7 +31,7 @@ export default function ListInputSection({
       overflow-hidden
     "
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-red-100/20 pointer-events-none" />
+        <div className="absolute inset-0 bg-linear-to-br from-white/40 via-transparent to-red-100/20 pointer-events-none" />
 
         <div className="relative">
           <legend className="text-xs font-bold uppercase tracking-[0.2em] text-red-600 mb-2">
@@ -129,7 +129,7 @@ export default function ListInputSection({
             rounded-2xl
             px-5 py-2.5
             text-xs font-bold uppercase tracking-[0.18em]
-            bg-gradient-to-r from-red-600 to-red-500
+            bg-linear-to-r from-red-600 to-red-500
             text-white
             shadow-[0_15px_50px_rgba(220,38,38,0.18)]
             hover:scale-[1.03]
