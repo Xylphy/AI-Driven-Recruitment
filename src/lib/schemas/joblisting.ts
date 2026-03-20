@@ -7,7 +7,10 @@ export const jobListingSchema = z.object({
     .min(1, "Title is required")
     .max(255, "Title must be less than 255 characters"),
   qualifications: z.array(identifiableTitleSchema).optional(),
-  requirements: z.array(identifiableTitleSchema).optional(),
+  requirements: z
+    .array(identifiableTitleSchema)
+    .min(1, "At least one requirement is required")
+    .optional(),
   tags: z
     .array(
       z.object({
