@@ -18,42 +18,6 @@ import {
 } from "../init";
 
 const jobListingRouter = createTRPCRouter({
-  joblistings: authorizedProcedure
-    .input(
-      z
-        .object({
-          limit: z.number().min(1).max(100).optional().default(10),
-          page: z.number().min(1).optional().default(1),
-        })
-        .optional(),
-    )
-    .query(async ({ ctx }) => {
-      // biome-ignore lint/style/noNonNullAssertion: ctx.userJWT is guaranteed to exist due to authorizedProcedure
-      const userId = ctx.userJWT!;
-      const supabase = await createClientServer(true);
-
-      const { data: appliedData, error: appliedError } = await supabase
-        .from("applicants")
-        .select("id, status, scheduled_at, platform, job_listings(title)")
-        .eq("user_id", userId);
-
-      if (appliedError) {
-        console.error(appliedError);
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to fetch applied jobs",
-        });
-      }
-
-      return {
-        joblistings:
-          appliedData?.map((item) => ({
-            ...item,
-            ...item.job_listings,
-            job_listings: undefined,
-          })) ?? [],
-      };
-    }),
   deleteJoblisting: authorizedProcedure
     .input(
       z.object({
