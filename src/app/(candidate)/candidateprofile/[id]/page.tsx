@@ -165,14 +165,17 @@ function isScoredStatus(status: CandidateStatuses): status is ScoredStatus {
 }
 
 function StatusScoreCards(scores: Array<StatusScore> = []) {
-  const scoresMap: Record<ScoredStatus, number | null> = scores.reduce(
+  const scoresMap: Record<ScoredStatus, Array<number>> = scores.reduce(
     (acc, { status, score }) => {
-      if (isScoredStatus(status)) {
-        acc[status] = score;
+      if (isScoredStatus(status) && typeof score === "number") {
+        if (!acc[status]) {
+          acc[status] = [];
+        }
+        acc[status].push(score);
       }
       return acc;
     },
-    {} as Record<ScoredStatus, number | null>,
+    {} as Record<ScoredStatus, Array<number>>,
   );
 
   const statuses = SCORED_STATUSES.map((status) => ({
@@ -208,7 +211,11 @@ function StatusScoreCards(scores: Array<StatusScore> = []) {
           </p>
 
           <p className="text-2xl font-bold text-gray-400 mt-2">
-            {status.score ? status.score : "--"}
+            {status.score && status.score.length > 0
+              ? (
+                  status.score.reduce((a, b) => a + b, 0) / status.score.length
+                ).toFixed(1)
+              : "--"}
           </p>
 
           <p className="text-xs text-gray-400 mt-1">out of 5</p>
