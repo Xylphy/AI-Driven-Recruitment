@@ -1,5 +1,6 @@
 "use client";
 
+import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import ListInputSection from "@/components/joblisting/Qualifications";
@@ -86,7 +87,7 @@ export default function JobListingPage() {
         "Unauthorized",
         "You are not authorized to create a job listing.",
       );
-      router.push("/login");
+      router.push("/login" as Route);
       return;
     }
 

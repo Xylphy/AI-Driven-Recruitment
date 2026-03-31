@@ -8,7 +8,7 @@ import { ErrorResponse } from "@/types/classes";
 export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get("Authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    if (!authHeader?.startsWith("Bearer ")) {
       return NextResponse.json(
         { error: "Authorization header is missing or invalid" },
         { status: 401 },

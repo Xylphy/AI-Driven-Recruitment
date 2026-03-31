@@ -42,11 +42,20 @@ enum HeaderTabKey {
   Resume,
 }
 
-type LinkMeta = {
-  icon: React.ComponentType<{ className?: string }>;
+interface ClassNameProps {
+  className?: string;
+}
+
+interface LinkMeta {
+  icon: React.ComponentType<ClassNameProps>;
   label: string;
   url: string;
-};
+}
+
+interface StatusScore {
+  status: CandidateStatuses;
+  score: number | null;
+}
 
 const statusClassMap: Record<string, string> = {
   "Paper Screening": "bg-gray-500/10 text-gray-600 border-gray-300/40",
@@ -141,20 +150,41 @@ function getLinkMeta(rawUrl: string) {
   return { icon: MdLink, label: "Link", url: normalized };
 }
 
-function StatusScoreCards() {
-  const statuses = [
-    "Paper Screening",
-    "Exam",
-    "HR Interview",
-    "Technical Interview",
-    "Final Interview",
-  ];
+const SCORED_STATUSES = [
+  "Paper Screening",
+  "Exam",
+  "HR Interview",
+  "Technical Interview",
+  "Final Interview",
+] as const;
+
+type ScoredStatus = (typeof SCORED_STATUSES)[number];
+
+function isScoredStatus(status: CandidateStatuses): status is ScoredStatus {
+  return (SCORED_STATUSES as readonly CandidateStatuses[]).includes(status);
+}
+
+function StatusScoreCards(scores: Array<StatusScore> = []) {
+  const scoresMap: Record<ScoredStatus, number | null> = scores.reduce(
+    (acc, { status, score }) => {
+      if (isScoredStatus(status)) {
+        acc[status] = score;
+      }
+      return acc;
+    },
+    {} as Record<ScoredStatus, number | null>,
+  );
+
+  const statuses = SCORED_STATUSES.map((status) => ({
+    status,
+    score: scoresMap[status] ?? null,
+  }));
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
       {statuses.map((status) => (
         <div
-          key={status}
+          key={status.status}
           className="
             relative
             rounded-2xl
@@ -171,13 +201,15 @@ function StatusScoreCards() {
             hover:scale-[1.03]
           "
         >
-          <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/40 to-transparent pointer-events-none" />
+          <div className="absolute inset-0 rounded-2xl bg-linear-to-br from-white/40 to-transparent pointer-events-none" />
 
           <p className="text-[11px] font-semibold tracking-widest text-gray-500 uppercase">
-            {status}
+            {status.status}
           </p>
 
-          <p className="text-2xl font-bold text-gray-400 mt-2">--</p>
+          <p className="text-2xl font-bold text-gray-400 mt-2">
+            {status.score ? status.score : "--"}
+          </p>
 
           <p className="text-xs text-gray-400 mt-1">out of 5</p>
         </div>
@@ -744,7 +776,12 @@ export default function Page() {
         <div className="bg-white rounded-lg shadow-md p-6">
           {activeTab === HeaderTabKey.Evaluation ? (
             <div className="flex flex-col gap-6">
-              <StatusScoreCards />
+              {StatusScoreCards(
+                hrReportsData.map((report) => ({
+                  status: report.candidate_status as CandidateStatuses,
+                  score: report.score,
+                })),
+              )}
               <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 h-full">
                 <h3 className="font-semibold mb-2">AI Generated Report</h3>
                 {candidateProfileQuery.data ? (
