@@ -193,7 +193,7 @@ export default function AdminNavbar({
                           : "hover:bg-white/40 backdrop-blur-md"
                       }`}
                     >
-                      <MdPeople /> Staffs
+                      <MdPeople /> Users
                     </Link>
 
                     <Link
