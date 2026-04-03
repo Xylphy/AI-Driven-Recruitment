@@ -17,8 +17,9 @@ const Header: React.FC = () => {
                 <Image
                   src="/logo.png"
                   alt="Alliance Logo"
-                  width={42}
-                  height={42}
+                  width={100}
+                  height={100}
+                  className="w-20 h-auto"
                 />
               </div>
               <span className="font-bold text-lg text-gray-800 tracking-wide">
