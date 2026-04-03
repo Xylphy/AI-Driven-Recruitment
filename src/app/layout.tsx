@@ -29,10 +29,10 @@ export default function RootLayout({
         <TRPCProvider>
           <AuthProvider>
             <AdminGate>
-              <AdminNavbar />
+              {children}
             </AdminGate>
 
-            {children}
+            
           </AuthProvider>
 
           <Chatbot />
