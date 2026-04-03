@@ -1186,8 +1186,7 @@ export default function Page() {
                   </div>
                 </div>
 
-                {/* Scroll container */}
-                <div className="max-h-[540px] overflow-y-auto pr-2">
+                <div className="max-h-[650px] overflow-y-auto pr-2">
                   {candidateProfileQuery.data?.skills?.map((item) => {
                     const pct = Math.max(
                       0,
