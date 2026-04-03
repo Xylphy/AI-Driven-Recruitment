@@ -5,7 +5,6 @@ import { AuthProvider } from "@/context/AuthProvider";
 import { TRPCProvider } from "@/lib/trpc/client";
 import { poppins } from "@/styles/font";
 import AdminGate from "./role";
-import AdminNavbar from "@/components/admin/AdminNavbar";
 
 export const metadata: Metadata = {
   title: "AI-Driven Recruitment",
