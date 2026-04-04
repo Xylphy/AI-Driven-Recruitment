@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { getEmailByUid, updateUserPassword } from "@/lib/firebase/action";
 import { updatePasswordSchema } from "@/lib/schemas/user";
-import { createClientServer } from "@/lib/supabase/supabase";
+import { createClientServer } from "@/lib/supabase/server";
 import { authorizedProcedure, createTRPCRouter } from "@/lib/trpc/init";
 
 const authRouter = createTRPCRouter({

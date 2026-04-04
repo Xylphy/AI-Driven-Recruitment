@@ -1,6 +1,5 @@
 import { type FirebaseApp, getApps, initializeApp } from "firebase/app";
 import { getAuth as firebaseGetAuth } from "firebase/auth";
-import { getFirestore as firebaseGetFirestore } from "firebase/firestore";
 import { z } from "zod";
 
 const firebaseConfigSchema = z.object({
@@ -46,8 +45,4 @@ function initApp(): FirebaseApp {
  */
 export function getAuthInstance() {
   return firebaseGetAuth(initApp());
-}
-
-export function getDbInstance() {
-  return firebaseGetFirestore(initApp());
 }

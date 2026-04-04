@@ -25,5 +25,4 @@ function getAdminApp() {
 }
 
 export const getAuth = () => getAdminApp().auth();
-export const getDb = () => getAdminApp().firestore();
 export default admin;

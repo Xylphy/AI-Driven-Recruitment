@@ -64,7 +64,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   // Handle Firebase auth state changes
-  // biome-ignore lint/correctness/useExhaustiveDependencies: // Removing router and queryClient to avoid aborting on navigation and dependency array size issues
+  // biome-ignore lint/correctness/useExhaustiveDependencies: // Removing  queryClient to avoid aborting on navigation and dependency array size issues
   useEffect(() => {
     if (!csrfToken) return;
 
@@ -112,8 +112,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     );
 
     return () => unsubscribe();
-    // Remove `router` and `queryClient` from deps to avoid aborting on navigation and dependency array size issues
-    // Silently ignore the lint warning for exhaustive-deps
   }, [csrfToken]);
 
   return (

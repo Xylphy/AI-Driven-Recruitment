@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { createClientServer } from "@/lib/supabase/supabase";
+import { createClientServer } from "@/lib/supabase/server";
 import { createTRPCRouter, rateLimitedProcedure } from "../init";
 
 const chatbotRouter = createTRPCRouter({

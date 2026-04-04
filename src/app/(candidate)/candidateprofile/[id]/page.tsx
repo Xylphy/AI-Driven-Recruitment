@@ -42,11 +42,20 @@ enum HeaderTabKey {
   Resume,
 }
 
-type LinkMeta = {
-  icon: React.ComponentType<{ className?: string }>;
+interface ClassNameProps {
+  className?: string;
+}
+
+interface LinkMeta {
+  icon: React.ComponentType<ClassNameProps>;
   label: string;
   url: string;
-};
+}
+
+interface StatusScore {
+  status: CandidateStatuses;
+  score: number | null;
+}
 
 const statusClassMap: Record<string, string> = {
   "Paper Screening": "bg-gray-500/10 text-gray-600 border-gray-300/40",
@@ -139,6 +148,81 @@ function getLinkMeta(rawUrl: string) {
   if (match) return { icon: match.icon, label: match.label, url: normalized };
 
   return { icon: MdLink, label: "Link", url: normalized };
+}
+
+const SCORED_STATUSES = [
+  "Paper Screening",
+  "Exam",
+  "HR Interview",
+  "Technical Interview",
+  "Final Interview",
+] as const;
+
+type ScoredStatus = (typeof SCORED_STATUSES)[number];
+
+function isScoredStatus(status: CandidateStatuses): status is ScoredStatus {
+  return (SCORED_STATUSES as readonly CandidateStatuses[]).includes(status);
+}
+
+function StatusScoreCards(scores: Array<StatusScore> = []) {
+  const scoresMap: Record<ScoredStatus, Array<number>> = scores.reduce(
+    (acc, { status, score }) => {
+      if (isScoredStatus(status) && typeof score === "number") {
+        if (!acc[status]) {
+          acc[status] = [];
+        }
+        acc[status].push(score);
+      }
+      return acc;
+    },
+    {} as Record<ScoredStatus, Array<number>>,
+  );
+
+  const statuses = SCORED_STATUSES.map((status) => ({
+    status,
+    score: scoresMap[status] ?? null,
+  }));
+
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+      {statuses.map((status) => (
+        <div
+          key={status.status}
+          className="
+            relative
+            rounded-2xl
+            bg-white/40
+            backdrop-blur-xl
+            border border-white/40
+            shadow-md
+            p-4
+            flex flex-col
+            items-center
+            justify-center
+            text-center
+            transition-all
+            hover:scale-[1.03]
+          "
+        >
+          <div className="absolute inset-0 rounded-2xl bg-linear-to-br from-white/40 to-transparent pointer-events-none" />
+
+          <p className="text-[11px] font-semibold tracking-widest text-gray-500 uppercase">
+            {status.status}
+          </p>
+
+          <p className="text-2xl font-bold text-gray-400 mt-2">
+            {status.score && status.score.length > 0
+              ? (
+                  status.score.reduce((a, b) => a + b, 0) / status.score.length
+                ).toFixed(1)
+              : "--"}
+          </p>
+
+          <p className="text-xs text-gray-400 mt-1">out of 5</p>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export default function Page() {
@@ -699,6 +783,12 @@ export default function Page() {
         <div className="bg-white rounded-lg shadow-md p-6">
           {activeTab === HeaderTabKey.Evaluation ? (
             <div className="flex flex-col gap-6">
+              {StatusScoreCards(
+                hrReportsData.map((report) => ({
+                  status: report.candidate_status as CandidateStatuses,
+                  score: report.score,
+                })),
+              )}
               <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 h-full">
                 <h3 className="font-semibold mb-2">AI Generated Report</h3>
                 {candidateProfileQuery.data ? (
@@ -1103,61 +1193,62 @@ export default function Page() {
                   </div>
                 </div>
 
-                {candidateProfileQuery.data?.skills?.map((item) => {
-                  const pct = Math.max(
-                    0,
-                    Math.min(100, (item.rating / 5) * 100),
-                  );
+                <div className="max-h-162.5 overflow-y-auto pr-2">
+                  {candidateProfileQuery.data?.skills?.map((item) => {
+                    const pct = Math.max(
+                      0,
+                      Math.min(100, (item.rating / 5) * 100),
+                    );
 
-                  return (
-                    <div
-                      key={`${item.name}-${item.rating}`}
-                      className="
-                        mb-3
-                        rounded-2xl
-                        bg-white/45
-                        backdrop-blur-xl
-                        border border-white/40
-                        shadow-[0_10px_30px_rgba(227,0,34,0.10)]
-                        p-4
-                        transition
-                        hover:bg-white/60
-                      "
-                    >
-                      <div className="flex items-center justify-between gap-4">
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold text-gray-800 truncate">
-                            {item.name}
-                          </p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            Applicant Self-Assessment Score
-                          </p>
+                    return (
+                      <div
+                        key={`${item.name}-${item.rating}`}
+                        className={[
+                          "mb-3",
+                          "rounded-2xl",
+                          "bg-white/45 backdrop-blur-xl",
+                          "border border-white/40",
+                          "shadow-[0_10px_30px_rgba(227,0,34,0.10)]",
+                          "p-4",
+                          "transition",
+                          "hover:bg-white/60",
+                        ].join(" ")}
+                      >
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-gray-800 truncate">
+                              {item.name}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              Applicant Self-Assessment Score
+                            </p>
+                          </div>
+
+                          <div className="shrink-0 flex items-center gap-3">
+                            <div className="px-3 py-1 rounded-full bg-red-600/10 text-red-600 text-sm font-bold border border-white/30 whitespace-nowrap">
+                              {item.rating.toFixed(1)} / 5
+                            </div>
+                          </div>
                         </div>
 
-                        <div className="shrink-0 flex items-center gap-3">
-                          <div className="px-3 py-1 rounded-full bg-red-600/10 text-red-600 text-sm font-bold border border-white/30 whitespace-nowrap">
-                            {item.rating.toFixed(1)} / 5
+                        <div className="mt-3">
+                          <div className="h-2 rounded-full bg-white/50 border border-white/40 overflow-hidden">
+                            <div
+                              className="h-full rounded-full bg-linear-to-r from-red-600 to-red-400"
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+
+                          <div className="mt-2 flex items-center justify-between text-[11px] text-gray-500">
+                            <span>0</span>
+                            <span>2.5</span>
+                            <span>5</span>
                           </div>
                         </div>
                       </div>
-
-                      <div className="mt-3">
-                        <div className="h-2 rounded-full bg-white/50 border border-white/40 overflow-hidden">
-                          <div
-                            className="h-full rounded-full bg-linear-to-r from-red-600 to-red-400"
-                            style={{ width: `${pct}%` }}
-                          />
-                        </div>
-
-                        <div className="mt-2 flex items-center justify-between text-[11px] text-gray-500">
-                          <span>0</span>
-                          <span>2.5</span>
-                          <span>5</span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             </div>
           )}

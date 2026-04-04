@@ -10,7 +10,7 @@ export default function CandidateResume({
   candidateProfile: FetchCandidateProfileOutput | null | undefined;
 }) {
   return (
-    <div className="w-full p-6">
+    <div className="max-h-162.5 w-full p-6">
       <h2 className="text-2xl font-bold mb-6">
         <span className="text-red-600">Candidate</span> Profile
       </h2>

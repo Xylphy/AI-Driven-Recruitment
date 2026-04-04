@@ -2,7 +2,6 @@
 // --------------- Types for common attributes | meant for extends --------------- //
 
 import type { inferProcedureOutput } from "@trpc/server";
-import type { FieldValue, Timestamp } from "firebase/firestore";
 import type { JwtPayload } from "jsonwebtoken";
 import type {
   CANDIDATE_STATUSES,
@@ -64,15 +63,6 @@ interface Tag extends IdentifiableItem {
 
 export interface Tags {
   tags: Tag[];
-}
-
-export interface Notification {
-  id: string;
-  title: string;
-  body: string;
-  isRead: boolean;
-  createdAt: Timestamp | FieldValue;
-  link: string;
 }
 
 export interface BottleneckPercentileRow {

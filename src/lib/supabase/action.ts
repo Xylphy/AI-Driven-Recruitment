@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { createClientServer } from "./supabase";
+import { createClientServer } from "./server";
 
 type FileLocation = {
   bucket: string;

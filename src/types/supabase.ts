@@ -482,6 +482,44 @@ export type Database = {
           },
         ];
       };
+      notifications: {
+        Row: {
+          body: string | null;
+          created_at: string;
+          id: string;
+          link: string | null;
+          read: boolean;
+          staff_id: string;
+          title: string;
+        };
+        Insert: {
+          body?: string | null;
+          created_at?: string;
+          id?: string;
+          link?: string | null;
+          read?: boolean;
+          staff_id: string;
+          title: string;
+        };
+        Update: {
+          body?: string | null;
+          created_at?: string;
+          id?: string;
+          link?: string | null;
+          read?: boolean;
+          staff_id?: string;
+          title?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "notifications_staff_id_fkey";
+            columns: ["staff_id"];
+            isOneToOne: false;
+            referencedRelation: "staff";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       parsed_resume: {
         Row: {
           created_at: string;
@@ -546,6 +584,7 @@ export type Database = {
       };
       staff: {
         Row: {
+          created_at: string;
           firebase_uid: string;
           first_name: string;
           id: string;
@@ -553,6 +592,7 @@ export type Database = {
           role: Database["public"]["Enums"]["user_roles"];
         };
         Insert: {
+          created_at?: string;
           firebase_uid: string;
           first_name: string;
           id?: string;
@@ -560,6 +600,7 @@ export type Database = {
           role: Database["public"]["Enums"]["user_roles"];
         };
         Update: {
+          created_at?: string;
           firebase_uid?: string;
           first_name?: string;
           id?: string;

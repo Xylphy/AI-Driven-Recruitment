@@ -3,16 +3,18 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import useAuth from "@/hooks/useAuth";
+import useDebounce from "@/hooks/useDebounce";
 import { trpc } from "@/lib/trpc/client";
 
 export default function ApplicantsPage() {
   const router = useRouter();
   const [searchInput, setSearchInput] = useState("");
+  const debouncedSearch = useDebounce(searchInput);
   const { isAuthenticated } = useAuth();
 
   const applicantsQuery = trpc.candidate.getCandidatesFromJob.useQuery(
     {
-      searchQuery: searchInput,
+      searchQuery: debouncedSearch,
     },
     {
       enabled: isAuthenticated,
@@ -98,7 +100,7 @@ export default function ApplicantsPage() {
                   >
                     <td className="py-4 px-6 font-medium">{candidate.name}</td>
 
-                    <td className="py-4 px-6">{candidate.jobTitle.title}</td>
+                    <td className="py-4 px-6">{candidate.jobTitle}</td>
 
                     <td className="py-4 px-6 text-center">
                       <span

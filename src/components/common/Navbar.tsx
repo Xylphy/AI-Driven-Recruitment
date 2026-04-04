@@ -6,7 +6,7 @@ import type { Route } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
   MdClose,
   MdCompareArrows,
@@ -34,10 +34,8 @@ const profileLink = {
   Staff: "/admin/jobs",
 } as const;
 
-type Role = keyof typeof profileLink;
-
 export default function Navbar() {
-  const [notifOpen, setNotifOpen] = useState(false);
+  const [notificationOpen, setNotificationOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
 
   const router = useRouter();
@@ -49,11 +47,10 @@ export default function Navbar() {
     enabled: isAuthenticated,
   });
 
-  const role = jwtInfo.data?.user.role as Role | undefined;
+  const { role, id } = jwtInfo.data?.user || {};
 
-  const isAdminUser = useMemo(() => {
-    return role === "Admin" || role === "SuperAdmin" || role === "Staff";
-  }, [role]);
+  const isAdminUser =
+    role === "Admin" || role === "SuperAdmin" || role === "Staff";
 
   const {
     notifications,
@@ -61,14 +58,14 @@ export default function Navbar() {
     markAsRead,
     markAllAsRead,
     deleteNotification,
-  } = useNotifications(undefined, jwtInfo.data?.user.id);
+  } = useNotifications(id);
 
   const clickNotification = (notificationId: string) => {
     markAsRead(notificationId);
     const link =
       notifications.find((n) => n.id === notificationId)?.link ?? "/";
     router.push(link as unknown as Parameters<typeof router.push>[0]);
-    setNotifOpen(false);
+    setNotificationOpen(false);
   };
 
   const onNotificationKeyDown = (
@@ -80,6 +77,11 @@ export default function Navbar() {
       clickNotification(notificationId);
     }
   };
+
+  const href =
+    role === "Admin" || role === "SuperAdmin" || role === "Staff"
+      ? profileLink[role]
+      : "/login";
 
   return (
     <>
@@ -101,8 +103,9 @@ export default function Navbar() {
               <Image
                 src="/logo.png"
                 alt="Alliance Logo"
-                width={130}
-                height={50}
+                width={100}
+                height={100}
+                className="w-20 h-auto"
               />
             </Link>
           </div>
@@ -111,7 +114,7 @@ export default function Navbar() {
             {isAuthenticated ? (
               <>
                 <button
-                  onClick={() => setNotifOpen(!notifOpen)}
+                  onClick={() => setNotificationOpen(!notificationOpen)}
                   className="relative"
                   type="button"
                 >
@@ -123,7 +126,7 @@ export default function Navbar() {
                   )}
                 </button>
 
-                {notifOpen && (
+                {notificationOpen && (
                   <div className="absolute top-10 right-0 bg-white shadow-lg rounded-lg w-72 p-4 z-50">
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="text-sm font-semibold">Notifications</h3>
@@ -152,7 +155,7 @@ export default function Navbar() {
                             <button
                               type="button"
                               className={`w-full text-left p-2 rounded cursor-pointer ${
-                                !notification.isRead ? "bg-gray-100" : ""
+                                !notification.read ? "bg-gray-100" : ""
                               } hover:bg-gray-200`}
                               onClick={() => clickNotification(notification.id)}
                               onKeyDown={(e) =>
@@ -161,7 +164,7 @@ export default function Navbar() {
                             >
                               <div className="flex justify-between items-center">
                                 <span>{notification.body}</span>
-                                {!notification.isRead && (
+                                {!notification.read && (
                                   <span className="ml-2 w-2.5 h-2.5 bg-red-600 rounded-full inline-block"></span>
                                 )}
                               </div>
@@ -184,7 +187,7 @@ export default function Navbar() {
                   </div>
                 )}
 
-                <Link href={role ? profileLink[role] : "/login"}>
+                <Link href={href}>
                   <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-red-500 hover:border-black transition-all duration-300">
                     <Image
                       src={profileImageUrl}
@@ -361,7 +364,7 @@ export default function Navbar() {
                           : "hover:bg-white/60"
                       }`}
                     >
-                      <MdPeople /> Staffs
+                      <MdPeople /> Staff Management
                     </Link>
 
                     <Link

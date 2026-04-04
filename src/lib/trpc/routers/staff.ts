@@ -4,7 +4,8 @@
 
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { createClientServer } from "@/lib/supabase/supabase";
+import { PAGE_SIZE } from "@/lib/constants";
+import { createClientServer } from "@/lib/supabase/server";
 import { authorizedProcedure, createTRPCRouter } from "../init";
 
 const staffRouter = createTRPCRouter({
@@ -146,6 +147,39 @@ const staffRouter = createTRPCRouter({
           avg_response_time: 0,
         },
         weekly: weekly ?? [],
+      };
+    }),
+  notifications: authorizedProcedure
+    .input(
+      z.object({
+        limit: z.number().int().min(1).max(100).default(PAGE_SIZE),
+      }),
+    )
+    .query(async ({ input, ctx }) => {
+      const supabase = await createClientServer(true);
+
+      const { data: notifications, error } = await supabase
+        .from("notifications")
+        .select("*")
+        // biome-ignore lint/style/noNonNullAssertion: User must be authenticated to access this route, so ctx.userJWT is guaranteed to be defined
+        .eq("staff_id", ctx.userJWT!.id)
+        .order("created_at", { ascending: false })
+        .limit(input.limit);
+
+      if (error) {
+        console.error("Error fetching staff notifications:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch notifications",
+        });
+      }
+
+      return {
+        notifications: notifications ?? [],
+        nextCursor:
+          notifications && notifications.length === input.limit
+            ? notifications[notifications.length - 1]?.created_at
+            : null,
       };
     }),
 });

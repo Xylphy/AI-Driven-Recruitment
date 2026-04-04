@@ -1,5 +1,6 @@
 "use client";
 
+import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import ListInputSection from "@/components/joblisting/Qualifications";
@@ -86,7 +87,20 @@ export default function JobListingPage() {
         "Unauthorized",
         "You are not authorized to create a job listing.",
       );
-      router.push("/login");
+      router.push("/login" as Route);
+      return;
+    }
+
+    const validRequirements = jobListing.requirements.filter(
+      (item) => item.title.trim() !== "",
+    );
+
+    if (validRequirements.length === 0) {
+      swalError(
+        "Missing Requirement",
+        "Please add at least one job listing requirement before submitting.",
+      );
+      return;
     }
 
     swalConfirm(
@@ -366,15 +380,15 @@ export default function JobListingPage() {
                   type="submit"
                   disabled={isSubmitting}
                   className="
-                relative rounded-2xl px-8 py-3
-                font-bold uppercase tracking-[0.18em]
-                bg-linear-to-r from-red-600 to-red-500
-                text-white
-                shadow-[0_25px_80px_rgba(220,38,38,0.25)]
-                hover:scale-[1.02]
-                transition-all duration-300
-                disabled:opacity-60 disabled:cursor-not-allowed
-              "
+                    relative rounded-2xl px-8 py-3
+                    font-bold uppercase tracking-[0.18em]
+                    bg-linear-to-r from-red-600 to-red-500
+                    text-white
+                    shadow-[0_25px_80px_rgba(220,38,38,0.25)]
+                    hover:scale-[1.02]
+                    transition-all duration-300
+                    disabled:opacity-60 disabled:cursor-not-allowed
+                  "
                 >
                   {isSubmitting ? "Processing..." : "Submit Listing"}
                 </button>

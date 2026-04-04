@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import useAuth from "@/hooks/useAuth";
+import useDebounce from "@/hooks/useDebounce";
 import { REGULAR_STAFF_ROLES } from "@/lib/constants";
 import { addStaffSchema } from "@/lib/schemas";
 import { swalError, swalSuccess } from "@/lib/swal";
@@ -11,6 +12,7 @@ import type { RegularStaffRoles } from "@/types/types";
 export default function UsersPage() {
   const { isAuthenticated } = useAuth();
   const [searchInput, setSearchInput] = useState("");
+  const debouncedSearchInput = useDebounce(searchInput);
 
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [newStaffRole, setNewStaffRole] = useState<RegularStaffRoles>("Staff");
@@ -21,7 +23,7 @@ export default function UsersPage() {
 
   const staffsQuery = trpc.admin.staffs.useQuery(
     {
-      searchQuery: searchInput || undefined,
+      searchQuery: debouncedSearchInput,
     },
     {
       enabled: isAuthenticated,
@@ -45,23 +47,6 @@ export default function UsersPage() {
     password: staffPassword,
   });
 
-  const handleRoleChange = async (userId: string, newRole: RegularStaffRoles) =>
-    await changeRoleMutation.mutateAsync(
-      { userId, newRole },
-      {
-        onSuccess: () => {
-          staffsQuery.refetch();
-        },
-        onError: (error) => {
-          swalError(
-            "Role Update Failed",
-            `Failed to change user role: ${error.message}`,
-          );
-        },
-      },
-    );
-
-  // ✅ Placeholder add (local only)
   const handleAddStaff = () => {
     if (!isStaffValid) {
       swalError("Validation Failed", staffError);
@@ -171,10 +156,21 @@ export default function UsersPage() {
                       <select
                         value={staff.role}
                         onChange={(e) =>
-                          handleRoleChange(
-                            staff.id,
-                            e.target.value as RegularStaffRoles,
-                          )
+                          (async (userId: string, newRole: RegularStaffRoles) =>
+                            await changeRoleMutation.mutateAsync(
+                              { userId, newRole },
+                              {
+                                onSuccess: () => {
+                                  staffsQuery.refetch();
+                                },
+                                onError: (error) => {
+                                  swalError(
+                                    "Role Update Failed",
+                                    `Failed to change user role: ${error.message}`,
+                                  );
+                                },
+                              },
+                            ))(staff.id, e.target.value as RegularStaffRoles)
                         }
                         className="border rounded px-2 py-1 text-sm focus:ring-1 focus:ring-red-500 focus:outline-none"
                       >

@@ -1,24 +1,13 @@
 "use client";
-import {
-  collection,
-  deleteDoc,
-  doc,
-  limit,
-  onSnapshot,
-  orderBy,
-  query,
-  updateDoc,
-  writeBatch,
-} from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { getDbInstance } from "@/lib/firebase/client";
-import type { Notification } from "@/types/types";
+import { PAGE_SIZE } from "@/lib/constants";
+import { supabaseClient } from "@/lib/supabase/client";
+import type { Database } from "@/types/supabase";
 
-export default function useNotifications(
-  limitCount: number = 20,
-  userId?: string,
-) {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+export default function useNotifications(userId?: string) {
+  const [notifications, setNotifications] = useState<
+    Database["public"]["Tables"]["notifications"]["Row"][]
+  >([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -30,68 +19,81 @@ export default function useNotifications(
       return;
     }
 
-    const notificationsRef = collection(
-      getDbInstance(),
-      "users",
-      userId,
-      "notifications",
-    );
+    async function load() {
+      const { data } = await supabaseClient
+        .from("notifications")
+        .select("*")
+        // biome-ignore lint/style/noNonNullAssertion: userId is guaranteed to be defined if this function is called, as we return early if it's not
+        .eq("staff_id", userId!)
+        .order("created_at", { ascending: false })
+        .limit(PAGE_SIZE);
 
-    // Real-time listener
-    const unsubscribe = onSnapshot(
-      query(notificationsRef, orderBy("createdAt", "desc"), limit(limitCount)),
-      (snapshot) => {
-        const notifications: Notification[] = [];
-        let unread = 0;
-        snapshot.docs.forEach((doc) => {
-          const data = doc.data();
-          notifications.push({ id: doc.id, ...data } as Notification);
-          if (!data.isRead) unread++;
-        });
-        setNotifications(notifications);
-        setUnreadCount(unread);
-        setLoading(false);
-      },
-      (error) => {
-        console.error("Notification listener error:", error);
-        setLoading(false);
-      },
-    );
+      setNotifications(data || []);
+    }
 
-    return () => unsubscribe();
-  }, [userId, limitCount]);
+    load();
+
+    const channel = supabaseClient
+      .channel("notifications")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+          filter: `staff_id=eq.${userId}`,
+        },
+        (payload) => {
+          setNotifications((prev) => [
+            payload.new as Database["public"]["Tables"]["notifications"]["Row"],
+            ...prev,
+          ]);
+        },
+      )
+      .subscribe();
+
+    return () => {
+      void supabaseClient.removeChannel(channel);
+    };
+  }, [userId]);
 
   const markAsRead = async (notificationId: string) => {
     if (!userId) return;
-    await updateDoc(
-      doc(getDbInstance(), "users", userId, "notifications", notificationId),
-      {
-        isRead: true,
-      },
-    );
+    const { error } = await supabaseClient
+      .from("notifications")
+      .update({ read: true })
+      .eq("id", notificationId)
+      .eq("staff_id", userId);
+    if (!error) {
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n)),
+      );
+      setUnreadCount((prev) => Math.max(0, prev - 1));
+    }
   };
 
   const markAllAsRead = async () => {
     if (!userId) return;
-    const batch = writeBatch(getDbInstance());
-    notifications
-      .filter((n) => !n.isRead)
-      .forEach((n) => {
-        batch.update(
-          doc(getDbInstance(), "users", userId, "notifications", n.id),
-          {
-            isRead: true,
-          },
-        );
-      });
-    await batch.commit();
+    const { error } = await supabaseClient
+      .from("notifications")
+      .update({ read: true })
+      .eq("staff_id", userId)
+      .eq("read", false);
+    if (!error) {
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+      setUnreadCount(0);
+    }
   };
 
   const deleteNotification = async (notificationId: string) => {
     if (!userId) return;
-    await deleteDoc(
-      doc(getDbInstance(), "users", userId, "notifications", notificationId),
-    );
+    const { error } = await supabaseClient
+      .from("notifications")
+      .delete()
+      .eq("id", notificationId)
+      .eq("staff_id", userId);
+    if (!error)
+      setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
   };
 
   return {

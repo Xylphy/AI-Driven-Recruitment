@@ -4,11 +4,11 @@
 
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import type { CANDIDATE_STATUSES } from "@/lib/constants";
+import { type CANDIDATE_STATUSES, PAGE_SIZE } from "@/lib/constants";
 import { sendEmail } from "@/lib/nodemailer/sendEmail";
 import { jobListingSchema, userSchema } from "@/lib/schemas";
 import { moveFile } from "@/lib/supabase/action";
-import { createClientServer } from "@/lib/supabase/supabase";
+import { createClientServer } from "@/lib/supabase/server";
 import type { Json } from "@/types/supabase";
 import {
   adminProcedure,
@@ -18,42 +18,6 @@ import {
 } from "../init";
 
 const jobListingRouter = createTRPCRouter({
-  joblistings: authorizedProcedure
-    .input(
-      z
-        .object({
-          limit: z.number().min(1).max(100).optional().default(10),
-          page: z.number().min(1).optional().default(1),
-        })
-        .optional(),
-    )
-    .query(async ({ ctx }) => {
-      // biome-ignore lint/style/noNonNullAssertion: ctx.userJWT is guaranteed to exist due to authorizedProcedure
-      const userId = ctx.userJWT!;
-      const supabase = await createClientServer(true);
-
-      const { data: appliedData, error: appliedError } = await supabase
-        .from("applicants")
-        .select("id, status, scheduled_at, platform, job_listings(title)")
-        .eq("user_id", userId);
-
-      if (appliedError) {
-        console.error(appliedError);
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to fetch applied jobs",
-        });
-      }
-
-      return {
-        joblistings:
-          appliedData?.map((item) => ({
-            ...item,
-            ...item.job_listings,
-            job_listings: undefined,
-          })) ?? [],
-      };
-    }),
   deleteJoblisting: authorizedProcedure
     .input(
       z.object({
@@ -352,7 +316,7 @@ const jobListingRouter = createTRPCRouter({
             title: input.title,
             location: input.location,
             is_fulltime: input.isFullTime,
-            officer_id: input.hrOfficerId || null,
+            staff_id: input.hrOfficerId || null,
           })
           .eq("id", input.jobId),
         input.qualifications && input.qualifications.length > 0
@@ -460,7 +424,7 @@ const jobListingRouter = createTRPCRouter({
           // biome-ignore lint/style/noNonNullAssertion: ctx.userJWT is guaranteed to exist due to adminProcedure
           created_by: ctx.userJWT!.id,
           is_fulltime: input.isFullTime,
-          officer_id: input.hrOfficerId || null,
+          staff_id: input.hrOfficerId || null,
         })
         .select("id")
         .single();
@@ -555,19 +519,26 @@ const jobListingRouter = createTRPCRouter({
 
       return { success: true, message: "Job listing created successfully" };
     }),
+  // Accessible by everyone
   fetchJobs: rateLimitedProcedure
     .input(
       z.object({
         searchQuery: z.string().optional(),
+        limit: z.number().optional().default(PAGE_SIZE),
+        cursor: z.string().optional(),
       }),
     )
     .query(async ({ input }) => {
       const supabaseClient = await createClientServer(true);
 
-      let query = supabaseClient.from("job_listings").select("*");
+      const query = supabaseClient
+        .from("job_listings")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(input.limit);
 
       if (input.searchQuery) {
-        query = query.ilike("title", `%${input.searchQuery}%`);
+        query.ilike("title", `%${input.searchQuery}%`);
       }
 
       const { data, error } = await query;
@@ -588,6 +559,10 @@ const jobListingRouter = createTRPCRouter({
           is_fulltime: item.is_fulltime,
           location: item.location,
         })),
+        nextCursor:
+          data && data.length === input.limit
+            ? data[data.length - 1]?.id
+            : null,
       };
     }),
   fetchTags: rateLimitedProcedure
