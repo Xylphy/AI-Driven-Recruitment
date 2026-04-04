@@ -35,11 +35,24 @@ export default function HRReport({
   const [summary, setSummary] = useState(initialSummary);
   const [evaluationFile, setEvaluationFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<{ summary?: string }>({});
 
   const handleSubmit = async () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
 
+    const newErrors: { summary?: string } = {};
+
+    if (!summary.trim()) {
+      newErrors.summary = "Summary is required";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    setErrors({});
     const data = {
       score,
       keyHighlights: highlights,
@@ -232,6 +245,11 @@ export default function HRReport({
                       }
                       disabled={isSubmitting}
                     />
+                    {errors.summary && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.summary}
+                      </p>
+                    )}
                   </div>
                   <div className="w-full">
                     <label

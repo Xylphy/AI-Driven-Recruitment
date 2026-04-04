@@ -103,8 +103,9 @@ export default function Navbar() {
               <Image
                 src="/logo.png"
                 alt="Alliance Logo"
-                width={130}
-                height={50}
+                width={100}
+                height={100}
+                className="w-20 h-auto"
               />
             </Link>
           </div>
@@ -363,7 +364,7 @@ export default function Navbar() {
                           : "hover:bg-white/60"
                       }`}
                     >
-                      <MdPeople /> Staffs
+                      <MdPeople /> Staff Management
                     </Link>
 
                     <Link
