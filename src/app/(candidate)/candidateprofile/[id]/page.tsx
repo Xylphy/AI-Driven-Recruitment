@@ -1186,7 +1186,7 @@ export default function Page() {
                   </div>
                 </div>
 
-                <div className="max-h-[650px] overflow-y-auto pr-2">
+                <div className="max-h-162.5 overflow-y-auto pr-2">
                   {candidateProfileQuery.data?.skills?.map((item) => {
                     const pct = Math.max(
                       0,
@@ -1196,17 +1196,16 @@ export default function Page() {
                     return (
                       <div
                         key={`${item.name}-${item.rating}`}
-                        className="
-            mb-3
-            rounded-2xl
-            bg-white/45
-            backdrop-blur-xl
-            border border-white/40
-            shadow-[0_10px_30px_rgba(227,0,34,0.10)]
-            p-4
-            transition
-            hover:bg-white/60
-          "
+                        className={[
+                          "mb-3",
+                          "rounded-2xl",
+                          "bg-white/45 backdrop-blur-xl",
+                          "border border-white/40",
+                          "shadow-[0_10px_30px_rgba(227,0,34,0.10)]",
+                          "p-4",
+                          "transition",
+                          "hover:bg-white/60",
+                        ].join(" ")}
                       >
                         <div className="flex items-center justify-between gap-4">
                           <div className="min-w-0">

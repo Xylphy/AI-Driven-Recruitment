@@ -27,11 +27,7 @@ export default function RootLayout({
       >
         <TRPCProvider>
           <AuthProvider>
-            <AdminGate>
-              {children}
-            </AdminGate>
-
-            
+            <AdminGate>{children}</AdminGate>
           </AuthProvider>
 
           <Chatbot />
