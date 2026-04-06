@@ -556,6 +556,50 @@ export type Database = {
         };
         Relationships: [];
       };
+      scoring_settings: {
+        Row: {
+          ai_benchmark: number;
+          behavioral_blend: number;
+          created_at: string;
+          cultural_fit_score: number;
+          job_fit_score: number;
+          joblisting_id: string;
+          soft_skills_score: number;
+          transcription_cultural_fit_score: number;
+          transcription_score: number;
+        };
+        Insert: {
+          ai_benchmark?: number;
+          behavioral_blend?: number;
+          created_at?: string;
+          cultural_fit_score?: number;
+          job_fit_score?: number;
+          joblisting_id: string;
+          soft_skills_score?: number;
+          transcription_cultural_fit_score?: number;
+          transcription_score?: number;
+        };
+        Update: {
+          ai_benchmark?: number;
+          behavioral_blend?: number;
+          created_at?: string;
+          cultural_fit_score?: number;
+          job_fit_score?: number;
+          joblisting_id?: string;
+          soft_skills_score?: number;
+          transcription_cultural_fit_score?: number;
+          transcription_score?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "scoring_settings_joblisting_id_fkey";
+            columns: ["joblisting_id"];
+            isOneToOne: true;
+            referencedRelation: "job_listings";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       social_links: {
         Row: {
           applicant_id: string;

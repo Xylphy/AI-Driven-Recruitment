@@ -78,7 +78,7 @@ export default function JobScoringConfiguration() {
 
   return (
     <div className="min-h-screen p-10 bg-white relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-red-100 via-white to-red-50 opacity-40 pointer-events-none" />
+      <div className="absolute inset-0 bg-linear-to-br from-red-100 via-white to-red-50 opacity-40 pointer-events-none" />
 
       <div className="relative z-10 max-w-5xl mx-auto space-y-8">
         <h2 className="text-3xl font-bold text-red-600">
@@ -160,10 +160,11 @@ export default function JobScoringConfiguration() {
           <button
             onClick={handleSubmit}
             disabled={!behavioralValid || !predictiveValid}
+            type="button"
             className={`px-8 py-3 rounded-xl font-bold text-white shadow-lg transition
             ${
               behavioralValid && predictiveValid
-                ? "bg-gradient-to-r from-red-600 to-red-500 hover:opacity-90"
+                ? "bg-linear-to-r from-red-600 to-red-500 hover:opacity-90"
                 : "bg-gray-300 cursor-not-allowed"
             }`}
           >
@@ -222,7 +223,7 @@ function ModernSlider({
         <div className="h-3 w-full rounded-full bg-white/40 border border-white/30 backdrop-blur" />
 
         <div
-          className="absolute top-0 left-0 h-3 rounded-full bg-gradient-to-r from-red-500 to-red-400 transition-all duration-300"
+          className="absolute top-0 left-0 h-3 rounded-full bg-linear-to-r from-red-500 to-red-400 transition-all duration-300"
           style={{ width: `${percent}%` }}
         />
 

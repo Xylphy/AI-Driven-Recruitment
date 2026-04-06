@@ -175,6 +175,18 @@ CREATE TABLE "public"."key_highlights"(
 
 ALTER TABLE "public"."key_highlights" ENABLE ROW LEVEL SECURITY;
 
+CREATE TABLE "public"."notifications"(
+  "id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "created_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "staff_id" uuid NOT NULL,
+  "title" text NOT NULL,
+  "body" text,
+  "read" boolean NOT NULL DEFAULT FALSE,
+  "link" text
+);
+
+ALTER TABLE "public"."notifications" ENABLE ROW LEVEL SECURITY;
+
 CREATE TABLE "public"."parsed_resume"(
   "id" uuid NOT NULL DEFAULT gen_random_uuid(),
   "created_at" timestamp with time zone NOT NULL DEFAULT now(),
@@ -190,6 +202,20 @@ CREATE TABLE "public"."scored_candidates"(
 );
 
 ALTER TABLE "public"."scored_candidates" ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE "public"."scoring_settings"(
+  "created_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "joblisting_id" uuid NOT NULL,
+  "soft_skills_score" real NOT NULL DEFAULT '0'::real,
+  "transcription_score" real NOT NULL DEFAULT '0'::real,
+  "cultural_fit_score" real NOT NULL DEFAULT '0'::real,
+  "transcription_cultural_fit_score" real NOT NULL DEFAULT '0'::real,
+  "job_fit_score" real NOT NULL DEFAULT '0'::real,
+  "behavioral_blend" real NOT NULL DEFAULT '0'::real,
+  "ai_benchmark" real NOT NULL DEFAULT '0'::real
+);
+
+ALTER TABLE "public"."scoring_settings" ENABLE ROW LEVEL SECURITY;
 
 CREATE TABLE "public"."social_links"(
   "link" text NOT NULL,
@@ -252,9 +278,13 @@ CREATE UNIQUE INDEX job_tags_pkey ON public.job_tags USING btree(joblisting_id, 
 
 CREATE UNIQUE INDEX key_highlights_pkey ON public.key_highlights USING btree(id);
 
+CREATE UNIQUE INDEX notifications_pkey ON public.notifications USING btree(id);
+
 CREATE UNIQUE INDEX parsed_resume_pkey ON public.parsed_resume USING btree(id);
 
 CREATE UNIQUE INDEX scored_candidates_pkey ON public.scored_candidates USING btree(id);
+
+CREATE UNIQUE INDEX scoring_settings_pkey ON public.scoring_settings USING btree(joblisting_id);
 
 CREATE UNIQUE INDEX social_links_pkey ON public.social_links USING btree(id);
 
@@ -303,11 +333,17 @@ ALTER TABLE "public"."job_tags"
 ALTER TABLE "public"."key_highlights"
   ADD CONSTRAINT "key_highlights_pkey" PRIMARY KEY USING INDEX "key_highlights_pkey";
 
+ALTER TABLE "public"."notifications"
+  ADD CONSTRAINT "notifications_pkey" PRIMARY KEY USING INDEX "notifications_pkey";
+
 ALTER TABLE "public"."parsed_resume"
   ADD CONSTRAINT "parsed_resume_pkey" PRIMARY KEY USING INDEX "parsed_resume_pkey";
 
 ALTER TABLE "public"."scored_candidates"
   ADD CONSTRAINT "scored_candidates_pkey" PRIMARY KEY USING INDEX "scored_candidates_pkey";
+
+ALTER TABLE "public"."scoring_settings"
+  ADD CONSTRAINT "scoring_settings_pkey" PRIMARY KEY USING INDEX "scoring_settings_pkey";
 
 ALTER TABLE "public"."social_links"
   ADD CONSTRAINT "social_links_pkey" PRIMARY KEY USING INDEX "social_links_pkey";
@@ -425,6 +461,16 @@ ALTER TABLE "public"."key_highlights"
   ADD CONSTRAINT "key_highlights_report_id_fkey" FOREIGN KEY (report_id) REFERENCES public.hr_reports(id) ON UPDATE CASCADE ON DELETE CASCADE NOT valid;
 
 ALTER TABLE "public"."key_highlights" validate CONSTRAINT "key_highlights_report_id_fkey";
+
+ALTER TABLE "public"."notifications"
+  ADD CONSTRAINT "notifications_staff_id_fkey" FOREIGN KEY (staff_id) REFERENCES public.staff(id) ON UPDATE CASCADE ON DELETE CASCADE NOT valid;
+
+ALTER TABLE "public"."notifications" validate CONSTRAINT "notifications_staff_id_fkey";
+
+ALTER TABLE "public"."scoring_settings"
+  ADD CONSTRAINT "scoring_settings_joblisting_id_fkey" FOREIGN KEY (joblisting_id) REFERENCES public.job_listings(id) ON UPDATE CASCADE ON DELETE CASCADE NOT valid;
+
+ALTER TABLE "public"."scoring_settings" validate CONSTRAINT "scoring_settings_joblisting_id_fkey";
 
 ALTER TABLE "public"."social_links"
   ADD CONSTRAINT "social_links_applicant_id_fkey" FOREIGN KEY (applicant_id) REFERENCES public.applicants(id) ON UPDATE CASCADE ON DELETE CASCADE NOT valid;
@@ -1635,6 +1681,48 @@ GRANT TRUNCATE ON TABLE "public"."key_highlights" TO "service_role";
 
 GRANT UPDATE ON TABLE "public"."key_highlights" TO "service_role";
 
+GRANT DELETE ON TABLE "public"."notifications" TO "anon";
+
+GRANT INSERT ON TABLE "public"."notifications" TO "anon";
+
+GRANT REFERENCES ON TABLE "public"."notifications" TO "anon";
+
+GRANT SELECT ON TABLE "public"."notifications" TO "anon";
+
+GRANT TRIGGER ON TABLE "public"."notifications" TO "anon";
+
+GRANT TRUNCATE ON TABLE "public"."notifications" TO "anon";
+
+GRANT UPDATE ON TABLE "public"."notifications" TO "anon";
+
+GRANT DELETE ON TABLE "public"."notifications" TO "authenticated";
+
+GRANT INSERT ON TABLE "public"."notifications" TO "authenticated";
+
+GRANT REFERENCES ON TABLE "public"."notifications" TO "authenticated";
+
+GRANT SELECT ON TABLE "public"."notifications" TO "authenticated";
+
+GRANT TRIGGER ON TABLE "public"."notifications" TO "authenticated";
+
+GRANT TRUNCATE ON TABLE "public"."notifications" TO "authenticated";
+
+GRANT UPDATE ON TABLE "public"."notifications" TO "authenticated";
+
+GRANT DELETE ON TABLE "public"."notifications" TO "service_role";
+
+GRANT INSERT ON TABLE "public"."notifications" TO "service_role";
+
+GRANT REFERENCES ON TABLE "public"."notifications" TO "service_role";
+
+GRANT SELECT ON TABLE "public"."notifications" TO "service_role";
+
+GRANT TRIGGER ON TABLE "public"."notifications" TO "service_role";
+
+GRANT TRUNCATE ON TABLE "public"."notifications" TO "service_role";
+
+GRANT UPDATE ON TABLE "public"."notifications" TO "service_role";
+
 GRANT DELETE ON TABLE "public"."parsed_resume" TO "anon";
 
 GRANT INSERT ON TABLE "public"."parsed_resume" TO "anon";
@@ -1718,6 +1806,48 @@ GRANT TRIGGER ON TABLE "public"."scored_candidates" TO "service_role";
 GRANT TRUNCATE ON TABLE "public"."scored_candidates" TO "service_role";
 
 GRANT UPDATE ON TABLE "public"."scored_candidates" TO "service_role";
+
+GRANT DELETE ON TABLE "public"."scoring_settings" TO "anon";
+
+GRANT INSERT ON TABLE "public"."scoring_settings" TO "anon";
+
+GRANT REFERENCES ON TABLE "public"."scoring_settings" TO "anon";
+
+GRANT SELECT ON TABLE "public"."scoring_settings" TO "anon";
+
+GRANT TRIGGER ON TABLE "public"."scoring_settings" TO "anon";
+
+GRANT TRUNCATE ON TABLE "public"."scoring_settings" TO "anon";
+
+GRANT UPDATE ON TABLE "public"."scoring_settings" TO "anon";
+
+GRANT DELETE ON TABLE "public"."scoring_settings" TO "authenticated";
+
+GRANT INSERT ON TABLE "public"."scoring_settings" TO "authenticated";
+
+GRANT REFERENCES ON TABLE "public"."scoring_settings" TO "authenticated";
+
+GRANT SELECT ON TABLE "public"."scoring_settings" TO "authenticated";
+
+GRANT TRIGGER ON TABLE "public"."scoring_settings" TO "authenticated";
+
+GRANT TRUNCATE ON TABLE "public"."scoring_settings" TO "authenticated";
+
+GRANT UPDATE ON TABLE "public"."scoring_settings" TO "authenticated";
+
+GRANT DELETE ON TABLE "public"."scoring_settings" TO "service_role";
+
+GRANT INSERT ON TABLE "public"."scoring_settings" TO "service_role";
+
+GRANT REFERENCES ON TABLE "public"."scoring_settings" TO "service_role";
+
+GRANT SELECT ON TABLE "public"."scoring_settings" TO "service_role";
+
+GRANT TRIGGER ON TABLE "public"."scoring_settings" TO "service_role";
+
+GRANT TRUNCATE ON TABLE "public"."scoring_settings" TO "service_role";
+
+GRANT UPDATE ON TABLE "public"."scoring_settings" TO "service_role";
 
 GRANT DELETE ON TABLE "public"."social_links" TO "anon";
 
