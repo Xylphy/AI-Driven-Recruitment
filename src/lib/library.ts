@@ -107,3 +107,9 @@ export function formatDate(
     minute: "2-digit",
   });
 }
+
+export function clearSessionStorage() {
+  if (typeof window !== "undefined" && window.sessionStorage) {
+    window.sessionStorage.clear();
+  }
+}

@@ -102,9 +102,10 @@ export default function AdminDashboard() {
             },
             {
               label: "Hiring Success Rate",
-              value: statsQuery.data?.hiringSuccess_timeToHire?.find(
-                (item) => item.metric_type === "success_rate_pct",
-              )?.value ?? "0%",
+              value:
+                statsQuery.data?.hiringSuccess_timeToHire?.find(
+                  (item) => item.metric_type === "success_rate_pct",
+                )?.value ?? "0%",
             },
             {
               label: "Avg Time-to-Hire",

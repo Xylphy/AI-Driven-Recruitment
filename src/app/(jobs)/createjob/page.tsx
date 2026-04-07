@@ -2,13 +2,15 @@
 
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ListInputSection from "@/components/joblisting/Qualifications";
 import useAuth from "@/hooks/useAuth";
-import { JOB_LOCATIONS } from "@/lib/constants";
-import { swalConfirm, swalError, swalSuccess } from "@/lib/swal";
+import { JOB_LOCATIONS, PENDING_JOB_LISTING_KEY } from "@/lib/constants";
+import { swalConfirm, swalError } from "@/lib/swal";
 import { trpc } from "@/lib/trpc/client";
 import type { JobListing, Tags } from "@/types/types";
+import { clearSessionStorage } from "@/lib/library";
+import { getAuthInstance } from "@/lib/firebase/client";
 
 export default function JobListingPage() {
   const router = useRouter();
@@ -25,12 +27,7 @@ export default function JobListingPage() {
   const userJWT = trpc.auth.decodeJWT.useQuery(undefined, {
     enabled: isAuthenticated,
   });
-  const { role } = userJWT.data?.user || {};
-  const createJoblisting = trpc.joblisting.createJoblisting.useMutation();
   const [hrSearch, setHrSearch] = useState("");
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [hrOfficerId, setHrOfficerId] = useState<string | null>(null);
-
   const hrOfficersQuery = trpc.admin.fetchHrOfficers.useQuery(
     {
       query: hrSearch,
@@ -40,7 +37,73 @@ export default function JobListingPage() {
     },
   );
 
+  const { role } = userJWT.data?.user || {};
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [hrOfficerId, setHrOfficerId] = useState<string | null>(null);
   const filteredHROfficers = hrOfficersQuery.data?.hrOfficers || [];
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      return;
+    }
+    const pending = window.sessionStorage.getItem("pendingJobListing");
+
+    if (!pending) {
+      return;
+    }
+
+    const { jobData, hrOfficerId } = JSON.parse(pending);
+
+    setJobListing(jobData);
+    setHrOfficerId(hrOfficerId);
+    window.sessionStorage.removeItem(PENDING_JOB_LISTING_KEY);
+  }, [isAuthenticated]);
+
+  if (!isAuthenticated) {
+    return (
+      <div
+        className={[
+          "relative",
+          "min-h-screen",
+          "w-full",
+          "flex",
+          "items-center",
+          "justify-center",
+          "bg-linear-to-br from-white via-red-50/30 to-white",
+          "px-4",
+          "py-16",
+        ].join(" ")}
+      >
+        <div className="absolute -top-40 -left-40 w-112.5 h-112.5 bg-red-400/20 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -right-40 w-112.5 h-112.5 bg-red-500/20 rounded-full blur-3xl" />
+
+        <div
+          className={[
+            "relative",
+            "rounded-4xl",
+            "border border-white/40",
+            "bg-white/55",
+            "backdrop-blur-3xl",
+            "shadow-[0_40px_120px_rgba(220,38,38,0.15)]",
+            "p-10",
+            "overflow-hidden",
+            "text-center",
+          ].join(" ")}
+        >
+          <div className="absolute inset-0 bg-linear-to-br from-white/40 via-transparent to-red-100/30 pointer-events-none" />
+
+          <div className="relative">
+            <h1 className="mt-3 text-3xl font-extrabold bg-linear-to-r from-red-600 to-red-400 bg-clip-text text-transparent">
+              Unauthorized
+            </h1>
+            <p className="mt-2 text-sm text-gray-600">
+              You must be logged in to access this page.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -79,7 +142,7 @@ export default function JobListingPage() {
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (role !== "Admin" && role !== "SuperAdmin") {
@@ -87,7 +150,8 @@ export default function JobListingPage() {
         "Unauthorized",
         "You are not authorized to create a job listing.",
       );
-      router.push("/login" as Route);
+      clearSessionStorage(); // Clear session storage on unauthorized access
+      getAuthInstance().signOut();
       return;
     }
 
@@ -107,71 +171,55 @@ export default function JobListingPage() {
       "Finalize tags?",
       "Tags will be finalized and cannot be modified after job creation. Do you want to continue?",
       async () => {
-        await createJoblisting.mutateAsync(
-          {
-            title: jobListing.title,
-            qualifications: jobListing.qualifications,
-            requirements: jobListing.requirements,
-            tags: jobListing.tags,
-            location: jobListing.location,
-            isFullTime: jobListing.isFullTime,
-            hrOfficerId: hrOfficerId ?? undefined,
-          },
-          {
-            onSuccess: (data) => {
-              swalSuccess("Create Job Listing", data.message);
-
-              setJobListing({
-                title: "",
-                qualifications: [],
-                requirements: [],
-                tags: [],
-                location: "Cebu City",
-                isFullTime: true,
-              });
-              setHrSearch("");
-              setHrOfficerId(null);
-
-              router.push("/createjob/scoring_settings" as Route);
+        window.sessionStorage.setItem(
+          "pendingJobListing",
+          JSON.stringify({
+            jobData: {
+              title: jobListing.title,
+              qualifications: jobListing.qualifications,
+              requirements: jobListing.requirements,
+              tags: jobListing.tags,
+              location: jobListing.location,
+              isFullTime: jobListing.isFullTime,
             },
-            onError: (error) => {
-              swalError("Operation Failed", error.message);
-            },
-          },
+
+            hrOfficerId: hrOfficerId ?? null,
+          }),
         );
+        router.push("/createjob/scoring_settings" as Route);
       },
     );
   };
 
   return (
     <div
-      className="
-    relative
-    min-h-screen
-    w-full
-    flex
-    items-center
-    justify-center
-    bg-linear-to-br from-white via-red-50/30 to-white
-    px-4
-    py-16
-  "
+      className={[
+        "relative",
+        "min-h-screen",
+        "w-full",
+        "flex",
+        "items-center",
+        "justify-center",
+        "bg-linear-to-br from-white via-red-50/30 to-white",
+        "px-4",
+        "py-16",
+      ].join(" ")}
     >
       <div className="absolute -top-40 -left-40 w-112.5 h-112.5 bg-red-400/20 rounded-full blur-3xl" />
       <div className="absolute -bottom-40 -right-40 w-112.5 h-112.5 bg-red-500/20 rounded-full blur-3xl" />
 
       <div className="relative w-full max-w-3xl">
         <div
-          className="
-        relative
-        rounded-4xl
-        border border-white/40
-        bg-white/55
-        backdrop-blur-3xl
-        shadow-[0_40px_120px_rgba(220,38,38,0.15)]
-        p-10
-        overflow-hidden
-      "
+          className={[
+            "relative",
+            "rounded-4xl",
+            "border border-white/40",
+            "bg-white/55",
+            "backdrop-blur-3xl",
+            "shadow-[0_40px_120px_rgba(220,38,38,0.15)]",
+            "p-10",
+            "overflow-hidden",
+          ].join(" ")}
         >
           <div className="absolute inset-0 bg-linear-to-br from-white/40 via-transparent to-red-100/30 pointer-events-none" />
 
@@ -204,15 +252,15 @@ export default function JobListingPage() {
                   onChange={handleInputChange}
                   required
                   maxLength={255}
-                  className="
-                w-full rounded-2xl px-5 py-3
-                bg-white/70 backdrop-blur-xl
-                border border-white/40
-                text-gray-700 font-semibold placeholder:text-gray-400
-                shadow-[0_15px_50px_rgba(220,38,38,0.08)]
-                focus:ring-2 focus:ring-red-400/40 focus:border-red-300
-                transition-all duration-300 outline-none
-              "
+                  className={[
+                    "w-full rounded-2xl px-5 py-3",
+                    "bg-white/70 backdrop-blur-xl",
+                    "border border-white/40",
+                    "text-gray-700 font-semibold placeholder:text-gray-400",
+                    "shadow-[0_15px_50px_rgba(220,38,38,0.08)]",
+                    "focus:ring-2 focus:ring-red-400/40 focus:border-red-300",
+                    "transition-all duration-300 outline-none",
+                  ].join(" ")}
                 />
               </div>
 
@@ -296,15 +344,15 @@ export default function JobListingPage() {
                     }}
                     onFocus={() => setShowDropdown(true)}
                     placeholder="Type to search Staff"
-                    className="
-                  w-full rounded-2xl px-5 py-3
-                  bg-white/70 backdrop-blur-xl
-                  border border-white/40
-                  text-gray-700 font-semibold
-                  shadow-[0_15px_50px_rgba(220,38,38,0.08)]
-                  focus:ring-2 focus:ring-red-400/40 focus:border-red-300
-                  transition-all duration-300 outline-none
-                "
+                    className={[
+                      "w-full rounded-2xl px-5 py-3",
+                      "bg-white/70 backdrop-blur-xl",
+                      "border border-white/40",
+                      "text-gray-700 font-semibold placeholder:text-gray-400",
+                      "shadow-[0_15px_50px_rgba(220,38,38,0.08)]",
+                      "focus:ring-2 focus:ring-red-400/40 focus:border-red-300",
+                      "transition-all duration-300 outline-none",
+                    ].join(" ")}
                   />
 
                   {showDropdown && filteredHROfficers.length > 0 && (
@@ -318,31 +366,37 @@ export default function JobListingPage() {
                   max-h-56 overflow-y-auto
                 "
                     >
-                      {filteredHROfficers.map((officer) => (
-                        <li
-                          key={officer.id}
-                          onClick={() => {
-                            setHrOfficerId(officer.id);
-                            setHrSearch(
-                              `${officer.first_name} ${officer.last_name}`,
-                            );
-                            setShowDropdown(false);
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" || e.key === " ") {
-                              e.preventDefault();
+                      {filteredHROfficers.map(
+                        (officer: {
+                          id: string;
+                          first_name: string;
+                          last_name: string;
+                        }) => (
+                          <li
+                            key={officer.id}
+                            onClick={() => {
                               setHrOfficerId(officer.id);
                               setHrSearch(
                                 `${officer.first_name} ${officer.last_name}`,
                               );
                               setShowDropdown(false);
-                            }
-                          }}
-                          className="px-5 py-3 cursor-pointer hover:bg-red-50 transition"
-                        >
-                          {officer.first_name} {officer.last_name}
-                        </li>
-                      ))}
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                setHrOfficerId(officer.id);
+                                setHrSearch(
+                                  `${officer.first_name} ${officer.last_name}`,
+                                );
+                                setShowDropdown(false);
+                              }
+                            }}
+                            className="px-5 py-3 cursor-pointer hover:bg-red-50 transition"
+                          >
+                            {officer.first_name} {officer.last_name}
+                          </li>
+                        ),
+                      )}
                     </ul>
                   )}
                 </div>

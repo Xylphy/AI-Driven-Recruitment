@@ -22,7 +22,7 @@ import Swal from "sweetalert2";
 import HRReport from "@/components/admin/candidateProfile/HRReport";
 import useAuth from "@/hooks/useAuth";
 import { CANDIDATE_STATUSES } from "@/lib/constants";
-import { formatDate } from "@/lib/library";
+import { clearSessionStorage, formatDate } from "@/lib/library";
 import { swalError, swalSuccess } from "@/lib/swal";
 import { trpc } from "@/lib/trpc/client";
 import type { CandidateStatuses } from "@/types/types";
@@ -448,7 +448,10 @@ export default function Page() {
             You must be logged in to view this candidate profile.
           </p>
           <button
-            onClick={() => router.push("/login")}
+            onClick={() => {
+              clearSessionStorage();
+              router.push("/login");
+            }}
             className="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-2 rounded-lg shadow transition"
             type="button"
           >

@@ -470,6 +470,17 @@ const jobListingRouter = createTRPCRouter({
               })),
             )
           : Promise.resolve({ data: [], error: null }),
+        supabase.from("scoring_settings").insert({
+          joblisting_id: insertedData.id,
+          soft_skills_score: input.scoringSettings.softSkillsWeight,
+          transcription_score: input.scoringSettings.transcriptionWeight,
+          cultural_fit_score: input.scoringSettings.culturalFitWeight,
+          transcription_cultural_fit_score:
+            input.scoringSettings.transcriptionCulturalFitWeight,
+          job_fit_score: input.scoringSettings.jobFitWeight,
+          behavioral_blend: input.scoringSettings.behavioralBlendWeight,
+          ai_benchmark: input.scoringSettings.benchmark,
+        }),
       ]);
 
       if (results.some((result) => result.error)) {
@@ -489,6 +500,10 @@ const jobListingRouter = createTRPCRouter({
             .eq("joblisting_id", insertedData.id),
           supabase
             .from("jl_requirements")
+            .delete()
+            .eq("joblisting_id", insertedData.id),
+          supabase
+            .from("scoring_settings")
             .delete()
             .eq("joblisting_id", insertedData.id),
         ]);

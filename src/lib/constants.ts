@@ -56,3 +56,4 @@ export const EVENT_TYPES = [
 ] as const;
 
 export const REGULAR_STAFF_ROLES = ["Admin", "Staff"] as const;
+export const PENDING_JOB_LISTING_KEY = "pendingJobListing"; // Key for sessionStorage to store pending job listing data during creation process

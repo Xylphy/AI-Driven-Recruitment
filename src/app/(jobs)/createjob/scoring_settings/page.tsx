@@ -1,6 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import useAuth from "@/hooks/useAuth";
+import { PENDING_JOB_LISTING_KEY } from "@/lib/constants";
+import { swalError, swalInfo } from "@/lib/swal";
+import { trpc } from "@/lib/trpc/client";
+import type { JobListing, Tags } from "@/types/types";
+import { useEffect, useMemo, useState } from "react";
 
 type BehavioralWeights = {
   softSkills: number;
@@ -11,6 +16,7 @@ type BehavioralWeights = {
 
 export default function JobScoringConfiguration() {
   const [isPosted] = useState(false);
+  const { isAuthenticated } = useAuth();
 
   const [behavioral, setBehavioral] = useState<BehavioralWeights>({
     softSkills: 0.3,
@@ -19,10 +25,20 @@ export default function JobScoringConfiguration() {
     transcriptionCulture: 0.3,
   });
 
+  const [jobListing, setJobListing] = useState<JobListing & Tags>({
+    title: "",
+    qualifications: [],
+    requirements: [],
+    tags: [],
+    location: "Cebu City",
+    isFullTime: true,
+  });
+  const [hrOfficerId, setHrOfficerId] = useState<string | null>(null);
+
   const [jobFitWeight, setJobFitWeight] = useState(0.4);
   const [behavioralBlendWeight, setBehavioralBlendWeight] = useState(0.6);
-
   const [benchmark, setBenchmark] = useState(0.8);
+  const createJobMutation = trpc.joblisting.createJoblisting.useMutation();
 
   const behavioralTotal = useMemo(() => {
     return Object.values(behavioral).reduce((a, b) => a + b, 0);
@@ -41,9 +57,7 @@ export default function JobScoringConfiguration() {
     ) as (keyof BehavioralWeights)[];
 
     const remaining = 1 - value;
-
     const othersTotal = otherKeys.reduce((sum, k) => sum + behavioral[k], 0);
-
     const updated: BehavioralWeights = { ...behavioral };
 
     updated[key] = value;
@@ -60,20 +74,68 @@ export default function JobScoringConfiguration() {
     setBehavioralBlendWeight(1 - value);
   };
 
-  const handleSubmit = () => {
-    if (!behavioralValid || !predictiveValid) return;
+  useEffect(() => {
+    if (!isAuthenticated) {
+      return;
+    }
 
-    const payload = {
-      soft_skills_weight: behavioral.softSkills,
-      transcription_weight: behavioral.transcription,
-      cultural_fit_weight: behavioral.culturalFit,
-      transcription_cultural_fit_weight: behavioral.transcriptionCulture,
-      job_fit_weight: jobFitWeight,
-      behavioral_blend_weight: behavioralBlendWeight,
-      benchmark,
-    };
+    const pendingJob = window.sessionStorage.getItem(PENDING_JOB_LISTING_KEY);
 
-    console.log("Scoring config payload:", payload);
+    if (!pendingJob) {
+      swalError(
+        "No Job Data",
+        "Please complete the job details before configuring scoring.",
+      );
+      return;
+    }
+
+    try {
+      const { jobData, hrOfficerId } = JSON.parse(pendingJob);
+      setJobListing(jobData);
+      setHrOfficerId(hrOfficerId);
+    } catch {
+      swalError(
+        "Invalid Job Data",
+        "There was an error loading your job details. Please start over.",
+      );
+    }
+  }, [isAuthenticated]);
+
+  const handleSubmit = async () => {
+    if (!behavioralValid || !predictiveValid) {
+      return;
+    }
+
+    await createJobMutation.mutateAsync(
+      {
+        ...jobListing,
+        hrOfficerId: hrOfficerId || undefined,
+        scoringSettings: {
+          softSkillsWeight: behavioral.softSkills,
+          transcriptionWeight: behavioral.transcription,
+          culturalFitWeight: behavioral.culturalFit,
+          transcriptionCulturalFitWeight: behavioral.transcriptionCulture,
+          jobFitWeight: jobFitWeight,
+          behavioralBlendWeight: behavioralBlendWeight,
+          benchmark,
+        },
+      },
+      {
+        onSuccess: () => {
+          swalInfo(
+            "Success",
+            "Job listing created successfully with the configured scoring settings.",
+          );
+          window.sessionStorage.removeItem(PENDING_JOB_LISTING_KEY);
+        },
+        onError: () => {
+          swalError(
+            "Creation Failed",
+            "There was an error creating the job listing. Please try again.",
+          );
+        },
+      },
+    );
   };
 
   return (
@@ -222,7 +284,7 @@ function ModernSlider({
       <div className="relative">
         <div className="h-3 w-full rounded-full bg-white/40 border border-white/30 backdrop-blur-md overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-red-500 to-red-400 transition-all duration-200"
+            className="h-full bg-linear-to-r from-red-500 to-red-400 transition-all duration-200"
             style={{ width: `${percent}%` }}
           />
         </div>
@@ -235,12 +297,15 @@ function ModernSlider({
           value={value}
           disabled={disabled}
           onChange={(e) => onChange(Number(e.target.value))}
-          className="
-            absolute top-0 left-0 w-full h-3
-            appearance-none bg-transparent
-            cursor-pointer
-            z-10
-          "
+          className={
+            [
+              "absolute top-0 left-0 w-full h-3",
+              "appearance-none bg-transparent",
+              "cursor-pointer",
+              "z-10",
+              disabled ? "cursor-not-allowed opacity-50" : "",
+            ].join(" ")
+          }
         />
       </div>
 

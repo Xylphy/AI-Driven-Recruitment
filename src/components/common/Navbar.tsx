@@ -106,6 +106,7 @@ export default function Navbar() {
                 width={100}
                 height={100}
                 className="w-20 h-auto"
+                loading="lazy"
               />
             </Link>
           </div>

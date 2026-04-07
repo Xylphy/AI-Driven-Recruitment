@@ -1,15 +1,15 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import useAuth from "@/hooks/useAuth";
 import { getAuthInstance } from "@/lib/firebase/client";
 import { updatePasswordSchema } from "@/lib/schemas";
 import { swalError, swalSuccess } from "@/lib/swal";
 import { trpc } from "@/lib/trpc/client";
+import { clearSessionStorage } from "@/lib/library";
 
 export default function UpdatePasswordPage() {
-  useAuth();
+  const { isAuthenticated } = useAuth();
 
   const updatePasswordMutation = trpc.auth.updatePassword.useMutation();
 
@@ -71,6 +71,16 @@ export default function UpdatePasswordPage() {
     );
   }
 
+  if (!isAuthenticated) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <p className="text-lg font-semibold text-gray-600">
+          Please log in to update your password.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div
       className="
@@ -106,7 +116,7 @@ export default function UpdatePasswordPage() {
           backdrop-blur-3xl
           p-10
           shadow-[0_40px_120px_rgba(220,38,38,0.15)]
-          overflow-hiddenz
+          overflow-hidden
         "
         >
           <div className="absolute inset-0 bg-linear-to-br from-white/40 via-transparent to-red-100/30 pointer-events-none" />
@@ -301,23 +311,16 @@ export default function UpdatePasswordPage() {
               </button>
 
               <div className="pt-4 text-center">
-                <Link
-                  href="/login"
-                  className="
-                inline-flex items-center justify-center
-                rounded-2xl
-                px-5 py-2
-                text-xs font-bold uppercase tracking-[0.18em]
-                bg-white/60 backdrop-blur-md
-                border border-white/40
-                text-red-600
-                shadow-sm
-                hover:bg-white/80
-                transition
-              "
+                <button
+                  type="button"
+                  className="inline-flex items-center justify-center rounded-2xl px-5 py-2 text-xs font-bold uppercase tracking-[0.18em] bg-white/60 backdrop-blur-md border border-white/40 text-red-600 shadow-sm hover:bg-white/80 transition"
+                  onClick={() => {
+                    clearSessionStorage();
+                    getAuthInstance().signOut();
+                  }}
                 >
                   Back to Dashboard
-                </Link>
+                </button>
               </div>
             </form>
           </div>
