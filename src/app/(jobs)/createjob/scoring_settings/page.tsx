@@ -212,20 +212,20 @@ function ModernSlider({
 
   return (
     <div className="space-y-3">
-      <div className="flex justify-between">
-        <span className="text-gray-700">{label}</span>
-        <span className="font-semibold text-red-600">
+      <div className="flex justify-between items-center">
+        <span className="text-gray-700 font-medium">{label}</span>
+        <span className="font-semibold text-red-600 text-sm">
           {(value * 100).toFixed(0)}%
         </span>
       </div>
 
-      <div className="relative group">
-        <div className="h-3 w-full rounded-full bg-white/40 border border-white/30 backdrop-blur" />
-
-        <div
-          className="absolute top-0 left-0 h-3 rounded-full bg-linear-to-r from-red-500 to-red-400 transition-all duration-300"
-          style={{ width: `${percent}%` }}
-        />
+      <div className="relative">
+        <div className="h-3 w-full rounded-full bg-white/40 border border-white/30 backdrop-blur-md overflow-hidden">
+          <div
+            className="h-full bg-gradient-to-r from-red-500 to-red-400 transition-all duration-200"
+            style={{ width: `${percent}%` }}
+          />
+        </div>
 
         <input
           type="range"
@@ -235,14 +235,47 @@ function ModernSlider({
           value={value}
           disabled={disabled}
           onChange={(e) => onChange(Number(e.target.value))}
-          className="absolute top-0 w-full h-3 opacity-0 cursor-pointer"
-        />
-
-        <div
-          className="absolute top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-white border border-red-300 shadow-lg transition-all group-hover:scale-110"
-          style={{ left: `calc(${percent}% - 10px)` }}
+          className="
+            absolute top-0 left-0 w-full h-3
+            appearance-none bg-transparent
+            cursor-pointer
+            z-10
+          "
         />
       </div>
+
+      <style jsx>{`
+        input[type="range"] {
+          -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          width: 20px;
+          height: 20px;
+          border-radius: 9999px;
+          background: linear-gradient(to right, #dc2626, #ef4444);
+          border: 2px solid white;
+          box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+          transform: scale(1.15);
+          box-shadow: 0 6px 20px rgba(220, 38, 38, 0.6);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+          width: 20px;
+          height: 20px;
+          border-radius: 9999px;
+          background: linear-gradient(to right, #dc2626, #ef4444);
+          border: 2px solid white;
+          box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
+          cursor: pointer;
+        }
+      `}</style>
     </div>
   );
 }

@@ -120,6 +120,7 @@ export default function JobListingPage() {
           {
             onSuccess: (data) => {
               swalSuccess("Create Job Listing", data.message);
+
               setJobListing({
                 title: "",
                 qualifications: [],
@@ -130,6 +131,8 @@ export default function JobListingPage() {
               });
               setHrSearch("");
               setHrOfficerId(null);
+
+              router.push("/createjob/scoring_settings" as Route);
             },
             onError: (error) => {
               swalError("Operation Failed", error.message);
