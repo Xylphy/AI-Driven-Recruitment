@@ -5,6 +5,7 @@ import { PENDING_JOB_LISTING_KEY } from "@/lib/constants";
 import { swalError, swalInfo } from "@/lib/swal";
 import { trpc } from "@/lib/trpc/client";
 import type { JobListing, Tags } from "@/types/types";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 type BehavioralWeights = {
@@ -15,6 +16,7 @@ type BehavioralWeights = {
 };
 
 export default function JobScoringConfiguration() {
+  const router = useRouter();
   const [isPosted] = useState(false);
   const { isAuthenticated } = useAuth();
 
@@ -127,6 +129,7 @@ export default function JobScoringConfiguration() {
             "Job listing created successfully with the configured scoring settings.",
           );
           window.sessionStorage.removeItem(PENDING_JOB_LISTING_KEY);
+          router.push("/admin");
         },
         onError: () => {
           swalError(

@@ -43,3 +43,28 @@ export const jobListingSchema = z.object({
   hrOfficerId: z.string().optional(),
   scoringSettings: scoringSettingsSchema,
 });
+
+export const updateJoblistingSchema = z.object({
+  title: z
+    .string()
+    .min(1, "Title is required")
+    .max(255, "Title must be less than 255 characters"),
+  qualifications: z.array(identifiableTitleSchema).optional(),
+  requirements: z
+    .array(identifiableTitleSchema)
+    .min(1, "At least one requirement is required")
+    .optional(),
+  tags: z
+    .array(
+      z.object({
+        title: z
+          .string()
+          .min(1, "Tag cannot be empty")
+          .max(50, "Tag must be less than 50 characters"),
+      }),
+    )
+    .optional(),
+  location: z.enum(JOB_LOCATIONS),
+  isFullTime: z.boolean(),
+  hrOfficerId: z.string().optional(),
+});

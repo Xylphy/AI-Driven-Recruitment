@@ -6,7 +6,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { type CANDIDATE_STATUSES, PAGE_SIZE } from "@/lib/constants";
 import { sendEmail } from "@/lib/nodemailer/sendEmail";
-import { jobListingSchema, userSchema } from "@/lib/schemas";
+import { jobListingSchema, updateJoblistingSchema, userSchema } from "@/lib/schemas";
 import { moveFile } from "@/lib/supabase/action";
 import { createClientServer } from "@/lib/supabase/server";
 import type { Json } from "@/types/supabase";
@@ -266,7 +266,7 @@ const jobListingRouter = createTRPCRouter({
     }),
   updateJoblisting: authorizedProcedure
     .input(
-      jobListingSchema.extend({
+      updateJoblistingSchema.extend({
         jobId: z.uuid(),
       }),
     )
