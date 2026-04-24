@@ -16,7 +16,9 @@ export const userSchema = z.object({
   socialLinks: z
     .array(
       z.object({
-        value: z.url("Invalid URL"),
+        value: z.preprocess((val) => {
+          return typeof val === "string" && !/^https?:\/\//i.test(val) ? `https://${val}` : val;
+        }, z.url("Invalid URL")),
       }),
     )
     .optional()
